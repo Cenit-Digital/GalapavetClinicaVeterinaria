@@ -12,6 +12,10 @@ build/
 .coverage
 htmlcov/
 coverage/
+reports/
+
+# Verificación en vivo (experimentos contra navegador real, nunca se versionan)
+.experimentos-tmp/
 
 # Datos de las apps de ejemplo
 .notes.json

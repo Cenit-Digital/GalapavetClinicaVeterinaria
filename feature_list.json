@@ -1,25 +1,294 @@
 {
-  "project": "mi-proyecto",
-  "description": "Lista de features del proyecto. Una feature a la vez. Ver AGENTS.md y docs/workflow.md. Estados: pending → spec_ready → in_progress → done (o blocked).",
+  "project": "galapavet-web",
+  "description": "Web de Galapavet, centro integral veterinario (Galapagar, Madrid). Landing one-page + Campañas + Blog + Tienda. Una feature a la vez. Ver AGENTS.md y docs/workflow.md. Estados: pending → spec_ready → in_progress → done (o blocked).",
   "rules": {
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
     "require_approved_spec_to_implement": true,
     "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
-    "sdd_required_when": "feature has \"sdd\": true"
+    "sdd_required_when": "feature has \"sdd\": true",
+    "notas": [
+      "Ningún dato de negocio llega a la UI si no está verificado y con fuente en docs/datos-galapavet.md.",
+      "Un doble de test nunca se compara contra la constante importada de producción, sino contra el literal escrito a mano (patrón doble-de-test-anclado-al-literal-no-al-simbolo).",
+      "El estado condicional vive en un atributo ARIA consultable, nunca en un className ternario (patrón estado-condicional-en-atributo-aria-no-en-clase-css).",
+      "Toda decisión o derivación vive en un módulo puro .ts; el .tsx solo cablea (patrón logica-de-decision-en-modulo-puro-no-en-el-jsx).",
+      "Antes de leer el mutation score se lee la columna '# timeout'. Si no es 0, el informe no vale: repetir a --concurrency 1 (patrón informe-de-mutacion-con-timeouts-miente).",
+      "Jamás dos corridas de Stryker a la vez sobre el mismo repo.",
+      "El estado base en CSS es el estado final visible; el oculto vive solo dentro del ámbito de la animación (patrón estado-base-visible-ssg-reduced-motion)."
+    ]
   },
   "features": [
     {
       "id": 1,
-      "name": "ejemplo_feature",
-      "title": "Feature de ejemplo (renómbrala o bórrala al empezar)",
-      "description": "Sustituye esta feature por la primera real de tu proyecto. Toda feature con \"sdd\": true recorre spec → gherkin → puerta humana → TDD → judge → mutación.",
+      "name": "tokens_marca",
+      "title": "Tokens de marca, tipografía y contraste verificado",
+      "description": "La paleta real de Galapavet (extraída por muestreo del logo), la escala tipográfica y el espaciado, como tokens SCSS consumidos por todos los módulos. Incluye el cálculo real del ratio de contraste WCAG, no una suposición.",
       "acceptance": [
-        "Describe aquí los criterios de aceptación observables",
-        "Cada criterio debe poder convertirse en un escenario Gherkin medible"
+        "Los tres colores de marca están declarados con los hexadecimales exactos extraídos del logo",
+        "El ratio de contraste de cada pareja de color usada para texto se calcula y cumple WCAG 2.2 AA",
+        "Un color que no alcance el ratio exigido no se usa para ese propósito",
+        "Ningún módulo SCSS declara un color literal: todos consumen tokens"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "datos_negocio",
+      "title": "Fuente única canónica de los datos del negocio",
+      "description": "src/lib/site.ts declara cada dato de negocio exactamente una vez y deriva de él todas sus formas (texto visible, tel:, wa.me, JSON-LD). El normalizador de teléfono falla cerrado.",
+      "acceptance": [
+        "Cada dato de negocio se declara una sola vez",
+        "El texto visible y todos los href derivan del mismo dato y no pueden divergir",
+        "Un teléfono que no valida hace lanzar al normalizador en vez de emitir un tel: a medias",
+        "Ningún componente reescribe a mano un número de teléfono"
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "cabecera_y_navegacion",
+      "title": "Cabecera con navegación principal y menú móvil",
+      "description": "Cabecera fija con logotipo, navegación horizontal en escritorio y menú desplegable en móvil por debajo del breakpoint medido para ESTE diseño (no heredado).",
+      "acceptance": [
+        "En escritorio se ven todos los enlaces de navegación en horizontal",
+        "Por debajo del breakpoint la navegación horizontal se oculta y aparece el botón de menú",
+        "El botón de menú comunica su estado con aria-expanded",
+        "Pulsar un enlace del menú móvil navega y cierra el menú",
+        "El logotipo enlaza al inicio"
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 4,
+      "name": "hero",
+      "title": "Sección de bienvenida",
+      "description": "Primer impacto: quién es Galapavet, dónde está y qué hacer a continuación. Sin cifras de confianza inventadas.",
+      "acceptance": [
+        "Se muestra la localidad real y el titular principal",
+        "El botón principal lleva a la sección de reserva",
+        "El botón secundario usa un dato de contacto real derivado de la fuente única",
+        "No aparece ninguna cifra de reputación, antigüedad o volumen que no esté verificada"
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 5,
+      "name": "servicios",
+      "title": "Catálogo de servicios expandibles",
+      "description": "Los cinco bloques de servicio que Galapavet publica realmente, cada uno con su desglose, en tarjetas que se expanden de forma independiente.",
+      "acceptance": [
+        "Se muestran exactamente los bloques de servicio publicados por el cliente",
+        "Cada tarjeta se expande y colapsa de forma independiente del resto",
+        "El estado de expansión se comunica con aria-expanded",
+        "El detalle desplegado lista los puntos publicados por el cliente, sin añadidos"
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 6,
+      "name": "equipo",
+      "title": "Presentación del equipo",
+      "description": "Los profesionales que el cliente publica, con biografía desplegable. Sin colegiaciones ni idiomas inventados.",
+      "acceptance": [
+        "Se muestran exactamente los profesionales publicados por el cliente",
+        "Cada tarjeta se expande de forma independiente",
+        "El texto accesible del botón cambia según el estado",
+        "No aparece ningún número de colegiado ni titulación que no esté publicada"
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 7,
+      "name": "reserva_chat",
+      "title": "Reserva de cita guiada por chat",
+      "description": "Flujo guiado paso a paso que termina derivando a un canal humano. La rama de urgencia deriva de inmediato al teléfono de urgencias en vez de seguir preguntando disponibilidad.",
+      "acceptance": [
+        "El chat arranca en el primer paso con sus opciones",
+        "Elegir una opción avanza al siguiente paso y registra la respuesta",
+        "El último paso ofrece campo de texto libre y no admite envío vacío",
+        "Elegir urgencia corta el guion y deriva al teléfono de urgencias",
+        "Al completar el flujo se ofrece el envío por el canal humano con el resumen",
+        "Se avisa de que nada se envía a ningún servidor hasta ese momento"
+      ],
+      "sdd": true,
+      "status": "in_progress"
+    },
+    {
+      "id": 8,
+      "name": "galeria",
+      "title": "Galería de pacientes",
+      "description": "Carrusel de fotografías con scroll físico y controles accesibles.",
+      "acceptance": [
+        "Se muestran todas las fotografías con su texto alternativo",
+        "Los controles desplazan la pista una tarjeta en cada sentido",
+        "El desplazamiento respeta prefers-reduced-motion",
+        "Las imágenes se sirven en local, sin peticiones a terceros"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 9,
+      "name": "campanas_portada",
+      "title": "Campañas de salud destacadas en la portada",
+      "description": "Bloque de portada que adelanta las campañas y enlaza a su página. Contenido de demo rotulado como tal; sin precios inventados.",
+      "acceptance": [
+        "Se muestran las tarjetas de campaña con su título y su estado",
+        "Ninguna tarjeta muestra un precio o una fecha que no esté confirmada por el cliente",
+        "El contenido de demo está marcado de forma inequívoca",
+        "Las tarjetas y el botón enlazan a la página de campañas"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 10,
+      "name": "informacion_contacto",
+      "title": "Panel de información de contacto",
+      "description": "Dirección, teléfonos, horario y mapa, todo derivado de la fuente única. Sin el bloque destacado de urgencias 24 h, suprimido por decisión del cliente.",
+      "acceptance": [
+        "Se muestran la dirección, los teléfonos y el horario reales",
+        "El teléfono de urgencias aparece con su rótulo real de fuera de horario",
+        "No existe ningún bloque ni barra que anuncie urgencias 24 h",
+        "El mapa se muestra con un título accesible"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 11,
+      "name": "formulario_contacto",
+      "title": "Formulario de contacto",
+      "description": "Formulario con validación nativa que no envía nada a ningún servidor y lo declara explícitamente.",
+      "acceptance": [
+        "Cada campo tiene su etiqueta asociada",
+        "Los campos obligatorios impiden el envío si están vacíos",
+        "Al enviar se muestra la confirmación y desaparece el formulario",
+        "Se muestra el aviso de que el mensaje no se envía a ningún servidor",
+        "Se puede volver a mostrar el formulario"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 12,
+      "name": "faq",
+      "title": "Preguntas frecuentes",
+      "description": "Acordeón excluyente con las dudas habituales, sin afirmaciones clínicas ni comerciales atribuidas al cliente que no estén verificadas.",
+      "acceptance": [
+        "Se muestran todas las preguntas colapsadas por defecto",
+        "Expandir una pregunta muestra su respuesta",
+        "Abrir una pregunta cierra automáticamente la que estuviera abierta",
+        "Ninguna respuesta afirma precios, planes de financiación ni servicios no publicados"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 13,
+      "name": "pie_de_pagina",
+      "title": "Pie de página",
+      "description": "Enlaces rápidos, datos de contacto y enlaces legales reales del cliente.",
+      "acceptance": [
+        "Se muestran las columnas de enlaces y el bloque de marca",
+        "Los enlaces legales apuntan a las páginas legales reales del cliente",
+        "El aviso de copyright no incluye ningún número de registro no verificado",
+        "Los enlaces de contacto derivan de la fuente única"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 14,
+      "name": "selector_paleta",
+      "title": "Selector de variantes de paleta",
+      "description": "Conmutador flotante entre variantes de la marca real, persistido y aplicado antes del primer pintado mediante un script inline espejado por un gemelo puro testeable.",
+      "acceptance": [
+        "El panel lista las variantes disponibles y marca la activa",
+        "Elegir una variante la aplica de inmediato a toda la página",
+        "La elección se recuerda entre visitas",
+        "Un valor corrupto en el almacenamiento cae a la variante por defecto sin escribir basura",
+        "La variante se aplica antes del primer pintado"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 15,
+      "name": "seo_estructura",
+      "title": "SEO técnico y datos estructurados",
+      "description": "Idioma, metadatos, Open Graph y JSON-LD con el tipo Schema.org correcto para una clínica veterinaria, alimentado por la fuente única. Ataca el «SEO inexistente» del estudio de prospección.",
+      "acceptance": [
+        "El documento declara idioma, charset y viewport correctos",
+        "Cada página tiene título y descripción propios y únicos",
+        "El JSON-LD usa el tipo Schema.org correcto y valida",
+        "Los datos del JSON-LD derivan de la fuente única y coinciden con los visibles"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 16,
+      "name": "pagina_campanas",
+      "title": "Página de campañas: listado y ficha",
+      "description": "Subpágina con el listado de campañas y su ficha de detalle. Contenido de demo rotulado; sin precios inventados.",
+      "acceptance": [
+        "El listado muestra todas las campañas",
+        "La ficha muestra el detalle de la campaña seleccionada",
+        "Ningún precio ni fecha aparece sin estar confirmado por el cliente",
+        "La página comparte cabecera y pie con la landing"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 17,
+      "name": "pagina_blog",
+      "title": "Página de blog: listado, filtro y artículo",
+      "description": "Subpágina con listado filtrable por categoría y vista de artículo. Contenido editorial de demo, rotulado como tal.",
+      "acceptance": [
+        "El listado muestra todos los artículos",
+        "El filtro por categoría reduce el listado a los artículos de esa categoría",
+        "Seleccionar un artículo muestra su contenido completo",
+        "El contenido de demo está marcado de forma inequívoca"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 18,
+      "name": "pagina_tienda",
+      "title": "Página de tienda: catálogo, filtros y cesta",
+      "description": "Subpágina con rejilla de productos sobre las cuatro categorías reales del cliente, filtros y cesta local. Sin pasarela de pago.",
+      "acceptance": [
+        "La rejilla muestra los productos y permite filtrar por las categorías reales del cliente",
+        "Añadir un producto a la cesta actualiza la cesta y su total",
+        "El total se calcula correctamente al cambiar cantidades y al eliminar líneas",
+        "Se declara que no hay pasarela de pago y que los precios están pendientes del cliente"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
+    },
+    {
+      "id": 19,
+      "name": "accesibilidad",
+      "title": "Puerta de accesibilidad WCAG 2.2 AA",
+      "description": "Puerta transversal de cierre: cero violaciones automáticas de axe en todas las páginas, área táctil mínima, foco visible y respeto de prefers-reduced-motion.",
+      "acceptance": [
+        "Cada página pasa el análisis automático sin violaciones",
+        "Todo control interactivo alcanza el área táctil mínima exigida",
+        "El foco es visible en todos los controles",
+        "Ninguna animación se reproduce si el visitante pidió menos movimiento",
+        "La puerta falla cerrada si no analiza ninguna página"
+      ],
+      "sdd": true,
+      "status": "spec_ready"
     }
   ]
 }

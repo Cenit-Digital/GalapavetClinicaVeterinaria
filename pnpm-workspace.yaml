@@ -1,0 +1,11 @@
+# Fichero de ajustes de pnpm. En pnpm 10 los ajustes de build viven aquí, no en
+# package.json ni en .npmrc.
+#
+# @parcel/watcher es una dependencia nativa de `sass` que solo sirve al modo
+# --watch de la CLI de Dart Sass. Aquí la compilación la dirige Vite, así que su
+# script de instalación no aporta nada y ejecutarlo solo añadiría superficie de
+# ejecución. Se declara ignorado A PROPÓSITO: sin esta declaración pnpm avisa en
+# cada instalación de que hay scripts de build sin revisar, y un aviso recurrente
+# que nadie atiende acaba entrenando a ignorar los avisos de verdad.
+ignoredBuiltDependencies:
+  - '@parcel/watcher'

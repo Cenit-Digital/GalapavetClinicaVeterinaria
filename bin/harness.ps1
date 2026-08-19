@@ -6,6 +6,8 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   Write-Host '[FAIL] node no está instalado (requerido por el arnés)'
   exit 1
 }
-$engine = Join-Path $PSScriptRoot '..' '.harness' 'harness.mjs'
+$engine = Join-Path $PSScriptRoot '..'
+$engine = Join-Path $engine '.harness'
+$engine = Join-Path $engine 'harness.mjs'
 & node $engine @args
 exit $LASTEXITCODE

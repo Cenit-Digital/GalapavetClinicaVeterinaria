@@ -1,25 +1,25 @@
 {
   "$schema": "./harness.schema.json",
-  "project": "mi-proyecto",
-  "language": "generic",
-  "description": "Rellena este archivo con los comandos de TU stack. Es el único punto que hace al arnés dependiente del lenguaje. Ver docs/configuration.md y los ejemplos en examples/.",
+  "project": "galapavet-web",
+  "language": "node",
+  "description": "Web de Galapavet (Galapagar, Madrid). pnpm + Vite + React + TypeScript + SCSS Modules; Vitest + Testing Library para los tests; StrykerJS para la prueba de mutación.",
   "commands": {
-    "install": "",
-    "lint": "",
-    "test": "",
-    "mutate": "",
-    "build": ""
+    "install": "pnpm install",
+    "lint": "pnpm run lint && pnpm run typecheck",
+    "test": "pnpm run test",
+    "mutate": "pnpm exec stryker run --mutate {{target}}",
+    "build": "pnpm run build"
   },
   "paths": {
     "src": "src",
-    "tests": "tests",
+    "tests": "src",
     "features": "features",
     "progress": "progress",
     "spec": "project-spec.md",
     "feature_list": "feature_list.json"
   },
   "mutation": {
-    "threshold": 0.8,
+    "threshold": 1.0,
     "targets": []
   },
   "rules": {

@@ -1,0 +1,47 @@
+{
+  "name": "galapavet-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Web de Galapavet, centro integral veterinario (Galapagar, Madrid).",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "oxlint --deny-warnings",
+    "typecheck": "tsc -b",
+    "verificar": "pnpm run lint && pnpm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cobertura": "vitest run --coverage",
+    "mutate": "stryker run"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router": "^8.3.0"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.4",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "axe-core": "^4.13.0",
+    "jsdom": "^30.0.1",
+    "oxlint": "^1.78.0",
+    "sass-embedded": "^1.102.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Alias, espejo de resolve.alias de vite.config.ts. Sin `baseUrl` (deprecado
+       en TS 5.x/6.0 bajo moduleResolution "bundler"): sin él, `paths` se resuelve
+       relativo a este propio fichero, que es el mismo directorio que "." fijaba. */
+    "paths": {
+      "@/*": ["./src/*"],
+      "@styles/*": ["./src/styles/*"]
+    },
+
+    /* Rigor. `strict` se declara explícitamente aunque TypeScript 6 lo traiga
+       activado por defecto: el contrato del repo no depende de un default. */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,77 @@
+import React, { useId, useState } from 'react'
+import { ENLACES_NAVEGACION, type EnlaceNavegacion } from '../data/navegacion'
+import { datosNegocio } from '../lib/site'
+import { esAncla, esMovil } from './Cabecera-logica'
+
+interface CabeceraProps {
+  /** Ancho de la ventana en píxeles, medido por quien integra el componente. */
+  ancho: number
+  /** Destinos de la navegación. Por defecto, el catálogo real del proyecto. */
+  enlaces?: readonly EnlaceNavegacion[]
+}
+
+interface ListaDeEnlacesProps {
+  enlaces: readonly EnlaceNavegacion[]
+  /** Solo el panel móvil lo usa: cierra el menú y, si hace falta, evita la navegación completa (@s9/@s10). */
+  alPulsar?: (destino: string, evento: React.MouseEvent<HTMLAnchorElement>) => void
+}
+
+/** La misma lista de enlaces sirve para la navegación de escritorio y el panel móvil (@s7). */
+function ListaDeEnlaces({ enlaces, alPulsar }: ListaDeEnlacesProps): React.JSX.Element {
+  return (
+    <ul>
+      {enlaces.map((enlace) => (
+        <li key={enlace.destino}>
+          <a href={enlace.destino} onClick={alPulsar && ((evento) => alPulsar(enlace.destino, evento))}>
+            {enlace.nombre}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function Cabecera({ ancho, enlaces = ENLACES_NAVEGACION }: CabeceraProps): React.JSX.Element {
+  const movil = esMovil(ancho)
+  const hayEnlaces = enlaces.length > 0
+  const [abierto, setAbierto] = useState(false)
+  const idPanel = useId()
+
+  return (
+    <header>
+      <div>
+        <a href="#inicio">{datosNegocio.identidad.nombreComercial}</a>
+        <p>{datosNegocio.identidad.descriptor}</p>
+      </div>
+      {hayEnlaces && !movil && (
+        <nav aria-label="Navegación principal">
+          <ListaDeEnlaces enlaces={enlaces} />
+        </nav>
+      )}
+      {hayEnlaces && movil && (
+        <button
+          type="button"
+          aria-expanded={abierto}
+          aria-controls={idPanel}
+          onClick={() => setAbierto((valorPrevio) => !valorPrevio)}
+        >
+          Abrir menú
+        </button>
+      )}
+      {hayEnlaces && movil && abierto && (
+        <div id={idPanel}>
+          <ListaDeEnlaces
+            enlaces={enlaces}
+            alPulsar={(destino, evento) => {
+              if (!esAncla(destino)) {
+                evento.preventDefault()
+                window.history.pushState(null, '', destino)
+              }
+              setAbierto(false)
+            }}
+          />
+        </div>
+      )}
+    </header>
+  )
+}
