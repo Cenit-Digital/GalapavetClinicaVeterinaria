@@ -188,7 +188,7 @@
         "Ninguna respuesta afirma precios, planes de financiación ni servicios no publicados"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 13,
@@ -202,7 +202,7 @@
         "Los enlaces de contacto derivan de la fuente única"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "in_progress"
     },
     {
       "id": 14,

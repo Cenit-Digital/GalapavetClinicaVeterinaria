@@ -4,18 +4,47 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **Feature en curso:** faq (id 12) — `tdd_craftsman` ronda 1 en marcha.
-  Escenarios a recorrer en orden: @s1 (5 preguntas colapsadas por defecto),
-  @s2 (horario derivado de `datosNegocio.horario`), @s3 (cita con los 2
-  teléfonos verificados y sus enlaces), @s4 (servicios: 5 bloques
-  publicados), @s5 (urgencias fuera de horario con teléfono real y enlace),
-  @s6 (divulgativa sin afirmar nada de la clínica), @s7 (abrir cierra la
-  anterior — excluyente), @s8 (cerrar la que ya estaba abierta), @s9
-  (teclado: Enter expande y conserva el foco), @s10 (guarda negativa sobre
-  el catálogo completo), @s11 (catálogo vacío → sin sección), @s12 (entrada
-  con pregunta o respuesta vacía se descarta), @s13 (teléfono de urgencias
-  inyectable desde la fuente única).
+- **Feature en curso:** pie_de_pagina (id 13) — pendiente de arrancar
+  `tdd_craftsman` ronda 1. Escenarios a recorrer en orden: @s1 (bloque de
+  marca sin afirmar nada no publicado), @s2 (tres columnas de 4 enlaces),
+  @s3 (columna "Clínica" a las 4 secciones de la landing), @s4 (columna
+  "Contenido" a las 3 subpáginas + FAQ), @s5 (columna "Contacto", teléfonos
+  reales derivados de la fuente única), @s6 (enlace de urgencias con rótulo
+  real, sin "24 h"), @s7 (sin email publicado, sin enlace de correo), @s8
+  (sin perfiles publicados, sin bloque de redes sociales), @s9 (enlaces
+  legales reales), @s10 (enlaces legales en ventana nueva, `rel` seguro),
+  @s11 (página legal no publicada no se pinta como enlace muerto), @s12
+  (copyright sin número de registro), @s13 (año de copyright calculado, no
+  horneado), @s14 (ningún dato del prototipo heredado sobrevive), @s15
+  (teléfono inválido falla cerrado, no pinta un enlace a medias).
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **`faq` (id 12): DONE.** Reanudada a mitad de ronda 1 (@s1-@s3 ya
+  existían en disco de una sesión previa, con 3 placeholders literales
+  `'Respuesta'` en el catálogo). `tdd_craftsman` completó @s4-@s13 (10
+  ciclos Rojo-Verde-Refactor, 3 "verde a la primera" verificados con
+  sabotaje manual y reversión: @s7, @s9, @s10), sustituyendo los 3
+  placeholders solo cuando un test rojo real lo exigió; reutilizó
+  `SERVICIOS` de `servicios.ts` para los 5 títulos de @s4 (nunca los
+  retipeó) y `construirEnlaceTelefono` de `informacion_contacto` para los
+  `tel:`. `judge` ronda 1: **APROBADO** (13/13 escenarios cubiertos).
+  `mutation_tester` ronda 1: **FAIL** 82.22% (74/90, 16 no-killed sobre
+  `Faq-logica.ts`: formato de listado en español nunca verificado por
+  `textContent` exacto, ramas 0/1 de `enumerar` sin cobertura,
+  `segmentosDeRespuesta` sin verificar por estructura exacta). `tdd_craftsman`
+  ronda 2: creó `Faq-logica.test.ts` (7 tests dirigidos, mismo patrón que
+  `Galeria-logica.test.ts`/`CampanasPortada-logica.test.ts`, cero producción
+  tocada) y documentó por adelantado que `Faq-logica.ts:49` sería un
+  mutante equivalente genuino (propiedad de `Array.prototype.join` con 0/1
+  elementos). `judge` ronda 2: **APROBADO**, re-verificó los 13 escenarios
+  contra el código real. `mutation_tester` ronda 2: **PASS** 89/90 = 98.89%
+  en bruto, 100% sobre mutantes no equivalentes — confirmó L49 como
+  equivalente por partida doble (matemática + script empírico), mismo
+  protocolo que `telefono.ts:13` y `contraste.ts:36`. `bin/harness init`
+  verde: 276/276 tests. Lanzada y cerrada vía workflow con reintento
+  acotado (rondas 1-2); yo (craftsman_lead) releí `progress/tdd_faq.md`,
+  `progress/judge_faq.md` y `progress/mutation_faq.md` completos y repetí
+  `node .harness/harness.mjs init` de forma independiente antes de marcar
+  `done` — no me fié del resumen estructurado del workflow.
 - **`formulario_contacto` (id 11): DONE.** `tdd_craftsman` ronda 1 (14/14
   escenarios) → `judge` ronda 1 APROBADO (5 sabotajes propios) →
   `mutation_tester` ronda 1 FAIL 94.44% (34/36, 2 supervivientes en el
