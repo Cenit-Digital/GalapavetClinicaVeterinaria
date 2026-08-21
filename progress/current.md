@@ -4,23 +4,57 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **Feature en curso:** selector_paleta (id 14) — pendiente de arrancar
-  `tdd_craftsman` ronda 1. Escenarios a recorrer en orden: @s1 (selector
-  cerrado al cargar), @s2 (panel lista las 4 variantes), @s3 (reabrir el
-  botón cierra el panel), @s4 (muestras de color no ensucian el nombre
-  accesible), @s5 (sin preferencia guardada, variante activa = marca), @s6
-  (elegir variante la aplica de inmediato), @s7 (elegir variante la guarda
-  en almacenamiento), @s8 (se recuerda en la siguiente visita), @s9
-  (variante guardada resuelta antes del primer pintado), @s10 (script de
-  arranque precede al bundle de la app), @s11 (id desconocido → variante
-  por defecto), @s12 (preferencia vacía → variante por defecto), @s13
-  (valor corrupto nunca llega al atributo del documento), @s14
-  (almacenamiento que lanza al leer no rompe la carga), @s15 (almacenamiento
-  que lanza al escribir no rompe el cambio), @s16 (catálogo vacío → no se
-  renderiza). Nota de diseño propia del `.feature`: script inline
-  pre-pintado espejado por un gemelo puro testeable (patrón organizacional
-  `logica-pre-pintado-inline-se-espeja-en-gemelo-puro-testeable`).
-- **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **PAUSA de la cadena `spec_ready` (21/08/2026): hueco crítico
+  descubierto antes de arrancar `seo_estructura` (id 15).** `src/main.tsx`
+  NO EXISTE (`index.html` referencia `/src/main.tsx`, roto). No hay
+  `App.tsx` ni enrutado: ninguno de los 14 componentes `done` (Cabecera,
+  Hero, Servicios, Equipo, ReservaChat, Galeria, CampanasPortada,
+  InformacionContacto, FormularioContacto, Faq, PieDePagina, SelectorPaleta)
+  está ensamblado en una página real — `pnpm run build`/`pnpm run dev`
+  fallarían ahora mismo. Ninguno de los 19 `.feature` cubre este ensamblaje
+  (confirmado por grep); ya lo había señalado `servicios` al cerrar
+  ("pendiente legítimo de una feature de ensamblado de página con su propio
+  test") pero nunca se convirtió en feature real. `seo_estructura` exige
+  las "seis páginas publicadas" (inicio, campañas, ficha de campaña, blog,
+  artículo de blog, tienda) — imposible de satisfacer sin este ensamblaje
+  Y sin `pagina_campanas`/`pagina_blog`/`pagina_tienda` (16-18, aún
+  `spec_ready`). Presentado al humano con 3 opciones (spec+Gherkin nuevos /
+  reordenar asumiendo que 16-18 incluyen el ensamblaje / spike desechable
+  para ver qué hay). **Elegida: spec + Gherkin nuevos primero**, respetando
+  la disciplina SDD del proyecto (nunca se salta la puerta humana). Lanzado
+  `spec_partner` en background para destilar la sección de `project-spec.md`
+  de una feature nueva ("ensamblaje_landing" o similar: `main.tsx`,
+  `App.tsx`, composición de la landing, enrutado con `react-router`,
+  destinos de anclas internas ya fijados por contratos aprobados). Tras el
+  spec, toca `gherkin_author` y la puerta de aprobación humana sobre el
+  `.feature` resultante, ANTES de que ningún `tdd_craftsman` toque código.
+  Ninguna feature queda `in_progress` en `feature_list.json` mientras dura
+  esta pausa — no se salta `one_feature_at_a_time` porque no hay ninguna
+  activa.
+- **Fase:** pausa — `spec_partner` (ensamblaje) → `gherkin_author` →
+  puerta humana → `tdd_craftsman` → `judge` → `mutation_tester`
+- **`selector_paleta` (id 14): DONE.** 16 escenarios, 2 rondas. Ronda 1:
+  `tdd_craftsman` completo desde cero — `src/data/variantesPaleta.ts`
+  (catálogo de las 4 variantes reales de marca), `SelectorPaleta-logica.ts`
+  (`resolverVarianteInicial` — gemelo puro del script anti-destello;
+  `leerVarianteAlmacenada`/`guardarVarianteElegida` — envoltorios
+  `try/catch` de `localStorage`), `SelectorPaleta.tsx` (solo cablea),
+  `index.html` (script inline anti-FOUC en `<head>`, espejo literal escrito
+  a mano de `resolverVarianteInicial`, precede al `<script type="module">`).
+  `judge` ronda 1: **CHANGES_REQUESTED** — el campo `nota` del catálogo era
+  producción sin ningún `@s` que lo exigiera (Ley 1). `tdd_craftsman` ronda
+  2: lo retira sin ciclo Rojo nuevo (remediación válida, razonada). `judge`
+  ronda 2: **APROBADO**, repitió el protocolo completo desde cero, no solo
+  el punto corregido. `mutation_tester`: **PASS**, 16/17 = 94.12% en bruto,
+  1 superviviente (`stored !== null` → `true`) documentado como equivalente
+  genuino (verificado matemática y empíricamente: `idsDelCatalogo` nunca
+  produce `null`, así que `includes(null)` siempre es `false`) — 100% sobre
+  mutantes no equivalentes. No se inventó ningún token CSS para la variante
+  "noche": ese PENDIENTE sigue siendo exclusivo de `tokens_marca`. `bin/harness
+  init` verde: 310/310. Yo (craftsman_lead) releí `progress/tdd_selector_paleta.md`,
+  `progress/judge_selector_paleta.md` y `progress/mutation_selector_paleta.md`
+  completos y repetí `node .harness/harness.mjs init` de forma independiente
+  antes de marcar `done`.
 - **`pie_de_pagina` (id 13): DONE.** 15/15 escenarios por TDD estricto
   desde cero, ronda única (judge y mutación aprobados a la primera).
   Entregables: `src/data/pieDePaginaEnlaces.ts`

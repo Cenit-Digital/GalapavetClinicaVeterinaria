@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Galapavet · Centro integral veterinario en Galapagar</title>
+    <script>
+      // Anti-destello (FOUC): aplica la variante de paleta guardada ANTES del
+      // primer pintado, para que el visitante no vea la variante por defecto
+      // seguida de un salto a la guardada. Corre antes de que exista el
+      // bundle, así que no puede importar código: es un ESPEJO LITERAL,
+      // escrito a mano, de `resolverVarianteInicial` en
+      // `src/components/SelectorPaleta-logica.ts` — mismas ramas, mismo
+      // catch defensivo. Un id ausente, vacío, desconocido o corrupto cae
+      // siempre a "marca"; nunca escribe basura en el atributo (@s9/@s10).
+      ;(function aplicarVarianteAntesDelPintado() {
+        var CLAVE_ALMACENAMIENTO_VARIANTE = 'galapavet-variante'
+        var IDS_DEL_CATALOGO = ['marca', 'lima', 'verde', 'noche']
+        var VARIANTE_POR_DEFECTO = 'marca'
+        var variante = VARIANTE_POR_DEFECTO
+        try {
+          var guardada = window.localStorage.getItem(CLAVE_ALMACENAMIENTO_VARIANTE)
+          if (guardada !== null && IDS_DEL_CATALOGO.indexOf(guardada) !== -1) {
+            variante = guardada
+          }
+        } catch (error) {
+          variante = VARIANTE_POR_DEFECTO
+        }
+        document.documentElement.setAttribute('data-variante', variante)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
