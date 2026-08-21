@@ -304,8 +304,8 @@
         "El proyecto compila (vite build) y arranca (vite dev/preview)"
       ],
       "sdd": true,
-      "status": "in_progress",
-      "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". features/ensamblaje_landing.feature (15 escenarios) aprobado por el humano el 21/08/2026, incluido el orden Equipo→ReservaChat→Galería de @s3 como orden de trabajo con una sola fuente (docs/contrato-heredado/README_TRASPASO.md)."
+      "status": "done",
+      "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". features/ensamblaje_landing.feature (15 escenarios) aprobado por el humano el 21/08/2026, incluido el orden Equipo→ReservaChat→Galería de @s3 como orden de trabajo con una sola fuente (docs/contrato-heredado/README_TRASPASO.md). Cerrada 21/08/2026: judge APROBADO (2 rondas), mutation_tester PASS 100% sobre no-equivalentes (26/26; 1 equivalente genuino en el array de dependencias del useEffect de resize, verificado contra el código fuente real de React). El sitio compila y arranca de verdad por primera vez en el proyecto."
     }
   ]
 }

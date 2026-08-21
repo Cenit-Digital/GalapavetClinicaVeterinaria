@@ -4,14 +4,51 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **PAUSA de la cadena `spec_ready` (21/08/2026): hueco crítico
-  descubierto antes de arrancar `seo_estructura` (id 15).** `src/main.tsx`
-  NO EXISTE (`index.html` referencia `/src/main.tsx`, roto). No hay
-  `App.tsx` ni enrutado: ninguno de los 14 componentes `done` (Cabecera,
-  Hero, Servicios, Equipo, ReservaChat, Galeria, CampanasPortada,
+- **Feature en curso:** seo_estructura (id 15) — pendiente de arrancar
+  `tdd_craftsman` ronda 1. Ahora sí tiene páginas reales donde apoyarse
+  gracias al cierre de `ensamblaje_landing`.
+- **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **`ensamblaje_landing` (id 20): DONE.** 15/15 escenarios, 2 rondas. El
+  sitio compila y arranca de verdad por primera vez en el proyecto.
+  Entregables: `src/main.tsx` (excepción nombrada si falta `#root`),
+  `src/App.tsx` (shell común: `Cabecera` con ancho real y vivo de
+  `window.innerWidth`/`resize`, `BrowserRouter`, rutas de subpágina
+  derivadas de `ENLACES_NAVEGACION` hacia el catch-all), `src/App-logica.ts`
+  (extraído en la ronda 2 por una restricción real de oxlint
+  `react-refresh/only-export-components`, no por preferencia —
+  `RUTAS_DE_SUBPAGINA`), `src/pages/Landing.tsx` (las 8 secciones en el
+  orden de la Decisión 16, con los 7 `id` de ancla asignados por este
+  fichero, nunca por los 12 componentes ya `done`, que no se tocaron —
+  confirmado con `git diff --stat` vacío sobre `src/components/`),
+  `src/pages/PaginaNoEncontrada.tsx`. `judge` ronda 1: **APROBADO**.
+  `mutation_tester` ronda 1: **FAIL** 66.67% (18/27, 9 supervivientes: 1 en
+  `main.tsx`, 8 en `App.tsx` — limpieza de listener de `resize`, derivación
+  de rutas, generación de `<Route>` por subpágina). `tdd_craftsman` ronda de
+  refuerzo: mató 8/9 con tests dirigidos (incluida la extracción a
+  `App-logica.ts`) y dejó 1 documentado como candidato a equivalente sin
+  auto-excluirlo. `judge` ronda 2: **APROBADO**, reprodujo ella misma
+  `pnpm run build` + `pnpm run preview` + `curl` reales en su propia sesión
+  de revisión (no solo releyó la bitácora). `mutation_tester` ronda 2:
+  **PASS** 26/26 = 100% sobre no equivalentes (26/27 en bruto) — el
+  superviviente (`App.tsx:29:6`, array de dependencias del `useEffect` de
+  resize) verificado como equivalente genuino leyendo el código fuente real
+  de `areHookInputsEqual` en `node_modules/react-dom`, no solo argumentado.
+  Yo (craftsman_lead) repetí de forma independiente `node .harness/harness.mjs
+  init` (343/343 verde), `pnpm run build` (éxito, bundle generado) y
+  `pnpm run preview` + `curl` reales sobre `/`, `/campanas`, `/blog`,
+  `/tienda` y `/esto-no-existe` (los 5, HTTP 200; el cuerpo de `/` contiene
+  de verdad el script anti-FOUC de `selector_paleta`, confirmando que todo
+  está realmente ensamblado) antes de marcar `done`. Bitácora ciclo a ciclo
+  completa, con trazabilidad @s→test, en `progress/tdd_ensamblaje_landing.md`.
+
+- **RESUELTA (21/08/2026): la pausa de la cadena `spec_ready` que bloqueaba
+  `seo_estructura` (id 15).** `src/main.tsx` NO EXISTÍA (`index.html`
+  referenciaba `/src/main.tsx`, roto). No había `App.tsx` ni enrutado:
+  ninguno de los 14 componentes `done` de entonces (Cabecera, Hero,
+  Servicios, Equipo, ReservaChat, Galeria, CampanasPortada,
   InformacionContacto, FormularioContacto, Faq, PieDePagina, SelectorPaleta)
-  está ensamblado en una página real — `pnpm run build`/`pnpm run dev`
-  fallarían ahora mismo. Ninguno de los 19 `.feature` cubre este ensamblaje
+  estaba ensamblado en una página real — `pnpm run build`/`pnpm run dev`
+  habrían fallado. Ninguno de los 19 `.feature` cubría este ensamblaje
   (confirmado por grep); ya lo había señalado `servicios` al cerrar
   ("pendiente legítimo de una feature de ensamblado de página con su propio
   test") pero nunca se convirtió en feature real. `seo_estructura` exige
@@ -21,18 +58,14 @@
   `spec_ready`). Presentado al humano con 3 opciones (spec+Gherkin nuevos /
   reordenar asumiendo que 16-18 incluyen el ensamblaje / spike desechable
   para ver qué hay). **Elegida: spec + Gherkin nuevos primero**, respetando
-  la disciplina SDD del proyecto (nunca se salta la puerta humana). Lanzado
-  `spec_partner` en background para destilar la sección de `project-spec.md`
-  de una feature nueva ("ensamblaje_landing" o similar: `main.tsx`,
-  `App.tsx`, composición de la landing, enrutado con `react-router`,
-  destinos de anclas internas ya fijados por contratos aprobados). Tras el
-  spec, toca `gherkin_author` y la puerta de aprobación humana sobre el
-  `.feature` resultante, ANTES de que ningún `tdd_craftsman` toque código.
-  Ninguna feature queda `in_progress` en `feature_list.json` mientras dura
-  esta pausa — no se salta `one_feature_at_a_time` porque no hay ninguna
-  activa.
-- **Fase:** pausa — `spec_partner` (ensamblaje) → `gherkin_author` →
-  puerta humana → `tdd_craftsman` → `judge` → `mutation_tester`
+  la disciplina SDD del proyecto (nunca se salta la puerta humana).
+  `spec_partner` destiló 8 decisiones nuevas (15-22) en `project-spec.md`,
+  todas trazadas a contratos ya aprobados, verificadas por mí contra los
+  ficheros fuente antes de aceptarlas. `gherkin_author` produjo
+  `features/ensamblaje_landing.feature` (15 escenarios); el humano lo aprobó
+  tal cual, incluido el orden de trabajo Equipo→ReservaChat→Galería con una
+  sola fuente. Pipeline completo hasta `done` (ver bullet de arriba). Pausa
+  cerrada — `seo_estructura` retoma como feature en curso.
 - **`selector_paleta` (id 14): DONE.** 16 escenarios, 2 rondas. Ronda 1:
   `tdd_craftsman` completo desde cero — `src/data/variantesPaleta.ts`
   (catálogo de las 4 variantes reales de marca), `SelectorPaleta-logica.ts`
