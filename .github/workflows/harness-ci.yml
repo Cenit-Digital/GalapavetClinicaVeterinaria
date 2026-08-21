@@ -18,9 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
       - run: node .harness/harness.mjs init
 
   python-example:
