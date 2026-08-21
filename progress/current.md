@@ -15,8 +15,43 @@
   aprobados (16-18 son `spec_ready` desde el 18/08/2026, ninguna decisión
   nueva que requiera al humano): construyo 16 → 17 → 18 primero, y vuelvo a
   `seo_estructura` cuando las seis páginas existan de verdad.
-- **Feature en curso:** pagina_blog (id 17) — pendiente de arrancar
+- **Feature en curso:** pagina_tienda (id 18) — pendiente de arrancar
   `tdd_craftsman` ronda 1.
+- **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **`pagina_blog` (id 17): DONE.** 31/31 escenarios, 3 rondas. Entregables:
+  `src/data/blog.ts` (`ARTICULOS_DEMO`, 6 artículos literales del
+  Background, tipo sin campo de autor/firma/iniciales — R1),
+  `src/lib/desplazamiento.ts` (`decidirComportamientoDesplazamiento`, helper
+  compartido nuevo, envoltorio de `prefiereMenosMovimiento` — no se tocó
+  `PaginaCampanas-logica.ts`, ya `done`/mutado 100%; duplicación menor
+  aceptada como no bloqueante, consolidar cuando una 3ª página lo necesite),
+  `src/pages/PaginaBlog-logica.ts` (`CATEGORIAS_PUBLICADAS` derivada de
+  `SERVICIOS`, `filtrarPorCategoria`, `construirCatalogoBlog` con validador
+  R1+R3 fail-closed y `PATRONES_PROHIBIDOS_DE_CONTENIDO`, tiempo de lectura
+  a 200 ppm, `articulosRelacionados` con tope de 3), `src/pages/PaginaBlog.tsx`
+  (listado "/blog" con filtro + artículo "/blog/:identificador" con
+  `role="article"`). Ruta de detalle es SEGMENTO de ruta, no query param (a
+  diferencia de `/campanas?campana=`). `App.tsx`/`App-logica.ts` registran
+  las rutas reales del blog (`RUTAS_DE_SUBPAGINA` pasa de
+  `['/blog','/tienda']` a `['/tienda']`), sin tocar `pagina_campanas`/
+  `cabecera_y_navegacion`/`ensamblaje_landing` ya `done`. `judge` ronda 1:
+  **CHANGES_REQUESTED** (bloqueante: `desplazamiento.ts` sin consumidor
+  real). `tdd_craftsman` ronda 2: lo cablea en `VistaArticulo`. `judge`
+  ronda 2: **APROBADO**. `mutation_tester` ronda 1: **FAIL** 83.90% (17
+  supervivientes reales en `PaginaBlog-logica.ts`). `tdd_craftsman` ronda 3:
+  13 tests dirigidos, cero producción nueva. `judge` ronda 3: **APROBADO**,
+  reprodujo ella misma 2 de los 17 sabotajes con resultado idéntico.
+  `mutation_tester` ronda 2: **PASS** 113/113 = 100% sobre no equivalentes
+  (2 equivalentes genuinos en `resolverArticulo`, guarda redundante dado el
+  tipo no-opcional de `identificador`). `bin/harness init` verde: 484/484.
+  **Deuda de contrato resuelta en el cierre** (mismo patrón que
+  `pagina_campanas`): `features/ensamblaje_landing.feature` seguía citando
+  "/blog" en su catch-all (@s12 y nota de cabecera) — corregido yo mismo
+  para cubrir solo "/tienda" (18, única `spec_ready` que queda). Yo
+  (craftsman_lead) releí `progress/tdd_pagina_blog.md`,
+  `progress/judge_pagina_blog.md` y `progress/mutation_pagina_blog.md`
+  completos y repetí `node .harness/harness.mjs init` de forma independiente
+  antes de marcar `done`.
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
 - **`pagina_campanas` (id 16): DONE.** La feature más grande del proyecto
   hasta ahora (41 escenarios), 2 rondas. Entregables:

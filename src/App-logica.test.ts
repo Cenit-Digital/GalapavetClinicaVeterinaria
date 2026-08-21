@@ -12,12 +12,13 @@ import { RUTAS_DE_SUBPAGINA } from './App-logica'
  * vaciado (17:3).
  */
 describe('RUTAS_DE_SUBPAGINA deriva exactamente los destinos no-ancla de ENLACES_NAVEGACION que aún no tienen página propia', () => {
-  it('es exactamente ["/blog", "/tienda"], sin anclas, sin "/campanas" y sin nada de más', () => {
-    // "/campanas" sale de esta lista desde `pagina_campanas` (feature 16,
-    // `App.tsx` ya registra su propia `<Route>` real): ya no debe caer en el
-    // catch-all genérico. Literal escrito a mano: nunca se compara contra
-    // ENLACES_NAVEGACION importado (patrón
+  it('es exactamente ["/tienda"], sin anclas, sin "/campanas" ni "/blog", y sin nada de más', () => {
+    // "/campanas" salió de esta lista desde `pagina_campanas` (feature 16) y
+    // "/blog" sale ahora desde `pagina_blog` (feature 17): `App.tsx` ya
+    // registra su propia `<Route>` real para ambas, así que ya no deben caer
+    // en el catch-all genérico. Literal escrito a mano: nunca se compara
+    // contra ENLACES_NAVEGACION importado (patrón
     // doble-de-test-anclado-al-literal-no-al-simbolo).
-    expect(RUTAS_DE_SUBPAGINA).toEqual(['/blog', '/tienda'])
+    expect(RUTAS_DE_SUBPAGINA).toEqual(['/tienda'])
   })
 })

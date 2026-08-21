@@ -259,7 +259,7 @@
         "El contenido de demo está marcado de forma inequívoca"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 18,
@@ -273,7 +273,7 @@
         "Se declara que no hay pasarela de pago y que los precios están pendientes del cliente"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "in_progress"
     },
     {
       "id": 19,

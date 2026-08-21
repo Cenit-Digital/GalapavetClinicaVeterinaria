@@ -154,13 +154,16 @@ describe('@s11 antes de la primera medición, Cabecera recibe un ancho inicial q
   })
 })
 
-describe('@s12 las rutas /blog y /tienda sirven el catch-all "Página no encontrada" con enlace de vuelta', () => {
-  // "/campanas" queda fuera de esta lista a propósito: desde `pagina_campanas`
-  // (feature 16) ya no es 404 — tiene su propia `<Route>` real
-  // (`src/pages/PaginaCampanas.tsx`). "/blog" y "/tienda" siguen sin página
-  // propia (features 17/18, aún no aterrizadas) y por tanto siguen sirviendo
-  // este catch-all: se conserva su cobertura tal cual.
-  it.each(['/blog', '/tienda'])(
+describe('@s12 la ruta /tienda sirve el catch-all "Página no encontrada" con enlace de vuelta', () => {
+  // "/campanas" salió de esta lista desde `pagina_campanas` (feature 16) y
+  // "/blog" sale ahora desde `pagina_blog` (feature 17): ninguna de las dos
+  // es ya 404 — cada una tiene su propia `<Route>` real
+  // (`src/pages/PaginaCampanas.tsx`, `src/pages/PaginaBlog.tsx`). Su cobertura
+  // de contenido real vive en `PaginaCampanas.test.tsx`/`PaginaBlog.test.tsx`,
+  // no aquí. "/tienda" sigue sin página propia (feature 18, aún no
+  // aterrizada) y por tanto sigue sirviendo este catch-all: se conserva su
+  // cobertura tal cual.
+  it.each(['/tienda'])(
     'en "%s" hay un encabezado "Página no encontrada" y un enlace "Volver al inicio" a "/"',
     (ruta) => {
       window.history.pushState(null, '', ruta)

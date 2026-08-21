@@ -5,10 +5,12 @@ import { ENLACES_NAVEGACION } from './data/navegacion'
  * Rutas de subpágina que ya aterrizaron su propia `<Route>` en `App.tsx` y
  * por tanto deben dejar de caer en el catch-all genérico
  * (`features/ensamblaje_landing.feature`: "hasta que sus propias features
- * aterricen su propia Route"). `pagina_campanas` (feature 16) es la primera;
- * `pagina_blog`/`pagina_tienda` (17/18) añadirán la suya cuando aterricen.
+ * aterricen su propia Route"). `pagina_campanas` (feature 16) fue la
+ * primera; `pagina_blog` (feature 17) añade "/blog" aquí al aterrizar
+ * `src/pages/PaginaBlog.tsx`. `pagina_tienda` (18) añadirá "/tienda" cuando
+ * aterrice.
  */
-const RUTAS_YA_CON_PAGINA_PROPIA: ReadonlySet<string> = new Set(['/campanas'])
+const RUTAS_YA_CON_PAGINA_PROPIA: ReadonlySet<string> = new Set(['/campanas', '/blog'])
 
 /**
  * Rutas de subpágina derivadas de `ENLACES_NAVEGACION` (Decisión 20): no se

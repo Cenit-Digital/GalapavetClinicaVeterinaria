@@ -5,6 +5,7 @@ import { Cabecera } from './components/Cabecera'
 import { PieDePagina } from './components/PieDePagina'
 import { SelectorPaleta } from './components/SelectorPaleta'
 import { Landing } from './pages/Landing'
+import { PaginaBlog } from './pages/PaginaBlog'
 import { PaginaCampanas } from './pages/PaginaCampanas'
 import { PaginaNoEncontrada } from './pages/PaginaNoEncontrada'
 
@@ -51,6 +52,8 @@ function AppInterior({ ancho }: AppInteriorProps): React.JSX.Element {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/campanas" element={<PaginaCampanas />} />
+        <Route path="/blog" element={<PaginaBlog />} />
+        <Route path="/blog/:identificador" element={<PaginaBlog />} />
         {RUTAS_DE_SUBPAGINA.map((ruta) => (
           <Route key={ruta} path={ruta} element={<PaginaNoEncontrada />} />
         ))}
