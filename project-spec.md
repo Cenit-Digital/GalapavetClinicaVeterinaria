@@ -93,6 +93,14 @@ implementarse.
 | 12 | **Los precios de `pagina_tienda` se mantienen como contenido de demo, con rótulo explícito e inequívoco de "precio de ejemplo, no real"** (mismo patrón literal que el aviso de demo de `campanas_portada.feature:108`). Es contenido editorial/catálogo bajo la Decisión 1(b), distinto del dato pendiente §9 (precio real de campaña) que `pagina_campanas.feature` protege prohibiendo el carácter «€»: son dos campos distintos con reglas distintas, no una contradicción a igualar. | Eliminar los precios de la tienda. Igualar la regla de `pagina_tienda` a la de `pagina_campanas` (prohibir «€» también en la tienda). | El humano ya asume que los precios de la tienda son de ejemplo; lo que exige el contrato es que ese rótulo sea inequívoco, no que desaparezcan. Decisión tomada por el humano el 18/08/2026. |
 | 13 | **`seo_estructura` amplía su alcance de 4 a 6 páginas**, incluyendo las dos vistas de detalle (ficha de campaña individual, artículo de blog individual), coherente con que `accesibilidad.feature` ya audita 6. | Dejar el alcance en 4 páginas (lo que hacía el contrato heredado). | Las vistas de detalle son páginas reales con URL propia; dejarlas sin metadatos propios es el mismo «SEO inexistente» que el proyecto existe para corregir. Decisión tomada por el humano el 18/08/2026. |
 | 14 | **Se confirma WhatsApp (`wa.me`) como canal humano de cierre en `reserva_chat`**, pero el contrato debe distinguir dos pendientes separados, no uno solo: (1) si el cliente usa WhatsApp en absoluto, y (2) en caso afirmativo, cuál es el número correcto del canal — puede no coincidir con el número de voz (685 34 31 49) que hoy es la única cifra verificada. | Descartar WhatsApp del guion. Dar por bueno el número de voz también como canal de WhatsApp (lo que presuponía el contrato re-destilado). | El cliente puede usar un número distinto para WhatsApp Business; asumir que es el mismo que el de voz sin haberlo verificado es fabricar un dato, aunque quede rotulado PENDIENTE. Decisión tomada por el humano el 18/08/2026. |
+| 15 | **Nace `ensamblaje_landing`, la feature que faltaba**: `src/main.tsx` (punto de entrada, monta la app en `#root`) → `src/App.tsx` (shell común a TODAS las rutas: `Cabecera`, el enrutado, `PieDePagina` y `SelectorPaleta`) → `src/pages/Landing.tsx` (composición de la landing en una sola página). Ninguna de las 14 features ya `done` la cubre: cada una construyó y probó su componente en aislamiento, pero nadie los ha ensamblado — el proyecto no compila (`index.html` referencia un `/src/main.tsx` que no existe). | Seguir sin `src/pages/` y componer todo dentro de un `App.tsx` monolítico. Repartirlo entre las 3 futuras features de subpágina en vez de fijarlo una sola vez. | Este documento ya declaraba la carpeta `src/pages/` en «Arquitectura» sin que ninguna feature la poblara. `pagina_campanas`/`pagina_blog`/`pagina_tienda` (16-18, ya `spec_ready`) necesitan ese mismo patrón de ensamblado — y el propio criterio de aceptación de `pagina_campanas` en `feature_list.json` («la página comparte cabecera y pie con la landing») exige que `Cabecera`/`PieDePagina` vivan en el shell común, no dentro de `Landing.tsx`. |
+| 16 | **Orden de la landing, verificado contra el prototipo heredado, no inventado**: `Hero` (`#inicio`) → `Servicios` (`#servicios`) → `CampanasPortada` (sin ancla propia) → `Equipo` (`#equipo`) → `ReservaChat` (`#reservar`) → `Galeria` (`#galeria`) → Contacto (`#contacto`, Decisión 18) → `Faq` (`#faq`), con `Cabecera` fija arriba y `PieDePagina` al cierre, fuera del flujo de secciones. | El orden sugerido en el encargo de esta conversación (Hero, Servicios, Equipo, ReservaChat, Galeria, CampanasPortada, InformacionContacto, FormularioContacto, Faq), que no coincide con el del prototipo. | Dos fuentes ya en el repo, y ya usadas para aprobar el resto del contrato, coinciden: la tabla de `docs/contrato-heredado/README_TRASPASO.md` (servicios, campañas, equipo, reserva_chat, galería, formulario_contacto, informacion_contacto, faq, en ese orden) y los rangos de línea que cada `.feature` cita de `Veterinaria La Sierra.dc.html` en su propia cabecera (servicios ~142-181, campañas ~183-206, contacto 346-425, faq ~424-442, pie 444-478). Confianza alta en Hero→Servicios→Campañas y en que Contacto es una sola sección; confianza media en el tramo Equipo→ReservaChat→Galería (ver PREGUNTA ABIERTA 1 de `ensamblaje_landing`). |
+| 17 | **El `id` de cada ancla lo asigna `Landing.tsx`, nunca el propio componente de sección.** Ninguno de los 12 componentes ya `done` declara su propio `id`; cada uno expone como mucho un `aria-label` de landmark. El ensamblador envuelve (o inyecta el `id` en) exactamente los que tienen ancla contratada: `Hero`, `Servicios`, `Equipo`, `ReservaChat`, `Galeria`, la sección Contacto y `Faq`. `CampanasPortada` y `SelectorPaleta` no reciben `id`. | Añadir el `id` dentro de cada componente ahora que hace falta un destino real. | Ya hay un veredicto del `judge` sobre exactamente este punto: en la ronda 1 de `servicios` rechazó `id="servicios"` dentro de `Servicios.tsx` por Ley 1 (ningún escenario de esa feature lo pedía), y `progress/current.md` dejó anotado que el destino es «un pendiente legítimo de una feature de ensamblado de página con su propio test». Volver a meterlo en el componente reabriría ese veredicto ya cerrado. |
+| 18 | **`FormularioContacto` e `InformacionContacto` no son dos secciones de la landing: son las dos mitades de UNA — «Contacto» (`id="contacto"`)** —, con el formulario primero e `InformacionContacto` después (columna derecha, según su propia cita de fuente). | Tratarlas como dos secciones independientes, cada una con su propio hueco en el orden de la landing (lo que asumía el encargo original de esta conversación, que las listaba como dos entradas separadas). | Las cabeceras de ambos `.feature` citan la MISMA sección del prototipo heredado, `id="contacto"` (`formulario_contacto.feature`: líneas 346-390; `informacion_contacto.feature`: «columna derecha», líneas 401-425 — rango posterior y contiguo). Además solo hay un destino `#contacto` en todo el contrato ya aprobado (`cabecera_y_navegacion.feature` @s5, `pie_de_pagina.feature` @s5), nunca dos; tratarlas como secciones separadas obligaría a inventar un segundo ancla que ningún escenario pide. |
+| 19 | **El enrutador es `<BrowserRouter>` de `react-router` (^8.3.0, ya en `package.json`), no `<HashRouter>`.** | `HashRouter`, que no exige configurar el hosting estático para servir `index.html` en cualquier ruta. | `HashRouter` enruta por el fragmento de la URL. Las anclas `#inicio`, `#servicios`, `#equipo`, `#reservar`, `#galeria`, `#contacto` y `#faq` ya son literales fijados en dos contratos `done` (`cabecera_y_navegacion.feature`, `pie_de_pagina.feature`) como navegación DENTRO de la misma página. Adoptar `HashRouter` las convertiría en rutas del enrutador y rompería ambos contratos ya cerrados. El coste de `BrowserRouter` (el hosting debe reescribir cualquier ruta desconocida a `index.html`) se deja anotado como riesgo de despliegue, no como bloqueo de esta feature (ver «Riesgos abiertos»). |
+| 20 | **Las rutas `/campanas`, `/blog` y `/tienda` que registra el router se derivan de `src/data/navegacion.ts` (`ENLACES_NAVEGACION`), no se retipean como literales nuevos en `App.tsx`.** | Escribir las tres cadenas de ruta directamente en la configuración del router, igual que están escritas en `navegacion.ts`. | Mismo patrón que ya exige el Invariante 2 de este documento para los datos de negocio (`dato-de-negocio-en-fuente-unica-canonica`), aplicado a rutas: dos declaraciones independientes de la misma cadena `/tienda` es la forma exacta en que este proyecto ya ha visto divergir un contrato (ver la reparación de `campanas_portada`/`pagina_campanas` del 18/08/2026). |
+| 21 | **Si el documento no contiene ningún elemento con `id="root"`, el punto de entrada falla con una excepción nombrada y explícita** (mensaje que menciona `root`), en vez de una aserción de tipos silenciosa (`document.getElementById('root')!`) que reventaría más tarde con un error críptico de React. | El idiom habitual de la plantilla de Vite, `document.getElementById('root')!`, que confía en TypeScript y no falla con un mensaje propio si `index.html` cambia. | Es el mismo principio que ya rige todo el proyecto (`docs/architecture.md`, principio 3: «errores explícitos… excepciones nombradas… no valores nulos silenciosos») y el mismo patrón de «falla cerrado» que usa `enlaceLlamada` con un teléfono inválido. |
+| 22 | **`App.tsx` (o un módulo dedicado) es responsable de darle a `Cabecera` un `ancho` real y vivo**: lee `window.innerWidth`, se suscribe a `resize`, y arranca con un valor inicial que caiga en la rama móvil antes de la primera medición (coherente con `esMovil`/@s14 de `cabecera_y_navegacion.feature`, ya aprobado y ya `done`). | Dejarlo sin resolver, asumiendo que ya lo hacía `cabecera_y_navegacion`. | No lo hace: sus tests inyectan `ancho` como prop de control, nunca lo conectan a `window.innerWidth`. Es exactamente el tipo de cableado que ninguna feature de sección puede hacer por sí sola (mide algo del navegador real, no del componente); sin él, `Cabecera` no tiene forma de recibir un `ancho` verdadero en producción — sería otro «pendiente de ensamblado» silencioso, igual que el de las anclas. |
 
 ## Arquitectura
 
@@ -139,6 +147,119 @@ dos primeras son cimiento de todas las demás.
 Todas parten del contrato heredado —la **interacción** aprobada se respeta— y le
 cambian los **datos** por los reales, con las supresiones de la Decisión 2.
 
+### Ensamblaje — nueva feature: `ensamblaje_landing`
+
+> **No estaba en las 19 features originales.** Las 14 features `done` construyeron
+> y probaron 12 componentes en aislamiento; ninguna los ha ensamblado. `index.html`
+> referencia `/src/main.tsx`, que no existe; no hay `App.tsx`; no hay enrutado;
+> `pnpm run build` falla. El hueco ya estaba anotado explícitamente al cerrar
+> `servicios` («pendiente legítimo de una feature de ensamblado de página con su
+> propio test, no un defecto de servicios»), pero nunca se convirtió en una
+> feature real hasta esta conversación. Todavía no tiene `id` en
+> `feature_list.json` — lo añade `craftsman_lead` al aceptar este spec.
+
+**Propósito** — Que la web de Galapavet exista de verdad: un punto de entrada que
+monta la aplicación, una landing que compone sus 8 secciones ancladas y
+`CampanasPortada` en el orden real del contrato heredado, y un enrutador que hace
+de `/`, `/campanas`, `/blog` y `/tienda` destinos reales — sin construir el
+contenido que ya tienen asignado sus propias features.
+
+**Comportamiento**
+
+- `src/main.tsx` monta `<App />` sobre el elemento `#root` de `index.html`. Si
+  `#root` no existe, falla con una excepción nombrada (Decisión 21) — no monta
+  nada a medias.
+- `src/App.tsx` es el shell común a **todas** las rutas: renderiza `Cabecera`
+  (con un `ancho` real y vivo, derivado de `window.innerWidth` y actualizado en
+  cada `resize` — Decisión 22), el enrutado (`<BrowserRouter>`, Decisión 19),
+  `PieDePagina` y `SelectorPaleta`, en ese orden relativo (cabecera arriba; pie
+  y selector fuera del contenido propio de cada ruta). Es lo que exige el
+  propio criterio de aceptación de `pagina_campanas` («la página comparte
+  cabecera y pie con la landing»).
+- `src/pages/Landing.tsx` es el contenido de la ruta `/`: compone, en orden,
+  `Hero` (`id="inicio"`) → `Servicios` (`id="servicios"`) → `CampanasPortada`
+  (sin ancla) → `Equipo` (`id="equipo"`) → `ReservaChat` (`id="reservar"`) →
+  `Galeria` (`id="galeria"`) → una sección Contacto (`id="contacto"`) que anida
+  `FormularioContacto` seguido de `InformacionContacto` → `Faq` (`id="faq"`).
+  Ver Decisión 16 (orden) y Decisión 18 (Contacto es una sola sección).
+- El `id` de cada ancla lo asigna `Landing.tsx`, nunca el propio componente
+  (Decisión 17).
+- El enrutador registra `/` → `Landing`, y las rutas de subpágina que declara
+  `src/data/navegacion.ts` (Decisión 20) — su contenido y su alcance exacto
+  quedan en la PREGUNTA ABIERTA 2, más abajo.
+
+**Contrato**
+
+- Entrada: ninguna explícita del visitante más allá de la URL con la que llega
+  (`pathname`) y el ancho real de su ventana.
+- Salida: el árbol DOM montado en `#root`; para la ruta `/`, el conjunto de
+  landmarks/secciones y anclas descrito arriba.
+- Estado de error: solo el de `#root` ausente (Decisión 21). Ningún componente
+  compuesto adquiere un estado de error nuevo por el hecho de ensamblarse: cada
+  uno ya falla cerrado por su propio contrato, ya aprobado y ya `done`.
+- Fuera del glob de mutación de Stryker (`src/lib/**/*.ts` + `src/**/*-logica.ts`,
+  `stryker.config.json`), igual que el resto de `.tsx` del proyecto: el orden,
+  los `id` de ancla y las rutas se verifican por tests de integración explícitos
+  (renderizar la app entera y comprobar el árbol accesible) y por sabotaje
+  manual del `judge`, no por Stryker.
+- No es responsabilidad de esta feature: el contenido de `/campanas`, `/blog`
+  ni `/tienda` (features 16-18, ya `spec_ready` con su propio Gherkin
+  aprobado); ni el `<title>`/metadatos por ruta (`seo_estructura`, feature 15).
+
+**Casos límite**
+
+1. `#root` no existe en el documento → el punto de entrada lanza una excepción
+   nombrada que menciona `root`; no se monta nada.
+2. Cada una de las 7 anclas (`#inicio`, `#servicios`, `#equipo`, `#reservar`,
+   `#galeria`, `#contacto`, `#faq`) existe **exactamente una vez** en el
+   documento de la ruta `/` — ni ausente ni duplicada.
+3. Ningún elemento con `id="campanas"` existe en el documento: `CampanasPortada`
+   no tiene ancla contratada; sus tarjetas y su botón navegan a `/campanas`
+   (ruta), no a un ancla de la landing.
+4. La ventana cambia de tamaño, con el menú móvil abierto o cerrado: `Cabecera`
+   reacciona al nuevo `ancho` real (reutiliza el comportamiento ya contratado
+   por `cabecera_y_navegacion.feature` @s11, ahora accionado por un evento de
+   `resize` real, no por un cambio de prop inyectado a mano en un test).
+5. `SelectorPaleta` se renderiza en cualquier punto del árbol sin alterar el
+   orden de las 8 secciones con ancla — su posición no es parte de este
+   contrato de orden.
+6. Navegar a una ruta no registrada por el enrutador (deep-link o clic) no deja
+   una pantalla en blanco indistinguible de un fallo — comportamiento exacto
+   sujeto a la PREGUNTA ABIERTA 2.
+7. El proyecto compila (`vite build`) y arranca (`vite dev`/`preview`) con
+   `main.tsx`, `App.tsx` y `Landing.tsx` en su sitio — el hecho que motivó esta
+   feature.
+
+**PREGUNTA ABIERTA**
+
+1. **Orden exacto Equipo → ReservaChat → Galería.** La Decisión 16 lo fija en
+   ese orden, pero con **una sola** fuente (la tabla de
+   `docs/contrato-heredado/README_TRASPASO.md`); a diferencia de
+   Hero→Servicios→Campañas y de que Contacto es una sola sección (dos fuentes
+   independientes cada una), este tramo no tiene una segunda cita que lo
+   confirme, porque el `.dc.html` original no está en el repositorio. Se toma
+   como orden de trabajo; requiere confirmación explícita antes de que
+   `gherkin_author` lo convierta en escenario — mismo criterio de prudencia que
+   el `PENDIENTE` ya existente en `servicios.feature` sobre el orden de sus 5
+   bloques.
+2. **`/campanas`, `/blog` y `/tienda`: ¿catch-all genérico o placeholder a
+   medida?** Recomendación de este documento: un único `<Route path="*">` con
+   un estado «página no encontrada» honesto y accesible (con enlace de vuelta a
+   `/`), que cubre las tres hasta que sus propias features (16, 17, 18, ya
+   `spec_ready`) añadan su propia `<Route>` por encima. Alternativa: un
+   placeholder «Próximamente» a medida por ruta — este documento la descarta
+   porque duplicaría/tiraría trabajo que esas tres features ya tienen aprobado
+   con su propio contrato, pero la deja como PREGUNTA ABIERTA (no como
+   Decisión) porque el encargo de esta conversación pedía explícitamente que la
+   cerrara el humano, no `spec_partner` en solitario.
+3. **Nombre accesible del contenedor `id="contacto"`.** Sus dos hijos
+   (`FormularioContacto`, `InformacionContacto`) ya tienen su propio
+   `aria-label` (`"Escríbenos"`, `"Información de contacto"`). Si el contenedor
+   necesita además su propio landmark con nombre accesible «Contacto» — para
+   que el destino del ancla se anuncie como tal — o si basta con el `id` sin
+   rol ni nombre propio, se deja abierto, salvo que entre en conflicto con los
+   dos `aria-label` ya aprobados.
+
 ### Transversales
 
 - **`seo_estructura`** — `lang`, metadatos, Open Graph y JSON-LD con el tipo
@@ -149,6 +270,11 @@ cambian los **datos** por los reales, con las supresiones de la Decisión 2.
   `axe` en cada página.
 
 ### Subpáginas
+
+> Dependen del enrutador y el shell común que fija `ensamblaje_landing` (ver esa
+> sección, arriba) para tener una ruta real donde montarse y una cabecera/pie
+> compartidos. Hasta que cada una aterrice, su ruta puede estar cubierta solo
+> por el catch-all de `ensamblaje_landing` (PREGUNTA ABIERTA 2 de esa sección).
 
 - **`pagina_campanas`** — Listado de campañas + ficha. Contenido de campaña
   derivado de servicios que la clínica **sí** presta; precios y fechas quedan

@@ -289,6 +289,23 @@
       ],
       "sdd": true,
       "status": "spec_ready"
+    },
+    {
+      "id": 20,
+      "name": "ensamblaje_landing",
+      "title": "Ensamblaje de la aplicación: punto de entrada, shell y landing",
+      "description": "src/main.tsx (punto de entrada) → src/App.tsx (shell común a todas las rutas: Cabecera con ancho real, enrutado BrowserRouter, PieDePagina, SelectorPaleta) → src/pages/Landing.tsx (composición de las 8 secciones ancladas en el orden del prototipo heredado). Ninguna de las 14 features previas ensambla nada: hoy el proyecto no compila. No construye el contenido de pagina_campanas/pagina_blog/pagina_tienda (16-18) ni el SEO por ruta (seo_estructura, 15), solo el shell que esas features necesitan.",
+      "acceptance": [
+        "src/main.tsx monta la app en #root; si #root no existe, falla con una excepción nombrada",
+        "Cada una de las 7 anclas (#inicio, #servicios, #equipo, #reservar, #galeria, #contacto, #faq) existe exactamente una vez en la ruta /, asignada por Landing.tsx, nunca por el propio componente de sección",
+        "Cabecera, PieDePagina y SelectorPaleta forman un shell común a todas las rutas (BrowserRouter, no HashRouter)",
+        "Cabecera recibe un ancho real derivado de window.innerWidth, actualizado en cada resize",
+        "Las rutas /campanas, /blog y /tienda (derivadas de src/data/navegacion.ts, no retipeadas) muestran un catch-all accesible de \"página no encontrada\" hasta que sus propias features las implementen",
+        "El proyecto compila (vite build) y arranca (vite dev/preview)"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". PENDIENTE explícito a confirmar por el humano en la puerta de aprobación del .feature: el orden Equipo→ReservaChat→Galería solo tiene una fuente (docs/contrato-heredado/README_TRASPASO.md, el .dc.html original no está en el repo)."
     }
   ]
 }
