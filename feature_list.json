@@ -304,8 +304,8 @@
         "El proyecto compila (vite build) y arranca (vite dev/preview)"
       ],
       "sdd": true,
-      "status": "pending",
-      "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". PENDIENTE explícito a confirmar por el humano en la puerta de aprobación del .feature: el orden Equipo→ReservaChat→Galería solo tiene una fuente (docs/contrato-heredado/README_TRASPASO.md, el .dc.html original no está en el repo)."
+      "status": "in_progress",
+      "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". features/ensamblaje_landing.feature (15 escenarios) aprobado por el humano el 21/08/2026, incluido el orden Equipo→ReservaChat→Galería de @s3 como orden de trabajo con una sola fuente (docs/contrato-heredado/README_TRASPASO.md)."
     }
   ]
 }
