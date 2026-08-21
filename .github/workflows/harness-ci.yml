@@ -24,6 +24,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          # El cache de pnpm ya lo gestiona pnpm/action-setup (arriba). Sin este
+          # false, actions/setup-node@v5 auto-detecta el campo "packageManager"
+          # de package.json y activa su propio caché por defecto
+          # (package-manager-cache: true), duplicando el mecanismo de caché.
+          package-manager-cache: false
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
       - run: node .harness/harness.mjs init
@@ -39,6 +44,13 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          # Este job no usa pnpm (test = "node --test" / unittest, sin
+          # package.json propio bajo examples/). Sin este false,
+          # actions/setup-node@v5 auto-detecta "packageManager": "pnpm@..."
+          # del package.json de la RAÍZ del repo (no respeta el
+          # working-directory del job) y falla intentando ejecutar pnpm, que
+          # aquí no está instalado.
+          package-manager-cache: false
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -61,6 +73,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          # Mismo motivo que en el job python-example: este proyecto de
+          # ejemplo no usa pnpm, y el "packageManager" de la raíz del repo se
+          # auto-detecta igualmente pese al working-directory del job.
+          package-manager-cache: false
       - name: init (entorno + tests)
         run: node ../../.harness/harness.mjs init
       - name: mutación (los 3 módulos deben quedar en 100%)
