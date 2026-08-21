@@ -33,3 +33,13 @@ export function esMovil(anchoVentana: number): boolean {
 export function esAncla(destino: string): boolean {
   return destino.startsWith('#')
 }
+
+/**
+ * ¿Es este destino de navegación el de la ruta activa? Solo aplica a
+ * destinos de subpágina: un ancla (p. ej. "#servicios") nunca es "la página
+ * actual" en este sentido, navega dentro de la misma página
+ * (`pagina_campanas.feature` @s1).
+ */
+export function esPaginaActual(destino: string, rutaActual: string): boolean {
+  return !esAncla(destino) && destino === rutaActual
+}

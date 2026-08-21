@@ -91,11 +91,17 @@
 #     hecho ya verificado dos veces. Si el humano no lo confirma en esta puerta,
 #     @s3 se reabre antes de que `tdd_craftsman` toque código.
 #   - PENDIENTE (PREGUNTA ABIERTA 2 de project-spec.md, cerrada por el humano en
-#     la conversación que originó este fichero): las rutas /campanas, /blog y
-#     /tienda sirven un ÚNICO catch-all genérico "página no encontrada" (@s12,
-#     @s13), no un placeholder a medida por ruta, hasta que sus propias
+#     la conversación que originó este fichero): las rutas de subpágina sin
+#     página propia sirven un ÚNICO catch-all genérico "página no encontrada"
+#     (@s12, @s13), no un placeholder a medida por ruta, hasta que sus propias
 #     features (16, 17, 18, ya `spec_ready`) aterricen su propia `<Route>` por
-#     encima.
+#     encima. RESUELTO PARCIALMENTE (21/08/2026): `pagina_campanas` (id 16,
+#     `done`) ya aterrizó su propia `<Route>` real sobre "/campanas" — esa ruta
+#     YA NO forma parte del catch-all. @s12 se actualizó en consecuencia para
+#     cubrir solo "/blog" y "/tienda", las dos que siguen pendientes (17, 18).
+#     Cambio de código pre-aprobado por esta misma PREGUNTA ABIERTA 2 y por el
+#     criterio de aceptación de esta propia feature (feature_list.json:307);
+#     esta nota documenta que el TEXTO del contrato ya se sincronizó con él.
 #   - PENDIENTE (PREGUNTA ABIERTA 3 de project-spec.md, cerrada por el humano en
 #     esa misma conversación): el contenedor id="contacto" no lleva landmark ni
 #     nombre accesible propio; basta con el id desnudo (@s6). Sus dos hijos
@@ -214,12 +220,12 @@ Feature: Ensamblaje de la aplicación: punto de entrada, shell y landing
     And no existe la región "Navegación principal"
 
   @s12
-  Scenario: Las rutas /campanas, /blog y /tienda, derivadas del catálogo de navegación, sirven el catch-all "página no encontrada" con enlace de vuelta
-    Given "/campanas", "/blog" y "/tienda" son los mismos tres destinos de subpágina que "src/data/navegacion.ts" declara en "ENLACES_NAVEGACION" y que "cabecera_y_navegacion.feature" @s5 ya contrata como destino de los enlaces "Campañas", "Blog" y "Tienda"
-    When el visitante navega a cada una de esas tres rutas, una por una
-    Then en las tres se muestra exactamente un encabezado cuyo nombre accesible es "Página no encontrada"
-    And en las tres existe un enlace cuyo nombre accesible es "Volver al inicio" y cuyo destino es exactamente "/"
-    And en las tres siguen presentes el elemento con rol "contentinfo" y el enlace del logotipo del shell común
+  Scenario: Las rutas de subpágina sin página propia todavía sirven el catch-all "página no encontrada" con enlace de vuelta
+    Given "/blog" y "/tienda" son destinos de subpágina que "src/data/navegacion.ts" declara en "ENLACES_NAVEGACION" y que "cabecera_y_navegacion.feature" @s5 ya contrata como destino de los enlaces "Blog" y "Tienda", y que todavía no tienen su propia página (features 17 y 18, `spec_ready`); "/campanas" comparte esa misma fuente pero queda fuera de este escenario porque `pagina_campanas` (id 16, `done`) ya le dio su propia `<Route>` real
+    When el visitante navega a cada una de esas dos rutas, una por una
+    Then en las dos se muestra exactamente un encabezado cuyo nombre accesible es "Página no encontrada"
+    And en las dos existe un enlace cuyo nombre accesible es "Volver al inicio" y cuyo destino es exactamente "/"
+    And en las dos siguen presentes el elemento con rol "contentinfo" y el enlace del logotipo del shell común
 
   @s13
   Scenario: Cualquier otra ruta no registrada por deep-link recibe el mismo catch-all, nunca una pantalla en blanco

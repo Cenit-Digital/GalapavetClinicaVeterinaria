@@ -15,20 +15,45 @@
   aprobados (16-18 son `spec_ready` desde el 18/08/2026, ninguna decisión
   nueva que requiera al humano): construyo 16 → 17 → 18 primero, y vuelvo a
   `seo_estructura` cuando las seis páginas existan de verdad.
-- **Feature en curso:** pagina_campanas (id 16) — pendiente de arrancar
-  `tdd_craftsman` ronda 1. La feature más grande del proyecto hasta ahora
-  (41 escenarios): listado + ficha de detalle vía `/campanas?campana=<id>`,
-  gestión de foco al abrir, migas de pan, 3 ramas de scroll con
-  `prefers-reduced-motion`, guardas de fallo cerrado extendidas
-  (precio/vigencia ya existían en `campanas_portada`; se añaden plazas y
-  duración), transcripción literal de puntos desde `SERVICIOS`
-  (`src/data/servicios.ts`). Incluye registrar la ruta real `/campanas` en
-  `App.tsx`/`App-logica.ts` (quitándola del catch-all genérico de
-  `ensamblaje_landing`, cambio ya previsto por el propio contrato de esa
-  feature: "hasta que sus propias features aterricen su propia Route") y
-  actualizar `App.test.tsx` en consecuencia, sin perder cobertura de que
-  `/blog` y `/tienda` siguen mostrando el catch-all.
+- **Feature en curso:** pagina_blog (id 17) — pendiente de arrancar
+  `tdd_craftsman` ronda 1.
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **`pagina_campanas` (id 16): DONE.** La feature más grande del proyecto
+  hasta ahora (41 escenarios), 2 rondas. Entregables:
+  `src/pages/PaginaCampanas.tsx` + `PaginaCampanas-logica.ts`
+  (`construirCatalogoCampanas` con guardas de fallo cerrado
+  precio/vigencia/plazas/duración/punto-no-publicado, `resolverVista`,
+  `otrasCampanas`, `decidirComportamientoDesplazamiento` reutilizando
+  `prefiereMenosMovimiento` de `Galeria-logica.ts`). Listado + ficha de
+  detalle vía `/campanas?campana=<id>`, gestión de foco al abrir, migas de
+  pan, 3 ramas de scroll con `prefers-reduced-motion`, transcripción literal
+  de puntos desde `SERVICIOS`. Registra la ruta real `/campanas` en
+  `App.tsx`/`App-logica.ts` (quitándola del catch-all de `ensamblaje_landing`,
+  cambio ya previsto por el propio contrato de esa feature) y actualiza
+  `App.test.tsx` en consecuencia. Extiende `CAMPANAS_DEMO` y
+  `Cabecera`/`Cabecera-logica.ts` (`rutaActual`, aditivo) sin romper
+  `campanas_portada` (24 tests) ni `Cabecera.test.tsx` (16 tests), ambos
+  reverificados en verde sin tocarlos. `judge` ronda 1: **APROBADO**.
+  `mutation_tester` ronda 1: **FAIL** 93.75% (8 supervivientes reales).
+  `tdd_craftsman` ronda 2: 8 tests dirigidos, cero producción nueva. `judge`
+  ronda 2: **APROBADO**, releyó el contrato completo (541 líneas) y verificó
+  ella misma las regresiones de `campanas_portada`/`ensamblaje_landing`/
+  `cabecera_y_navegacion` en vivo. `mutation_tester` ronda 2: **PASS**
+  130/130 = 100% sobre no equivalentes (1 equivalente genuino en
+  `Cabecera-logica.ts:18`, `esMovil`, verificado por análisis exhaustivo de
+  todo el dominio de `number`). `bin/harness init` verde: 406/406.
+  **Deuda de contrato detectada y resuelta en el cierre**: `judge` señaló que
+  `features/ensamblaje_landing.feature` (ya `done`) seguía afirmando en su
+  texto que `/campanas` sirve el catch-all — cierto en código hasta esta
+  feature, ya no. Cambio de comportamiento pre-aprobado por el humano
+  (PREGUNTA ABIERTA 2 de `project-spec.md` + criterio de aceptación de la
+  feature 20), solo el texto Gherkin no se había sincronizado. Corregido yo
+  mismo (edición de formato/hechos ya decididos, no diseño nuevo): @s12 y la
+  nota PENDIENTE de cabecera ahora cubren solo `/blog`/`/tienda`. Yo
+  (craftsman_lead) releí `progress/tdd_pagina_campanas.md`,
+  `progress/judge_pagina_campanas.md` y `progress/mutation_pagina_campanas.md`
+  completos y repetí `node .harness/harness.mjs init` de forma independiente
+  antes de marcar `done`.
 - **`ensamblaje_landing` (id 20): DONE.** 15/15 escenarios, 2 rondas. El
   sitio compila y arranca de verdad por primera vez en el proyecto.
   Entregables: `src/main.tsx` (excepción nombrada si falta `#root`),
