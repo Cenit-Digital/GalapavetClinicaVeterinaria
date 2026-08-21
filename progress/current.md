@@ -4,9 +4,30 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **Feature en curso:** seo_estructura (id 15) — pendiente de arrancar
-  `tdd_craftsman` ronda 1. Ahora sí tiene páginas reales donde apoyarse
-  gracias al cierre de `ensamblaje_landing`.
+- **Reordenación (21/08/2026): `seo_estructura` (id 15) sigue bloqueada,
+  ahora por `pagina_campanas`/`pagina_blog`/`pagina_tienda` (16-18), no por
+  el ensamblaje.** `seo_estructura.feature` @s4/@s5/@s6/@s12/@s19 exigen
+  "las seis páginas publicadas" (inicio, campañas, ficha de campaña, blog,
+  artículo de blog, tienda) con título/descripción/JSON-LD propios. Tras
+  `ensamblaje_landing`, `/campanas`/`/blog`/`/tienda` solo sirven el
+  catch-all genérico "Página no encontrada" — no son las páginas reales que
+  `seo_estructura` necesita. Reordenación mecánica dentro de contratos YA
+  aprobados (16-18 son `spec_ready` desde el 18/08/2026, ninguna decisión
+  nueva que requiera al humano): construyo 16 → 17 → 18 primero, y vuelvo a
+  `seo_estructura` cuando las seis páginas existan de verdad.
+- **Feature en curso:** pagina_campanas (id 16) — pendiente de arrancar
+  `tdd_craftsman` ronda 1. La feature más grande del proyecto hasta ahora
+  (41 escenarios): listado + ficha de detalle vía `/campanas?campana=<id>`,
+  gestión de foco al abrir, migas de pan, 3 ramas de scroll con
+  `prefers-reduced-motion`, guardas de fallo cerrado extendidas
+  (precio/vigencia ya existían en `campanas_portada`; se añaden plazas y
+  duración), transcripción literal de puntos desde `SERVICIOS`
+  (`src/data/servicios.ts`). Incluye registrar la ruta real `/campanas` en
+  `App.tsx`/`App-logica.ts` (quitándola del catch-all genérico de
+  `ensamblaje_landing`, cambio ya previsto por el propio contrato de esa
+  feature: "hasta que sus propias features aterricen su propia Route") y
+  actualizar `App.test.tsx` en consecuencia, sin perder cobertura de que
+  `/blog` y `/tienda` siguen mostrando el catch-all.
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
 - **`ensamblaje_landing` (id 20): DONE.** 15/15 escenarios, 2 rondas. El
   sitio compila y arranca de verdad por primera vez en el proyecto.
