@@ -4,20 +4,113 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **Feature en curso:** reserva_chat (id 7) — arrancando TDD.
+- **Feature en curso:** faq (id 12) — `tdd_craftsman` ronda 1 en marcha.
+  Escenarios a recorrer en orden: @s1 (5 preguntas colapsadas por defecto),
+  @s2 (horario derivado de `datosNegocio.horario`), @s3 (cita con los 2
+  teléfonos verificados y sus enlaces), @s4 (servicios: 5 bloques
+  publicados), @s5 (urgencias fuera de horario con teléfono real y enlace),
+  @s6 (divulgativa sin afirmar nada de la clínica), @s7 (abrir cierra la
+  anterior — excluyente), @s8 (cerrar la que ya estaba abierta), @s9
+  (teclado: Enter expande y conserva el foco), @s10 (guarda negativa sobre
+  el catálogo completo), @s11 (catálogo vacío → sin sección), @s12 (entrada
+  con pregunta o respuesta vacía se descarta), @s13 (teléfono de urgencias
+  inyectable desde la fuente única).
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
-- **Entregables de `equipo`:** `src/data/equipo.ts` (catálogo,
-  `docs/datos-galapavet.md` §4), `src/components/Equipo-logica.ts`
-  (`rotuloBoton`, `tieneFormacion`, `profesionalesValidos`),
-  `src/components/Equipo.tsx`. `pnpm run test` 137/137 en verde. Ronda 1 del
-  `judge` rechazada: @s7 usaba `toHaveTextContent` (subcadena) en vez de
-  igualdad exacta para su cláusula "se limita a" — el hueco más peligroso de
-  la ronda porque `.tsx` queda fuera del glob de Stryker, así que solo el
-  `judge` podía cazarlo. Corregido y cerrado en ronda 2, verificado con
-  sabotaje manual.
+- **`formulario_contacto` (id 11): DONE.** `tdd_craftsman` ronda 1 (14/14
+  escenarios) → `judge` ronda 1 APROBADO (5 sabotajes propios) →
+  `mutation_tester` ronda 1 FAIL 94.44% (34/36, 2 supervivientes en el
+  patrón de email: anclas `^`/`$` sin morder) → `tdd_craftsman` refuerzo (2
+  tests dirigidos, cero producción) → `judge` ronda 2 APROBADO (reprodujo
+  los 2 mutantes muertos + 4 sabotajes cruzados adicionales) →
+  `mutation_tester` PASS 100% (36/36). Entregables:
+  `src/components/FormularioContacto-logica.ts` (`validarCampos`,
+  `emailTieneFormatoValido`, `formularioEsValido`),
+  `src/components/FormularioContacto.tsx` (reutiliza `datosNegocio` y
+  `construirEnlaceTelefono` de `InformacionContacto-logica.ts`, sin
+  reescribir ningún `tel:` a mano). 256/256 tests totales.
+- **`informacion_contacto` (id 10): DONE.** `tdd_craftsman` ronda 1 (16/16
+  escenarios, 4 "verde a la primera" verificados con sabotaje) → `judge`
+  APROBADO (sabotaje independiente confirmando que los 3 bloques opcionales
+  fallan cerrado de forma desacoplada; confirmó que las 4 cláusulas Decisión
+  11 de @s9/@s10 están declaradas, no simuladas) → `mutation_tester` PASS
+  100% (2/2). Entregables: `src/components/InformacionContacto-logica.ts`
+  (`construirEnlaceTelefono`, deriva `tel:` con `enlaceLlamada`, falla
+  cerrado), `InformacionContacto.tsx` (props inyectables con sentinela
+  `null`/valor por defecto de `datosNegocio`, mapa con `loading="lazy"`).
+  232/232 tests.
+- **Sesión de fondo `a5629bbc` (nota permanente):** no hay comando de CLI
+  para desactivarla; el daemon la respawnea tras cada `Stop-Process`. Antes
+  de cada operación de escritura importante se comprueba `claude agents
+  --json --cwd <repo>` y se termina si tiene `pid` activo, para minimizar la
+  ventana de colisión. No es un fix permanente, es mitigación continua.
+- **`campanas_portada` (id 9): DONE.** `tdd_craftsman` ronda 1 (21/21
+  escenarios, descartó y reconstruyó el borrador huérfano de la colisión) →
+  `judge` ronda 1 APROBADO (7 sabotajes propios) → `mutation_tester` ronda 1
+  FAIL 85.71% (18/21, 3 supervivientes: `throw undefined` no detectado por
+  `toThrowError(regex)` en dos guardas de error, y `.trim()` sin cubrir en
+  el filtro de títulos) → `tdd_craftsman` refuerzo (3 tests dirigidos, cero
+  producción) → `judge` re-aprobó → `mutation_tester` PASS 100% (21/21).
+  216/216 tests totales. Nota: en esta ronda mi propio script de workflow
+  tuvo un bug de detección (regex que exigía "APPROVED" al inicio exacto de
+  la respuesta del subagente, que a veces trae preámbulo) y creyó que el
+  judge había rechazado cuando en realidad había aprobado — corregido
+  releyendo el fichero real antes de actuar, no confiando en el resumen del
+  workflow.
+- **Incidente de sesión duplicada (20/08/2026):** durante el cierre de
+  `galeria` se detectó una segunda sesión de Claude Code (`session_id`
+  `b665d482-...`, PIDs 41304/49832, `--fork-session --resume`) trabajando en
+  paralelo sobre este mismo repo con el mismo protocolo — de ahí ediciones
+  casi simultáneas e idénticas sobre `feature_list.json`/`progress/current.md`
+  y un sabotaje "fantasma" detectado por el `tdd_craftsman` de `galeria`
+  ronda 2. Confirmado que esa sesión quedó interrumpida dos veces por el
+  usuario (~16:30 UTC) y no era esta sesión (esta es el PID 17528,
+  verificado por árbol de procesos). Terminada (`Stop-Process -Force`) para
+  eliminar la colisión de escritura concurrente, autorizado explícitamente
+  por el usuario. Dejó 3 ficheros sin trazar de `campanas_portada`
+  (`CampanasPortada.tsx`, `CampanasPortada.test.tsx`, `src/data/campanas.ts`)
+  sin `progress/tdd_campanas_portada.md` que documente ciclos Rojo→Verde —
+  mismo caso que el borrador descartado de `galeria`: se instruye al
+  `tdd_craftsman` de esta feature a aplicar el mismo criterio (sin bitácora
+  que demuestre disciplina TDD, reconstruir por TDD estricto desde cero).
+- **Segunda colisión de escritura, esta vez sobre `progress/tdd_campanas_portada.md`
+  (20/08/2026, durante el propio ciclo TDD de `campanas_portada`):** el
+  `tdd_craftsman` que ejecutó esta ronda detectó que su propia bitácora se
+  sobrescribió en disco mientras la escribía, con una narrativa distinta (otra
+  instancia proponía **conservar** el borrador huérfano verificándolo por
+  sabotaje, en vez de descartarlo). `tasklist` mostró 13 procesos `claude.exe`
+  simultáneos, sin forma fiable de distinguir subagentes legítimos de la
+  colisión. Sin herramienta para terminar procesos ajenos, el `tdd_craftsman`
+  continuó con el mandato explícito recibido (descartar y reconstruir) y dejó
+  ambas notas en el propio `progress/tdd_campanas_portada.md` (sección "Aviso
+  de colisión de escritura" y la nota final de la segunda sesión, que se
+  retiró sin tocar `src/`). Revisar si hace falta repetir la comprobación de
+  procesos que se hizo para `galeria` antes de dar por buena esta ronda.
+- **Entregables de `campanas_portada`:** `src/data/campanas.ts` (catálogo de
+  demo, 3 entradas, sin precio/vigencia), `src/components/CampanasPortada-logica.ts`
+  (`construirModeloCampanas`: falla cerrado ante precio/vigencia
+  declarados, descarta títulos vacíos y solo-espacios), `src/components/CampanasPortada.tsx`
+  (`construirModeloSeguro` envuelve la llamada en `try/catch`, mismo modo de
+  error "dato ausente → no se renderiza el bloque"). 21/21 escenarios,
+  trazabilidad completa en `progress/tdd_campanas_portada.md`. 216/216 tests
+  totales, 100% mutación.
+- **Entregables de `galeria`:** `src/data/galeria.ts` (catálogo de demo,
+  rutas locales), `src/components/Galeria-logica.ts` (`entradasValidas`,
+  `calcularSolicitudDeDesplazamiento`, `prefiereMenosMovimiento`,
+  `SEPARACION_ENTRE_TARJETAS_PX`), `src/components/Galeria.tsx`. `pnpm run
+  test` 192/192 en verde. Ronda 1 del `judge` rechazada:
+  `SEPARACION_ENTRE_TARJETAS_PX` se reimportaba en los tests para *calcular*
+  el valor esperado — tautología, un mutante que cambiara la constante
+  mutaba ambos lados igual. Verificado en vivo (24/24 seguían en verde tras
+  el sabotaje). Corregido en ronda 2 con una aserción de apoyo anclada al
+  literal `18` (mismo patrón que `Cabecera-logica.test.ts`), 100% mutación.
+  **Pendiente, no bloqueante:** verificación en navegador real de las
+  cláusulas de @s9/@s10 no medibles en jsdom (scroll físico, Decisión 11).
 - **Estado:** `tokens_marca` (id 1), `datos_negocio` (id 2),
-  `cabecera_y_navegacion` (id 3), `hero` (id 4), `servicios` (id 5) y
-  `equipo` (id 6) cerradas: `done`. Ver bitácora abajo.
+  `cabecera_y_navegacion` (id 3), `hero` (id 4), `servicios` (id 5),
+  `equipo` (id 6), `reserva_chat` (id 7), `galeria` (id 8),
+  `campanas_portada` (id 9), `informacion_contacto` (id 10) y
+  `formulario_contacto` (id 11) cerradas:
+  `done`. Ver bitácora abajo.
 - **Entregables de `datos_negocio`:** `src/lib/site.ts` (fuente única),
   `src/lib/telefono.ts` (normalización/derivación de teléfono, falla
   cerrado), `src/lib/puertaTelefonoHardcodeado.ts` (puerta
@@ -466,4 +559,79 @@ documentado como reserva, no ocultado. `pnpm run test` 137/137.
 Marcado `done` en `feature_list.json` por el `craftsman_lead`, tras leer
 `progress/judge_equipo.md` y `progress/mutation_equipo.md` completos.
 Arranca `reserva_chat` (id 7) — única feature `in_progress`, respetando
+`one_feature_at_a_time`.
+
+### 20/08/2026 — reserva_chat (id 7): DONE
+
+Cerrada en 3 rondas — la más compleja hasta ahora (23 escenarios). `tdd_craftsman`
+ronda 1: `src/components/ReservaChat-logica.ts` (4 funciones puras) +
+`ReservaChat.tsx`. `judge` ronda 1: **CHANGES_REQUESTED**, dos hallazgos
+reales, ninguno cosmético: (1) `reiniciar()` reseteaba `respuestas` sin
+ningún test que lo exigiera (Ley 1) — verificado que sin esa línea 25/25
+tests seguían en verde, y que era un bug de datos real: completar el guion
+dos veces con respuestas distintas podía arrastrar campos de la primera
+solicitud a la segunda; (2) @s16 tenía un bucle `for` sobre una colección
+vacía (0 elementos), confirmado con sabotaje que el cuerpo nunca se
+ejecutaba. Ambos fuera del alcance de `mutation_tester` (`.tsx` excluido del
+glob de Stryker) — solo el `judge` podía cazarlos, mismo patrón que
+`servicios`/`equipo`.
+
+`tdd_craftsman` ronda 2: añade un test real de dos vueltas del guion con
+datos distintos (mata el bug de `reiniciar()`) y sustituye el bucle vacío
+por `toHaveLength(0)`. `judge` ronda 2: **APROBADO**. `mutation_tester`
+mide por primera vez: **FAIL**, 20/32 = 62.50%, 12 supervivientes reales
+(0 equivalentes, verificado con script de divergencia). Causa raíz única:
+`siguientePaso` es una máquina de estados de 6 casos, pero `ReservaChat.tsx`
+solo la invoca para 1 de las 4 transiciones reales del guion; las otras 3
+hardcodean `setPaso(...)` directo. El informe dejó explícitamente como
+decisión de diseño (no suya) elegir entre reforzar solo los tests o hacer
+que la producción realmente pase por `siguientePaso` en las 4 transiciones.
+
+`tdd_craftsman` ronda 3 elige reforzar solo los tests (5 aserciones
+directas/positivas en `ReservaChat-logica.test.ts`), razonando que forzar el
+cableado de producción sin un rojo de comportamiento que lo exigiera habría
+sido footgun de la Ley 1 en sentido contrario. `judge` ronda 3: **APROBADO**,
+confirmó con `git diff --stat` que el único fichero tocado fue el de test y
+reprodujo uno de los 5 sabotajes de forma independiente. `mutation_tester`:
+**APROBADO**, 100% (32/32), confirmado cruzando los 12 ids antes
+supervivientes contra `mutation.json` (todos `Killed`, `killedBy` apuntando
+a los tests nuevos). `pnpm run test` 167/167.
+
+Marcado `done` en `feature_list.json` por el `craftsman_lead`, tras leer
+`progress/judge_reserva_chat.md` y `progress/mutation_reserva_chat.md`
+completos. Arranca `galeria` (id 8) — única feature `in_progress`,
+respetando `one_feature_at_a_time`.
+
+### 20/08/2026 — galeria (id 8): DONE
+
+Cerrada en 2 rondas (17 escenarios). `tdd_craftsman` ronda 1:
+`src/data/galeria.ts` + `Galeria-logica.ts` (3 funciones puras +
+`SEPARACION_ENTRE_TARJETAS_PX`) + `Galeria.tsx`. `judge` ronda 1:
+**CHANGES_REQUESTED** — patrón `doble-de-test-anclado-al-literal-no-al-simbolo`:
+`SEPARACION_ENTRE_TARJETAS_PX` se reimportaba en ambos ficheros de test para
+*calcular* el valor esperado (`240 + SEPARACION_ENTRE_TARJETAS_PX`), igual
+que `calcularSolicitudDeDesplazamiento` lo calcula en producción —
+tautología. Verificado en vivo: mutar la constante a mano (`18` → `65`)
+dejaba los 24 tests en verde. Comparado contra el precedente ya aprobado del
+propio proyecto (`Cabecera-logica.test.ts`, que sí ancla
+`PUNTO_DE_CORTE_NAVEGACION_PX` a un literal).
+
+`tdd_craftsman` ronda 2: añade una aserción de apoyo
+(`expect(SEPARACION_ENTRE_TARJETAS_PX).toBe(18)`), rotulada explícitamente
+como apoyo de implementación, no escenario de negocio (el valor es
+provisional hasta que `tokens_marca` fije la escala de espaciado). `judge`
+ronda 2: **APROBADO**, reprodujo el sabotaje de forma independiente con un
+marcador distinto al del `tdd_craftsman` y confirmó exactamente 1 test en
+rojo. `mutation_tester`: **APROBADO**, 100% (31/31) sobre
+`Galeria-logica.ts`, confirmado contra `mutation.json` crudo. `pnpm run
+test` 192/192.
+
+Pendiente explícito, no bloqueante para C6/C7: la verificación en navegador
+real de las cláusulas de @s9/@s10 no medibles en jsdom (scroll físico,
+`prefers-reduced-motion` con layout real) — Decisión 11, declarada en el
+propio `.feature`, no oculta.
+
+Marcado `done` en `feature_list.json` por el `craftsman_lead`, tras leer
+`progress/judge_galeria.md` y `progress/mutation_galeria.md` completos.
+Arranca `campanas_portada` (id 9) — única feature `in_progress`, respetando
 `one_feature_at_a_time`.

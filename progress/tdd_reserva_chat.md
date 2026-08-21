@@ -567,3 +567,128 @@ UI.
   src/components/ReservaChat.tsx` si se quiere medir su superficie real,
   nota que ya dejó el `judge` en la ronda 1).
 
+---
+
+## Ronda 3 — cierre de huecos de mutación (`judge` APPROVED en ronda 2, `mutation_tester` FAIL: 20/32 = 62.50%)
+
+> Alcance: exactamente lo señalado en `progress/mutation_reserva_chat.md`
+> (ronda tras la aprobación del `judge`): 12 mutantes no-killed en
+> `src/components/ReservaChat-logica.ts`, función `siguientePaso`, los 12
+> verificados uno a uno como no-equivalentes por el propio `mutation_tester`.
+> No se toca nada del veredicto `judge` (APPROVED, sin cambios pedidos) ni
+> nada fuera de `siguientePaso`.
+
+### Decisión de diseño entre las dos vías que dejó abiertas el informe de mutación
+
+El informe ofrecía dos vías (explícitamente "elección de diseño, no me
+corresponde decidirla a mí"): (1) reforzar solo `ReservaChat-logica.test.ts`
+sin tocar producción, o (2) hacer que `ReservaChat.tsx` llame a
+`siguientePaso` en las 4 transiciones. Elegida la **vía 1**, siguiendo el
+precedente ya establecido en este mismo proyecto para cerrar huecos de
+mutación (`progress/tdd_tokens_marca.md`, "Intento 2", citado también por el
+propio informe de mutación de esta ronda como "mismo criterio ya aplicado en
+tokens_marca y datos_negocio"): cuando el comportamiento correcto ya existe
+en producción y lo único que falta es una entrada/aserción que lo ejercite,
+la corrección es añadir el test, no producción que ningún rojo (de
+comportamiento observable, no de mutante) pide. La vía 2 además reconoce en
+su propio texto que "por sí solo no basta para matar los 12 mutantes sin
+además añadir los tests directos del punto 1" — así que tocar producción no
+ahorraba nada aquí, solo añadía riesgo fuera del alcance señalado por
+`judge` (APPROVED, sin pedir cambios en `ReservaChat.tsx`).
+
+### Nota de honestidad sobre "rojo" (mismo patrón que `tokens_marca` Intento 2)
+
+Estos 5 tests nuevos no se pusieron en rojo contra la producción real (que ya
+era correcta: `siguientePaso` siempre implementó las 6 ramas del `switch`,
+solo que ninguna llamada de producción ni de test ejercitaba 5 de ellas con
+la entrada exacta que distingue el código real del mutante). El "rojo" de
+cada ciclo es el mutante: se aplicó a mano, uno a la vez, el diff exacto que
+`progress/mutation_reserva_chat.md` documentó para cada id, se confirmó que
+el test nuevo (y solo ese) fallaba, y se revirtió el sabotaje antes de seguir
+con el siguiente. Un test rojo a la vez, igual que pide la disciplina, solo
+que el rojo lo provoca un mutante en vez de un `TypeError` — exactamente el
+caso que ya cubrió `docs/mutation-testing.md` / el precedente de
+`tokens_marca`.
+
+### Tests añadidos (`src/components/ReservaChat-logica.test.ts`, dentro del `describe` de `@s23`, sin escenario nuevo)
+
+El `.feature` (@s23) solo exige, en su literal, que desde `'urgencia'` el
+paso siguiente "no devuelve ni el paso del animal, ni el del cuándo, ni el
+del nombre" (negaciones) — por eso las 3 negaciones existentes **no se
+tocan** (retirarlas violaría el patrón
+`doble-de-test-anclado-al-literal-no-al-simbolo` al alejarse del texto
+Gherkin). Los 5 tests nuevos son refuerzos explícitos de mutación, con
+nombre `refuerzo mutación: ...`, mismo patrón que `tokens_marca`:
+
+1. `siguientePaso('animal', 'cualquier respuesta')` → `'cuando'`.
+2. `siguientePaso('cuando', 'cualquier respuesta')` → `'nombre'`.
+3. `siguientePaso('nombre', 'cualquier respuesta')` → `'final'`.
+4. `siguientePaso('final', 'cualquier respuesta')` → `'final'` (estado
+   terminal se devuelve a sí mismo).
+5. `siguientePaso('urgencia', 'cualquier respuesta')` → `'urgencia'`
+   (aserción **positiva**, complementa — no sustituye — las 3 negaciones ya
+   existentes, que siguen ancladas al literal del `.feature`).
+
+Sabotajes manuales (uno a la vez, revertido antes del siguiente; ver diffs
+exactos en `progress/mutation_reserva_chat.md` §"Detalle de los 12 mutantes"):
+
+| Sabotaje aplicado | Mutante(s) que reproduce | Test que cae en rojo | Confirmado |
+| --- | --- | --- | --- |
+| `case 'animal':` → `case '' as IdPaso:` | id 20, 21, 22 | refuerzo #1 (`'animal'`→`'cuando'`) | `expected undefined to be 'cuando'` — solo ese test falla |
+| `case 'cuando':` → `case '' as IdPaso:` | id 23, 24, 25 | refuerzo #2 (`'cuando'`→`'nombre'`) | `expected undefined to be 'nombre'` — solo ese test falla |
+| `case 'nombre':` → `case '' as IdPaso:` | id 26, 27, 28 | refuerzo #3 (`'nombre'`→`'final'`) | `expected undefined to be 'final'` — solo ese test falla |
+| `case 'final':` → `case '' as IdPaso:` | id 29 | refuerzo #4 (`'final'`→`'final'`) | `expected undefined to be 'final'` — solo ese test falla |
+| `case 'urgencia':` → `case '' as IdPaso:` | id 31 (y confirma id 30 vía cuerpo compartido) | refuerzo #5 (`'urgencia'`→`'urgencia'`) | `expected undefined to be 'urgencia'` — **las 3 negaciones existentes de @s23 no lo detectan** (verificado: pasan igual con el sabotaje activo, `undefined` también cumple `not.toBe('animal'/'cuando'/'nombre')`), confirmando exactamente el hallazgo del informe de mutación |
+
+(El mutante id 30, `case 'urgencia': return pasoActual` con el cuerpo
+vaciado, comparte el mismo bloque de código que `case 'final':` — lo mata
+indistintamente el refuerzo #4 o el #5, ya que ambos dependen del mismo
+`return pasoActual` compartido; no requirió sabotaje aparte.)
+
+Tras cada sabotaje se confirmó `ReservaChat-logica.ts` idéntico al original
+(releído completo) antes de continuar.
+
+### Verificación final (ronda 3)
+
+- `pnpm exec vitest run src/components/ReservaChat-logica.test.ts`:
+  **10/10 verde** (5 tests previos + 5 refuerzos nuevos) con la producción
+  real, sin sabotajes activos.
+- `node .harness/harness.mjs init`: **verde** — lint (`oxlint
+  --deny-warnings`) sin errores, `tsc -b` sin errores, suite completa
+  **167/167** (162 previos + 5 refuerzos nuevos).
+- **Medición oficial de mutación** (mismo comando que documentó
+  `progress/mutation_reserva_chat.md`, sin otra corrida de Stryker en
+  paralelo verificado con `Get-CimInstance Win32_Process -Filter
+  "Name='node.exe'"` antes de arrancar — sin resultado, ningún proceso
+  node activo):
+
+  ```
+  pnpm exec stryker run --mutate src/components/ReservaChat-logica.ts --plugins @stryker-mutator/vitest-runner
+  ```
+
+  Resultado: **100.00%** (32/32 killed, 0 timeout, 0 survived, 0 no
+  coverage) — corrida única, sin reintentos necesarios. Duración 5m30s.
+  Reports regenerados en `reports/mutation/`.
+- `src/components/ReservaChat.tsx` **sin cambios** en esta ronda (vía 1
+  elegida: solo test).
+- No quedan `console.*`, `debugger`, `.only`/`.skip`, `TODO` ni restos de
+  "SABOTAJE" en ningún fichero de `reserva_chat` (`grep` propio, sin
+  coincidencias).
+- `git status` tras la ronda: solo `src/components/ReservaChat-logica.test.ts`
+  modificado dentro del alcance de esta feature (más
+  `progress/tdd_reserva_chat.md`); nada de producción tocado.
+- No se toca `feature_list.json`: la feature sigue `in_progress`, a la
+  espera de que `judge` revise los 5 tests nuevos y de que `mutation_tester`
+  repita su propia medición oficial — no me corresponde marcarla `done`.
+
+### Pendiente para las siguientes puertas (ronda 3)
+
+- `judge`: revisar que los 5 tests nuevos de `ReservaChat-logica.test.ts`
+  están correctamente atados a @s23 (mismo `describe`, sin escenario
+  Gherkin nuevo), que las 3 negaciones originales del literal no se tocaron,
+  y que `ReservaChat.tsx` sigue exactamente igual que en la ronda 2
+  (APPROVED, sin cambios pedidos ahí).
+- `mutation_tester`: repetir su propia medición oficial sobre
+  `src/components/ReservaChat-logica.ts` para confirmar de forma
+  independiente el 100.00% ya medido aquí.
+

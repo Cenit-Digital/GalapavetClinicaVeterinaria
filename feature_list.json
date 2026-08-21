@@ -117,7 +117,7 @@
         "Se avisa de que nada se envía a ningún servidor hasta ese momento"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 8,
@@ -131,7 +131,7 @@
         "Las imágenes se sirven en local, sin peticiones a terceros"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "done"
     },
     {
       "id": 9,
@@ -145,7 +145,7 @@
         "Las tarjetas y el botón enlazan a la página de campañas"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "done"
     },
     {
       "id": 10,
@@ -159,7 +159,7 @@
         "El mapa se muestra con un título accesible"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "done"
     },
     {
       "id": 11,
@@ -174,7 +174,7 @@
         "Se puede volver a mostrar el formulario"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "done"
     },
     {
       "id": 12,
@@ -188,7 +188,7 @@
         "Ninguna respuesta afirma precios, planes de financiación ni servicios no publicados"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "in_progress"
     },
     {
       "id": 13,

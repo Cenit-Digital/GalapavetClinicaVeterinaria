@@ -32,4 +32,24 @@ describe('@s23 la lógica pura corta el guion al elegir "Es una urgencia", sin t
     expect(siguiente).not.toBe('cuando')
     expect(siguiente).not.toBe('nombre')
   })
+
+  it('refuerzo mutación: desde "animal" el paso siguiente es exactamente "cuando"', () => {
+    expect(siguientePaso('animal', 'cualquier respuesta')).toBe('cuando')
+  })
+
+  it('refuerzo mutación: desde "cuando" el paso siguiente es exactamente "nombre"', () => {
+    expect(siguientePaso('cuando', 'cualquier respuesta')).toBe('nombre')
+  })
+
+  it('refuerzo mutación: desde "nombre" el paso siguiente es exactamente "final"', () => {
+    expect(siguientePaso('nombre', 'cualquier respuesta')).toBe('final')
+  })
+
+  it('refuerzo mutación: desde "final" (estado terminal) el paso siguiente es exactamente "final"', () => {
+    expect(siguientePaso('final', 'cualquier respuesta')).toBe('final')
+  })
+
+  it('refuerzo mutación: desde "urgencia" (estado terminal) el paso siguiente es exactamente "urgencia"', () => {
+    expect(siguientePaso('urgencia', 'cualquier respuesta')).toBe('urgencia')
+  })
 })
