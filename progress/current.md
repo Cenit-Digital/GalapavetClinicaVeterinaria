@@ -4,20 +4,47 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
-- **Feature en curso:** pie_de_pagina (id 13) — pendiente de arrancar
-  `tdd_craftsman` ronda 1. Escenarios a recorrer en orden: @s1 (bloque de
-  marca sin afirmar nada no publicado), @s2 (tres columnas de 4 enlaces),
-  @s3 (columna "Clínica" a las 4 secciones de la landing), @s4 (columna
-  "Contenido" a las 3 subpáginas + FAQ), @s5 (columna "Contacto", teléfonos
-  reales derivados de la fuente única), @s6 (enlace de urgencias con rótulo
-  real, sin "24 h"), @s7 (sin email publicado, sin enlace de correo), @s8
-  (sin perfiles publicados, sin bloque de redes sociales), @s9 (enlaces
-  legales reales), @s10 (enlaces legales en ventana nueva, `rel` seguro),
-  @s11 (página legal no publicada no se pinta como enlace muerto), @s12
-  (copyright sin número de registro), @s13 (año de copyright calculado, no
-  horneado), @s14 (ningún dato del prototipo heredado sobrevive), @s15
-  (teléfono inválido falla cerrado, no pinta un enlace a medias).
+- **Feature en curso:** selector_paleta (id 14) — pendiente de arrancar
+  `tdd_craftsman` ronda 1. Escenarios a recorrer en orden: @s1 (selector
+  cerrado al cargar), @s2 (panel lista las 4 variantes), @s3 (reabrir el
+  botón cierra el panel), @s4 (muestras de color no ensucian el nombre
+  accesible), @s5 (sin preferencia guardada, variante activa = marca), @s6
+  (elegir variante la aplica de inmediato), @s7 (elegir variante la guarda
+  en almacenamiento), @s8 (se recuerda en la siguiente visita), @s9
+  (variante guardada resuelta antes del primer pintado), @s10 (script de
+  arranque precede al bundle de la app), @s11 (id desconocido → variante
+  por defecto), @s12 (preferencia vacía → variante por defecto), @s13
+  (valor corrupto nunca llega al atributo del documento), @s14
+  (almacenamiento que lanza al leer no rompe la carga), @s15 (almacenamiento
+  que lanza al escribir no rompe el cambio), @s16 (catálogo vacío → no se
+  renderiza). Nota de diseño propia del `.feature`: script inline
+  pre-pintado espejado por un gemelo puro testeable (patrón organizacional
+  `logica-pre-pintado-inline-se-espeja-en-gemelo-puro-testeable`).
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
+- **`pie_de_pagina` (id 13): DONE.** 15/15 escenarios por TDD estricto
+  desde cero, ronda única (judge y mutación aprobados a la primera).
+  Entregables: `src/data/pieDePaginaEnlaces.ts`
+  (`ENLACES_CLINICA`/`ENLACES_CONTENIDO`), `src/data/paginasLegales.ts`
+  (`PAGINAS_LEGALES`), `src/components/PieDePagina-logica.ts`
+  (`construirEnlacesLegales`, `textoCopyright`, `construirEnlacesContacto`,
+  reutiliza `construirEnlaceTelefono` de `InformacionContacto-logica.ts`),
+  `src/components/PieDePagina.tsx` (solo cablea). 4 escenarios "verde a la
+  primera" (@s6, @s7, @s8, @s14) verificados con sabotaje manual/grep
+  independiente. `textoCopyright` recibe la fecha como parámetro (nunca
+  `Date.now()` implícito en la lógica pura; el borde de sistema en
+  `PieDePagina.tsx` inyecta `new Date()` por defecto). @s15 depende del
+  mismo `enlaceLlamada` que falla cerrado en el resto del proyecto, sin
+  duplicar la validación. `judge`: **APROBADO** (15/15 escenarios, 1 nota
+  cosmética no bloqueante: el Given de @s15 en el `.feature` describe "91
+  851 13" como de "ocho dígitos" cuando tiene 7 — pendiente de
+  `gherkin_author` en una pasada futura, no afecta cobertura).
+  `mutation_tester`: **PASS** 21/21 = 100% sobre `PieDePagina-logica.ts`
+  (único fichero mordible de la feature), cero supervivientes, verificado
+  contra `mutation.json` crudo. `bin/harness init` verde: 294/294 tests. Yo
+  (craftsman_lead) releí `progress/tdd_pie_de_pagina.md`,
+  `progress/judge_pie_de_pagina.md` y `progress/mutation_pie_de_pagina.md`
+  completos y repetí `node .harness/harness.mjs init` de forma
+  independiente antes de marcar `done`.
 - **`faq` (id 12): DONE.** Reanudada a mitad de ronda 1 (@s1-@s3 ya
   existían en disco de una sesión previa, con 3 placeholders literales
   `'Respuesta'` en el catálogo). `tdd_craftsman` completó @s4-@s13 (10
