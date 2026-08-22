@@ -8,6 +8,7 @@ import { Landing } from './pages/Landing'
 import { PaginaBlog } from './pages/PaginaBlog'
 import { PaginaCampanas } from './pages/PaginaCampanas'
 import { PaginaNoEncontrada } from './pages/PaginaNoEncontrada'
+import { PaginaTienda } from './pages/PaginaTienda'
 
 /**
  * Ancho antes de que `window.innerWidth` se haya leído ni una sola vez
@@ -54,6 +55,7 @@ function AppInterior({ ancho }: AppInteriorProps): React.JSX.Element {
         <Route path="/campanas" element={<PaginaCampanas />} />
         <Route path="/blog" element={<PaginaBlog />} />
         <Route path="/blog/:identificador" element={<PaginaBlog />} />
+        <Route path="/tienda" element={<PaginaTienda />} />
         {RUTAS_DE_SUBPAGINA.map((ruta) => (
           <Route key={ruta} path={ruta} element={<PaginaNoEncontrada />} />
         ))}

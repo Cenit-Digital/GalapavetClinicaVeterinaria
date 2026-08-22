@@ -231,7 +231,7 @@
         "Los datos del JSON-LD derivan de la fuente única y coinciden con los visibles"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "in_progress"
     },
     {
       "id": 16,
@@ -273,7 +273,7 @@
         "Se declara que no hay pasarela de pago y que los precios están pendientes del cliente"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 19,

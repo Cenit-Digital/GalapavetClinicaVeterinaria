@@ -92,14 +92,21 @@
 #     @s3 se reabre antes de que `tdd_craftsman` toque código.
 #   - PENDIENTE (PREGUNTA ABIERTA 2 de project-spec.md, cerrada por el humano en
 #     la conversación que originó este fichero): las rutas de subpágina sin
-#     página propia sirven un ÚNICO catch-all genérico "página no encontrada"
-#     (@s12, @s13), no un placeholder a medida por ruta, hasta que sus propias
-#     features (16, 17, 18, ya `spec_ready`) aterricen su propia `<Route>` por
-#     encima. RESUELTO PARCIALMENTE (21-22/08/2026): `pagina_campanas` (id 16,
-#     `done`) y `pagina_blog` (id 17, `done`) ya aterrizaron su propia `<Route>`
-#     real sobre "/campanas" y "/blog" — esas dos rutas YA NO forman parte del
-#     catch-all. @s12 se actualizó en consecuencia para cubrir solo "/tienda",
-#     la única que sigue pendiente (18, `spec_ready`).
+#     página propia sirven un ÚNICO catch-all genérico "página no encontrada",
+#     no un placeholder a medida por ruta, hasta que sus propias features (16,
+#     17, 18) aterricen su propia `<Route>` por encima. RESUELTO POR COMPLETO
+#     (22/08/2026): `pagina_campanas` (id 16, `done`), `pagina_blog` (id 17,
+#     `done`) y `pagina_tienda` (id 18, `done`) ya aterrizaron su propia
+#     `<Route>` real sobre "/campanas", "/blog" y "/tienda" — las tres rutas
+#     de subpágina de `navegacion.ts` tienen ya su propia página, así que
+#     `RUTAS_DE_SUBPAGINA` (`src/App-logica.ts`) queda vacía y ya no existe
+#     ningún caso real que el antiguo @s12 pudiera ejercitar. Retirado en
+#     consecuencia (ver nota bajo @s11 en el cuerpo del fichero): mantenerlo
+#     con un Given sin ningún destino real que satisfacerlo habría sido un
+#     escenario vacío, no una prueba de comportamiento (mismo criterio que el
+#     patrón `verde-por-vacuidad-en-puerta-de-verificacion`). El catch-all
+#     GENÉRICO para rutas no registradas en absoluto (deep-link a una URL
+#     arbitraria) sigue vigente y cubierto en @s13, sin cambios.
 #     Cambio de código pre-aprobado por esta misma PREGUNTA ABIERTA 2 y por el
 #     criterio de aceptación de esta propia feature (feature_list.json:307);
 #     esta nota documenta que el TEXTO del contrato ya se sincronizó con él.
@@ -220,13 +227,14 @@ Feature: Ensamblaje de la aplicación: punto de entrada, shell y landing
     Then la cabecera muestra la rama móvil: existe el botón "Abrir menú"
     And no existe la región "Navegación principal"
 
-  @s12
-  Scenario: La ruta de subpágina sin página propia todavía sirve el catch-all "página no encontrada" con enlace de vuelta
-    Given "/tienda" es un destino de subpágina que "src/data/navegacion.ts" declara en "ENLACES_NAVEGACION" y que "cabecera_y_navegacion.feature" @s5 ya contrata como destino del enlace "Tienda", y que todavía no tiene su propia página (feature 18, `spec_ready`); "/campanas" y "/blog" comparten esa misma fuente pero quedan fuera de este escenario porque `pagina_campanas` (id 16, `done`) y `pagina_blog` (id 17, `done`) ya les dieron su propia `<Route>` real
-    When el visitante navega a esa ruta
-    Then se muestra exactamente un encabezado cuyo nombre accesible es "Página no encontrada"
-    And existe un enlace cuyo nombre accesible es "Volver al inicio" y cuyo destino es exactamente "/"
-    And siguen presentes el elemento con rol "contentinfo" y el enlace del logotipo del shell común
+  # @s12 retirado (22/08/2026): probaba que una ruta de subpágina SIN página
+  # propia todavía servía el catch-all. Con pagina_campanas/pagina_blog/
+  # pagina_tienda (16-18) ya `done`, las tres rutas de subpágina de
+  # navegacion.ts tienen su propia página real y RUTAS_DE_SUBPAGINA queda
+  # vacía — el Given de este escenario ya no tiene ningún destino real que lo
+  # satisfaga. Ver la nota PENDIENTE (PREGUNTA ABIERTA 2) en la cabecera del
+  # fichero para el histórico completo. El catch-all genérico para rutas NO
+  # registradas en absoluto sigue cubierto, sin cambios, en @s13.
 
   @s13
   Scenario: Cualquier otra ruta no registrada por deep-link recibe el mismo catch-all, nunca una pantalla en blanco

@@ -4,6 +4,98 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **`pagina_tienda` (id 18): DONE (22/08/2026).** 44/44 escenarios, la
+  feature más grande del proyecto hasta ahora. Cierre reconciliado por mí
+  (craftsman_lead) tras leer completos `progress/tdd_pagina_tienda.md` (9
+  rondas), `progress/judge_pagina_tienda.md` (9 rondas, la última —
+  Ronda 9 — con sabotaje propio independiente) y
+  `progress/mutation_pagina_tienda.md` (2 mediciones), y repetir yo mismo
+  `node .harness/harness.mjs init` de forma independiente dos veces (una
+  antes y otra después del ajuste final de comentario). Entregables:
+  `src/data/tienda.ts` (`CATEGORIAS_TIENDA` fijas del cliente +
+  `PRODUCTOS_DEMO`, importes en céntimos enteros convertidos a mano una
+  sola vez desde el Background), `src/pages/PaginaTienda-logica.ts`
+  (catálogo fail-closed, `formatearImporte` con espacio duro U+00A0,
+  reducer de cesta con tope de 99, atrapa-foco real WAI-ARIA APG para
+  `PanelCesta`), `src/pages/PaginaTienda.tsx`. Router: `/tienda` con su
+  propia `<Route>`; `RUTAS_DE_SUBPAGINA` (`App-logica.ts`) queda **vacía**
+  — ya no queda ninguna subpágina de `navegacion.ts` sin página propia.
+  `pnpm run test`: 580/580.
+  - **Disciplina del cierre (9 rondas cada bitácora):** ronda 1 TDD
+    completo desde cero → judge ronda 1 CHANGES_REQUESTED (NBSP ASCII vs
+    U+00A0 en 16 aserciones + atrapa-foco sin atrapar de verdad) →
+    ronda 2 corrige ambos → judge encuentra 2 aserciones de @s29 que la
+    ronda 2 no cubrió → ronda 3 las corrige → judge ronda de verificación
+    sin cambios (ronda 4) → judge (con el fichero ya reescrito por otra
+    ronda por debajo, ver incidente) encuentra @s9 sin fidelidad de
+    nombres tras filtrar (hueco fuera del alcance de mutación por vivir en
+    el `.tsx`) → ronda 5 lo corrige → judge Ronda 6/7 aprueban con
+    verificación independiente completa (44/44 @s, sabotaje propio) →
+    `mutation_tester` ronda 1 **FAIL** 90.63% bruto (91.58% excl. 2
+    equivalentes ya conocidos), 13 supervivientes reales agrupados en 5
+    causas raíz (fábricas de `Error` vacías, frontera `importeCentimos ===
+    0`, `quitarUnidad`/`fijarCantidad` sin id/cantidad inválida, y 3
+    mutantes contingentes-de-los-datos en la derivación de
+    `RUTAS_DE_SUBPAGINA`) → `tdd_craftsman` rondas 6-7 (11 tests dirigidos
+    + extracción de `derivarRutasDeSubpagina` como función pura
+    parametrizada en `App-logica.ts`, justificada explícitamente por el
+    informe de mutación, no por preferencia; ronda 7 además encontró y
+    revirtió un resto de sabotaje de verificación (`if (false)`) que una
+    sesión de medición anterior había dejado sin revertir en
+    `PaginaTienda-logica.ts:226`) → judge Ronda 8 aprueba con 4 sabotajes
+    manuales propios → `mutation_tester` ronda 2 **PASS** 191/193 = 98.96%
+    bruto, **100% excluidos 2 equivalentes genuinos** ya justificados con
+    prueba analítica exhaustiva (`elementoTrasAtraparFoco`,
+    `PaginaTienda-logica.ts:226`, `elementosFocusables = []` fuerza las 3
+    ramas a devolver `null` con o sin la guarda) → judge Ronda 9,
+    verificación independiente final con sabotaje propio sobre 2 tests
+    distintos a los ya usados, **APROBADO**, C1-C7 en verde.
+  - **Incidentes operativos de esta sesión, ya resueltos:** (1) colisión de
+    sesión real: `claude agents --json` detectó una segunda sesión
+    interactiva activa (`busy`) sobre este mismo repo (PID 40820) —
+    sobrescribió `progress/judge_pagina_tienda.md` mientras un `judge` lo
+    redactaba, causando una numeración de rondas confusa que tuvo que
+    autocorregirse en vivo (ver "Ronda 6 — corrección del registro" en ese
+    fichero). Confirmado con el usuario que la máquina había estado en
+    suspensión y la sesión quedó colgada; terminada (`Stop-Process`) con
+    autorización explícita del usuario antes de correr `mutation_tester`,
+    seguido el mismo protocolo que dejó documentado el incidente de
+    `galeria`/`campanas_portada`. (2) Mi propio script de workflow tuvo
+    **dos veces** un bug de detección de veredicto (regex anclada al
+    inicio de la respuesta del subagente, que a veces antepone un resumen
+    largo antes del token "APROBADO"/"PASS" exigido) y creyó que el judge
+    o la mutación habían rechazado cuando en realidad habían aprobado —
+    mismo patrón de bug ya documentado en el cierre de `campanas_portada`.
+    Corregido en ambos casos releyendo los ficheros reales en disco antes
+    de actuar, nunca confiando en el resumen estructurado del workflow;
+    el efecto colateral (rondas de refuerzo/verificación de más) no violó
+    ninguna regla — cada ronda de más fue una verificación independiente
+    genuina, no un cambio de comportamiento espurio, y quedó documentada
+    en las bitácoras. (3) `node .harness/harness.mjs init` dio timeouts de
+    arranque de worker de Vitest (`environment` a 781 s) por saturación de
+    CPU de un clúster de 9 procesos `claude.exe` residuales de un día
+    anterior (no relacionados con la colisión anterior); repetir la corrida
+    bastó para obtener 580/580 verde de forma estable, mismo criterio de
+    cautela ya usado en `pagina_blog`/`campanas_portada` ante colisiones.
+  - **Notas heredadas resueltas en el cierre** (mismo patrón que
+    `pagina_campanas`/`pagina_blog`): `features/ensamblaje_landing.feature`
+    @s12 ya no tenía ningún destino real que lo satisficiera (las tres
+    rutas de subpágina — 16, 17, 18 — tienen ya su propia página) —
+    **retirado** (no solo re-acotado, como en los dos cierres anteriores,
+    porque esta vez la lista de pendientes queda vacía; mantenerlo habría
+    sido un escenario sin ningún caso real, patrón
+    `verde-por-vacuidad-en-puerta-de-verificacion`), con nota explicativa
+    en la cabecera del fichero y en el hueco que deja entre @s11 y @s13.
+    `src/App.test.tsx` tenía un comentario desactualizado (afirmaba que
+    `RUTAS_DE_SUBPAGINA` valía `['/campanas', '/blog', '/tienda']`, cuando
+    ya vale `[]`) — corregido por `tdd_craftsman` (comentario únicamente,
+    cero cambio de aserción, verificado por mí de forma independiente con
+    `git diff` + `node .harness/harness.mjs init`).
+  Marcado `done` en `feature_list.json` por mí (craftsman_lead). Con las
+  tres subpáginas (16-18) ya `done`, las "seis páginas publicadas" que
+  `seo_estructura` (id 15) exige existen todas de verdad: **arranca
+  `seo_estructura`** — única feature `in_progress`, respetando
+  `one_feature_at_a_time`.
 - **Reordenación (21/08/2026): `seo_estructura` (id 15) sigue bloqueada,
   ahora por `pagina_campanas`/`pagina_blog`/`pagina_tienda` (16-18), no por
   el ensamblaje.** `seo_estructura.feature` @s4/@s5/@s6/@s12/@s19 exigen
@@ -15,8 +107,110 @@
   aprobados (16-18 son `spec_ready` desde el 18/08/2026, ninguna decisión
   nueva que requiera al humano): construyo 16 → 17 → 18 primero, y vuelvo a
   `seo_estructura` cuando las seis páginas existan de verdad.
-- **Feature en curso:** pagina_tienda (id 18) — pendiente de arrancar
-  `tdd_craftsman` ronda 1.
+- **Feature en curso:** pagina_tienda (id 18) — `tdd_craftsman` ronda 1
+  **completa**, 44/44 escenarios (@s1-@s44) por TDD estricto desde cero,
+  pendiente de `judge` y `mutation_tester`. Entregables: `src/data/tienda.ts`
+  (`CATEGORIAS_TIENDA` fijas del cliente + `PRODUCTOS_DEMO`, 8 productos
+  literales del Background, `importeCentimos` ya en céntimos enteros —
+  conversión euro→céntimo hecha una sola vez a mano, con el euro original
+  en comentario, nunca parseada en runtime), `src/pages/PaginaTienda-logica.ts`
+  (`construirCatalogoTienda` fail-closed categoría/importe + descarte
+  silencioso de nombre vacío, `formatearImporte` vía `Intl.NumberFormat`
+  verificado con Node antes del primer test, `filtrarProductosPorCategoria`,
+  reducer de cesta `anadirUnidad`/`quitarUnidad`/`fijarCantidad`/
+  `eliminarLinea`/`vaciarCesta` con tope de 99 y rechazo de cantidad
+  inválida sin clampar, `calcularResumenCesta` sumando céntimos enteros,
+  `formatearContadorArticulos`/`rotuloBotonAnadir`/`nombreAccesibleBotonAnadir`),
+  `src/pages/PaginaTienda.tsx` (filtro `aria-pressed`, rejilla con estados
+  vacíos, `PanelCesta`: `<dialog open aria-modal="true">` nativo con
+  `aria-labelledby`, foco al abrir, Escape vía listener de `document` en
+  `useEffect` — no `onKeyDown` en el propio diálogo, por
+  `jsx-a11y/no-noninteractive-element-interactions` — foco de vuelta al
+  botón de la cesta al cerrar). Router: `/tienda` aterriza su propia
+  `<Route>` en `App.tsx`, añadida a `RUTAS_YA_CON_PAGINA_PROPIA`
+  (`App-logica.ts`); `RUTAS_DE_SUBPAGINA` queda **vacía** (esperado: ya no
+  quedan subpáginas de `navegacion.ts` sin página propia). `App.test.tsx`:
+  se retira el `it.each(['/tienda'])` del catch-all de casos conocidos (ya
+  no tiene ningún caso), sin tocar @s7 (shell común)/@s12 refuerzo/@s13
+  (catch-all genérico para rutas no registradas, que sigue vigente sin
+  cambios). `App-logica.test.ts`: literal `['/tienda']` → `[]`, verificado
+  en rojo antes del cambio de producción. 9 escenarios "verde a la primera"
+  (@s2, @s3, @s4, @s7, @s12, @s20, @s22, @s27, @s28), 2 de los de mayor
+  riesgo (@s27, @s40) verificados con sabotaje manual explícito (mensaje de
+  error confirmado, revertido). `pnpm run test`: 562/562 (baseline 484/38 →
+  562/40). `pnpm run lint && pnpm run typecheck`: limpio.
+  `node .harness/harness.mjs init`: verde de punta a punta. `features/
+  ensamblaje_landing.feature` NO se toca en esta ronda (lo hace el
+  `craftsman_lead` al cierre, mismo patrón que `pagina_campanas`/
+  `pagina_blog`). Trazabilidad @s→test completa, con nota de diseño y diff
+  exacto del router, en `progress/tdd_pagina_tienda.md`.
+- **`pagina_tienda` ronda 2 (refuerzo tras `judge`):** `judge` ronda 1
+  **CHANGES_REQUESTED** (`progress/judge_pagina_tienda.md`), 2 hallazgos:
+  (1) 16 aserciones `getByText('...€')` en `PaginaTienda.test.tsx` usaban
+  espacio ASCII en vez del espacio duro U+00A0 que exige la cabecera del
+  `.feature`, y pasaban solo porque el normalizador de Testing Library
+  colapsa cualquier espacio a ASCII antes de comparar — no verificaban
+  fidelidad byte a byte; (2) `PanelCesta` declaraba `aria-modal="true"` sin
+  atrapar el foco de verdad: Tab/Shift+Tab podían escapar hacia los chips
+  de filtro y la rejilla de detrás. `tdd_craftsman` ronda 2: (1) corrigió
+  las 16 aserciones al espacio duro real Y añadió `{ collapseWhitespace:
+  false }` (sin esa opción el fix literal rompía los tests: el
+  normalizador solo normaliza el texto del DOM, nunca el matcher —
+  diagnosticado leyendo el código fuente de `@testing-library/dom`,
+  verificado con sabotaje manual: 10 tests en rojo con `formatearImporte`
+  saboteado a espacio ASCII, revertido a 35/35 verde); (2) implementó un
+  atrapa-foco real (`elementoTrasAtraparFoco`, función pura nueva en
+  `PaginaTienda-logica.ts`, cableada en el listener de `document` ya
+  existente de `PanelCesta`) con test de integración nuevo (Rojo→Verde,
+  tabula repetidamente en ambos sentidos y comprueba que el foco nunca sale
+  del diálogo) + 6 tests unitarios directos de la función pura, todos
+  verificados con sabotaje manual (4/7 tests en rojo con la función
+  saboteada a `return null` fijo). `pnpm run test`: 569/569 (562 → 569, +7).
+  `pnpm run lint && pnpm run typecheck`: limpio. `node .harness/harness.mjs
+  init`: verde de punta a punta. Detalle completo (diagnóstico técnico,
+  trazabilidad, evidencia de sabotaje) en la sección "Ronda 2" de
+  `progress/tdd_pagina_tienda.md`. Pendiente de nuevo veredicto del `judge`
+  y de `mutation_tester`.
+- **`pagina_tienda` ronda 3 (refuerzo tras `judge`):** `judge` ronda 2
+  **CHANGES_REQUESTED** (`progress/judge_pagina_tienda.md`), 1 hallazgo
+  bloqueante: de las 18 aserciones `getByText('...€')` que exigen fidelidad
+  byte a byte del espacio duro U+00A0, la ronda 2 corrigió solo 16 — las 2
+  de `@s29` (`PaginaTienda.test.tsx:370-371`) seguían con espacio ASCII y
+  sin `{ collapseWhitespace: false }`, confirmado por el `judge` con
+  sabotaje manual en vivo (10 tests en rojo, pero `@s29` quedaba en verde).
+  `tdd_craftsman` ronda 3: cambio mínimo, solo esas 2 aserciones (mismo
+  patrón que las otras 16), verificado con el mismo sabotaje reproducido de
+  forma independiente antes y después del fix (rojo confirmado con el fix
+  aplicado + sabotaje activo; revertido a 86/86 verde). Cero producción
+  tocada en el estado final. `pnpm run test`: 569/569 (sin cambio de
+  conteo). `node .harness/harness.mjs init`: verde de punta a punta. Detalle
+  en la sección "Ronda 3" de `progress/tdd_pagina_tienda.md`. Pendiente de
+  nuevo veredicto del `judge`.
+- **`pagina_tienda` ronda 5 (refuerzo tras `judge`, encargo etiquetado
+  "ronda 4" pero numerado Ronda 5 en la bitácora para no chocar con una
+  sección previa que documentaba un contenido ya sobrescrito de
+  `progress/judge_pagina_tienda.md`):** `judge` **CHANGES_REQUESTED**, 1
+  hallazgo bloqueante: `@s9` (`PaginaTienda.test.tsx`, describe `@s9`) solo
+  verificaba el conteo (`toHaveLength(2)`) y `aria-pressed` tras filtrar por
+  "Descanso", nunca CUÁLES productos se muestran — el `Then` del
+  `.feature` exige los nombres accesibles exactos. El `judge` demostró con
+  sabotaje propio (`productosFiltrados` forzado a filtrar "Paseo" cuando
+  `categoriaActiva === 'Descanso'`) que toda la suite (86/86) seguía en
+  verde con ese defecto de cableado real en `PaginaTienda.tsx`, fuera del
+  glob de mutación de Stryker. `tdd_craftsman` ronda 5: reprodujo el mismo
+  sabotaje de forma independiente (86/86 verde confirmado antes de tocar
+  nada), añadió 1 aserción dentro del test existente de `@s9` (mismo patrón
+  que `@s13`: `getAllByRole('heading', { level: 2 }).map(...).toEqual([...])`
+  con los 2 literales exactos, incluido el signo `×` U+00D7), confirmó ROJO
+  con el sabotaje activo + fix aplicado (falla mostrando "Arnés"/"Correa" en
+  vez de "Cama"/"Manta"), revirtió el sabotaje → 86/86 verde. Cero
+  producción tocada en el estado final. Nota de colisión: una primera
+  corrida de `node .harness/harness.mjs init` dio un falso rojo transitorio
+  con 10 procesos `claude.exe` simultáneos detectados en la máquina (mismo
+  patrón de colisión ya anotado en esta bitácora); repetida de inmediato,
+  **569/569 verde de forma estable**. Detalle en la sección "Ronda 5" de
+  `progress/tdd_pagina_tienda.md`. Pendiente de nuevo veredicto del `judge`
+  y de `mutation_tester`.
 - **Fase:** `tdd_craftsman` → `judge` → `mutation_tester` (umbral 1.0)
 - **`pagina_blog` (id 17): DONE.** 31/31 escenarios, 3 rondas. Entregables:
   `src/data/blog.ts` (`ARTICULOS_DEMO`, 6 artículos literales del

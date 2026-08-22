@@ -154,32 +154,24 @@ describe('@s11 antes de la primera medición, Cabecera recibe un ancho inicial q
   })
 })
 
-describe('@s12 la ruta /tienda sirve el catch-all "Página no encontrada" con enlace de vuelta', () => {
-  // "/campanas" salió de esta lista desde `pagina_campanas` (feature 16) y
-  // "/blog" sale ahora desde `pagina_blog` (feature 17): ninguna de las dos
-  // es ya 404 — cada una tiene su propia `<Route>` real
-  // (`src/pages/PaginaCampanas.tsx`, `src/pages/PaginaBlog.tsx`). Su cobertura
-  // de contenido real vive en `PaginaCampanas.test.tsx`/`PaginaBlog.test.tsx`,
-  // no aquí. "/tienda" sigue sin página propia (feature 18, aún no
-  // aterrizada) y por tanto sigue sirviendo este catch-all: se conserva su
-  // cobertura tal cual.
-  it.each(['/tienda'])(
-    'en "%s" hay un encabezado "Página no encontrada" y un enlace "Volver al inicio" a "/"',
-    (ruta) => {
-      window.history.pushState(null, '', ruta)
-      renderizarApp()
-
-      expect(screen.getByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
-      expect(screen.getAllByRole('contentinfo')).toHaveLength(1)
-      expect(screen.getByRole('link', { name: /Galapavet/ })).toHaveAttribute('href', '#inicio')
-    },
-  )
-})
+// @s12 (ensamblaje_landing): "las rutas de subpágina sirven el catch-all
+// hasta que sus propias features las implementen". "/campanas" salió de ese
+// conjunto con `pagina_campanas` (feature 16), "/blog" con `pagina_blog`
+// (feature 17) y "/tienda" sale ahora con `pagina_tienda` (feature 18, esta
+// feature) — `App.tsx` ya registra su propia `<Route>` real para las tres
+// (`src/pages/PaginaCampanas.tsx`, `src/pages/PaginaBlog.tsx`,
+// `src/pages/PaginaTienda.tsx`). RUTAS_DE_SUBPAGINA (`src/App-logica.ts`)
+// queda vacía: ya no hay ninguna ruta conocida de `navegacion.ts` que sirva
+// este catch-all, así que el `it.each` de casos conocidos que vivía aquí ya
+// no tiene ningún caso que enumerar y se retira. El catch-all GENÉRICO para
+// rutas NO registradas en absoluto sigue vigente y cubierto en @s13, más
+// abajo, sin cambios. La cobertura de contenido real de "/tienda" vive en
+// `src/pages/PaginaTienda.test.tsx`.
 
 describe('@s12 refuerzo — App registra un <Route> explícito por cada ruta de subpágina, no solo cae en el comodín "*"', () => {
-  // El valor exacto de RUTAS_DE_SUBPAGINA (`['/campanas', '/blog', '/tienda']`)
-  // se verifica en `src/App-logica.test.ts`, donde vive ahora esa derivación.
+  // Con pagina_campanas/pagina_blog/pagina_tienda ya implementadas, las tres
+  // rutas de subpágina tienen su propia página y RUTAS_DE_SUBPAGINA (`src/App-logica.ts`)
+  // vale ahora `[]`; ese valor exacto se verifica en `src/App-logica.test.ts`.
   it('App registra un <Route> explícito con ese path por cada ruta de subpágina, además del comodín "*"', async () => {
     const { jsxDEV } = await import('react/jsx-dev-runtime')
     const espiaJsxDev = jsxDEV as ReturnType<typeof vi.fn>
