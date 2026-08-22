@@ -36,15 +36,38 @@ const HORARIO: readonly TramoHorario[] = [
 
 const SEPARADOR_UNA_LINEA = ', '
 
-/** Las líneas visibles de la dirección son el único dato declarado; la forma de una línea se deriva de ellas (@s17). */
-function crearDireccion(lineas: readonly [string, string]): { lineas: readonly [string, string]; unaLinea: string } {
-  return { lineas, unaLinea: lineas.join(SEPARADOR_UNA_LINEA) }
+interface DireccionEstructurada {
+  readonly calle: string
+  readonly codigoPostal: string
+  readonly localidad: string
+  readonly region: string
+}
+
+/**
+ * Calle, código postal, localidad y región son el único dato declarado (§2 de
+ * `docs/datos-galapavet.md`); las dos formas visibles ya existentes
+ * (`lineas`, `unaLinea`) Y la forma estructurada que consume el bloque de
+ * datos estructurados (`seo_estructura.feature` @s9) se derivan de ellos, sin
+ * retipear nada (Invariante 2).
+ */
+function crearDireccion(estructurada: DireccionEstructurada): DireccionEstructurada & {
+  lineas: readonly [string, string]
+  unaLinea: string
+} {
+  const segundaLinea = `${estructurada.codigoPostal} ${estructurada.localidad}, ${estructurada.region}`
+  const lineas = [estructurada.calle, segundaLinea] as const
+  return { ...estructurada, lineas, unaLinea: lineas.join(SEPARADOR_UNA_LINEA) }
 }
 
 const LOCALIDAD = 'Galapagar'
 const PROVINCIA = 'Madrid'
 
-const DIRECCION = crearDireccion(['Carretera de Torrelodones, 11', `28260 ${LOCALIDAD}, ${PROVINCIA}`])
+const DIRECCION = crearDireccion({
+  calle: 'Carretera de Torrelodones, 11',
+  codigoPostal: '28260',
+  localidad: LOCALIDAD,
+  region: PROVINCIA,
+})
 
 const NOMBRE_COMERCIAL = 'Galapavet'
 const DESCRIPTOR = 'Centro integral veterinario'

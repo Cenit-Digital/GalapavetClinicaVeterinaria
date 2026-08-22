@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { CAMPANAS_DEMO, type CampanaDemo } from '../data/campanas'
+import { MetadatosPagina } from '../components/MetadatosPagina'
+import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
+import { METADATOS_CAMPANAS, METADATOS_FICHA_CAMPANA } from '../lib/seo-logica'
 import { datosNegocio } from '../lib/site'
 import {
   construirCatalogoCampanas,
@@ -245,6 +248,10 @@ export function PaginaCampanas({ catalogo: catalogoDemo = CAMPANAS_DEMO }: Pagin
 
   return (
     <main>
+      <MetadatosPagina
+        metadatos={vista.tipo === 'ficha' ? METADATOS_FICHA_CAMPANA : METADATOS_CAMPANAS}
+        datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}
+      />
       {vista.tipo === 'ficha' ? (
         <VistaFicha campana={vista.campana} otras={otrasCampanas(catalogo, vista.campana.id)} />
       ) : (

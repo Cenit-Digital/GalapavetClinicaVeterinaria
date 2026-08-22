@@ -231,7 +231,7 @@
         "Los datos del JSON-LD derivan de la fuente única y coinciden con los visibles"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 16,
@@ -288,7 +288,7 @@
         "La puerta falla cerrada si no analiza ninguna página"
       ],
       "sdd": true,
-      "status": "spec_ready"
+      "status": "in_progress"
     },
     {
       "id": 20,

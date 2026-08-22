@@ -4,6 +4,82 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **`seo_estructura` (id 15) — `tdd_craftsman` ronda 1 completa, 22/22
+  escenarios (@s1-@s22) por TDD estricto desde cero, pendiente de `judge` y
+  `mutation_tester`.** Diseño y trazabilidad completa @s→test en
+  `progress/tdd_seo_estructura.md`. Entregables: `src/lib/seo-logica.ts`
+  (catálogo de metadatos de las 6 páginas, `validarMetadatos`,
+  `construirDatosEstructurados` — JSON-LD `["VeterinaryCare","LocalBusiness"]`,
+  `geo`/valoración/registro NUNCA se emiten por diseño, sin ninguna rama de
+  código que los produzca), `src/lib/site.ts` ampliado (dirección
+  estructurada en `calle`/`codigoPostal`/`localidad`/`region`, de la que
+  `lineas`/`unaLinea` ya existentes se siguen derivando, verificado
+  byte-idéntico), `src/lib/datosEstructuradosNegocio.ts` (constante
+  compartida por las 3 subpáginas), `src/components/MetadatosPagina.tsx`
+  (único punto de efectos de `<head>`: `document.title`, meta description,
+  Open Graph con `es_ES`/guion bajo, `<script type="application/ld+json">`
+  con upsert — nunca duplica). Cableado en `Landing` (con prop
+  `calleDireccion` solo para @s11), `PaginaCampanas`, `PaginaBlog`,
+  `PaginaTienda`. Sin `react-helmet` (no hay precedente en el repo). 6
+  sabotajes manuales documentados (guarda de horario vacío, rama `geo`
+  ingenua, `lang` con guion bajo, viewport sin zoom, upsert de `<script>`
+  desactivado, override de `Landing` ignorado), todos reprodujeron rojo y se
+  revirtieron sin resto. `pnpm run test`: 621/621 (580/40 → 621/46).
+  `pnpm run lint && pnpm run typecheck`: limpio. `node .harness/harness.mjs
+  init`: verde de punta a punta, sin timeouts de worker en esta corrida.
+
+- **`seo_estructura` (id 15): DONE (22/08/2026).** 22/22 escenarios, la
+  feature transversal que responde directamente al hallazgo del estudio de
+  prospección («SEO inexistente»). Cierre reconciliado por mí
+  (craftsman_lead) tras leer completos `progress/tdd_seo_estructura.md` (2
+  rondas), `progress/judge_seo_estructura.md` (2 rondas, la segunda con
+  verificación línea a línea del fichero no trackeado — `git diff` no da
+  señal sobre ficheros nuevos — más 3 sabotajes manuales independientes) y
+  `progress/mutation_seo_estructura.md` (2 mediciones), y repetir yo mismo
+  `node .harness/harness.mjs init` de forma independiente: **624/624
+  verde**. Entregables: `src/lib/seo-logica.ts` (módulo puro: construcción
+  del bloque JSON-LD y validación de metadatos — Invariante 6; tipo doble
+  `["VeterinaryCare","LocalBusiness"]`, `PostalAddress`/
+  `OpeningHoursSpecification`/`GeoCoordinates` con nombres exactos del
+  vocabulario, regla "lo que no hay se omite, nunca se emite vacío"),
+  `src/lib/datosEstructuradosNegocio.ts` (ensamblaje desde `datosNegocio`),
+  `src/components/MetadatosPagina.tsx` (única pieza con efecto de DOM: hace
+  upsert de `<meta>`/`<script type="application/ld+json">` sobre
+  `document.head`, sin lógica de decisión propia), `src/documento.test.ts`
+  (`lang="es-ES"`, UTF-8, viewport), `src/paginasSeo.test.tsx` (integración
+  sobre las 6 rutas reales). `src/lib/site.ts` se reestructura
+  (`crearDireccion` pasa a recibir la forma estructurada
+  `{calle, codigoPostal, localidad, region}` y deriva de ahí
+  `lineas`/`unaLinea`, antes al revés) para que el bloque JSON-LD y el texto
+  visible deriven del mismo campo — Invariante 2, verificado con sabotaje
+  independiente del propio `judge` (cambió `site.ts` a mano, confirmó que
+  bloque Y texto visible cambian juntos). Sin dependencias nuevas (nada de
+  `react-helmet`). `og:image` usa una ruta local provisional que aún no
+  existe como fichero — mismo criterio ya aceptado en `galeria.ts`, no es
+  deuda nueva.
+  - **Disciplina del cierre:** ronda 1 TDD completo desde cero (22/22 @s,
+    10 ciclos documentados, 6 sabotajes manuales explícitos) →
+    `pnpm run test` 621/621 → judge ronda 1 **APROBADO a la primera** (sin
+    `CHANGES_REQUESTED`, algo inusual en este proyecto para una feature de
+    este tamaño) con sabotaje independiente propio sobre @s10/@s11 →
+    `mutation_tester` ronda 1 **FAIL** 133/140 = 95.00% bruto, 7
+    supervivientes reales en `src/lib/seo-logica.ts` (líneas 157 y 189-190:
+    guarda de etiqueta de día no reconocida, guarda de `email`, guarda de
+    `sameAs` — los 3 casos "presencia" de un dato opcional que la suite
+    original solo probaba en su rama "ausencia") → `tdd_craftsman` ronda 2:
+    3 tests dirigidos, cero producción tocada (verificado por el `judge` con
+    dos métodos independientes: `git diff --stat` para los ficheros
+    trackeados y comparación línea a línea carácter a carácter para
+    `seo-logica.ts`, que al ser nuevo no aparece en el diff de un fichero no
+    añadido al índice) → judge ronda 2 **APROBADO**, reprodujo 3 de los 3
+    sabotajes exactos de Stryker de forma independiente → `mutation_tester`
+    ronda 2 (numerada "Ronda 3" en su propio informe) **PASS** 140/140 =
+    **100.00%**, 0 supervivientes, 0 timeouts en las 3 corridas. `bin/harness
+    init`: 624/624.
+  Marcado `done` en `feature_list.json` por mí (craftsman_lead). Con esto,
+  **19 de las 20 features del proyecto están `done`**: solo queda
+  `accesibilidad` (id 19), la puerta transversal final de cierre —
+  **arranca `accesibilidad`**, única feature `in_progress`.
 - **`pagina_tienda` (id 18): DONE (22/08/2026).** 44/44 escenarios, la
   feature más grande del proyecto hasta ahora. Cierre reconciliado por mí
   (craftsman_lead) tras leer completos `progress/tdd_pagina_tienda.md` (9

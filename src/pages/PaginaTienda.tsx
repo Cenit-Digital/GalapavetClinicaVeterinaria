@@ -1,6 +1,9 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { MetadatosPagina } from '../components/MetadatosPagina'
 import { CATEGORIAS_TIENDA, PRODUCTOS_DEMO, type ProductoDemo } from '../data/tienda'
+import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
+import { METADATOS_TIENDA } from '../lib/seo-logica'
 import {
   alcanzoTopeUnidades,
   anadirUnidad,
@@ -295,6 +298,7 @@ export function PaginaTienda({ catalogo: catalogoDemo = PRODUCTOS_DEMO }: Pagina
 
   return (
     <main>
+      <MetadatosPagina metadatos={METADATOS_TIENDA} datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO} />
       <h1>Tienda</h1>
       <p id={idAviso}>{AVISO_DEMOSTRACION}</p>
       <section aria-label="Catálogo" aria-describedby={idAviso}>

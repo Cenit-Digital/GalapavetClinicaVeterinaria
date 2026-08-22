@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react'
 import { Link, useParams, useSearchParams, type SetURLSearchParams, type URLSearchParamsInit } from 'react-router'
+import { MetadatosPagina } from '../components/MetadatosPagina'
 import { ARTICULOS_DEMO, type ArticuloDemo, type BloqueDeCuerpo } from '../data/blog'
+import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
 import { decidirComportamientoDesplazamiento } from '../lib/desplazamiento'
+import { METADATOS_ARTICULO_BLOG, METADATOS_BLOG } from '../lib/seo-logica'
 import {
   articulosRelacionados,
   calcularTiempoDeLectura,
@@ -231,6 +234,10 @@ export function PaginaBlog({ catalogo: catalogoDemo = ARTICULOS_DEMO }: PaginaBl
 
   return (
     <main>
+      <MetadatosPagina
+        metadatos={identificador === undefined ? METADATOS_BLOG : METADATOS_ARTICULO_BLOG}
+        datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}
+      />
       {identificador === undefined ? (
         <VistaListado catalogo={catalogo} searchParams={searchParams} setSearchParams={setSearchParams} />
       ) : (

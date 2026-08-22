@@ -167,3 +167,18 @@ describe('@s21 la identidad del negocio se declara una sola vez y su forma compu
     expect(identidad.descriptorConLocalidad).toBe('Centro integral veterinario en Galapagar, Madrid.')
   })
 })
+
+describe('seo_estructura @s9 la dirección también se expone estructurada, para el bloque de datos estructurados', () => {
+  it('calle, código postal, localidad y región son los mismos cuatro valores que ya componen "lineas"/"unaLinea"', () => {
+    const { direccion } = datosNegocio
+
+    expect(direccion.calle).toBe('Carretera de Torrelodones, 11')
+    expect(direccion.codigoPostal).toBe('28260')
+    expect(direccion.localidad).toBe('Galapagar')
+    expect(direccion.region).toBe('Madrid')
+
+    // Sin divergencia (Invariante 2): las formas ya existentes se siguen derivando de estos mismos cuatro valores.
+    expect(direccion.lineas).toEqual(['Carretera de Torrelodones, 11', '28260 Galapagar, Madrid'])
+    expect(direccion.unaLinea).toBe('Carretera de Torrelodones, 11, 28260 Galapagar, Madrid')
+  })
+})
