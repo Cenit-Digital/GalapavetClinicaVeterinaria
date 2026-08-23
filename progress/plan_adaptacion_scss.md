@@ -98,6 +98,63 @@ Sass es intra-compilación; entre 17 compilaciones no existe.
 
 ## 1 · FICHEROS NUEVOS
 
+> ## ⚠ CORRECCIÓN DE ARQUITECTURA — el barril de 5 parciales NO cabe en el contrato
+>
+> Este bloque proponía `src/styles/main.scss` como barril más cuatro parciales
+> (`_reset`, `_base`, `_tipografia`, `_fuentes`). **El contrato aprobado nombra un solo
+> fichero, `src/styles/global.scss`, y lee su TEXTO CRUDO con `?raw`** en seis escenarios
+> distintos:
+>
+> | escenario | qué exige encontrar **dentro de `src/styles/global.scss`** |
+> | --- | --- |
+> | @s12 | que el fichero exista y que `src/main.tsx` lo importe **exactamente una vez** |
+> | @s13 | las **nueve familias** del reset, contadas |
+> | @s14 | `scroll-padding-top` sobre `html` |
+> | @s15 | todo `scroll-behavior: smooth` y el bloque `reduce` |
+> | @s17 | las `@font-face` de Outfit y DM Sans |
+> | @s18 | las dos `@font-face` de respaldo con las seis métricas de Capsize |
+>
+> Un `?raw` sobre un barril de cinco `@use` devuelve **cinco líneas de `@use`**: no
+> contiene ni una de esas declaraciones, y los seis escenarios fallarían. **No hay forma
+> de salvar el barril**: el `?raw` no resuelve `@use`, y escribir un resolvedor de `@use`
+> dentro del test sería inventarse una herramienta para eludir un contrato aprobado.
+>
+> **Decisión: un único `src/styles/global.scss`** que contiene, en este orden y con sus
+> rótulos de sección, lo que los §1.3, §1.4, §1.5 y §1.6 describen: `@font-face` →
+> reset → capa base → tipografía → movimiento. Se conservan **íntegros** el contenido, las
+> siete diferencias con `_base.scss` de WebEmpresa, las seis con su `_reset.scss` y las
+> cuatro con `_tipografia.scss` de NailsLash: **lo que cambia es en cuántos ficheros se
+> reparte, no una sola de sus reglas**. `src/main.tsx` importa `./styles/global.scss` y
+> nada más.
+>
+> **Lo que NO se funde en `global.scss`, y por qué:**
+> - `src/styles/_tokens.scss` — su ruta está anclada por `tokensColor.test.ts:17`, que la
+>   globa con `?raw`. Moverla rompe las cuatro puertas de contraste (§6). `global.scss`
+>   hace `@use 'tokens';`.
+> - `src/styles/_api.scss` — la escisión del §2.2 sigue en pie tal cual: emite **cero
+>   CSS**, así que inyectarlo 17 veces por `additionalData` cuesta 0 bytes. Ninguno de los
+>   51 escenarios lo nombra.
+>
+> **Lo que se pierde y hay que reponer.** El barril tenía una virtud real: *«el orden de
+> la cascada queda escrito en un único sitio de 5 líneas, y es auditable»*, y habilitaba
+> el test T6 (*«el parcial existe **y está enganchado**»*). Con un solo fichero, ese test
+> cambia de forma pero **no desaparece**: `hojaGlobal.ts` pasa de aseverar «`main.scss`
+> hace `@use` de los cinco parciales» a aseverar **«`global.scss` declara las nueve
+> familias de @s13, en su orden»**, que es la misma protección anti-vacuidad —un
+> `global.scss` al que alguien le vacíe la mitad se pone rojo— expresada sobre el fichero
+> que el contrato sí nombra. La cascada sigue auditable: es el orden de las secciones
+> rotuladas dentro del fichero.
+>
+> **Segundo aviso, sobre el `body`.** @s13 pide dos reglas distintas para `body`:
+> `body { margin: 0 }` como familia 2, y una familia 6 que declara **a la vez**
+> `min-height: 100svh`, `line-height: 1.5`, `background-color: var(--color-fondo)`,
+> `color: var(--color-texto)` y `font-family: var(--fuente-texto)`. El plan repartía esas
+> cinco entre `_reset.scss` (min-height, line-height), `_base.scss` (fondo, color) y
+> `_tipografia.scss` (familia). **Van juntas en una sola regla**, o el «a la vez» del
+> escenario no se puede aseverar.
+>
+> (§9, divergencias D-4, D-5 y D-18.)
+
 ### 1.1 `src/main.tsx` — LA LÍNEA QUE FALTA (no es fichero nuevo, es la causa raíz)
 
 **Origen:** `WebEmpresa/src/main.tsx:11` y `NailsLashStudioWeb/src/main.tsx:43`, idénticos.
@@ -105,7 +162,7 @@ Sass es intra-compilación; entre 17 compilaciones no existe.
 **Qué se añade** — tres imports al principio del fichero, antes de `import { App }`:
 
 ```tsx
-import './styles/main.scss'
+import './styles/global.scss'
 ```
 
 (y, cuando entre la tipografía, los `@font-face` **antes** que la hoja: §1.6.)
@@ -123,7 +180,15 @@ ancla, no el fichero.
 
 ---
 
-### 1.2 `src/styles/main.scss` — el barril
+### 1.2 `src/styles/global.scss` — el fichero único (antes «el barril»)
+
+> **Esta subsección se escribió como barril de 5 `@use` y queda SUPERSEDIDA por la
+> corrección de arquitectura de la cabecera del §1: el fichero se llama
+> `src/styles/global.scss` y contiene las secciones, no los `@use` a parciales.**
+> Lo que sigue conserva su valor y **no se borra**: las tres cosas que NO se portan
+> (`logo-draw`, `demo`, el `color-scheme` constante) siguen siendo decisiones vigentes, y
+> el orden de la cascada sigue siendo el mismo — solo que ahora es el orden de las
+> secciones rotuladas dentro de un fichero, en vez del orden de cinco `@use`.
 
 **Origen:** `WebEmpresa/src/styles/main.scss:1-4` (4 líneas) y
 `NailsLashStudioWeb/src/styles/main.scss:1-13`.
@@ -131,18 +196,18 @@ ancla, no el fichero.
 **Contenido decidido:**
 
 ```scss
-// Punto de entrada de los estilos globales. Único fichero que `src/main.tsx`
-// importa: el orden de estos `@use` ES la cascada, y es auditable.
-//   tokens     → declara las custom properties de las 4 variantes (:root[data-variante])
-//   fuentes    → los @font-face autoalojados (ningún color, ninguna regla de elemento)
-//   reset      → normaliza el user-agent
-//   base       → aplica los tokens al documento (body, encabezados, foco, .prose)
-//   tipografia → suelo heredable de familia tipográfica (fichero aparte: ver 1.5)
+// src/styles/global.scss — la capa global del documento. Único fichero que
+// `src/main.tsx` importa (@s12). El orden de estas secciones ES la cascada:
+//   A. tokens      → @use del parcial de custom properties (ruta anclada: §6)
+//   B. fuentes     → los @font-face autoalojados + los 2 de respaldo (@s17, @s18)
+//   C. variables de tipografía → --fuente-titulo / --fuente-texto (@s13, @s17)
+//   D. reset       → las nueve familias de la Decisión 29 (@s13)
+//   E. base        → aplica los tokens al documento (body, encabezados, foco, .prosa)
+//   F. shell       → #root: aislamiento + rejilla que ancla el pie (@s13, @s46)
+//   G. movimiento  → scroll-padding-top, no-preference y reduce (@s14, @s15)
 @use 'tokens';
-@use 'fuentes';
-@use 'reset';
-@use 'base';
-@use 'tipografia';
+
+// ... el contenido de §1.6 (B), §1.5 (C), §1.3 (D), §1.4 (E, F, G), en ese orden ...
 ```
 
 **Qué cambia respecto del original:**
@@ -351,7 +416,63 @@ Va aquí, atado a la variable que dimensiona la cabecera, **no** a un número re
 
 ```scss
 html {
-  scroll-padding-block-start: calc(var(--altura-cabecera) + #{espaciado(16)});
+  scroll-padding-top: calc(var(--altura-cabecera) + #{espaciado(16)});
+}
+```
+
+> ⚠ **CORRECCIÓN — se escribe `scroll-padding-top`, no `scroll-padding-block-start`.**
+> @s14 exige literalmente que *«"html" declara "scroll-padding-top"»*, y la comprobación es
+> una lectura de texto: `scroll-padding-block-start` **no contiene** esa cadena y el
+> escenario fallaría. Son equivalentes en modo de escritura `horizontal-tb`, que es el
+> único que este sitio usa, así que no se pierde nada. **Manda el contrato.**
+>
+> Y @s14 pide una segunda mitad que el plan no cubría: *«esa misma variable es la que la
+> maquetación de la cabecera usa para su propia altura»*. `--altura-cabecera` no basta con
+> declararla en `_tokens.scss` y consumirla aquí: **`Cabecera.module.scss` tiene que
+> dimensionarse con ella** (`height: var(--altura-cabecera)`), o el escenario tiene dos
+> números que pueden divergir, que es justo lo que existe para impedir.
+
+**Segundo añadido que el plan no tenía: el bloque `reduce`.** @s15 lo exige por su
+contenido exacto: *«el bloque `@media (prefers-reduced-motion: reduce)` anula la duración
+de animación y de transición con `0.01ms` y no con `0`, para que `transitionend` y
+`animationend` sigan disparándose»*. El `_base.scss` propuesto solo tenía el bloque
+`no-preference`. Van los dos:
+
+```scss
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}
+```
+
+**Y no, esto NO es la forma prohibida del prototipo.** Lo que el §6 prohíbe —y con
+razón— es *declarar el movimiento fuera de la consulta y revocarlo después* con
+`* { transition-duration: .01ms !important }`. Aquí el movimiento sigue siendo **opt-in**
+(se declara **solo** dentro de `no-preference`) y este bloque es una **red de seguridad
+sin `!important`** para lo que el navegador o una librería puedan animar por su cuenta.
+La puerta existente lo admite explícitamente: `movimientoRespetuoso.ts:8-9` acepta un
+bloque `reduce` *«donde se asume que la regla existe para anular la duración»*.
+Verificado leyendo `PATRON_REDUCE` (`:20`). Sin este bloque, @s42 —*«ninguna transición se
+ejecuta con una duración efectiva distinta de 0.01 milisegundos»*— no puede pasar.
+
+**Tercer añadido: el pie que cierra la ventana (@s46).** El escenario dice que cerrarlo
+*«cierra el PENDIENTE que `sistema_de_diseno_visual.feature` dejó anotado sobre si el shell
+común necesita fichero de estilos propio»*. La respuesta es **no**: va en `global.scss`,
+porque @s12 prohíbe que un `.module.scss` declare reglas para `html`, `body` o `#root`. La
+regla del `#root` hace dos cosas a la vez, y las dos son de contrato —`isolation: isolate`
+es la familia 8 de @s13—:
+
+```scss
+#root {
+  isolation: isolate;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;   // cabecera · main · pie
 }
 ```
 
@@ -376,19 +497,42 @@ en `estudio_nailslash.md` §6.1).
 // (0 `font-family` en todo el CSS de `dist/`; `getComputedStyle(body).fontFamily` =
 // "Times New Roman").
 //
-// Solo familias YA horneadas por `_fuentes.scss`: ni @import ni @font-face nuevos,
-// ningún tercero (Decisión 9).
+// Solo familias YA horneadas por la sección de @font-face de este mismo fichero: ni
+// @import ni @font-face nuevos, ningún tercero (Decisión 9).
+:root {
+  --fuente-titulo: 'Outfit', 'Outfit Fallback', Arial, sans-serif;
+  --fuente-texto: 'DM Sans', 'DM Sans Fallback', Arial, sans-serif;
+}
+
 body {
-  font-family: 'DM Sans', 'DM Sans Fallback', Arial, sans-serif;
+  font-family: var(--fuente-texto);
 }
 
 // Suelo de TIPO de los encabezados. Regla CONJUNTA (una sola, seis selectores), no seis
 // reglas: es un selector de TIPO (0,0,1), el más débil que existe tras la herencia, así
 // que CUALQUIER clase de cualquier módulo lo derrota. Es un SUELO, no un techo.
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', 'Outfit Fallback', Arial, sans-serif;
+  font-family: var(--fuente-titulo);
 }
 ```
+
+> ⚠ **CORRECCIÓN — la familia se consume por VARIABLE, no por literal repetido.** La
+> diferencia 2 de la tabla de abajo decidía *«literales, no tokens»*, copiando a NailsLash.
+> **El contrato decide lo contrario, dos veces**: @s13 exige que el `body` tome *«la
+> familia … de la variable de tipografía de texto»*, y @s17 exige que *«la variable de
+> tipografía de titulares nombre "Outfit" y la de texto nombre "DM Sans"»*. Las dos frases
+> dicen **variable**, no literal.
+>
+> **Y el miedo que motivaba el literal no aplica aquí.** La objeción de NailsLash
+> (`tipografia-global.test.ts:16-18`) es que importar el token **como símbolo** para
+> compararlo consigo mismo es tautología. Cierto — y el contrato la evita por otra vía: el
+> test **lee del texto crudo del SCSS** el valor declarado de `--fuente-titulo` y lo
+> compara contra el literal `'Outfit'` **escrito a mano en el escenario**. Nada se importa,
+> nada se compara consigo mismo, y encima la consistencia deja de depender de una
+> *allowlist* que hay que recordar actualizar: hay **un solo sitio** donde cambiar la
+> familia. Las dos variables se declaran en un `:root` **sin `[data-variante]`**, porque la
+> tipografía no cambia con la paleta; no entran en los 17 tokens de @s1 ni en el recuento
+> de 68 pares de @s2 (§9, divergencia D-18).
 
 **Qué cambia respecto del original de NailsLash — cuatro diferencias:**
 
@@ -472,11 +616,14 @@ satisfecha: **cero peticiones a `fonts.googleapis.com`**.
 
 | Ruta | Nivel | Qué hace |
 | --- | --- | --- |
-| `src/lib/diseno/hojaGlobal.ts` | A (puro, mutado) | Inventario declarado de la capa global + comprobación de enganche (`main.tsx` → `main.scss` → cada parcial), con **guarda de no-vacuidad propia**. Es la puerta que hoy no existe y que habría cazado el fallo de raíz. |
+| `src/lib/diseno/hojaGlobal.ts` | A (puro, mutado) | Inventario declarado de las **nueve familias de reglas de @s13**, en su orden, + comprobación de enganche (`main.tsx` → `global.scss`), con **guarda de no-vacuidad propia**. Es la puerta que hoy no existe y que habría cazado el fallo de raíz. |
+| `src/lib/diseno/escalaDeMovimiento.ts` | A (puro, mutado) | **@s16**: las dos duraciones (150, 300) y la curva `ease-out` como inventario declarado, más el barrido de todas las duraciones de transición escritas en los ficheros de estilos y la prohibición de animar `all`. No estaba en el plan. |
+| `src/lib/diseno/configuracionAxe.ts` | A (puro, mutado) | **@s35**: las cinco etiquetas acumulativas como literal declarado, contrastado contra el texto real de las pruebas de navegador, y la prohibición de `.options()`. No estaba en el plan. |
+| `src/lib/diseno/escenariosHeredados.ts` | A (puro, mutado) | **@s50**: los doce identificadores heredados (8 de la feature 21 + 4 de la 19), con el recuento exacto de 12 y la comprobación de que cada uno está citado desde al menos una prueba de `tests/e2e`. No estaba en el plan. |
 | `src/lib/diseno/hojaGlobal.test.ts` | A | Su test, con literales escritos a mano. |
 | `src/lib/diseno/mezclaDeColor.ts` | A (puro, mutado) | `mezclar(base, otro, porcentaje) → '#RRGGBB'`: la derivación canal a canal con redondeo estándar. **Toda la tabla del §3 se recalcula con esto**, ningún hexadecimal se duplica a mano en el test. |
 | `src/lib/diseno/mezclaDeColor.test.ts` | A | Su test. Ancla los porcentajes y los hexadecimales resultantes por separado (anti-tautología). |
-| `src/styles/hoja-global.test.ts` | A | Aserciones sobre el TEXTO de `main.scss`/`_reset.scss`/`_base.scss`/`_tipografia.scss` con el parser de llaves de NailsLash. |
+| `src/styles/hoja-global.test.ts` | A | Aserciones sobre el TEXTO de `global.scss` con el parser de llaves de NailsLash (@s13, @s14, @s15, @s17, @s18). |
 | `playwright.config.ts`, `tsconfig.e2e.json` | C | Config del navegador real contra `vite preview` sobre `dist/`. |
 | `tests/e2e/capa-base.spec.ts` | C | Los cuatro síntomas medidos hoy, comprobados en Chrome real (§4.4). |
 | `tests/e2e/axe.spec.ts` | C | axe-core con `withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'])`. |
@@ -491,7 +638,7 @@ Extraerla a un módulo puro es lo que la convierte en verificación mutada de ve
 
 ## 2 · FICHEROS QUE SE AMPLÍAN
 
-### 2.1 `src/styles/_tokens.scss` — de 3 roles a 14
+### 2.1 `src/styles/_tokens.scss` — de 3 roles a 17 tokens (15 de color + 2 de sombra)
 
 Hoy declara 3 roles × 4 variantes (`:39-64`) más las escalas y mixins Sass (`:76-134`).
 
@@ -510,14 +657,20 @@ Forma: el bloque `:root` desnudo declara los valores de `marca` y los cuatro
 así que un `:root` desnudo **no** aparecerá en el inventario y @s1 sigue verde. Verificado
 leyendo la regex.
 
-**B. Los 11 roles nuevos van en los cinco bloques** (el desnudo + los cuatro), con los
-valores del §3.
+**B. Los 14 tokens nuevos van en los cinco bloques** (el desnudo + los cuatro), con los
+valores del §3: los 12 roles de color nuevos de @s3 (§3.3-§3.6) y los 2 de sombra (§3.8).
+Con los 3 ya existentes, **17 en cada bloque**. @s2 lo convierte en un recuento exacto:
+*«el recuento de pares (variante, token) efectivamente comprobados es exactamente 68»*
+= 17 × 4. El `:root` desnudo **no cuenta** para ese 68 (no lo matchea
+`PATRON_SELECTOR_VARIANTE`), y eso es correcto: es red de seguridad de runtime, no una
+quinta variante.
 
 **C. Restricción dura de formato, medida en el código de la puerta:**
 `extraerBloqueDeVariante` (`tokensColor.ts:35`) usa `[^}]*` → **un bloque de variante no
 puede contener llaves anidadas**; y `leerTokenDeVariante` (`:52`) exige literalmente
-`--color-<rol>: #RRGGBB;` con **hex de 6 dígitos**. Consecuencia: los 14 roles de color
+`--color-<rol>: #RRGGBB;` con **hex de 6 dígitos**. Consecuencia: los **15 roles de color**
 son hex de 6 dígitos, sin `color-mix()`, sin `rgba()`, sin `var()` encadenado.
+Los **2 roles de sombra** no pueden serlo, y por eso el lector se amplía: §2.5.
 
 **D. Los tokens que NO son color** (sombras, medidas, radios, alturas de control) también
 viven aquí, porque `puertaLiteralesColor.ts:27-30` señala **cualquier** `rgba()` en
@@ -525,22 +678,33 @@ viven aquí, porque `puertaLiteralesColor.ts:27-30` señala **cualquier** `rgba(
 ese glob** (`inventarioModulos.test.ts:88-89`). Es el único sitio legal para un `rgba()`:
 
 ```scss
---sombra-reposo:   0 6px 18px rgba(…);   // difuminado grande, alfa muy bajo
---sombra-elevada:  0 18px 45px rgba(…);
---maxw: 1220px;                          // el mismo número en las 5 páginas del prototipo
---gutter: clamp(18px, 5vw, 28px);
---seccion-y: clamp(64px, 9vw, 104px);
+// Los dos de sombra: valores completos y justificados en §3.8, distintos por variante.
+--sombra-reposo:   0 6px 18px rgba(83, 28, 75, 0.07);   // difuminado grande, alfa muy bajo
+--sombra-elevada:  0 18px 45px rgba(83, 28, 75, 0.10);
+// Medidas: NO son color y NO varían por variante -> van en el `:root` desnudo, una vez.
+--maxw: …;                               // PENDIENTE del tdd_craftsman: ver el aviso
+--gutter: …;
+--seccion-y: …;
 --radio-completo: 999px;
---altura-cabecera: …;                    // la consume `scroll-padding-block-start`
+--altura-cabecera: …;                    // la consume `scroll-padding-top` (§1.4) Y
+                                         // `Cabecera.module.scss` para su propia altura
 ```
 
-**Re-medición obligatoria, no herencia:** `--maxw` de WebEmpresa es **1180px**
-(`_tokens.scss:26-27`) y el del prototipo de diseño es **1220px** en las 4 páginas y sin
-excepciones. Gana el prototipo, que es el diseño aprobado de ESTE cliente. Igual con
-`--gutter`: WebEmpresa `clamp(18px,5vw,26px)`, prototipo `clamp(18px,5vw,28px)`
-(27 apariciones, el valor más repetido). El patrón
-`herencia-del-repo-base-es-deuda-muerta` pide además **anclar el rechazo**:
-`expect(scss).not.toContain('1180px')`.
+⚠ **CORRECCIÓN — `--maxw: 1220px` era un número del prototipo y sale del plan.** Esta
+sección decía *«gana el prototipo, que es el diseño aprobado de ESTE cliente»*, y eso
+contradice a la vez la regla de portabilidad de este mismo documento (*«se porta la
+ESTRUCTURA … los VALORES de marca no»*) y el contrato, cuyo PENDIENTE 3 es explícito:
+*«El prototipo usa 1220 px, pero la Decisión 24 solo autoriza tomar su ARQUITECTURA, no
+sus números, y 1220 no está verificado como valor de este proyecto … el valor concreto lo
+fija el `tdd_craftsman`»*. Lo mismo vale para `--gutter` y `--seccion-y`: se construyen
+sobre `$escala-espaciado`, la rejilla de 8 px que el proyecto YA tiene, no sobre las
+27 apariciones de un `clamp()` ajeno. Lo que @s45 exige es una **propiedad estructural**
+—que exista **un solo** ancho máximo, el mismo en las 6 rutas, y que el contenido no
+llegue al borde a 1600 px—, nunca una cifra concreta.
+**Lo que sí se conserva de la nota original**, porque es buen criterio y sigue valiendo:
+anclar el RECHAZO de lo heredado (`expect(scss).not.toContain('1180px')` y, ahora también,
+`not.toContain('1220px')` si el valor elegido no es ése) — patrón
+`herencia-del-repo-base-es-deuda-muerta` (§9, divergencia D-24).
 
 **E. `color-scheme` por variante, no en el barril.** `noche` es oscura y las otras tres
 claras, así que `color-scheme: light` no puede ser constante: va dentro de cada bloque de
@@ -592,7 +756,7 @@ CSS.**
 src/styles/_tokens.scss   → SOLO las custom properties (:root + 4 × :root[data-variante]).
                             La ruta NO cambia: `tokensColor.test.ts:17` la globa con `?raw`
                             y las 4 puertas de contraste dependen de ella.
-                            Se `@use`a UNA sola vez, desde `main.scss`.
+                            Se `@use`a UNA sola vez, desde `global.scss`.
 src/styles/_api.scss      → SOLO Sass: $escala-tipografica, paso-tipografico(),
                             $escala-espaciado, espaciado(), $grosor-foco,
                             @mixin foco-visible, $area-tactil-minima,
@@ -614,8 +778,8 @@ documenta un error real ya sufrido (*«`additionalData` se inyectaría también 
 mismo y provocaría un `@use` circular … error real de Sass "Module loop"»*). Ese comentario
 **queda obsoleto** con la escisión y hay que reescribirlo, no borrarlo: hoy el bucle es
 imposible porque `additionalData` inyecta `api`, no `tokens`, y `_api.scss` no usa
-`tokens`. **Verificado en M-4** que el caso `main.scss` (que sí recibe el `additionalData`
-por ser entrada) no produce ningún bucle.
+`tokens`. **Verificado en M-4** que el caso de la entrada (`global.scss`, que sí recibe el
+`additionalData` por serlo) no produce ningún bucle.
 
 **Lo que NO se toca de `vite.config.ts`:** `test.css.include: [/\?raw/]` (`:65`). Sus 20
 líneas de comentario (`:46-64`) documentan un fallo medido en vivo —activar la
@@ -640,11 +804,20 @@ Hoy las puertas @s24 (ningún literal de color) y @s33 (todo movimiento bajo
 **Se amplía el conjunto**, con su propia guarda de no-vacuidad (una por extractor, no una
 compartida):
 
-- `INVENTARIO_HOJAS_GLOBALES = ['main.scss', '_reset.scss', '_base.scss',
-  '_tipografia.scss', '_fuentes.scss']` — **`_tokens.scss` queda fuera del glob de
-  literales de color**, porque es el único sitio donde los hexadecimales y los `rgba()`
-  pueden vivir (y su contenido ya lo vigila `tokensColor.ts`).
-- @s33 (movimiento) **sí** cubre las cinco, `_tokens.scss` incluido.
+- `INVENTARIO_HOJAS_GLOBALES = ['global.scss', '_api.scss']` para la puerta de literales
+  de color — **`_tokens.scss` queda fuera de ese glob**, porque es el único sitio donde
+  los hexadecimales y los `rgba()` de las sombras pueden vivir (y su contenido ya lo
+  vigila `tokensColor.ts`).
+- La puerta de movimiento **sí** cubre las tres, `_tokens.scss` incluido.
+
+⚠ **Se invocan como catálogo SEPARADO, no ampliando el de los 17 módulos.** La versión
+anterior decía «se amplía el glob», y eso rompería @s51, que exige que *«el recuento de
+módulos del inventario coincida con el recuento de componentes visuales de
+`src/components` más el de páginas de `src/pages`»* — 12 + 5 = 17, y una hoja global no es
+ni un componente ni una página. Se llama **dos veces a la misma función pura**, una con
+los 17 módulos y otra con las hojas globales, **cada llamada con su propia guarda de
+no-vacuidad**. Así @s24 conserva su «exactamente 17», @s51 conserva su identidad de
+recuentos, y las hojas globales dejan de ser el punto ciego (§9, divergencia D-23).
 
 **Nota de la trampa:** `PATRON_NOMBRE_DE_COLOR` de `puertaLiteralesColor.ts` usa `\b`
 sobre los 16 nombres CSS. La palabra inglesa **`lime` está en esa lista**: un comentario
@@ -668,6 +841,25 @@ Tres añadidos, ninguno de ellos toca el `<script>` anti-FOUC (`:8-32`) ni su po
 when the fetch is not cross-origin**"*. Sin él el navegador **descarga el fichero dos
 veces** y la precarga es contraproducente.
 
+**Cuarto añadido, y es un 404 que se sirve hoy en todas las rutas.** `index.html:6`
+declara `<link rel="icon" type="image/svg+xml" href="/favicon.svg" />` y **ese fichero no
+existe** (`public/` tampoco). @s28 dice qué hacer, y no es inventarse un SVG: *«mientras
+no exista el vector del cliente, la etiqueta que declara el icono vectorial permanece
+comentada en vez de apuntar a un fichero inexistente»*. Se comenta, y se sirven los tres
+rasters que el escenario exige con código 200:
+
+```html
+<!-- Icono vectorial: pendiente del vector del cliente (@s28, PENDIENTE 8 del contrato).
+     No se apunta a un fichero inexistente: eso es un 404 en cada carga.
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" /> -->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />   <!-- 180×180 exactos -->
+```
+
+Mientras siga como está, **@s33 lo caza** (*«ninguna respuesta tiene un código de estado
+mayor o igual que 400»*) y @s28 también, por partida doble.
+
 **`theme-color` queda pendiente y declarado NO VERIFICADO**: con 4 variantes conmutadas
 por atributo no sirve la forma `media` de WebEmpresa (`index.html:7-9`); habría que
 escribirlo desde JS al cambiar de variante, y **no hay decisión tomada** en
@@ -675,37 +867,223 @@ escribirlo desde JS al cambiar de variante, y **no hay decisión tomada** en
 
 ---
 
+### 2.5 `src/lib/diseno/tokensColor.ts` — el lector, extendido (PENDIENTE 12 del contrato)
+
+**El problema, leído en el código y no supuesto.** Hoy el lector tiene dos límites duros:
+
+1. `leerTokenDeVariante` (`:50-58`) compila un patrón
+   `--color-<rol>:\s*(#[0-9a-fA-F]{6})\s*;` — solo lee tokens cuyo nombre empieza por
+   `--color-` y cuyo valor es un **hexadecimal de 6 dígitos**. Con eso **no puede leer
+   `--sombra-reposo`**: ni el prefijo casa ni el valor es un hex.
+2. `extraerBloqueDeVariante` (`:34-41`) usa `([^}]*)`, así que **un bloque de variante no
+   puede contener ni una llave anidada**: la primera `}` de un `@media` interior cortaría
+   el cuerpo por la mitad y los diez escenarios que dependen del lector caerían a la vez.
+
+@s1 y @s2 necesitan los dos tokens de sombra. Se resuelve **añadiendo hermanos, no
+relajando el lector existente**, y la razón es de puertas: si `leerTokenDeVariante`
+aceptara cualquier valor, un `#F4EEF` de 5 dígitos pasaría, y
+@s3/@s5/@s6/@s7/@s8/@s9 —que ya están aprobados— dejarían de detectar un token mal
+escrito. **El lector estricto se queda estricto.**
+
+**A. Los tipos.** `RolDeColor` pasa de 3 a **15** valores (los de @s1 sin el prefijo), y
+nace `RolDeSombra`. `leerTokenDeVariante` no cambia ni una línea: hereda los 12 roles
+nuevos por el tipo.
+
+```ts
+export type RolDeColor =
+  | 'fondo' | 'fondo-alterno' | 'superficie' | 'superficie-elevada' | 'tinta'
+  | 'texto' | 'texto-suave' | 'primario' | 'primario-fuerte' | 'sobre-primario'
+  | 'acento-tinta' | 'acento-suave' | 'borde-control' | 'borde' | 'foco'
+
+/** Los dos roles de sombra (@s1). No son color: no pasan por la puerta de contraste. */
+export type RolDeSombra = 'reposo' | 'elevada'
+
+/** Nombre completo de un token del sistema, tal y como se escribe en el SCSS. */
+export type NombreDeToken = `--color-${RolDeColor}` | `--sombra-${RolDeSombra}`
+```
+
+**B. El lector hermano, que lee el valor SIN interpretarlo.**
+
+```ts
+const PRIMERA_CAPTURA = 1
+
+/**
+ * Valor declarado de CUALQUIER token dentro del bloque de `variante`, tal cual
+ * lo escribe el fichero y sin normalizar. Existe porque `--sombra-reposo` vale
+ * una lista con `rgba()` y `leerTokenDeVariante` solo admite `#RRGGBB` (@s1,
+ * @s2 — PENDIENTE 12 del contrato). El lector estricto NO se relaja: convive.
+ */
+export function leerDeclaracionDeVariante(
+  textoScss: string,
+  variante: string,
+  nombreDeToken: NombreDeToken,
+): string {
+  const bloque = extraerBloqueDeVariante(textoScss, variante)
+  const coincidencia = bloque.match(new RegExp(nombreDeToken + ':\\s*([^;]+);'))
+  if (!coincidencia) {
+    throw new Error(`no se encontró el token "${nombreDeToken}" para la variante "${variante}"`)
+  }
+  return (coincidencia[PRIMERA_CAPTURA] as string).trim()
+}
+
+/** Si `variante` declara `nombreDeToken` en su PROPIO bloque, sin heredarlo (@s2). */
+export function declaraTokenEnVariante(
+  textoScss: string,
+  variante: string,
+  nombreDeToken: NombreDeToken,
+): boolean {
+  const bloque = extraerBloqueDeVariante(textoScss, variante)
+  return new RegExp(nombreDeToken + ':\\s*[^;]+;').test(bloque)
+}
+```
+
+**Por qué los dos puntos del patrón no son decorativos.** `--color-borde:` no casa dentro
+de `--color-borde-control: #A06997;`, porque entre `borde` y `:` hay `-control`. Lo mismo
+protege a `--color-primario` de `--color-primario-fuerte`, a `--color-fondo` de
+`--color-fondo-alterno`, a `--color-superficie` de `--color-superficie-elevada`, a
+`--color-texto` de `--color-texto-suave` y a `--color-tinta` de `--color-acento-tinta`.
+**Es exactamente la colisión que @s11 evita al prohibir un `--color-acento` a secas**:
+el sufijo obligatorio de `--color-acento-tinta` no es cosmética, es lo que mantiene el
+espacio de nombres legible por prefijo.
+
+**C. `extraerBloqueDeVariante` cuenta llaves.** Se sustituye `[^}]*` por un recorrido con
+profundidad, el mismo mecanismo que `movimientoRespetuoso.ts` ya usa en este repo:
+
+```ts
+const LLAVE_ABRE = '{'
+const LLAVE_CIERRA = '}'
+const SIN_COINCIDENCIA = -1
+const UNO = 1
+const PROFUNDIDAD_CERRADA = 0
+
+function extraerBloqueDeVariante(textoScss: string, variante: string): string {
+  const inicio = textoScss.search(patronDeEncabezadoDeVariante(variante))
+  if (inicio === SIN_COINCIDENCIA) {
+    throw new Error(`no se encontró ningún bloque ":root[data-variante='${variante}']" en el texto de tokens`)
+  }
+  const cuerpoEmpieza = textoScss.indexOf(LLAVE_ABRE, inicio) + UNO
+  let profundidad = UNO
+  let cursor = cuerpoEmpieza
+  while (cursor < textoScss.length && profundidad > PROFUNDIDAD_CERRADA) {
+    if (textoScss[cursor] === LLAVE_ABRE) { profundidad += UNO }
+    if (textoScss[cursor] === LLAVE_CIERRA) { profundidad -= UNO }
+    cursor += UNO
+  }
+  if (profundidad > PROFUNDIDAD_CERRADA) {
+    throw new Error(`el bloque ":root[data-variante='${variante}']" no se cierra: falta la llave de cierre`)
+  }
+  return textoScss.slice(cuerpoEmpieza, cursor - UNO)
+}
+```
+
+(`patronDeEncabezadoDeVariante` es el mismo selector que hoy, recortado en la llave de
+apertura: se extrae a función para que el literal viva **una sola vez** y no haya dos
+regex que puedan divergir.)
+
+**D. ⚠ AVISO A GRITOS PARA EL `tdd_craftsman`: este módulo está bajo StrykerJS con
+umbral 1.0.** `stryker.config.json` muta `src/lib/**/*.ts` y `break` está en 100: **un
+solo mutante superviviente tumba el cierre de la feature**. Cada rama, cada comparación y
+cada literal de arriba es un mutante nuevo. La lista de tests que hay que escribir
+**antes** de tocar el fichero, con el mutante que mata cada uno:
+
+| test (`it`) | mata el mutante |
+| --- | --- |
+| devuelve el cuerpo **exacto** de un bloque sin anidamiento (igualdad de string, sin llaves) | `+ UNO` → `- UNO`; `cursor - UNO` → `cursor`; `'{'` → `''` |
+| devuelve el cuerpo **entero** de un bloque que contiene un `@media` anidado | `profundidad += UNO` → `-=`; la vuelta a `[^}]*` |
+| **no se traga el bloque siguiente** cuando hay dos bloques de variante consecutivos | `profundidad > 0` → `>= 0`; `-=` → `+=` |
+| localiza el bloque cuando empieza en el **índice 0** del texto | `inicio === -1` → `inicio <= 0` / `>= -1` |
+| lanza con el **mensaje exacto** si la variante no existe | `SIN_COINCIDENCIA` → `0`; el `throw` eliminado |
+| lanza con el **mensaje exacto** si el bloque **no se cierra** (falta la `}`) | `cursor < length` → `<=`; la guarda final eliminada |
+| `leerDeclaracionDeVariante` lee `--sombra-reposo` con su `rgba()` y sus comas | `[^;]+` → `[^;]*`; la condición del `if` invertida |
+| **recorta** los espacios alrededor del valor | `.trim()` eliminado |
+| lanza con el mensaje exacto si el token pedido no está en el bloque | `!coincidencia` → `coincidencia` |
+| **no confunde** `--color-primario` con `--color-primario-fuerte`, en los dos sentidos | el `:` del patrón eliminado |
+| `declaraTokenEnVariante` devuelve `false` para un token ausente **y** `true` para uno presente | `test()` → `true` / `false` constante |
+| `leerTokenDeVariante` **sigue rechazando** un hex de 5 dígitos y un `rgba()` | la relajación accidental del lector estricto |
+
+Doce `it`, y ninguno es de adorno: son doce ramas nuevas en un fichero con `break: 100`.
+
+Y la puerta de @s2 lleva **su propia guarda de no-vacuidad**, como todas las de este repo
+(patrón `verde-por-vacuidad-en-puerta-de-verificacion`): catálogo de variantes vacío o
+inventario de tokens vacío → **suspenso con motivo**, nunca «68 de 68» sobre 0 × 0.
+
+**E. Cinturón y tirantes: la puerta que prohíbe anidar.** Aunque el lector ya cuente
+llaves, se escribe además la aserción que el §7.1 de este plan ya pedía —*«ningún
+bloque de variante contiene `{` interno»*—. Cuesta tres líneas y hace que un `@media`
+dentro de un bloque de variante falle **por su nombre** en vez de por un cuerpo cortado a
+la mitad.
+
+---
+
 ## 3 · LA TABLA DE ROLES DE COLOR COMPLETA
 
-### 3.1 Los 14 roles y su semántica
+### 3.1 Los 17 tokens y su semántica
+
+> **Fuente de verdad: `features/identidad_visual.feature` @s1, aprobado por la puerta
+> humana el 23/08/2026.** El contrato enumera a mano **17 nombres exactos** y exige
+> «el recuento de roles de color es exactamente 15 y el de roles de sombra exactamente 2».
+> Esta sección enumeraba antes 14 con tres nombres distintos y sin los dos de sombra:
+> **manda el contrato, se corrige el plan** (§9, divergencias D-1, D-2 y D-3).
+>
+> El titular «13 roles de color + 2 de sombra» de la Decisión 26 y de
+> `estudio_diseno_referencia.md` §1.2 es un **recuento equivocado** —ninguna de las dos
+> cuadra con su propia enumeración— y el propio contrato lo dice y **le encarga al
+> `craftsman_lead` corregirlo en `project-spec.md`**. Aquí ya está corregido: 15 + 2 = 17.
 
 Nombres en español, coherentes con los tres que ya existen. Reducidos desde los 18 del
-prototipo y los 20 de WebEmpresa: **13 roles de color + 2 de sombra es el mínimo real**
-para las secciones que Galapavet tiene (`estudio_diseno_referencia.md` §1.2).
+prototipo y los 20 de WebEmpresa: **15 roles de color + 2 de sombra es el mínimo real**
+para las secciones que Galapavet tiene.
 
 | # | Rol | Para qué | Umbral WCAG |
 | --- | --- | --- | --- |
 | 1 | `--color-fondo` *(ya existe)* | lienzo de página | — |
-| 2 | `--color-fondo-seccion` | fondo de sección **alterna**: sin él, 8 secciones seguidas con el mismo fondo y la página «no tiene ritmo» | — |
+| 2 | `--color-fondo-alterno` | fondo de sección **alterna**: sin él, 8 secciones seguidas con el mismo fondo y la página «no tiene ritmo» | — |
 | 3 | `--color-superficie` | tarjeta / panel elevado (servicios, equipo, campañas, galería, blog, tienda, formulario, pie) | — |
-| 4 | `--color-superficie-suave` | superficie **secundaria dentro** de una tarjeta: campos del formulario, cabecera y pie del chat, botones ± de la cesta | — |
+| 4 | `--color-superficie-elevada` | superficie **secundaria dentro** de una tarjeta: campos del formulario, cabecera y pie del chat, botones ± de la cesta | — |
 | 5 | `--color-tinta` | titulares y datos (precios, cifras). Hoy todo el texto usa el mismo `--color-texto` y **no hay jerarquía** | 1.4.3 AA 4.5 (se busca 7, AAA 1.4.6) |
 | 6 | `--color-texto` *(ya existe)* | cuerpo | 1.4.3 AA 4.5 |
 | 7 | `--color-texto-suave` | entradillas, descripciones de tarjeta, metadatos, pies de foto | 1.4.3 AA 4.5 |
 | 8 | `--color-primario` | fondo de acción: botón primario, burbuja propia del chat, cuadro del logotipo | 1.4.11 AA 3.0 contra el fondo |
-| 9 | `--color-sobre-primario` | texto/icono **sobre** `--color-primario` | 1.4.3 AA 4.5 |
-| 10 | `--color-acento` | el acento que **lleva texto**: eyebrows, categorías, checks, rótulos | 1.4.3 AA 4.5 |
-| 11 | `--color-acento-suave` | fondo suave del acento: píldoras, círculos de check, hover de nav | — (lo que importa es el texto encima) |
-| 12 | `--color-borde` | línea decorativa de 1px: perímetro de tarjeta, separadores | **exento** (decorativo) |
-| 13 | `--color-borde-control` | el borde que **identifica** un control: campo, botón fantasma, píldora seleccionable | 1.4.11 AA 3.0 |
-| 14 | `--color-foco` *(ya existe)* | anillo de foco | 1.4.11 AA 3.0 · 2.4.13 AAA |
+| 9 | `--color-primario-fuerte` | **estado con el puntero encima del botón primario.** Es un token y NO un `filter`, y ésa es toda su razón de ser (@s8) | 1.4.3 AA 4.5 contra `--color-sobre-primario`, y **estrictamente mejor** que el reposo |
+| 10 | `--color-sobre-primario` | texto/icono **sobre** `--color-primario` y sobre `--color-primario-fuerte` | 1.4.3 AA 4.5 |
+| 11 | `--color-acento-tinta` | el acento que **lleva texto**: eyebrows, categorías, checks, rótulos | 1.4.3 AA 4.5 |
+| 12 | `--color-acento-suave` | fondo suave del acento: píldoras, círculos de check, hover de nav | — (lo que importa es el texto encima) |
+| 13 | `--color-borde` | línea decorativa de 1px: perímetro de tarjeta, separadores | **exento** (decorativo) |
+| 14 | `--color-borde-control` | el borde que **identifica** un control: campo, botón fantasma, píldora seleccionable | 1.4.11 AA 3.0 |
+| 15 | `--color-foco` *(ya existe)* | anillo de foco | 1.4.11 AA 3.0 · 2.4.13 AAA |
+| 16 | `--sombra-reposo` | sombra de reposo de tarjeta, teñida con la tinta de la variante | **exento** (decorativo) |
+| 17 | `--sombra-elevada` | sombra elevada: hover de tarjeta, panel del chat, panel flotante del selector, imagen de artículo | **exento** (decorativo) |
+
+Los dos últimos **no son opcionales ni «para más adelante»**: @s1 los exige por nombre y
+@s2 los exige declarados en las 4 variantes. Y hay una razón mecánica, no estética, para
+que sean tokens y vivan en `_tokens.scss`: `puertaLiteralesColor.ts:27-30,56` señala
+**cualquier** `rgba()` en `src/components/*.module.scss` y `src/pages/*.module.scss`, y
+`_tokens.scss` **no está en ese glob**. Escribir la sombra en el módulo es imposible por
+puerta. Valores en §3.8.
 
 **Roles que se DESCARTAN a propósito, con su razón:**
-`--urg` / `--urg-soft` (Galapavet **no presta urgencias 24 h**; su teléfono fuera de
-horario es un enlace, no una marca de servicio), `--primary-strong` (declarado 4 veces y
-**usado 0 veces** en el prototipo: todos los hovers usan `filter:brightness(1.1)`, que
-sobre el morado lo **aclara** y **baja** el contraste del blanco encima), y `--accent` «a
-secas» decorativo (3 usos, y con el lima a 1.89 sobre blanco no puede llevar texto jamás).
+
+- `--urg` / `--urg-soft`: Galapavet **no presta urgencias 24 h**; su teléfono fuera de
+  horario es un enlace, no una marca de servicio. @s11 lo convierte en puerta: *«no existe
+  ningún token cuyo nombre contenga "urgencia" ni "urg"»*, y lo comprueba **también** sobre
+  los ficheros de estilos del inventario, no solo sobre `_tokens.scss`.
+- `--accent` «a secas» decorativo del prototipo (3 usos, y con el lima a 1.89 sobre blanco
+  no puede llevar texto jamás). @s11 también lo convierte en puerta: *«no existe ningún
+  token llamado `--color-acento` a secas, distinto de `--color-acento-tinta` y
+  `--color-acento-suave`»*. **Ésta es exactamente la razón por la que el nombre del rol 11
+  lleva el sufijo `-tinta`**: sin él, el plan habría creado por su cuenta el token que el
+  contrato prohíbe.
+
+**Un descarte RETIRADO — `--primary-strong`.** La versión anterior de este plan lo
+descartaba con esta medición del prototipo: *«declarado 4 veces y usado 0 veces: todos los
+hovers usan `filter: brightness(1.1)`»*. **La medición es correcta y la conclusión era la
+opuesta a la que toca.** Recalculado hoy con la fórmula real: `#77286B × 1.1` da `#832C76`,
+y el blanco encima cae de **9.13 a 8.12** — el filtro *aclara* el morado y *empeora* el
+contraste, que es justo lo que @s8 exige que no pase. El defecto del prototipo no es tener
+el token: es **declararlo y no usarlo**, y taparlo con un filtro. Por eso @s11 no se
+conforma con que exista: exige que *«`--color-primario-fuerte` está declarado **y además se
+usa al menos una vez** en algún fichero de estilos del inventario»*. Se declara, se usa, y
+**ningún módulo puede usar `filter: brightness()` sobre el primario**.
 
 ### 3.2 Regla de derivación
 
@@ -725,9 +1103,9 @@ estándar, los tres colores de marca con blanco o negro puro:
 | Rol | Valor | Derivación | Se pinta sobre | Ratio | Exigido | Criterio |
 | --- | --- | --- | --- | --- | --- | --- |
 | `--color-fondo` | `#FFFFFF` | ya fijado | — | — | — | — |
-| `--color-fondo-seccion` | `#F4EEF3` | blanco + 8 % morado | `#FFFFFF` | 1.14 | — | banda decorativa |
+| `--color-fondo-alterno` | `#F4EEF3` | blanco + 8 % morado | `#FFFFFF` | 1.14 | — | banda decorativa |
 | `--color-superficie` | `#FFFFFF` | = fondo | `#FFFFFF` | 1.00 | — | la tarjeta se distingue por borde + sombra |
-| `--color-superficie-suave` | `#FAF6F9` | blanco + 4 % morado | `#FFFFFF` | 1.07 | — | superficie |
+| `--color-superficie-elevada` | `#FAF6F9` | blanco + 4 % morado | `#FFFFFF` | 1.07 | — | superficie |
 | `--color-tinta` | `#531C4B` | morado + 30 % negro | `#FFFFFF` | **12.84** | 7.0 | 1.4.6 AAA |
 | | | | `#F4EEF3` | **11.23** | 7.0 | 1.4.6 AAA |
 | | | | `#FAF6F9` | **11.99** | 7.0 | 1.4.6 AAA |
@@ -740,8 +1118,11 @@ estándar, los tres colores de marca con blanco o negro puro:
 | | | | `#FAF6F9` | **5.13** | 4.5 | 1.4.3 AA |
 | `--color-primario` | `#77286B` | morado de marca | `#FFFFFF` | **9.13** | 3.0 | 1.4.11 AA |
 | | | | `#F4EEF3` | **7.99** | 3.0 | 1.4.11 AA |
+| `--color-primario-fuerte` | `#6B2460` | morado + 10 % negro | `#FFFFFF` | **10.26** | 4.5 | 1.4.3 AA · @s8 |
+| | | | `#F4EEF3` | **8.98** | 3.0 | 1.4.11 AA |
 | `--color-sobre-primario` | `#FFFFFF` | blanco puro | `#77286B` | **9.13** | 4.5 | 1.4.3 AA |
-| `--color-acento` | `#48704B` | verde profundo de marca | `#FFFFFF` | **5.68** | 4.5 | 1.4.3 AA |
+| | | | `#6B2460` | **10.26** | 4.5 | 1.4.3 AA · **> 9.13**, @s8 |
+| `--color-acento-tinta` | `#48704B` | verde profundo de marca | `#FFFFFF` | **5.68** | 4.5 | 1.4.3 AA |
 | | | | `#F4EEF3` | **4.97** | 4.5 | 1.4.3 AA |
 | | | | `#FAF6F9` | **5.31** | 4.5 | 1.4.3 AA |
 | | | | `#F6F8E3` | **5.27** | 4.5 | 1.4.3 AA |
@@ -758,9 +1139,9 @@ estándar, los tres colores de marca con blanco o negro puro:
 | Rol | Valor | Derivación | Sobre | Ratio | Exigido | Criterio |
 | --- | --- | --- | --- | --- | --- | --- |
 | `--color-fondo` | `#F8F9E8` | blanco + 10 % lima *(ya fijado)* | — | — | — | — |
-| `--color-fondo-seccion` | `#F0F4D1` | blanco + 20 % lima | `#F8F9E8` | 1.06 | — | banda |
+| `--color-fondo-alterno` | `#F0F4D1` | blanco + 20 % lima | `#F8F9E8` | 1.06 | — | banda |
 | `--color-superficie` | `#FFFFFF` | blanco puro | `#F8F9E8` | 1.07 | — | tarjeta elevada |
-| `--color-superficie-suave` | `#F8F9E8` | = fondo | `#FFFFFF` | 1.07 | — | campo dentro de tarjeta |
+| `--color-superficie-elevada` | `#F8F9E8` | = fondo | `#FFFFFF` | 1.07 | — | campo dentro de tarjeta |
 | `--color-tinta` | `#531C4B` | morado + 30 % negro | `#F8F9E8` | **12.05** | 7.0 | 1.4.6 AAA |
 | | | | `#FFFFFF` | **12.84** | 7.0 | 1.4.6 AAA |
 | | | | `#F0F4D1` | **11.35** | 7.0 | 1.4.6 AAA |
@@ -773,8 +1154,10 @@ estándar, los tres colores de marca con blanco o negro puro:
 | | | | `#F0F4D1` | **4.86** | 4.5 | 1.4.3 AA |
 | `--color-primario` | `#77286B` | morado | `#F8F9E8` | **8.57** | 3.0 | 1.4.11 AA |
 | | | | `#FFFFFF` | **9.13** | 3.0 | 1.4.11 AA |
+| `--color-primario-fuerte` | `#6B2460` | morado + 10 % negro | `#F8F9E8` | **9.63** | 3.0 | 1.4.11 AA |
 | `--color-sobre-primario` | `#FFFFFF` | blanco | `#77286B` | **9.13** | 4.5 | 1.4.3 AA |
-| `--color-acento` | `#48704B` | verde profundo | `#F8F9E8` | **5.33** | 4.5 | 1.4.3 AA |
+| | | | `#6B2460` | **10.26** | 4.5 | 1.4.3 AA · **> 9.13** |
+| `--color-acento-tinta` | `#48704B` | verde profundo | `#F8F9E8` | **5.33** | 4.5 | 1.4.3 AA |
 | | | | `#FFFFFF` | **5.68** | 4.5 | 1.4.3 AA |
 | | | | `#F0F4D1` | **5.02** | 4.5 | 1.4.3 AA |
 | | | | `#EFF3CC` | **4.97** | 4.5 | 1.4.3 AA |
@@ -790,66 +1173,107 @@ estándar, los tres colores de marca con blanco o negro puro:
 Control: el lima de marca sobre el fondo de `lima` da **1.77** — el mismo número que @s4
 ya ancla (`tokensColor.test.ts:78`). No se usa como texto en ninguna parte.
 
-### 3.5 `verde` — fondo `#F0F4F1`. **Aquí el escalón se rompe y hay que decidir.**
+### 3.5 `verde` — fondo `#F0F4F1`. **DECIDIDO: el escalón no se baja.**
 
-**El problema, medido:** el contrato fija hoy `--color-texto: #48704B` con **5.12** sobre
-`#F0F4F1` (@s5, `tokensColor.test.ts:99-104`). Un `--color-texto-suave` tiene que ser
-**más claro** que el cuerpo y seguir en ≥4.5. La ventana disponible es
-**[4.50, 5.12]**, o sea nada: el candidato más claro que cumple es `#517754`
-(verde + 5 % blanco) con **4.59**, que es perceptualmente indistinguible de `#48704B`.
-Y peor: **ningún** aclarado del verde llega a 3:1 para `--color-borde-control`
-(blanco+65 % verde = **2.49** sobre `#F0F4F1`; blanco+60 % = 2.28).
+> **Esta sección decía «aquí el escalón se rompe y hay que decidir» y proponía una
+> opción A que cambiaba `--color-texto` de `#48704B` a `#3A5A3C`. Esa opción está
+> MUERTA.** El contrato aprobado la prohíbe con todas las letras, en su sección «QUÉ NO
+> SE REABRE»: *«Los 3 roles de color ya fijados por `sistema_de_diseno_visual.feature`
+> @s2-@s10 (`--color-fondo`, `--color-texto`, `--color-foco` **en las 4 variantes**,
+> `src/styles/_tokens.scss:39-64`) se CONSERVAN tal cual. Esta feature **añade** roles;
+> no retoca los tres existentes.»* No hay puerta humana que pedir: ya se pidió, y la
+> respuesta fue no tocarlos. Se decide, por tanto, **sobre la restricción**, no contra
+> ella (§9, divergencia D-13).
 
-**Opción A — RECOMENDADA: bajar la escalera un peldaño.** El verde de marca deja de ser
-el cuerpo y pasa a ser el texto suave; el cuerpo y la tinta se oscurecen.
+**El hecho, medido y no opinado.** Con `--color-texto` clavado en `#48704B`, su ratio
+sobre el propio `--color-fondo` de la variante es **5.12**. Un `--color-texto-suave`
+tiene que ser, por definición del rol, **más claro** que el cuerpo, y sobre fondo claro
+más claro significa **menos ratio**. El mínimo de SC 1.4.3 es 4.5. Luego toda la ventana
+disponible es `[4.50, 5.12]`, y aquí está barrida con la fórmula real:
+
+| candidato | derivación | sobre `#F0F4F1` | sobre `#FFFFFF` | sobre `#E9EEE9` |
+| --- | --- | --- | --- | --- |
+| `#48704B` *(el propio texto)* | verde de marca | **5.12** | 5.68 | 4.84 |
+| `#4D7450` | verde + 3 % blanco | 4.81 | 5.34 | 4.55 |
+| `#517754` | verde + 5 % blanco | 4.59 | 5.10 | 4.29 ✗ |
+| `#577B59` | verde + 8 % blanco | 4.32 ✗ | 4.79 | 4.03 ✗ |
+
+El mejor candidato que sobrevive sobre las tres superficies es `#4D7450`, con **4.81**
+frente a **5.12**: una diferencia de ratio del **6 %**, que a 14-17 px no la distingue
+nadie. **No es un problema de buscar mejor: es que la ventana no existe.** Y no se puede
+abrir moviendo el `--color-fondo-alterno`, porque el techo lo pone el `--color-fondo`
+`#F0F4F1`, que también está bloqueado por el contrato.
+
+**LA DECISIÓN: en `verde`, `--color-texto-suave` vale `#48704B`, deliberadamente igual
+que `--color-texto`.** La jerarquía del texto secundario la llevan la escala tipográfica
+y el peso, no el color. No es una excepción inventada para salir del paso: es
+**exactamente el mismo movimiento que este plan ya hace en `noche`**, donde
+`--color-tinta` = `--color-texto` = `#FFFFFF` (§3.6, punto 3) por la razón simétrica. Un
+`#4D7450` que finge un peldaño que el ojo no ve sería peor: pasaría la puerta de contraste
+y **no resolvería el problema**, que es el defecto que este mismo plan le reprocha al
+prototipo en `estudio_diseno_referencia.md` §7.4 (*«pasa por los pelos»*).
+
+**Y hay un peldaño real donde sí cabe: el de arriba.** `--color-tinta` `#324E35` da
+**8.31** sobre el fondo frente a los 5.12 del cuerpo — un 62 % más de ratio. `verde`
+tiene dos peldaños de texto (tinta / cuerpo), no tres. Se declara y se dice.
+
+**PENDIENTE, con destinatario: el HUMANO.** Si se quiere un tercer peldaño de texto en
+`verde`, el único camino es **oscurecer `--color-texto` de esa variante**, y eso es
+enmendar un escenario de una feature ya `done` (`sistema_de_diseno_visual.feature` @s5,
+anclado en `tokensColor.test.ts:99-104` con `expect(texto).toBe('#48704B')` y
+`expect(ratio).toBe(5.12)`). **No le toca al `tdd_craftsman` ni a este plan.** La
+propuesta concreta, ya calculada por si se pide: `--color-texto` `#3A5A3C` (verde + 20 %
+negro, **6.99** sobre `#F0F4F1`), que reabre la ventana a `[4.50, 6.99]` y deja
+`#48704B` libre para `--color-texto-suave`.
+
+**Segunda corrección de esta sección.** Decía también: *«ningún aclarado del verde llega
+a 3:1 para `--color-borde-control`»*. **Es falso, y el desmentido estaba en su propia
+tabla.** Lo que se midió fueron aclarados fuertes (blanco + 65 % verde = 2.49). Pero el
+borde de control no tiene por qué ser pálido: `#5A7E5D` (verde + 10 % blanco) da **4.13**
+sobre el fondo, **3.90** sobre el alterno y **4.59** sobre la superficie blanca. Los tres
+por encima del 3.0 de SC 1.4.11, con margen. No hay nada que decidir aquí tampoco.
+
+**Tercera corrección: `--color-fondo-alterno` baja de `blanco + 16 %` a `blanco + 12 %`.**
+Con `#E2E8E2` (16 %) el cuerpo `#48704B` encima daba **4.57**: pasa por 0.07. Con
+`#E9EEE9` (12 %) da **4.84**, margen 0.34, y la banda sigue siendo un escalón visible
+(1.06 contra el fondo, el mismo escalón que ya se aceptó en `lima`). @s26 solo exige que
+los fondos computados sean **distintos**, no un ratio mínimo entre ellos; @s5 sí exige
+4.5 duro. Se protege el número que tiene puerta.
 
 | Rol | Valor | Derivación | Sobre | Ratio | Exigido | Criterio |
 | --- | --- | --- | --- | --- | --- | --- |
-| `--color-fondo` | `#F0F4F1` | blanco + 8 % verde *(ya fijado)* | — | — | — | — |
-| `--color-fondo-seccion` | `#E2E8E2` | blanco + 16 % verde | `#F0F4F1` | 1.12 | — | banda |
+| `--color-fondo` | `#F0F4F1` | blanco + 8 % verde *(ya fijado, NO se toca)* | — | — | — | — |
+| `--color-fondo-alterno` | `#E9EEE9` | blanco + 12 % verde | `#F0F4F1` | 1.06 | — | banda |
 | `--color-superficie` | `#FFFFFF` | blanco | `#F0F4F1` | 1.11 | — | tarjeta |
-| `--color-superficie-suave` | `#F0F4F1` | = fondo | `#FFFFFF` | 1.11 | — | campo |
+| `--color-superficie-elevada` | `#F0F4F1` | = fondo | `#FFFFFF` | 1.11 | — | campo dentro de tarjeta |
 | `--color-tinta` | `#324E35` | verde + 30 % negro | `#F0F4F1` | **8.31** | 7.0 | 1.4.6 AAA |
 | | | | `#FFFFFF` | **9.22** | 7.0 | 1.4.6 AAA |
-| | | | `#E2E8E2` | **7.41** | 7.0 | 1.4.6 AAA |
-| `--color-texto` | `#3A5A3C` | verde + 20 % negro | `#F0F4F1` | **6.99** | 4.5 | 1.4.3 AA |
-| | | | `#FFFFFF` | **7.76** | 4.5 | 1.4.3 AA |
-| | | | `#E2E8E2` | **6.23** | 4.5 | 1.4.3 AA |
-| | | | `#F4EEF3` | **6.78** | 4.5 | 1.4.3 AA |
-| `--color-texto-suave` | `#48704B` | **verde profundo de marca, sin tocar** | `#F0F4F1` | **5.12** | 4.5 | 1.4.3 AA |
+| | | | `#E9EEE9` | **7.85** | 7.0 | 1.4.6 AAA |
+| `--color-texto` | `#48704B` | verde de marca *(ya fijado, NO se toca)* | `#F0F4F1` | **5.12** | 4.5 | 1.4.3 AA |
 | | | | `#FFFFFF` | **5.68** | 4.5 | 1.4.3 AA |
-| | | | `#E2E8E2` | **4.57** | 4.5 | 1.4.3 AA |
-| `--color-primario` | `#48704B` | verde profundo | `#F0F4F1` | **5.12** | 3.0 | 1.4.11 AA |
-| | | | `#FFFFFF` | **5.68** | 3.0 | 1.4.11 AA |
+| | | | `#E9EEE9` | **4.84** | 4.5 | 1.4.3 AA |
+| `--color-texto-suave` | `#48704B` | **= `--color-texto`, decidido arriba** | `#F0F4F1` | **5.12** | 4.5 | 1.4.3 AA |
+| | | | `#E9EEE9` | **4.84** | 4.5 | 1.4.3 AA |
+| `--color-primario` | `#48704B` | verde de marca | `#F0F4F1` | **5.12** | 3.0 | 1.4.11 AA |
+| `--color-primario-fuerte` | `#416544` | verde + 10 % negro | `#F0F4F1` | **5.97** | 3.0 | 1.4.11 AA |
 | `--color-sobre-primario` | `#FFFFFF` | blanco | `#48704B` | **5.68** | 4.5 | 1.4.3 AA |
-| `--color-acento` | `#77286B` | morado de marca | `#F0F4F1` | **8.22** | 4.5 | 1.4.3 AA |
+| | | | `#416544` | **6.63** | 4.5 | 1.4.3 AA · **> 5.68**, @s8 |
+| `--color-acento-tinta` | `#77286B` | morado de marca | `#F0F4F1` | **8.22** | 4.5 | 1.4.3 AA |
 | | | | `#FFFFFF` | **9.13** | 4.5 | 1.4.3 AA |
+| | | | `#E9EEE9` | **7.77** | 4.5 | 1.4.3 AA |
 | | | | `#F4EEF3` | **7.99** | 4.5 | 1.4.3 AA |
-| | | | `#E2E8E2` | **7.34** | 4.5 | 1.4.3 AA |
 | `--color-acento-suave` | `#F4EEF3` | blanco + 8 % morado | `#F0F4F1` | 1.03 | — | píldora |
 | `--color-borde` | `#D7E0D7` | blanco + 22 % verde | `#FFFFFF` | 1.35 | **exento** | decorativo |
 | | | | `#F0F4F1` | 1.22 | **exento** | decorativo |
 | `--color-borde-control` | `#5A7E5D` | verde + 10 % blanco | `#F0F4F1` | **4.13** | 3.0 | 1.4.11 AA |
 | | | | `#FFFFFF` | **4.59** | 3.0 | 1.4.11 AA |
-| | | | `#E2E8E2` | **3.69** | 3.0 | 1.4.11 AA |
-| `--color-foco` | `#77286B` | ya fijado | `#F0F4F1` | **8.22** | 3.0 | 1.4.11 AA |
+| | | | `#E9EEE9` | **3.90** | 3.0 | 1.4.11 AA |
+| `--color-foco` | `#77286B` | morado *(ya fijado, NO se toca)* | `#F0F4F1` | **8.22** | 3.0 | 1.4.11 AA |
 | | | | `#FFFFFF` | **9.13** | 3.0 | 1.4.11 AA |
 
-**Coste de la opción A:** rompe **dos aserciones** de `tokensColor.test.ts:99-104`
-(`expect(texto).toBe('#48704B')` y `expect(ratio).toBe(5.12)`). El **criterio** de @s5
-(«ratio ≥ 4.5») se sigue cumpliendo con margen (6.99 > 5.12); lo que cambia es el
-hexadecimal exacto que el escenario clava. **Es una ampliación de contrato → puerta
-humana.** Como la capa global ya necesita ampliar el contrato de todas formas
-(`restricciones_memoria_organizacional.md` §3.1: los 34 escenarios no mencionan ni una vez
-`main.tsx`, `main.scss`, `body` ni `font-family`), entra en el mismo trámite.
-
-**Opción B — sin tocar @s5:** `--color-texto` se queda en `#48704B` y
-`--color-texto-suave` es `#517754` (**4.59** sobre `#F0F4F1`). Cumple el número
-(≥4.5) y **no cumple el propósito**: la diferencia de luminancia entre 5.12 y 4.59 es de
-un 10 %, o sea que el «texto suave» y el «texto» se verán iguales y la jerarquía que el
-rol existe para dar no existirá. Además `--color-borde-control` seguiría necesitando un
-verde tan oscuro como el cuerpo. **Lo digo sin adornos: la opción B pasa la puerta y no
-resuelve el problema.**
+**Coste de esta decisión sobre los tests existentes: CERO.** `tokensColor.test.ts:99-104`
+sigue verde palabra por palabra, porque los tres roles que asevera no se tocan. La opción
+A costaba dos aserciones rotas y una puerta humana; esta no cuesta ninguna de las dos.
 
 ### 3.6 `noche` — fondo `#000000`. **La variante donde los roles cambian de verdad.**
 
@@ -861,9 +1285,9 @@ escalones de morado sobre negro; el texto baja de blanco a lavanda.
 | Rol | Valor | Derivación | Sobre | Ratio | Exigido | Criterio |
 | --- | --- | --- | --- | --- | --- | --- |
 | `--color-fondo` | `#000000` | negro puro *(ya fijado)* | — | — | — | — |
-| `--color-fondo-seccion` | `#180815` | negro + 20 % morado | `#000000` | 1.08 | — | banda |
+| `--color-fondo-alterno` | `#180815` | negro + 20 % morado | `#000000` | 1.08 | — | banda |
 | `--color-superficie` | `#240C20` | negro + 30 % morado | `#000000` | 1.15 | — | tarjeta elevada |
-| `--color-superficie-suave` | `#30102B` | negro + 40 % morado | `#240C20` | 1.08 | — | campo dentro de tarjeta (en oscuro el campo **sube**, no baja) |
+| `--color-superficie-elevada` | `#30102B` | negro + 40 % morado | `#240C20` | 1.08 | — | campo dentro de tarjeta (en oscuro el campo **sube**, no baja) |
 | `--color-tinta` | `#FFFFFF` | blanco puro | `#000000` | **21.00** | 7.0 | 1.4.6 AAA |
 | | | | `#240C20` | **18.29** | 7.0 | 1.4.6 AAA |
 | | | | `#30102B` | **17.01** | 7.0 | 1.4.6 AAA |
@@ -876,8 +1300,10 @@ escalones de morado sobre negro; el texto baja de blanco a lavanda.
 | | | | `#180815` | **8.22** | 4.5 | 1.4.3 AA |
 | `--color-primario` | `#B489AE` | morado + 45 % blanco | `#000000` | **7.13** | 3.0 | 1.4.11 AA |
 | | | | `#240C20` | **6.21** | 3.0 | 1.4.11 AA |
+| `--color-primario-fuerte` | `#BC95B6` | primario + 10 % **blanco** (aquí se ACLARA: ver el aviso de abajo) | `#000000` | **8.11** | 3.0 | 1.4.11 AA |
 | `--color-sobre-primario` | `#000000` | **negro, no blanco** | `#B489AE` | **7.13** | 4.5 | 1.4.3 AA |
-| `--color-acento` | `#B4C718` | lima de marca | `#000000` | **11.12** | 4.5 | 1.4.3 AA |
+| | | | `#BC95B6` | **8.11** | 4.5 | 1.4.3 AA · **> 7.13** |
+| `--color-acento-tinta` | `#B4C718` | lima de marca | `#000000` | **11.12** | 4.5 | 1.4.3 AA |
 | | | | `#240C20` | **9.69** | 4.5 | 1.4.3 AA |
 | | | | `#1B1E04` | **9.01** | 4.5 | 1.4.3 AA |
 | | | | `#180815` | **10.26** | 4.5 | 1.4.3 AA |
@@ -890,7 +1316,7 @@ escalones de morado sobre negro; el texto baja de blanco a lavanda.
 | `--color-foco` | `#B4C718` | lima *(ya fijado por @s8)* | `#000000` | **11.12** | 3.0 | 1.4.11 AA |
 | | | | `#240C20` | **9.69** | 3.0 | 1.4.11 AA |
 
-**Los tres cambios de rol de `noche`, y por qué:**
+**Los CUATRO cambios de rol de `noche`, y por qué:**
 
 1. **`--color-sobre-primario` es NEGRO, no blanco.** Es el único de los cuatro donde el
    texto sobre la acción no es blanco: blanco sobre `#B489AE` da **2.95** (suspenso).
@@ -903,6 +1329,17 @@ escalones de morado sobre negro; el texto baja de blanco a lavanda.
 3. **`--color-tinta` = `--color-texto` = `#FFFFFF`.** En `noche` no hay dos peldaños de
    blanco: la jerarquía la lleva la escala tipográfica, no el color. Se declara
    explícitamente en vez de inventar un «blanco roto» que sería ruido.
+4. **`--color-primario-fuerte` se ACLARA, no se oscurece.** En las tres variantes claras
+   el hover mezcla el primario con **negro** al 10 %, porque `--color-sobre-primario` es
+   blanco y oscurecer el relleno sube el ratio. En `noche` `--color-sobre-primario` es
+   **negro**, así que la regla ingenua se da la vuelta: recalculado, `#B489AE` + 10 %
+   negro da `#A27B9D` y el ratio contra el negro **cae de 7.13 a 5.86** — el hover
+   *empeoraría* el contraste, exactamente el defecto que @s8 existe para prohibir. La
+   regla correcta, y la que se escribe, es **invariante**: *el estado con el puntero
+   encima mezcla el primario un 10 % con el polo OPUESTO a `--color-sobre-primario`*.
+   En `marca`/`lima`/`verde` ese polo es el negro; en `noche` es el blanco.
+   Verificado en las cuatro: 9.13→10.26, 9.13→10.26, 5.68→6.63 y 7.13→8.11.
+   **Las cuatro mejoran, que es lo que @s8 exige.**
 
 ### 3.7 El anillo de foco y el `outline-offset`: por qué 2px es funcional, no estético
 
@@ -923,6 +1360,63 @@ Es además la lección del **botón invisible** del spike: el enlace «Reservar�
 las 712 pruebas podía verlo. Con `--color-sobre-primario` como rol propio, ese par pasa a
 ser 9.13 **por construcción**, y el par entra en la matriz de uso.
 
+### 3.8 `--sombra-reposo` y `--sombra-elevada`, en las 4 variantes
+
+Los otros dos tokens que este plan no tenía y que @s1/@s2 exigen. Se derivan de tres
+piezas, cada una con su procedencia, y ninguna de las tres es un color del prototipo.
+
+**A. La GEOMETRÍA se porta; es arquitectura, no color.** Del prototipo
+(`estudio_diseno_referencia.md` §3.2, valores en su `:24`): reposo `0 6px 18px`, elevada
+`0 18px 45px`. Es la proporción que el estudio describe y justifica —*«mucho difuminado,
+poca opacidad»*, desplazamiento vertical grande, difuminado muy grande— y es la que hace
+que se lea como profundidad y no como suciedad. **Dos escalones y ni uno más**: la elevada
+solo aparece en hover de tarjeta, panel del chat, panel flotante del selector e imagen de
+artículo.
+
+**B. Las OPACIDADES también se portan, y también son geometría.** `.07` en reposo y `.10`
+en elevada para las variantes claras. Para la variante oscura el propio prototipo declara
+el refuerzo, y es correcto: sobre un fondo negro una sombra a `.07` **no existe**. Se
+refuerza a `.35` / `.45`.
+
+**C. El COLOR NO se porta. Se sustituye por la tinta de cada variante.** El prototipo tiñe
+con `rgb(15, 32, 60)`, un azul marino que es *su* tinta. La Decisión 8 y la línea roja de
+esta feature prohíben tomar un solo color suyo, así que cada variante tiñe su sombra con
+**su propio `--color-tinta`**, que es exactamente lo que el estudio dice que hace el
+prototipo: *«sombra teñida con el color de la tinta, no gris»*. Se porta la REGLA, no el
+valor.
+
+| variante | `--color-tinta` | canales | `--sombra-reposo` | `--sombra-elevada` |
+| --- | --- | --- | --- | --- |
+| `marca` | `#531C4B` | `83, 28, 75` | `0 6px 18px rgba(83, 28, 75, 0.07)` | `0 18px 45px rgba(83, 28, 75, 0.10)` |
+| `lima` | `#531C4B` | `83, 28, 75` | `0 6px 18px rgba(83, 28, 75, 0.07)` | `0 18px 45px rgba(83, 28, 75, 0.10)` |
+| `verde` | `#324E35` | `50, 78, 53` | `0 6px 18px rgba(50, 78, 53, 0.07)` | `0 18px 45px rgba(50, 78, 53, 0.10)` |
+| `noche` | `#FFFFFF` ⚠ | `0, 0, 0` | `0 6px 18px rgba(0, 0, 0, 0.35)` | `0 18px 45px rgba(0, 0, 0, 0.45)` |
+
+⚠ **La excepción de `noche`, y por qué no es una arbitrariedad.** La regla «tiñe con la
+tinta» se rompe sola en `noche`, porque allí `--color-tinta` es `#FFFFFF` (§3.6, punto 3)
+y **una sombra blanca sobre negro no es una sombra: es un halo**. La sombra modela una
+oclusión de luz; su color no puede ser más claro que la superficie que la recibe. En
+`noche` se tiñe con negro puro, que es a la vez el `--color-fondo` de la variante, y el
+efecto de profundidad lo lleva **la opacidad reforzada**, no el tono. Escrito aquí para
+que nadie lo «arregle» más adelante creyendo que es un despiste.
+
+**Dónde viven, y por qué no pueden vivir en otro sitio.** En los cinco bloques de
+`src/styles/_tokens.scss` (el `:root` desnudo + los cuatro de variante).
+`puertaLiteralesColor.ts:27-30,56` señala **cualquier** `rgba()` de cualquier línea de
+`src/components/*.module.scss` y `src/pages/*.module.scss`; `_tokens.scss` **no está en
+ese glob** (`inventarioModulos.test.ts:88-89`). Un módulo que quiera sombra escribe
+`box-shadow: var(--sombra-reposo);` y nada más.
+
+**Consecuencia para el lector de tokens, y es la razón del §2.5.** Estos dos valores
+**no son hexadecimales de 6 dígitos**, así que `leerTokenDeVariante`
+(`tokensColor.ts:50-58`) no puede leerlos hoy. Es el PENDIENTE 12 del contrato, resuelto
+en §2.5.
+
+**Lo que estos dos tokens NO llevan.** Ni ratio ni umbral: una sombra es decorativa y no
+entra en la matriz de uso de @s5 —igual que `--color-borde`, y por el mismo motivo—.
+Tampoco pasan por `calcularRatioContraste`, que exige `#RRGGBB` y **lanzaría** con un
+`rgba()`. Si alguien las mete en el catálogo de contraste, la excepción es el aviso.
+
 ---
 
 ## 4 · LA ESTRATEGIA DE VERIFICACIÓN EN TRES NIVELES
@@ -940,13 +1434,15 @@ creemos», C = «el navegador lo pinta».
 
 - `mezclaDeColor.ts` → `mezclar('#FFFFFF', '#77286B', 0.08) === '#F4EEF3'`. Hoy esa
   aritmética vive **duplicada dentro del test** (`tokensColor.test.ts:57-64,93-100`), donde
-  Stryker no la ve. Extraerla es lo que convierte los 14 roles × 4 variantes en
+  Stryker no la ve. Extraerla es lo que convierte los 15 roles × 4 variantes en
   verificación mutada.
-- `tokensColor.ts` ampliado: `RolDeColor` pasa de 3 a 14 valores, y **cada rol nuevo
-  necesita su fila en la matriz de uso** (qué se pinta sobre qué). Un token que existe y
-  no se verifica es el bloqueante del botón «Reservar» repitiéndose.
-- `hojaGlobal.ts` → el enganche: `main.tsx` importa `./styles/main.scss`, y `main.scss`
-  hace `@use` de los cinco parciales. Con **guarda de no-vacuidad propia**.
+- `tokensColor.ts` ampliado: `RolDeColor` pasa de 3 a **15** valores, nace `RolDeSombra`
+  con 2, y **cada rol nuevo necesita su fila en la matriz de uso** (qué se pinta sobre
+  qué). Un token que existe y no se verifica es el bloqueante del botón «Reservar»
+  repitiéndose. Los dos lectores hermanos y sus doce tests: §2.5.
+- `hojaGlobal.ts` → el enganche: `main.tsx` importa `./styles/global.scss` **exactamente
+  una vez**, ningún otro fichero de `src/` lo importa, y `global.scss` declara las nueve
+  familias de @s13. Con **guarda de no-vacuidad propia**.
 - `contraste.ts` **no se toca**: ya está `done`, probada al 100 % y con las tres puertas
   por uso (texto normal / texto grande / componente) y sus tres guardas separadas
   (`contraste.ts:220-256`).
@@ -994,7 +1490,7 @@ con su ejemplo real en ese repo):
 - **Especificidad por forma**: `not.toMatch(/[.#]/)` sobre cada selector del parcial
   global → imposible que la capa global suba de especificidad sin ponerse roja.
 - **Existencia de un `@media`** y su contenido.
-- **Que el parcial esté ENGANCHADO** a `main.scss` — la aserción anti-vacuidad.
+- **Que la hoja global esté ENGANCHADA** desde `main.tsx` — la aserción anti-vacuidad.
 - **Higiene**: cero `!important`, cero `@import url(`, cero `url(https:`, cero
   `@font-face` fuera de `_fuentes.scss`.
 - **Simular `reduce` sin evaluar el media query**: `stripNoPreference()`
@@ -1113,11 +1609,11 @@ Cada paso empieza por su test rojo. El orden va de la causa raíz hacia afuera.
 **1. El enganche. Es el paso que más fealdad quita por línea escrita.**
 
 *Rojo primero:* `src/lib/diseno/hojaGlobal.test.ts` asevera, leyendo el texto real
-(`?raw`), que `src/main.tsx` contiene `import './styles/main.scss'` y que
-`src/styles/main.scss` hace `@use` de `tokens`, `reset` y `base`. Falla porque no existe
-ninguno de los dos.
+(`?raw`), que `src/main.tsx` contiene `import './styles/global.scss'` **exactamente una
+vez**, que ningún otro fichero de `src/` lo importa, y que `src/styles/global.scss` declara
+las nueve familias de @s13. Falla porque no existe ninguno de los dos.
 
-*Verde:* `main.scss` (5 líneas), `_reset.scss` (~35), `_base.scss` con **tres
+*Verde:* `global.scss` con su sección de reset (~35 líneas) y **tres
 declaraciones que son el 80 % del salto visual** —`body { margin: 0 }`,
 `body { background-color: var(--color-fondo); color: var(--color-texto) }`— y
 `_tipografia.scss` con `body { font-family: … }` provisional sobre la pila del sistema
@@ -1149,15 +1645,19 @@ de una variable — patrón `valor-guardado-por-puerta-que-lee-config-como-texto
 `grep -c ':root\[data-variante' dist/assets/*.css` y `wc -c` del CSS. Se escribe en
 `progress/`. Es la comprobación de M-3/M-4 en el artefacto real.
 
-**4. Los 11 roles de color nuevos, variante a variante.**
+**4. Los 14 tokens nuevos (12 de color + 2 de sombra), variante a variante.**
 
 *Rojo:* `mezclaDeColor.test.ts` primero (la aritmética pura, que Stryker muerde), luego
-`tokensColor.test.ts` ampliado: por cada uno de los 14 roles × 4 variantes, leer el valor
-del texto real de `_tokens.scss`, recalcular el ratio contra su fondo declarado y exigir
-el umbral del §3. Guarda de no-vacuidad por extractor.
+`tokensColor.test.ts` ampliado: por cada uno de los **17 tokens × 4 variantes = 68
+pares** (@s2), comprobar que está declarado en el bloque de su variante; por cada rol de
+color, leer el valor del texto real de `_tokens.scss`, recalcular el ratio contra su fondo
+declarado y exigir el umbral del §3. Guarda de no-vacuidad por extractor. Antes de tocar
+`tokensColor.ts`, los **doce tests del §2.5**: el fichero está bajo Stryker con `break:
+100`.
 *Verde:* los cinco bloques de `_tokens.scss`.
-*Puerta humana dentro de este paso:* la opción A del §3.5 (`verde`) rompe dos aserciones
-de @s5. No se aplica sin aprobación.
+*Ya NO hay puerta humana dentro de este paso:* la opción A del §3.5 (`verde`) está
+descartada por el contrato y la decisión que la sustituye no rompe ninguna aserción
+existente. El paso 4 pasa de «bloqueado a la espera de aprobación» a ejecutable.
 
 **5. El movimiento y el foco globales.**
 
@@ -1188,12 +1688,28 @@ escritos a mano y el CSS minificado real de `dist/` pegado literal.
 `package.json` → `build`. **Solo en `build`, nunca en `dev`**: *«la puerta separa VER de
 PUBLICAR»*.
 
-**8. `public/img/` — los 26 huecos.**
+**8. `public/` — los 26 huecos, los tres iconos y la imagen de compartición.**
 
 *Rojo:* una puerta de nivel A que compare las rutas declaradas en `src/data/*.ts` +
 `MetadatosPagina.tsx:18` + `PieDePagina.tsx:12` contra los ficheros reales de `public/`.
 *Verde:* los ficheros. El logo (`201×201`, ya existe en la raíz) y el resto según
 `plan_imagenes.md` §4.3.
+
+**Y los cinco ficheros que el plan no enumeraba y el contrato sí** (@s28 y @s29):
+
+| fichero | exigencia | escenario |
+| --- | --- | --- |
+| `public/favicon.ico` | responde 200 | @s28 |
+| `public/favicon-32.png` | responde 200 | @s28 |
+| `public/apple-touch-icon.png` | 200 y **exactamente 180×180 px** | @s28 |
+| `public/favicon.svg` | **NO se crea**: el `<link>` va comentado hasta que llegue el vector | @s28 |
+| la imagen de `og:image` | 200, **exactamente 1200×630 px**, **PNG y no WebP** | @s29 |
+
+El PNG no es capricho: la documentación oficial de Meta **no declara** qué formatos
+aceptan sus rastreadores, así que el WebP queda **NO VERIFICADO** ahí. Y @s29 exige además
+que *«el fichero no proceda del banco de imágenes: se compone con el logotipo real sobre el
+morado de marca»* — es de las pocas piezas gráficas de esta feature que se **fabrican**,
+no se descargan.
 *Cuidado:* `PaginaTienda.test.tsx:167-181` fija **exactamente 8** imágenes con `alt=""`;
 `PaginaBlog.test.tsx:566-581`, exactamente 3; `CampanasPortada.test.tsx:178-192`,
 exactamente 3; `Servicios.test.tsx:398-416`, cero; `Equipo.test.tsx:184`, cero. Añadir una
@@ -1205,6 +1721,38 @@ imagen a una tarjeta rompe la suite, y **eso es lo que se quiere**.
 `--seccion-y`), bandeado alterno de secciones en `Landing.module.scss`, tarjeta,
 botón primario/fantasma, píldora, eyebrow, prosa del blog. Va **al final** a propósito:
 sin los pasos 1-6 cada uno de esos ficheros estaría maquetando sobre arena.
+
+*Tres exigencias concretas del contrato que caen en este paso y son fáciles de olvidar:*
+
+- @s26: **las 8 secciones de la landing declaran fondo explícito**, cada una
+  `--color-fondo` o `--color-fondo-alterno`. No basta con alternar unas cuantas: el
+  escenario exige que **ninguna** compute transparente.
+- @s31: **el hueco de una imagen que aún no ha cargado se pinta con
+  `--color-fondo-alterno`** y reserva su `aspect-ratio`. Es maquetación, no imágenes.
+- @s11: **`--color-primario-fuerte` tiene que USARSE** al menos una vez en algún fichero
+  del inventario — el `:hover` del botón primario— y **ningún módulo puede usar
+  `filter: brightness()` sobre el primario** (§3.1).
+
+**11. El techo de bytes del CSS servido (@s49).**
+
+*Rojo:* la prueba de navegador que suma los bytes de todas las respuestas de tipo hoja de
+estilo de la portada y los compara contra un **literal escrito a mano**.
+*Verde:* se mide el primer `dist/` verde y **se escribe el número a mano**. A partir de
+ahí funciona como trinquete anti-regresión. El contrato es explícito en que **no se
+recalcula del `dist/` que comprueba**, o deja de ser puerta. Cifra: PENDIENTE del
+`tdd_craftsman`, por construcción.
+
+**12. La puerta de navegador, separada del arranque de sesión (@s48).**
+
+*Rojo:* la lectura del texto real de `package.json`, `harness.config.json` y
+`playwright.config.ts`.
+*Verde:* guion propio `test:e2e` en `package.json`; el comando de test del arnés **no lo
+incluye**, para que verificar el entorno no exija descargar un navegador de cientos de
+megas ni construir el sitio entero; `testDir: 'tests/e2e'`; **`retries: 0`**, contra la
+recomendación de 2 para integración continua y a propósito —*«un reintento convierte una
+prueba inestable en verde y esconde justo lo que esta feature existe para destapar»*—; y
+`webServer` que construye y sirve `dist/` con `vite preview --port 4173 --strictPort`,
+**nunca** el servidor de desarrollo.
 
 ---
 
@@ -1233,19 +1781,19 @@ Contratos ya cerrados que esta feature **no puede reabrir**, con su razón:
 ### 7.1 Los tests sospechosos de romperse al activar la hoja global
 
 **El riesgo estructural es MENOR de lo que parece, y conviene decir por qué:** ningún test
-importa `src/main.tsx` ni `src/styles/main.scss`, y `vite.config.ts:65` ancla la
+importa `src/main.tsx` ni `src/styles/global.scss`, y `vite.config.ts:65` ancla la
 transformación de CSS a la query `?raw`. Es decir, **la hoja global nunca llega a jsdom**.
 Los 712 tests renderizan componentes sueltos, sin capa base. El escenario catastrófico
 («hojas reales en jsdom rompen `getByRole`») **no se dispara** mientras nadie importe
-`main.scss` desde un test.
+`global.scss` desde un test.
 
 Dicho eso, éstos son los sospechosos concretos, ordenados por probabilidad:
 
 | Test | Por qué es sospechoso | Mitigación |
 | --- | --- | --- |
-| **`src/lib/diseno/tokensColor.test.ts` @s5** (`:99-104`) | **Rotura segura** si se aplica la opción A del §3.5: `expect(texto).toBe('#48704B')` y `expect(ratio).toBe(5.12)`. | Es el caso que exige puerta humana. Con la opción B no se rompe, pero el rol «texto suave» de `verde` no cumple su propósito. |
+| **`src/lib/diseno/tokensColor.test.ts` @s5** (`:99-104`) | ~~Rotura segura con la opción A del §3.5~~ **RIESGO CERRADO.** El contrato prohíbe tocar `--color-texto` de `verde`, la opción A está descartada (§3.5) y las dos aserciones `expect(texto).toBe('#48704B')` y `expect(ratio).toBe(5.12)` siguen verdes palabra por palabra. | Ninguna: ya no hay nada que mitigar. El coste queda registrado como PENDIENTE del humano en §3.5, no como riesgo de esta feature. |
 | **`tokensColor.test.ts` @s1** (`:24-34`) | Asevera **exactamente** `['marca','lima','verde','noche']` y `toHaveLength(4)`. Añadir el `:root` desnudo del paso 2 podría meterlo en el inventario. | Verificado leyendo `PATRON_SELECTOR_VARIANTE` (`tokensColor.ts:17`): solo matchea `:root[data-variante=…]`, así que el `:root` desnudo **no** entra. Riesgo controlado, pero hay que aseverarlo explícitamente. |
-| **`tokensColor.test.ts`, todos** | `extraerBloqueDeVariante` usa `[^}]*`: **una sola llave anidada dentro de un bloque de variante rompe los 10 escenarios de golpe**. Con 14 roles la tentación de meter un `@media` o un `&` dentro crece. | Test explícito: ningún bloque de variante contiene `{` interno. |
+| **`tokensColor.test.ts`, todos** | `extraerBloqueDeVariante` usa `[^}]*`: **una sola llave anidada dentro de un bloque de variante rompe los 10 escenarios de golpe**. Con 17 tokens la tentación de meter un `@media` o un `&` dentro crece. | Resuelto en §2.5.C (el lector cuenta llaves) **y** con la aserción explícita de §2.5.E: ningún bloque de variante contiene `{` interno. |
 | **`src/lib/diseno/movimientoRespetuoso.test.ts`** | Al ampliar el inventario a las hojas globales, cualquier `transition`/`animation` de `_base.scss` fuera de `prefers-reduced-motion` la pone roja. Y su parser **cuenta un bloque por línea**: un `@media X { html { … } }` escrito en una sola línea lo despista. | Es el efecto buscado. Formato: una apertura de bloque por línea, como los 17 ficheros actuales. |
 | **`inventarioModulos.test.ts` @s24** (`:88-93`) | Al ampliar el glob, un `#hex` o un `rgba()` en `_reset.scss`/`_base.scss` la pone roja — **incluso dentro de un comentario** (`PATRON_HEX` no distingue). Y `PATRON_NOMBRE_DE_COLOR` incluye **`lime`**: escribir «lime» en vez de «lima» en un comentario dispara la puerta. | `_tokens.scss` se queda **fuera** de ese glob; las hojas globales entran con cero literales. |
 | **`inventarioModulos.test.ts` @s21/@s22** | Si el diseño fino introduce un componente compartido nuevo (un `Boton`), hay que **añadirlo al inventario** o la puerta falla; @s24 exige además *«el número de ficheros inspeccionados es exactamente 17»*. | Ese número deja de ser 17 en cuanto entren las hojas globales: hay que actualizarlo **y** su aserción de recuento. |
@@ -1309,3 +1857,162 @@ Dicho eso, éstos son los sospechosos concretos, ordenados por probabilidad:
    `100svh` en el parque de navegadores objetivo — que **no está declarado en ningún sitio
    del repo**. Debe fijarse antes de usarlos: `backdrop-filter` sin soporte deja la
    cabecera translúcida e ilegible.
+
+---
+
+## 9 · Reconciliación con el contrato aprobado (23/08/2026)
+
+**Qué es esto.** El 23/08/2026 la puerta humana aprobó
+`features/identidad_visual.feature` (51 escenarios). Este plan es anterior. Se ha cotejado
+**escenario a escenario** contra el contrato y aquí está el resultado completo: primero
+las divergencias reales encontradas y cómo se resolvió cada una, después el barrido de los
+51 y al final lo que queda pendiente y de quién es.
+
+**La regla que ha decidido todos los empates, sin una sola excepción: MANDA EL CONTRATO.**
+Está aprobado por el humano y es lo único que el `tdd_craftsman` va a leer como fuente de
+verdad. Cuando el plan y el contrato decían cosas distintas, se ha corregido el plan. En
+los tres casos en que el plan tenía una **medición** buena detrás de una **conclusión**
+equivocada, se conserva la medición y se rehace la conclusión, en vez de borrar el rastro.
+
+### 9.1 Las divergencias, una por una
+
+| # | Dónde | La divergencia | Cómo se ha resuelto |
+| --- | --- | --- | --- |
+| **D-1** | §3.1, §3.3-§3.6 | **Tres tokens con nombre equivocado.** El plan decía `--color-fondo-seccion`, `--color-superficie-suave` y `--color-acento`; @s1 enumera a mano `--color-fondo-alterno`, `--color-superficie-elevada` y `--color-acento-tinta`. | Renombrados en **todo** el documento: título, tabla de semántica, las cuatro tablas de contraste y todo fragmento de código. Verificado con `grep`: **0 apariciones** de los tres nombres viejos. Nota: `estudio_diseno_referencia.md` §1.2 ya usaba los nombres correctos — el error nació en el plan, no aguas arriba. |
+| **D-2** | §3.1 | **Faltaban tres tokens enteros**: `--color-primario-fuerte`, `--sombra-reposo` y `--sombra-elevada`. El plan enumeraba 14; @s1 exige 17 y los cuenta (*«15 de color y 2 de sombra»*). | Derivados y verificados en las 4 variantes: el primero en §3.3-§3.6, los dos de sombra en el **§3.8 nuevo**. Todos con su fórmula y su ratio recalculado. |
+| **D-3** | §3.1 | **`--primary-strong` estaba en la lista de DESCARTES**, con el argumento de que el prototipo lo declara 4 veces y lo usa 0. @s3, @s8 y @s11 lo exigen declarado **y usado**. | Descarte **retirado**, conservando la medición que lo motivaba y dándole la vuelta con la fórmula: `#77286B × 1.1` = `#832C76`, y el blanco encima **cae de 9.13 a 8.12**. El defecto del prototipo no era tener el token: era declararlo, no usarlo y taparlo con un `filter: brightness(1.1)` que **aclara** el morado. Por eso @s11 exige uso real y este plan prohíbe el filtro sobre el primario. |
+| **D-4** | §1.2-§1.6 | **Arquitectura de ficheros incompatible.** El plan proponía `main.scss` + 4 parciales; @s12 exige `src/styles/global.scss` y @s13/@s14/@s15/@s17/@s18 leen su **texto crudo** con `?raw`. Un `?raw` sobre un barril devuelve cinco líneas de `@use`: los seis escenarios fallarían. | **Un único `src/styles/global.scss`** con secciones rotuladas en el orden de la cascada. Se conserva íntegro el contenido decidido y las 6+7+4 diferencias razonadas con los repos de referencia: cambia el reparto en ficheros, **no una sola regla**. `_tokens.scss` (ruta anclada por `tokensColor.test.ts:17`) y `_api.scss` (emite 0 CSS) siguen fuera. |
+| **D-5** | §1.3 vs §1.4 vs §1.5 | **El `body` estaba repartido en tres ficheros.** @s13 exige que declare *«a la vez»* `min-height: 100svh`, `line-height: 1.5`, fondo, color y familia. | Las cinco, en **una sola regla** de `global.scss`. `body { margin: 0 }` sigue aparte: es la familia 2 de @s13, distinta de la 6. |
+| **D-6** | §1.4 | **Faltaba el bloque `@media (prefers-reduced-motion: reduce)`.** @s15 lo exige con `0.01ms` —y no `0`— para que `transitionend`/`animationend` sigan disparándose; sin él **@s42 no puede pasar**. | Añadido, **sin `!important` y sin declarar-y-revocar**: el movimiento sigue siendo opt-in dentro de `no-preference` y este bloque es red de seguridad. Verificado que la puerta existente lo admite: `movimientoRespetuoso.ts:8-9,20` acepta explícitamente un bloque `reduce`. |
+| **D-7** | §1.4 | **`scroll-padding-block-start` en vez de `scroll-padding-top`.** @s14 exige la cadena literal `scroll-padding-top`; la comprobación es lectura de texto y la lógica no salva la diferencia. | Corregido. Equivalentes en `horizontal-tb`, que es el único modo que este sitio usa. Añadida además la segunda mitad de @s14 que faltaba: **`Cabecera.module.scss` tiene que dimensionarse con `--altura-cabecera`**, o hay dos números que pueden divergir. |
+| **D-8** | §1.5 | **La familia tipográfica iba por literal, no por variable.** El plan copiaba de NailsLash la decisión *«literales, no tokens»*; @s13 y @s17 dicen las dos veces **«la variable de tipografía»**. | Se declaran `--fuente-titulo` y `--fuente-texto`. La objeción anti-tautología de NailsLash **no aplica**: el test lee el valor del texto crudo del SCSS y lo compara contra `'Outfit'` / `'DM Sans'` escritos a mano en el escenario; no importa ningún símbolo. Van en un `:root` **sin** `[data-variante]`: la tipografía no cambia con la paleta, y no cuentan para los 17 de @s1 ni para los 68 pares de @s2. |
+| **D-9** | §3.5 | **La opción A de `verde` estaba PROHIBIDA por el contrato** y el plan la marcaba como recomendada: cambiaba `--color-texto` de `#48704B` a `#3A5A3C`. La sección «QUÉ NO SE REABRE» conserva los tres roles ya fijados **en las 4 variantes**. | §3.5 reescrita y **cerrada**: ver §9.2. Coste sobre los tests existentes: **cero**. |
+| **D-10** | §2.1 D | **`--maxw: 1220px` era un número del prototipo**, justificado con *«gana el prototipo»*. Contradice la regla de portabilidad de este mismo plan y el PENDIENTE 3 del contrato, que reserva el valor al `tdd_craftsman`. | Retirado, junto con `--gutter` y `--seccion-y`. Se construyen sobre `$escala-espaciado`, la rejilla de 8 px que el proyecto ya tiene. @s45 exige la **propiedad estructural** (un solo ancho, el mismo en las 6 rutas), nunca una cifra. Se conserva la buena idea original: anclar el **rechazo** de lo heredado. |
+| **D-11** | §2.3 | **Ampliar el glob de los 17 módulos rompería @s51**, que exige que el recuento del inventario sea el de componentes visuales + páginas (12 + 5 = 17). Una hoja global no es ni lo uno ni lo otro. | Se llama **dos veces a la misma función pura**, con dos catálogos y **dos guardas de no-vacuidad**. @s24 conserva su «exactamente 17», @s51 su identidad de recuentos, y las hojas globales dejan de ser punto ciego. |
+| **D-12** | §1.7, §4 | **Faltaban tres módulos puros que el contrato exige como nivel A**: @s16 (escala de movimiento), @s35 (configuración de axe) y @s50 (los doce escenarios heredados). El plan los daba por hechos dentro de los ficheros de Playwright, donde **StrykerJS no llega**. | Añadidos a §1.7: `escalaDeMovimiento.ts`, `configuracionAxe.ts` y `escenariosHeredados.ts`. Los tres son inventarios declarados contrastados contra el texto real, que es exactamente la forma que el contrato pide. |
+| **D-13** | §2.5 (nueva) | **El lector de tokens no puede leer un `rgba()`** ni un bloque con llaves anidadas — PENDIENTE 12 del contrato, sin resolver en el plan. | §2.5 nueva, con el código propuesto: dos lectores **hermanos** (`leerDeclaracionDeVariante`, `declaraTokenEnVariante`), `extraerBloqueDeVariante` contando llaves, y **el aviso de StrykerJS con la tabla de doce tests y el mutante que mata cada uno**. El lector estricto NO se relaja: si aceptara cualquier valor, seis escenarios ya aprobados dejarían de detectar un token mal escrito. |
+| **D-14** | §2.4 | **`index.html:6` declara `<link rel="icon" href="/favicon.svg">` y ese fichero no existe**: es un 404 activo hoy. @s28 exige que **mientras no exista el vector del cliente esa etiqueta permanezca comentada**, y exige 200 en `/favicon.ico`, `/favicon-32.png` y `/apple-touch-icon.png` (este último de 180×180). | Anotado en §2.4 y en el paso 8 del §5. Es una línea de HTML, pero es un 404 en cada carga de cada ruta y **@s33 la caza**. |
+| **D-15** | §5 paso 8 | El paso enumeraba las 26 imágenes pero **no los ficheros de icono ni la imagen de compartición**. @s28 y @s29 los exigen, con `1200×630` y **PNG, no WebP**. | Añadidos al paso 8 con sus tamaños. |
+| **D-16** | §5 | **Faltaban dos pasos**: el techo de bytes del CSS (@s49) y la puerta separada de navegador (@s48: guion `test:e2e` propio que el comando de test del arnés **no** incluye, `testDir: tests/e2e`, `retries: 0`, `vite preview` sobre `dist/` en el 4173). | Añadidos al §5. |
+| **D-17** | §3.6 | El plan enumeraba **«los tres cambios de rol de `noche`»** y son **cuatro**: el sentido del `--color-primario-fuerte` se invierte en la variante oscura. | Corregido y derivado: ver §9.3. |
+
+### 9.2 La decisión de §3.5 (`verde`), en tres líneas
+
+El contrato conserva `--color-texto: #48704B` en `verde`. Su ratio sobre el propio fondo
+es **5.12**, el mínimo de SC 1.4.3 es **4.5**, y un texto «suave» tiene que ser más claro,
+o sea de menos ratio. **La ventana entera es `[4.50, 5.12]`** y el mejor candidato que
+sobrevive sobre las tres superficies es `#4D7450` con 4.81: un 6 % de diferencia, que
+nadie ve. **Decisión: `--color-texto-suave` vale `#48704B`, igual que `--color-texto`**,
+y la jerarquía secundaria la llevan la escala tipográfica y el peso — el mismo movimiento
+que este plan ya hacía en `noche` con `--color-tinta` = `--color-texto` = `#FFFFFF`.
+`verde` tiene dos peldaños de texto (tinta `#324E35` a 8.31 / cuerpo a 5.12), no tres, y
+se dice en voz alta en vez de fingir un tercero que el ojo no distingue.
+De paso se corrigieron dos afirmaciones falsas de esa sección: el borde de control **sí**
+llega (`#5A7E5D`, 4.13/3.90/4.59), y el `--color-fondo-alterno` baja de 16 % a 12 % de
+verde para que el cuerpo tenga 4.84 encima en vez de 4.57, que pasaba por 0.07.
+
+### 9.3 Los tres tokens que faltaban, derivados y verificados
+
+Todo lo que sigue está calculado con una réplica exacta de `src/lib/contraste.ts`, la
+misma que reprodujo **dígito a dígito** los diez valores de control de M-1 y, ahora
+también, **los 14 números que el contrato clava a mano** en @s3, @s4, @s5, @s6, @s7, @s8 y
+@s9. Ninguno es una estimación.
+
+**`--color-primario-fuerte` — la regla es invariante, el polo no.** @s8 exige que el
+estado con el puntero encima **mejore** el contraste contra `--color-sobre-primario`. La
+regla que lo garantiza en las cuatro variantes es: *mezclar el primario un 10 % con el polo
+OPUESTO a `--color-sobre-primario`*.
+
+| variante | primario | sobre-primario | polo | **primario-fuerte** | reposo | hover |
+| --- | --- | --- | --- | --- | --- | --- |
+| `marca` | `#77286B` | `#FFFFFF` | negro | **`#6B2460`** | 9.13 | **10.26** |
+| `lima` | `#77286B` | `#FFFFFF` | negro | **`#6B2460`** | 9.13 | **10.26** |
+| `verde` | `#48704B` | `#FFFFFF` | negro | **`#416544`** | 5.68 | **6.63** |
+| `noche` | `#B489AE` | `#000000` | **blanco** | **`#BC95B6`** | 7.13 | **8.11** |
+
+`marca` coincide dígito a dígito con lo que @s3 y @s8 ya clavan (`#6B2460`, 10.26), lo que
+confirma que la regla es la del contrato y no una reconstrucción. **`noche` es la que
+enseña por qué la regla se enuncia por polos y no como «10 % de negro»**: allí el
+sobre-primario es negro, y oscurecer el relleno da `#A27B9D` con **5.86**, o sea que el
+hover *empeoraría* el contraste — el defecto exacto que @s8 existe para prohibir.
+
+**`--sombra-reposo` y `--sombra-elevada` — geometría portada, color derivado.** Se porta
+del prototipo la **geometría** (`0 6px 18px` / `0 18px 45px`) y las **opacidades**
+(`.07`/`.10` en claro, reforzadas a `.35`/`.45` en oscuro), que son arquitectura. **No se
+porta su color** `rgb(15,32,60)`: cada variante tiñe con **su propio `--color-tinta`**,
+que es la regla que el propio estudio describe.
+
+| variante | tinta | **`--sombra-reposo`** | **`--sombra-elevada`** |
+| --- | --- | --- | --- |
+| `marca` | `#531C4B` | `0 6px 18px rgba(83, 28, 75, 0.07)` | `0 18px 45px rgba(83, 28, 75, 0.10)` |
+| `lima` | `#531C4B` | `0 6px 18px rgba(83, 28, 75, 0.07)` | `0 18px 45px rgba(83, 28, 75, 0.10)` |
+| `verde` | `#324E35` | `0 6px 18px rgba(50, 78, 53, 0.07)` | `0 18px 45px rgba(50, 78, 53, 0.10)` |
+| `noche` | `#FFFFFF` ⚠ | `0 6px 18px rgba(0, 0, 0, 0.35)` | `0 18px 45px rgba(0, 0, 0, 0.45)` |
+
+⚠ En `noche` la regla se rompe sola: la tinta es blanca y **una sombra blanca sobre negro
+no es una sombra, es un halo**. Se tiñe con negro puro y la profundidad la lleva la
+opacidad reforzada. Está escrito para que nadie lo «arregle» creyendo que es un despiste.
+Los dos viven obligatoriamente en `_tokens.scss`: `puertaLiteralesColor.ts:27-30,56`
+señala **cualquier** `rgba()` en los `.module.scss`, y `_tokens.scss` no está en ese glob.
+
+### 9.4 Barrido de los 51 escenarios
+
+Leídos uno a uno contra lo que el plan (ya corregido) propone escribir.
+
+| escenarios | veredicto |
+| --- | --- |
+| @s1, @s2, @s3, @s4, @s5, @s6, @s7, @s8, @s9, @s10, @s11 | **Cubiertos tras D-1, D-2, D-3 y D-13.** Los 14 números que el contrato clava a mano se han recalculado con la fórmula real y **coinciden los 14**. |
+| @s12, @s13, @s14, @s15, @s17, @s18 | **Cubiertos tras D-4 a D-8.** Antes de la corrección, los seis fallaban por la arquitectura de ficheros. |
+| @s16 | **Cubierto tras D-12.** Medido de paso: hoy hay **una sola** declaración de transición en los 17 módulos (`Faq.module.scss:33`, `padding-inline-start 150ms ease`) y **cero** que animen `all`. La duración ya es correcta; la curva es `ease` y la Decisión 31 pide `ease-out`: un carácter, y es la única deuda de movimiento que existe. |
+| @s19 | **Cubierto.** Verificado que `index.html` no tiene hoy **ninguna** etiqueta de precarga, así que «exactamente 2 y ninguna otra» se cumple añadiendo solo las dos de fuente. |
+| @s20, @s21, @s23 | **Cubiertos.** @s21 depende de la familia 4 del reset (`font: inherit` en los cuatro controles), que el plan ya tenía y que WebEmpresa solo aplicaba a `button`. |
+| @s22 | **Cubierto con una condición que hay que escribir.** Son 4 `@font-face` pero el escenario exige *«exactamente 2 ficheros `.woff2`»*: las dos de respaldo **tienen que declararse con `src: local(...)`**, nunca con una URL, o el recuento se rompe y el techo de 69 224 B se dispara. |
+| @s24, @s25 | **Cubiertos.** El `:root` desnudo del §2.1.A es justo lo que hace que @s24 (*«el fondo del cuerpo no es transparente»*) aguante sin JS. |
+| @s26 | **Cubierto con un añadido.** El escenario exige además que **ninguna** de las 8 secciones tenga fondo transparente: cada una declara explícitamente `--color-fondo` o `--color-fondo-alterno`, no basta con alternar unas cuantas. |
+| @s27, @s30, @s32, @s33 | **Cubiertos** por el paso 8 y el nivel C. |
+| @s28, @s29 | **Cubiertos tras D-14 y D-15.** |
+| @s31 | **Cubierto con un añadido.** El escenario fija el color del hueco de imagen: *«el color de fondo computado de cada hueco equivale al `--color-fondo-alterno` de la variante activa»*. Es un requisito de maquetación, no de imágenes, y va al paso 10. |
+| @s34 | **Cubierto, con un riesgo real que hay que medir.** «Cero avisos» es más duro que «cero errores»: un `<link rel=preload>` cuyo recurso no se use en unos segundos hace que Chrome escriba un **warning**. Con texto latino en pantalla las dos fuentes se usan siempre, así que no debería dispararse — pero es **NO VERIFICADO** hasta medirlo en el nivel C, y es la clase de detalle que tumba una puerta el último día. |
+| @s35, @s36, @s37, @s38, @s39, @s40, @s41 | **Cubiertos tras D-12.** @s38/@s39 apoyan además en el §3.7, que ya explicaba por qué el `outline-offset: 2px` es funcional y no estético. |
+| @s42, @s43 | **Cubiertos tras D-6.** Sin el bloque `reduce` ninguno de los dos podía pasar. |
+| @s44, @s45, @s47 | **Cubiertos tras D-10**, con el valor del ancho máximo como pendiente legítimo del `tdd_craftsman`. |
+| @s46 | **Cubierto tras D-4.** La respuesta al pendiente que dejó la feature 21 es **no**: el shell no necesita fichero propio, va en `global.scss`, porque @s12 prohíbe que un `.module.scss` toque `html`, `body` o `#root`. |
+| @s48, @s49 | **Cubiertos tras D-16.** |
+| @s50, @s51 | **Cubiertos tras D-11 y D-12.** |
+
+**Resultado: 51 de 51 con camino escrito.** Ninguno queda sin cubrir; los que dependen de
+una cifra que el contrato reserva al `tdd_craftsman` (el ancho máximo de @s45 y el techo de
+CSS de @s49) tienen el escenario cubierto y la cifra declarada como pendiente suyo, que es
+exactamente lo que el contrato pide.
+
+### 9.5 Lo que sigue PENDIENTE, y de quién es
+
+**Del `tdd_craftsman`** (los que el contrato ya le asigna y este plan no invade): la tabla
+completa de `lima`, `verde` y `noche` pasada por la puerta de contraste de @s5 —el §3 le da
+los valores derivados, él los ancla en rojo primero—; el techo de bytes del CSS de @s49,
+midiendo el primer `dist/` verde; el ancho máximo de contenedor de @s45; y los pasos
+concretos de radio, ancho de borde y altura de control.
+
+**Del `craftsman_lead`**: corregir en `project-spec.md` el titular de la Decisión 26
+(«de 3 a 15 (13 de color + 2 de sombra)»), que **no cuadra con su propia enumeración**. El
+contrato lo dice y le pone nombre: son **15 de color + 2 de sombra = 17**. Y el `og:image`
+relativo, que exige enmendar un escenario de `seo_estructura` (feature 15, ya `done`).
+
+**Del HUMANO**, y son tres:
+
+1. **El tercer peldaño de texto de `verde`.** Existe solo si se oscurece `--color-texto`
+   de esa variante, y eso es enmendar `sistema_de_diseno_visual.feature` @s5, ya `done`.
+   Propuesta calculada por si se pide: `#3A5A3C` (verde + 20 % negro, **6.99**), que
+   reabre la ventana a `[4.50, 6.99]` y libera `#48704B` para el texto suave.
+   **Mientras no se pida, no se toca**, y esta feature no lo necesita para cerrar.
+2. **El parque de navegadores objetivo** (PENDIENTE 5 del contrato, PREGUNTA ABIERTA 2 del
+   spec). Afecta a `color-mix()`, `backdrop-filter`, `text-wrap: pretty` e
+   `interpolate-size`. Ningún escenario del contrato depende de ellos, así que **no
+   bloquea**; mientras no esté fijado, cada uno lleva su respaldo sólido y
+   `backdrop-filter` **no se usa** para la cabecera translúcida (sin soporte queda
+   translúcida e ilegible).
+3. **El `favicon.svg` vectorial del cliente.** Mientras no llegue, `<link>` comentado y
+   juego raster, tal y como @s28 permite explícitamente.
+
+**Lo que este documento NO ha podido verificar y sigue NO VERIFICADO**: todo lo del §8
+sigue vigente. Se añade uno nuevo, el aviso de precarga de @s34 (§9.4).
