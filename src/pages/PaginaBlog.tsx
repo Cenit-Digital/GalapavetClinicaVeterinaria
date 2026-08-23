@@ -15,6 +15,7 @@ import {
   normalizarCategoriaSeleccionada,
   resolverArticulo,
 } from './PaginaBlog-logica'
+import styles from './PaginaBlog.module.scss'
 
 const AVISO_DEMOSTRACION =
   'Contenido de demostración. Galapavet no ha escrito ninguno de estos artículos: son textos de ejemplo para enseñar el formato. No son consejo veterinario ni comprometen a la clínica.'
@@ -233,7 +234,7 @@ export function PaginaBlog({ catalogo: catalogoDemo = ARTICULOS_DEMO }: PaginaBl
   const [searchParams, setSearchParams] = useSearchParams()
 
   return (
-    <main>
+    <main className={styles.pagina}>
       <MetadatosPagina
         metadatos={identificador === undefined ? METADATOS_BLOG : METADATOS_ARTICULO_BLOG}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

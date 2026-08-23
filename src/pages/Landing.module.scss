@@ -1,0 +1,7 @@
+// Envoltorio de cada sección anclada. `Hero`/`Servicios`/`Equipo`/etc. ya
+// traen su propia maquetación en su `.module.scss` co-localizado; este
+// fichero solo separa una sección de la siguiente para que la landing no
+// quede con todo pegado verticalmente.
+.seccion {
+  scroll-margin-block-start: espaciado(96);
+}

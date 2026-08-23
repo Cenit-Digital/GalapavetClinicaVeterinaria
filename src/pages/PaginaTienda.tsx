@@ -21,6 +21,7 @@ import {
   type EstadoCesta,
   type ResumenCesta,
 } from './PaginaTienda-logica'
+import styles from './PaginaTienda.module.scss'
 
 /**
  * Construye el catálogo sin dejar que un dato inválido (categoría no
@@ -189,7 +190,14 @@ function PanelCesta({
   }, [onCerrar])
 
   return (
-    <dialog open aria-modal="true" aria-labelledby={idTitulo} tabIndex={-1} ref={refDialogo}>
+    <dialog
+      open
+      aria-modal="true"
+      aria-labelledby={idTitulo}
+      tabIndex={-1}
+      ref={refDialogo}
+      className={styles.dialogoCesta}
+    >
       <h2 id={idTitulo}>{NOMBRE_DIALOGO_CESTA}</h2>
       {cestaVacia ? (
         <p>{AVISO_CESTA_VACIA}</p>
@@ -297,7 +305,7 @@ export function PaginaTienda({ catalogo: catalogoDemo = PRODUCTOS_DEMO }: Pagina
   }
 
   return (
-    <main>
+    <main className={styles.pagina}>
       <MetadatosPagina metadatos={METADATOS_TIENDA} datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO} />
       <h1>Tienda</h1>
       <p id={idAviso}>{AVISO_DEMOSTRACION}</p>

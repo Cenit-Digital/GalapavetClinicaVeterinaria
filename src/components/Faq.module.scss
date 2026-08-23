@@ -1,0 +1,40 @@
+.faq {
+  padding-block: espaciado(64);
+  padding-inline: espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+
+  h2 {
+    font-size: paso-tipografico(4);
+    margin-block-end: espaciado(24);
+  }
+
+  button {
+    @include foco-visible;
+    @include area-tactil-minima;
+    display: block;
+    width: 100%;
+    text-align: start;
+    padding-block: espaciado(12);
+    font-size: paso-tipografico(1);
+    border: none;
+    border-block-end: 1px solid var(--color-texto);
+    background: none;
+    color: inherit;
+
+    &:hover {
+      padding-inline-start: espaciado(8);
+    }
+
+    // Transición funcional mínima (hover del acordeón), nunca decorativa por
+    // sí sola: la propiedad "transition" vive DENTRO de esta consulta, nunca
+    // fuera (@s33 lee el texto real y lo comprueba literalmente).
+    @media (prefers-reduced-motion: no-preference) {
+      transition: padding-inline-start 150ms ease;
+    }
+  }
+
+  a {
+    @include foco-visible;
+  }
+}

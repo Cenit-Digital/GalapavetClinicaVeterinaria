@@ -3,6 +3,7 @@ import { PAGINAS_LEGALES, type PaginaLegal } from '../data/paginasLegales'
 import { ENLACES_CLINICA, ENLACES_CONTENIDO, type EnlacePieDePagina } from '../data/pieDePaginaEnlaces'
 import { datosNegocio } from '../lib/site'
 import { construirEnlacesContacto, construirEnlacesLegales, textoCopyright } from './PieDePagina-logica'
+import styles from './PieDePagina.module.scss'
 
 /**
  * PENDIENTE: el fichero de imagen local del logotipo no existe aún en el
@@ -60,7 +61,7 @@ export function PieDePagina({
   const copyright = textoCopyright(fecha ?? new Date(), datosNegocio.identidad.nombreComercial)
 
   return (
-    <footer>
+    <footer className={styles.pie}>
       <div>
         {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
         <img src={SRC_LOGO} alt="" />

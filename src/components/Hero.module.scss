@@ -1,0 +1,28 @@
+.hero {
+  padding-block: espaciado(64);
+  padding-inline: espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+
+  h1 {
+    font-size: paso-tipografico(5);
+    margin-block-end: espaciado(16);
+  }
+
+  p {
+    font-size: paso-tipografico(1);
+    margin-block-end: espaciado(16);
+  }
+
+  a {
+    @include foco-visible;
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+    margin-inline-end: espaciado(16);
+  }
+
+  dl {
+    margin-block-start: espaciado(24);
+  }
+}

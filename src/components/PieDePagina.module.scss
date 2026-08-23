@@ -1,0 +1,30 @@
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: espaciado(32);
+  padding: espaciado(48) espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-size: paso-tipografico(-1);
+
+  h3 {
+    font-size: paso-tipografico(1);
+    margin-block-end: espaciado(12);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: espaciado(8);
+  }
+
+  a {
+    @include foco-visible;
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
+}

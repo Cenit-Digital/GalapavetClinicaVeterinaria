@@ -4,6 +4,96 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **Feature en curso: `sistema_de_diseno_visual` (id 21) — `tdd_craftsman`
+  ronda 1 completa.** 26/34 escenarios (`@s1`-`@s11`, `@s13`-`@s26`, `@s33`)
+  cubiertos con test concreto por TDD estricto desde cero; los 8 restantes
+  (`@s12`, `@s27`-`@s32`, `@s34`) declarados por el propio `.feature` como de
+  navegador real (Decisión 11), documentados como pendientes explícitos —
+  ninguno tenía fracción pura verificable en jsdom sin fingir una medición
+  de layout que jsdom no calcula. Ratios de contraste re-verificados de forma
+  independiente con el módulo real `src/lib/contraste.ts` antes de fijar nada
+  (los 9 valores de la cabecera del `.feature` coinciden dígito a dígito).
+  Entregables: `src/styles/_tokens.scss` (colores de las 4 variantes,
+  conmutados por `[data-variante]`; escala tipográfica Utopia ratio 1.25/base
+  16/viewport 320-1024, 8 pasos -2..5; escala de espaciado 8px de Material
+  Design; mixins `foco-visible`/`area-tactil-minima`), 6 módulos puros nuevos
+  bajo `src/lib/diseno/` (`tokensColor`, `escalaTipografica`,
+  `escalaEspaciado`, `inventarioModulos`, `puntoDeCorte`,
+  `movimientoRespetuoso`, todos con test dedicado), y 17
+  `<Nombre>.module.scss` co-localizados (12 componentes + 5 páginas) cableados
+  en sus `.tsx`. Hallazgo técnico relevante y corregido en la misma ronda:
+  `vite.config.ts` `test.css: false` stubea CUALQUIER módulo CSS/SCSS
+  (incluidos los leídos con `?raw`) — cambiado a
+  `{ include: [/\?raw/] }` (Vitest matchea `css.include` contra el id CON
+  query, verificado en el código fuente real de Vitest 4.1.10), acotado para
+  no afectar las importaciones normales de `.module.scss` de los componentes
+  (un primer intento por extensión rompió 17 tests ya `done` porque jsdom SÍ
+  aplica `display:none` fuera de un `@media` no evaluado; detectado,
+  diagnosticado y corregido antes de seguir). 4 sabotajes manuales
+  verificados (`@s14`, `@s23`/`@s11` por inspección directa, `@s25`, `@s33`)
+  más un hallazgo real durante la implementación (`@s24`: comentarios en
+  español con la palabra "red" disparaban el patrón de color inglés de la
+  puerta ya `done`, corregido sin tocar la puerta). `pnpm run test`:
+  699/699 (672 → 699, +27). `pnpm run lint && pnpm run typecheck`: limpio.
+  `pnpm run build`: éxito, CSS real generado. `node .harness/harness.mjs
+  init`: verde de punta a punta. Detalle completo, trazabilidad @s→test y
+  justificación de la escala tipográfica en
+  `progress/tdd_sistema_de_diseno_visual.md`. Pendiente de `judge` y
+  `mutation_tester` para la fracción jsdom, y de una sesión de navegador real
+  para los 8 escenarios pendientes.
+
+- **Hallazgo mayor (22/08/2026) y nueva feature `sistema_de_diseno_visual`
+  (id 21):** al intentar cerrar los 4 escenarios de navegador real de
+  `accesibilidad` (target-size, geometría de cabecera/foco, animación), la
+  puerta lógica de `accesibilidad` ya estaba cerrada (judge Ronda 9 APPROVED,
+  mutation_tester PASS 100 % sobre no equivalentes, 224/224) — pero al servir
+  el sitio real (`vite build && vite preview`) y auditarlo con axe-core real
+  (no jsdom), la portada dio **21 violaciones reales de `target-size`**. Causa
+  raíz investigada a fondo: **el repo no tiene ningún fichero `.scss`/`.css`
+  en absoluto** (`find src -iname "*.scss" -o -iname "*.css"` → 0) y **ningún
+  componente importa estilos** (`grep` de `.module.scss/.css` en todo
+  `src/**/*.tsx` → 0), pese a que `project-spec.md` → «Arquitectura» especifica
+  `<X>.module.scss` co-localizado desde ANTES de que arrancara la feature 1.
+  Captura de pantalla de la portada confirma HTML sin estilar (Times New
+  Roman, enlaces azules por defecto). `tokens_marca` (done, mutación 100 %)
+  solo entregó `src/lib/tokens.ts` (constantes TS); nunca se creó
+  `src/styles/_tokens.scss` ni se conectó a ningún componente — un hueco
+  sistémico invisible para las 20 features anteriores porque TODA la suite
+  verifica sobre jsdom con `css: false` (regla del propio proyecto: nunca se
+  asevera sobre clases CSS), así que nada en el arnés podía verlo. Investigado
+  también el zip original del prototipo
+  (`C:\Users\vhurt\Downloads\ClinicaVeterinariaGalapavet.zip`, hallado fuera
+  del repo): confirma que `docs/contrato-heredado/` solo capturó
+  COMPORTAMIENTO (Gherkin), nunca CSS — el `.dc.html` original tiene una
+  arquitectura de custom properties + `[data-tema]` YA compatible con el
+  mecanismo real de `selector_paleta` (`data-variante`, ya `done`/probado),
+  pero sus valores numéricos de `font-size` son 20 literales dispersos sin
+  ratio sistemático (extracción exhaustiva), así que se descartan como fuente
+  de valores (solo de arquitectura). `project-spec.md` → Decisiones 23-24 y
+  `feature_list.json` → feature 21 documentan la decisión completa: tokens de
+  color derivados matemáticamente de los 3 hexadecimales ya verificados de
+  `tokens.ts` (nunca del prototipo) y verificados con la fórmula WCAG real de
+  `contraste.ts` antes de fijarse (script desechable en el scratchpad de la
+  sesión, resultados citados en el `.feature`); escala tipográfica con la
+  metodología pública de Utopia (fluid type, ratio 1.25, base 16px, rango
+  320-1024px — este último = `PUNTO_DE_CORTE_NAVEGACION_PX`, no un valor
+  nuevo); escala de espaciado con la rejilla de 8px de Material Design.
+  Autorización explícita del humano (22/08/2026) para investigación +
+  planificación + implementación 100 % autónoma, verificada a 0 fallos/0
+  errores/0 warnings antes de cerrar. `gherkin_author` lanzado para destilar
+  `features/sistema_de_diseno_visual.feature`; pipeline TDD/judge/mutación +
+  verificación en navegador real (que cierra a la vez los 4 escenarios
+  pendientes de `accesibilidad`) sigue en la próxima entrada de esta bitácora.
+- **Feature en curso: `accesibilidad` (id 19) — puerta transversal final de
+  cierre del proyecto.** `tdd_craftsman` ronda 1 completa por TDD estricto
+  desde cero, escenarios `@s1`-`@s36` (orden real del `.feature`, no el
+  numérico: `@s34` antes que `@s33`/`@s35`/`@s36`) recorridos en ese orden.
+  32/36 escenarios cubiertos de verdad en jsdom; los 4 declarados navegador
+  real por la Decisión 11 (`@s2` target-size, `@s17`, `@s18`, `@s19`) tienen
+  su fracción de lógica pura cubierta y el resto documentado pendiente.
+  Diseño, trazabilidad @s→test y detalle de sabotajes en
+  `progress/tdd_accesibilidad.md`. Pendiente de `judge` y `mutation_tester`.
+
 - **`seo_estructura` (id 15) — `tdd_craftsman` ronda 1 completa, 22/22
   escenarios (@s1-@s22) por TDD estricto desde cero, pendiente de `judge` y
   `mutation_tester`.** Diseño y trazabilidad completa @s→test en

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { SERVICIOS, type BloqueServicio } from '../data/servicios'
 import { nombreAccesibleBoton, puntosVisibles, rotuloBoton, tieneDesglose } from './Servicios-logica'
+import styles from './Servicios.module.scss'
 
 interface ServiciosProps {
   /** Catálogo de bloques a mostrar. Por defecto, el catálogo real del proyecto. */
@@ -17,7 +18,7 @@ function TarjetaServicio({ bloque }: TarjetaServicioProps): React.JSX.Element {
   const conDesglose = tieneDesglose(bloque.puntos)
 
   return (
-    <article>
+    <article className={styles.tarjeta}>
       <h3>{bloque.titulo}</h3>
       {conDesglose && (
         <button
@@ -46,7 +47,7 @@ export function Servicios({ catalogo = SERVICIOS }: ServiciosProps = {}): React.
     return null
   }
   return (
-    <section>
+    <section className={styles.servicios}>
       <h2>Servicios</h2>
       {catalogo.map((bloque) => (
         <TarjetaServicio key={bloque.titulo} bloque={bloque} />

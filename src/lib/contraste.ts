@@ -143,3 +143,114 @@ export function ejecutarPuertaDeContraste(catalogo: readonly ParDeContraste[]): 
 
   return { pasa: true, parejasEvaluadas: parejas.length, parejas }
 }
+
+/**
+ * Umbrales de contraste WCAG 2.2 AA que esta puerta exige (SC 1.4.3 / SC
+ * 1.4.11), y el tamaño a partir del cual un texto se considera "grande"
+ * (`features/accesibilidad.feature` @s28): 18pt = 24px, 14pt negrita =
+ * 18.66px (conversión 1pt = 1.333px).
+ */
+export const TAMANO_TEXTO_GRANDE_PX = 24
+export const TAMANO_TEXTO_GRANDE_NEGRITA_PX = 18.66
+
+export interface UmbralesDeContraste {
+  readonly textoNormal: number
+  readonly textoGrande: number
+  readonly tamanoTextoGrandePx: number
+  readonly tamanoTextoGrandeNegritaPx: number
+}
+
+/** Los umbrales que esta puerta exige, tal y como los consulta cualquier caller (@s28). */
+export function umbralesDeContraste(): UmbralesDeContraste {
+  return {
+    textoNormal: RATIO_MINIMO_POR_USO['texto normal'],
+    textoGrande: RATIO_MINIMO_POR_USO['texto grande'],
+    tamanoTextoGrandePx: TAMANO_TEXTO_GRANDE_PX,
+    tamanoTextoGrandeNegritaPx: TAMANO_TEXTO_GRANDE_NEGRITA_PX,
+  }
+}
+
+/** Si un texto de `tamanoPx`, con o sin negrita, se clasifica como "grande" (@s30). El límite es inclusivo. */
+export function esTextoGrande(tamanoPx: number, negrita: boolean): boolean {
+  return tamanoPx >= (negrita ? TAMANO_TEXTO_GRANDE_NEGRITA_PX : TAMANO_TEXTO_GRANDE_PX)
+}
+
+export interface VeredictoDePareja {
+  readonly veredicto: 'aprobado' | 'suspenso'
+  readonly ratio: number
+  readonly umbral: number
+  readonly color: string
+  readonly fondo: string
+}
+
+/**
+ * Formula el veredicto de una pareja ya con su ratio calculado (@s32/@s34):
+ * separado de `evaluarParDeContraste` para poder anclar los tests a un ratio
+ * exacto escrito a mano, sin depender de encontrar un hexadecimal real que
+ * produzca ese ratio con precisión de dos decimales.
+ */
+export function formularVeredictoDePareja(par: ParDeContraste, ratio: number): VeredictoDePareja {
+  return {
+    veredicto: esAptoParaUso(ratio, par.uso) ? 'aprobado' : 'suspenso',
+    ratio,
+    umbral: RATIO_MINIMO_POR_USO[par.uso],
+    color: par.color,
+    fondo: par.fondo,
+  }
+}
+
+/** Calcula el ratio real de la pareja y formula su veredicto. */
+export function evaluarParDeContraste(par: ParDeContraste): VeredictoDePareja {
+  return formularVeredictoDePareja(par, calcularRatioContraste(par.color, par.fondo))
+}
+
+export interface InformePuertaDeContrastePorUso {
+  readonly pasa: boolean
+  readonly parejasEvaluadas: number
+  readonly parejas: readonly ParEvaluada[]
+  readonly motivo?: string
+}
+
+/**
+ * Puerta de contraste para UN solo uso (texto normal / texto grande /
+ * componente de interfaz), con guarda de vacuidad propia: cada extractor de
+ * color del bloque F necesita la suya, no una genérica compartida entre los
+ * tres (@s33/@s35/@s36 — patrón `verde-por-vacuidad-en-puerta-de-verificacion`).
+ */
+function ejecutarPuertaDeContrasteParaUso(
+  catalogo: readonly ParDeContraste[],
+  motivoDeVacuidadParaUso: string,
+): InformePuertaDeContrastePorUso {
+  if (catalogo.length === CERO_PAREJAS) {
+    return { pasa: false, parejasEvaluadas: CERO_PAREJAS, parejas: [], motivo: motivoDeVacuidadParaUso }
+  }
+
+  const parejas = catalogo.map((par) => ({ ...par, ratio: calcularRatioContraste(par.color, par.fondo) }))
+  const todasAptas = parejas.every((par) => esAptoParaUso(par.ratio, par.uso))
+
+  return { pasa: todasAptas, parejasEvaluadas: parejas.length, parejas }
+}
+
+/** Puerta de contraste de texto normal (@s29/@s33). */
+export function ejecutarPuertaDeContrasteTextoNormal(
+  catalogo: readonly ParDeContraste[],
+): InformePuertaDeContrastePorUso {
+  return ejecutarPuertaDeContrasteParaUso(catalogo, 'no se calculó ninguna pareja de color de texto normal: el catálogo está vacío')
+}
+
+/** Puerta de contraste de texto grande (@s30/@s35). */
+export function ejecutarPuertaDeContrasteTextoGrande(
+  catalogo: readonly ParDeContraste[],
+): InformePuertaDeContrastePorUso {
+  return ejecutarPuertaDeContrasteParaUso(catalogo, 'no se calculó ninguna pareja de color de texto grande: el catálogo está vacío')
+}
+
+/** Puerta de contraste de componentes de interfaz (@s31/@s36). */
+export function ejecutarPuertaDeContrasteComponentesInterfaz(
+  catalogo: readonly ParDeContraste[],
+): InformePuertaDeContrastePorUso {
+  return ejecutarPuertaDeContrasteParaUso(
+    catalogo,
+    'no se calculó ningún componente de interfaz: el catálogo está vacío',
+  )
+}

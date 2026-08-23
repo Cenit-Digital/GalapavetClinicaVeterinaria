@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { VARIANTES_PALETA, type VariantePaleta } from '../data/variantesPaleta'
 import { guardarVarianteElegida, leerVarianteAlmacenada, resolverVarianteInicial } from './SelectorPaleta-logica'
+import styles from './SelectorPaleta.module.scss'
 
 const NOMBRE_ACCESIBLE_BOTON = 'Cambiar paleta de color'
 const NOMBRE_ACCESIBLE_GRUPO = 'Paleta de color'
@@ -26,12 +27,12 @@ export function SelectorPaleta({ catalogo = VARIANTES_PALETA }: SelectorPaletaPr
   }
 
   return (
-    <div>
+    <div className={styles.selector}>
       <button type="button" aria-expanded={abierto} onClick={() => setAbierto((valorPrevio) => !valorPrevio)}>
         {NOMBRE_ACCESIBLE_BOTON}
       </button>
       {abierto && (
-        <fieldset aria-label={NOMBRE_ACCESIBLE_GRUPO}>
+        <fieldset aria-label={NOMBRE_ACCESIBLE_GRUPO} className={styles.panel}>
           {catalogo.map((variante) => (
             <button
               key={variante.id}
@@ -43,7 +44,7 @@ export function SelectorPaleta({ catalogo = VARIANTES_PALETA }: SelectorPaletaPr
               }}
             >
               {variante.muestras.map((color) => (
-                <span key={color} aria-hidden="true" style={{ backgroundColor: color }} />
+                <span key={color} aria-hidden="true" className={styles.muestra} style={{ backgroundColor: color }} />
               ))}
               {variante.nombre}
             </button>

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import { datosNegocio } from '../lib/site'
 import { construirEnlaceTelefono } from './InformacionContacto-logica'
 import { formularioEsValido, validarCampos, type CamposFormulario, type ValidezCampos } from './FormularioContacto-logica'
+import styles from './FormularioContacto.module.scss'
 
 const OPCIONES_MOTIVO: readonly string[] = [
   'Pedir cita',
@@ -60,7 +61,7 @@ export function FormularioContacto(): React.JSX.Element {
     const enlaceClinica = construirEnlaceTelefono(datosNegocio.telefonoClinica.textoVisible)
     const enlaceUrgencias = construirEnlaceTelefono(datosNegocio.telefonoUrgencias.textoVisible)
     return (
-      <output>
+      <output className={styles.confirmacion}>
         <h2>Formulario completado</h2>
         <p>
           Tu mensaje no se ha enviado a ningún servidor. Para hablar con nosotros, llama al{' '}
@@ -77,7 +78,7 @@ export function FormularioContacto(): React.JSX.Element {
   }
 
   return (
-    <form aria-label="Escríbenos" onSubmit={manejarEnvio} noValidate>
+    <form aria-label="Escríbenos" onSubmit={manejarEnvio} noValidate className={styles.formulario}>
       <label htmlFor={ID_NOMBRE}>Tu nombre</label>
       <input id={ID_NOMBRE} ref={refNombre} type="text" required aria-invalid={validez.nombreInvalido} />
 

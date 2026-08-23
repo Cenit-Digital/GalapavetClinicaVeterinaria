@@ -12,6 +12,7 @@ import {
   resolverVista,
   type CampanaValidada,
 } from './PaginaCampanas-logica'
+import styles from './PaginaCampanas.module.scss'
 
 const TITULO_LISTADO = 'Campañas de prevención'
 
@@ -247,7 +248,7 @@ export function PaginaCampanas({ catalogo: catalogoDemo = CAMPANAS_DEMO }: Pagin
   const vista = resolverVista(catalogo, searchParams.get('campana'))
 
   return (
-    <main>
+    <main className={styles.pagina}>
       <MetadatosPagina
         metadatos={vista.tipo === 'ficha' ? METADATOS_FICHA_CAMPANA : METADATOS_CAMPANAS}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

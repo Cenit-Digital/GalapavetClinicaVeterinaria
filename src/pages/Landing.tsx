@@ -12,6 +12,7 @@ import { Servicios } from '../components/Servicios'
 import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
 import { construirDatosEstructurados, METADATOS_INICIO } from '../lib/seo-logica'
 import { datosNegocio } from '../lib/site'
+import styles from './Landing.module.scss'
 
 interface LandingProps {
   /**
@@ -47,27 +48,27 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
   return (
     <>
       <MetadatosPagina metadatos={METADATOS_INICIO} datosEstructurados={datosEstructurados} />
-      <div id="inicio">
+      <div id="inicio" className={styles.seccion}>
         <Hero />
       </div>
-      <div id="servicios">
+      <div id="servicios" className={styles.seccion}>
         <Servicios />
       </div>
       <CampanasPortada />
-      <div id="equipo">
+      <div id="equipo" className={styles.seccion}>
         <Equipo />
       </div>
-      <div id="reservar">
+      <div id="reservar" className={styles.seccion}>
         <ReservaChat />
       </div>
-      <div id="galeria">
+      <div id="galeria" className={styles.seccion}>
         <Galeria />
       </div>
-      <div id="contacto">
+      <div id="contacto" className={styles.seccion}>
         <FormularioContacto />
         <InformacionContacto direccion={direccionVisible} />
       </div>
-      <div id="faq">
+      <div id="faq" className={styles.seccion}>
         <Faq />
       </div>
     </>

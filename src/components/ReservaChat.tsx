@@ -9,6 +9,7 @@ import {
   siguientePaso,
   type IdPaso,
 } from './ReservaChat-logica'
+import styles from './ReservaChat.module.scss'
 
 const MENSAJE_BIENVENIDA = 'Hola, soy el asistente de Galapavet. ¿Qué necesita tu mascota?'
 const MENSAJE_TRAS_SERVICIO = 'Entendido. ¿Con qué animal vienes?'
@@ -117,7 +118,7 @@ export function ReservaChat(): React.JSX.Element {
   }
 
   return (
-    <section>
+    <section className={styles.reservaChat}>
       <div>
         <EnlaceLlamada etiqueta="Llamar a la clínica" telefono={datosNegocio.telefonoClinica} />
         <EnlaceLlamada etiqueta="Llamar al móvil" telefono={datosNegocio.telefonoMovil} />

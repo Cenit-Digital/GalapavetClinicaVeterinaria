@@ -1,7 +1,8 @@
-import React, { useId, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import { ENLACES_NAVEGACION, type EnlaceNavegacion } from '../data/navegacion'
 import { datosNegocio } from '../lib/site'
 import { esAncla, esMovil, esPaginaActual } from './Cabecera-logica'
+import styles from './Cabecera.module.scss'
 
 interface CabeceraProps {
   /** Ancho de la ventana en píxeles, medido por quien integra el componente. */
@@ -54,21 +55,39 @@ export function Cabecera({
   const hayEnlaces = enlaces.length > 0
   const [abierto, setAbierto] = useState(false)
   const idPanel = useId()
+  const refBotonMenu = useRef<HTMLButtonElement>(null)
+
+  /** Escape cierra el menú móvil abierto y devuelve el foco al botón que lo abrió (@s25). */
+  useEffect(() => {
+    if (!abierto) {
+      return
+    }
+    function alPulsarTecla(evento: KeyboardEvent): void {
+      if (evento.key === 'Escape') {
+        setAbierto(false)
+        refBotonMenu.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', alPulsarTecla)
+    return () => document.removeEventListener('keydown', alPulsarTecla)
+  }, [abierto])
 
   return (
-    <header>
+    <header className={styles.cabecera}>
       <div>
         <a href="#inicio">{datosNegocio.identidad.nombreComercial}</a>
         <p>{datosNegocio.identidad.descriptor}</p>
       </div>
       {hayEnlaces && !movil && (
-        <nav aria-label="Navegación principal">
+        <nav aria-label="Navegación principal" className={styles.navPrincipal}>
           <ListaDeEnlaces enlaces={enlaces} rutaActual={rutaActual} />
         </nav>
       )}
       {hayEnlaces && movil && (
         <button
           type="button"
+          ref={refBotonMenu}
+          className={styles.botonMenu}
           aria-expanded={abierto}
           aria-controls={idPanel}
           onClick={() => setAbierto((valorPrevio) => !valorPrevio)}
@@ -77,7 +96,7 @@ export function Cabecera({
         </button>
       )}
       {hayEnlaces && movil && abierto && (
-        <div id={idPanel}>
+        <div id={idPanel} className={styles.panelMovil}>
           <ListaDeEnlaces
             enlaces={enlaces}
             rutaActual={rutaActual}

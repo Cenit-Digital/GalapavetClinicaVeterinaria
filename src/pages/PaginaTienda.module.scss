@@ -1,0 +1,53 @@
+.pagina {
+  padding: espaciado(64) espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+
+  h1 {
+    font-size: paso-tipografico(5);
+    margin-block-end: espaciado(16);
+  }
+
+  h2 {
+    font-size: paso-tipografico(2);
+  }
+
+  a,
+  button,
+  input {
+    @include foco-visible;
+    @include area-tactil-minima;
+  }
+
+  a,
+  button {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: espaciado(24);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.dialogoCesta {
+  padding: espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  border: 1px solid var(--color-texto);
+  border-radius: espaciado(8);
+
+  @include foco-visible;
+
+  a,
+  button,
+  input {
+    @include foco-visible;
+    @include area-tactil-minima;
+  }
+}

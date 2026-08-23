@@ -6,6 +6,7 @@ import {
   prefiereMenosMovimiento,
   type Sentido,
 } from './Galeria-logica'
+import styles from './Galeria.module.scss'
 
 interface GaleriaProps {
   /** Catálogo de entradas a mostrar. Por defecto, el catálogo real del proyecto. */
@@ -46,7 +47,7 @@ export function Galeria({ catalogo = GALERIA }: GaleriaProps = {}): React.JSX.El
   }
 
   return (
-    <section aria-label="Galería" aria-describedby="galeria-aviso-demostracion">
+    <section aria-label="Galería" aria-describedby="galeria-aviso-demostracion" className={styles.galeria}>
       <p id="galeria-aviso-demostracion">
         Contenido de demostración. Estas fotografías y sus pies son de ejemplo, no fotografías reales de pacientes de
         Galapavet: la clínica todavía no ha cedido fotografías propias ni el consentimiento de las familias
@@ -62,7 +63,7 @@ export function Galeria({ catalogo = GALERIA }: GaleriaProps = {}): React.JSX.El
           que sugiere el linter para role="group" -- address, details,
           fieldset, hgroup, optgroup -- no encajan aquí). */}
       {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex jsx-a11y/prefer-tag-over-role */}
-      <div ref={pistaRef} role="group" aria-label="Fotografías de la galería" tabIndex={0}>
+      <div ref={pistaRef} role="group" aria-label="Fotografías de la galería" tabIndex={0} className={styles.pista}>
         {validas.map((entrada) => (
           <figure key={entrada.nombre}>
             <img src={entrada.src} alt={entrada.nombre} />

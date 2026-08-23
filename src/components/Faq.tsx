@@ -10,6 +10,7 @@ import {
   type EntradaFaq,
 } from './Faq-logica'
 import type { EnlaceTelefono } from './InformacionContacto-logica'
+import styles from './Faq.module.scss'
 
 /** Identificador de la región de respuesta de la entrada situada en `indice`. */
 function idRegion(indice: number): string {
@@ -73,7 +74,7 @@ export function Faq({
   }
 
   return (
-    <section aria-label="Preguntas frecuentes">
+    <section aria-label="Preguntas frecuentes" className={styles.faq}>
       <h2>Preguntas frecuentes</h2>
       {validas.map((entrada, indice) => {
         const abierto = indiceAbierto === indice

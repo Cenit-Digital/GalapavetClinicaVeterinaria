@@ -46,7 +46,23 @@ export default defineConfig({
     // Vitest no procesa CSS por defecto: los CSS Modules devuelven un proxy. Es
     // deliberado — el contrato de este repo prohíbe aseverar sobre clases CSS, así
     // que el estado condicional vive en atributos ARIA y no en nombres de clase.
-    css: false,
+    // Verificado en vivo (`sistema_de_diseno_visual.feature`): activar la
+    // transformación real de CSS para las importaciones NORMALES de un
+    // `.module.scss` inyecta hojas de estilo reales en jsdom, y jsdom SÍ
+    // aplica `display: none` fuera de un `@media` que no evalúa como
+    // verdadero — rompiendo `getByRole` de Testing Library en componentes que
+    // React ya oculta/muestra por lógica (p. ej. `Cabecera`). Por eso el
+    // `include` de abajo se ancla a la QUERY `?raw`, no a la extensión: Vitest
+    // matchea `css.include` contra el id COMPLETO, con query
+    // (`CSSEnablerPlugin`, verificado leyendo el código fuente real de Vitest
+    // 4.1.10) — así que `import styles from './X.module.scss'` (sin query)
+    // sigue devolviendo el proxy de siempre, y solo
+    // `import.meta.glob(..., { query: '?raw' })` (usado por las puertas de
+    // verificación del Bloque A/D/E/H para leer el texto REAL de
+    // `_tokens.scss`/`<X>.module.scss`, patrón
+    // `tokens/contraste-de-tokens-verificado-por-matriz-de-uso.md`) recibe
+    // contenido real.
+    css: { include: [/\?raw/] },
 
     coverage: {
       provider: 'v8',

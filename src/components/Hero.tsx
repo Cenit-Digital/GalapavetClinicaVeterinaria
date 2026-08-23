@@ -1,6 +1,7 @@
 import React from 'react'
 import { datosNegocio } from '../lib/site'
 import { enlaceLlamada } from '../lib/telefono'
+import styles from './Hero.module.scss'
 
 /** Misma forma que las entradas de `datosNegocio.horario` (`src/lib/site.ts`). */
 export interface FranjaHorario {
@@ -35,7 +36,7 @@ export function Hero({
   horario = datosNegocio.horario,
 }: HeroProps = {}): React.JSX.Element {
   return (
-    <section>
+    <section className={styles.hero}>
       <p>{UBICACION}</p>
       <h1>{TITULAR}</h1>
       <p>{TEXTO_DESCRIPTIVO}</p>

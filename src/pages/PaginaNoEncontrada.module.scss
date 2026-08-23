@@ -1,0 +1,18 @@
+.paginaNoEncontrada {
+  padding: espaciado(64) espaciado(24);
+  text-align: center;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+
+  h1 {
+    font-size: paso-tipografico(4);
+    margin-block-end: espaciado(16);
+  }
+
+  a {
+    @include foco-visible;
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
+}

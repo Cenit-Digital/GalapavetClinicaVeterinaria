@@ -1,6 +1,7 @@
 import React from 'react'
 import { datosNegocio } from '../lib/site'
 import { construirEnlaceTelefono, type TramoHorario } from './InformacionContacto-logica'
+import styles from './InformacionContacto.module.scss'
 
 /**
  * Proveedor del mapa embebido: la ÚNICA petición a un tercero admitida en
@@ -49,7 +50,7 @@ export function InformacionContacto({
   const tituloMapa = `Mapa de ${datosNegocio.identidad.nombreComercial}`
 
   return (
-    <section aria-label="Información de contacto">
+    <section aria-label="Información de contacto" className={styles.informacionContacto}>
       {direccion !== null && (
         <>
           {/* `sandbox` vacío: el mapa no necesita ni script ni formularios ni

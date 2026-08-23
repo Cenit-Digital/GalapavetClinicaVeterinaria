@@ -288,7 +288,8 @@
         "La puerta falla cerrada si no analiza ninguna página"
       ],
       "sdd": true,
-      "status": "in_progress"
+      "status": "blocked",
+      "notas": "Puerta lógica ya superada (judge Ronda 9 APPROVED, mutation_tester PASS 100% sobre no equivalentes, 224/224 — ver progress/judge_accesibilidad.md y progress/mutation_accesibilidad.md). Bloqueada, no in_progress, en los 4 escenarios de navegador real (@s2/@s7, @s17, @s18, @s19): el sitio real no tenía ningún CSS que auditar. Desbloquea feature 21 (sistema_de_diseno_visual) al cerrar; mismo patrón que el bloqueo de seo_estructura sobre pagina_campanas/blog/tienda."
     },
     {
       "id": 20,
@@ -306,6 +307,24 @@
       "sdd": true,
       "status": "done",
       "notas": "Nace de una conversación de spec (2026-08-21) tras detectar que ninguna de las 19 features originales cubre el ensamblaje. project-spec.md → Decisiones 15-22 y sección \"Ensamblaje — nueva feature: ensamblaje_landing\". features/ensamblaje_landing.feature (15 escenarios) aprobado por el humano el 21/08/2026, incluido el orden Equipo→ReservaChat→Galería de @s3 como orden de trabajo con una sola fuente (docs/contrato-heredado/README_TRASPASO.md). Cerrada 21/08/2026: judge APROBADO (2 rondas), mutation_tester PASS 100% sobre no-equivalentes (26/26; 1 equivalente genuino en el array de dependencias del useEffect de resize, verificado contra el código fuente real de React). El sitio compila y arranca de verdad por primera vez en el proyecto."
+    },
+    {
+      "id": 21,
+      "name": "sistema_de_diseno_visual",
+      "title": "Sistema de diseño visual: tokens SCSS reales y maquetación de todos los componentes",
+      "description": "Implementa la arquitectura visual que project-spec.md (sección Arquitectura) ya especifica desde el inicio del proyecto pero que ninguna de las 20 features anteriores ejecutó: src/styles/_tokens.scss (colores de las 4 variantes de paleta como custom properties CSS conmutadas por [data-variante], escala tipográfica fluida, escala de espaciado) y un <X>.module.scss por cada componente/página ya done, maquetando el comportamiento que su propio .feature ya describe en prosa sin reabrir ningún contrato de comportamiento. Nace tras detectar, al intentar cerrar los 4 escenarios de navegador real de accesibilidad (id 19), que el sitio servido en real (vite build + preview) no tiene ningún CSS: 0 ficheros .scss/.css en todo el repo, 0 componentes que importen estilos, y axe-core real reporta violaciones de target-size en la portada.",
+      "acceptance": [
+        "src/styles/_tokens.scss existe y expone los tokens de color de las 4 variantes de paleta (marca/lima/verde/noche) como custom properties CSS conmutadas por [data-variante], la escala tipográfica y la escala de espaciado, todos con contraste WCAG 2.2 AA verificado con la fórmula real de src/lib/contraste.ts antes de fijarse (nunca a ojo)",
+        "Cada componente y página ya done consume esos tokens vía su propio <X>.module.scss co-localizado, sin ningún color/tamaño/espaciado literal suelto fuera de _tokens.scss",
+        "Todo control interactivo del sitio real alcanza el área táctil mínima de 24×24 px CSS (SC 2.5.8), verificado con axe-core real sobre el build de producción",
+        "El indicador de foco es visible en todo control interactivo, con al menos 2 px CSS de perímetro y 3:1 de contraste entre el estado con foco y sin foco (SC 2.4.7/2.4.13), verificado en navegador real",
+        "La navegación responsive de Cabecera colapsa exactamente en el mismo punto de corte que ya usa PUNTO_DE_CORTE_NAVEGACION_PX (Cabecera-logica.ts), sin divergencia entre el breakpoint de JS y el de CSS",
+        "Cualquier animación o transición introducida respeta prefers-reduced-motion y no oculta contenido que debería estar visible sin ella",
+        "Cierra, como consecuencia directa (no como escenario propio), los 4 escenarios de navegador real que accesibilidad.feature (id 19) dejó pendientes: @s2/@s7 (target-size axe-core), @s17 (cabecera no tapa el foco), @s18 (área/contraste del indicador de foco), @s19 (sin animación en curso con menos movimiento)"
+      ],
+      "sdd": true,
+      "status": "in_progress",
+      "notas": "Contrato aprobado por el humano el 22/08/2026 (34 escenarios, 0 errores de sintaxis con el parser oficial de Gherkin). Nace de un hallazgo del craftsman_lead (22/08/2026) durante el cierre de accesibilidad (id 19): el sitio real no tiene ningún CSS pese a que tokens_marca/selector_paleta y 17 features de UI más están done. project-spec.md → Decisiones 23-24. Arquitectura de custom properties + [data-variante] tomada del mecanismo YA implementado por selector_paleta (index.html:30), no inventada. Valores numéricos (tipografía/espaciado) tomados de metodologías públicas citables (Utopia fluid type, rejilla de 8px de Material Design), nunca del prototipo heredado (cuyos font-size son 20 valores dispersos sin ratio sistemático) ni inventados. Colores de las 4 variantes derivados matemáticamente de los 3 hexadecimales ya verificados de tokens.ts, verificados con la fórmula WCAG real antes de fijarse. Autorización de investigación + planificación + implementación 100% autónoma del humano el 22/08/2026."
     }
   ]
 }

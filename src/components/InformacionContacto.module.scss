@@ -1,0 +1,28 @@
+.informacionContacto {
+  display: flex;
+  flex-direction: column;
+  gap: espaciado(16);
+  padding: espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-size: paso-tipografico(0);
+
+  iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  a {
+    @include foco-visible;
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
+}

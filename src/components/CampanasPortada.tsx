@@ -1,6 +1,7 @@
 import React from 'react'
 import { CAMPANAS_DEMO, type CampanaDemo } from '../data/campanas'
 import { construirModeloCampanas } from './CampanasPortada-logica'
+import styles from './CampanasPortada.module.scss'
 
 interface CampanasPortadaProps {
   /** Catálogo de demo a mostrar. Por defecto, el catálogo real del proyecto. */
@@ -28,7 +29,11 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
   }
 
   return (
-    <section aria-label="Campañas de prevención" aria-describedby="campanas-aviso-demostracion">
+    <section
+      aria-label="Campañas de prevención"
+      aria-describedby="campanas-aviso-demostracion"
+      className={styles.campanasPortada}
+    >
       <h2>Campañas de prevención</h2>
       <p id="campanas-aviso-demostracion">
         Contenido de demostración. Galapavet no ha confirmado ninguna campaña: estas tarjetas muestran el formato

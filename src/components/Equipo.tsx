@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { EQUIPO, type Profesional } from '../data/equipo'
 import { profesionalesValidos, rotuloBoton, tieneFormacion } from './Equipo-logica'
+import styles from './Equipo.module.scss'
 
 interface EquipoProps {
   /** Listado de profesionales a mostrar. Por defecto, el listado real del proyecto. */
@@ -17,7 +18,7 @@ function TarjetaProfesional({ profesional }: TarjetaProfesionalProps): React.JSX
   const conFormacion = tieneFormacion(profesional.formacion)
 
   return (
-    <article>
+    <article className={styles.tarjeta}>
       <h3>{profesional.nombre}</h3>
       <p>{profesional.rol}</p>
       {conFormacion && (
@@ -37,7 +38,7 @@ export function Equipo({ listado = EQUIPO }: EquipoProps = {}): React.JSX.Elemen
     return null
   }
   return (
-    <section aria-label="Equipo">
+    <section aria-label="Equipo" className={styles.equipo}>
       <h2>Equipo</h2>
       {validos.map((profesional) => (
         <TarjetaProfesional key={profesional.nombre} profesional={profesional} />

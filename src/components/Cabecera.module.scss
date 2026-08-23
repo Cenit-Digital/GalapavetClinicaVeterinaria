@@ -1,0 +1,83 @@
+// Cabecera fija (accesibilidad.feature @s17: no debe tapar por completo el
+// foco de lo que hay debajo — altura acotada + z-index propio, sin position:
+// fixed a pantalla completa). El punto de corte de esta cobertura CSS es EL
+// MISMO valor que ya decide `esMovil` en JS (`Cabecera-logica.ts`,
+// `PUNTO_DE_CORTE_NAVEGACION_PX = 1024`): @s25/@s26 de
+// `sistema_de_diseno_visual.feature` verifican que no diverja.
+
+.cabecera {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: espaciado(16);
+  padding-block: espaciado(12);
+  padding-inline: espaciado(24);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-size: paso-tipografico(0);
+
+  a {
+    @include foco-visible;
+  }
+}
+
+.navPrincipal {
+  // Oculta por defecto y solo visible desde el punto de corte de escritorio:
+  // cobertura CSS de refuerzo, con el MISMO literal (`min-width: 1024px`,
+  // nunca `max-width: 1023px`, para que un único número gobierne los dos
+  // lados de la regla) que ya decide `esMovil` en JS (`Cabecera-logica.ts`).
+  // Aunque React ya deja de renderizar esta lista en móvil, esta cobertura
+  // evita que pudiera existir una franja de ancho en la que JS y CSS
+  // discreparan (mismo principio que el patrón de memoria organizacional
+  // sobre bifurcaciones de UI decididas solo en JS).
+  display: none;
+
+  @media (min-width: 1024px) {
+    display: block;
+  }
+
+  ul {
+    display: flex;
+    align-items: center;
+    gap: espaciado(24);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.botonMenu {
+  @include foco-visible;
+  @include area-tactil-minima;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.panelMovil {
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: espaciado(12);
+    list-style: none;
+    margin: 0;
+    padding: espaciado(16);
+  }
+
+  a {
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
+}

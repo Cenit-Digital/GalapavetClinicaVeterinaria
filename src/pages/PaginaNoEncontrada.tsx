@@ -1,4 +1,5 @@
 import React from 'react'
+import styles from './PaginaNoEncontrada.module.scss'
 
 /**
  * Catch-all de cualquier ruta de subpágina que todavía no aterriza contenido
@@ -7,7 +8,7 @@ import React from 'react'
  */
 export function PaginaNoEncontrada(): React.JSX.Element {
   return (
-    <section>
+    <section className={styles.paginaNoEncontrada}>
       <h1>Página no encontrada</h1>
       <a href="/">Volver al inicio</a>
     </section>
