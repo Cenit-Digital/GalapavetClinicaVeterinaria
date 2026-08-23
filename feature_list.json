@@ -5,7 +5,13 @@
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
     "require_approved_spec_to_implement": true,
-    "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
+    "valid_status": [
+      "pending",
+      "spec_ready",
+      "in_progress",
+      "done",
+      "blocked"
+    ],
     "sdd_required_when": "feature has \"sdd\": true",
     "notas": [
       "Ningún dato de negocio llega a la UI si no está verificado y con fuente en docs/datos-galapavet.md.",
@@ -323,8 +329,8 @@
         "Cierra, como consecuencia directa (no como escenario propio), los 4 escenarios de navegador real que accesibilidad.feature (id 19) dejó pendientes: @s2/@s7 (target-size axe-core), @s17 (cabecera no tapa el foco), @s18 (área/contraste del indicador de foco), @s19 (sin animación en curso con menos movimiento)"
       ],
       "sdd": true,
-      "status": "in_progress",
-      "notas": "Contrato aprobado por el humano el 22/08/2026 (34 escenarios, 0 errores de sintaxis con el parser oficial de Gherkin). Nace de un hallazgo del craftsman_lead (22/08/2026) durante el cierre de accesibilidad (id 19): el sitio real no tiene ningún CSS pese a que tokens_marca/selector_paleta y 17 features de UI más están done. project-spec.md → Decisiones 23-24. Arquitectura de custom properties + [data-variante] tomada del mecanismo YA implementado por selector_paleta (index.html:30), no inventada. Valores numéricos (tipografía/espaciado) tomados de metodologías públicas citables (Utopia fluid type, rejilla de 8px de Material Design), nunca del prototipo heredado (cuyos font-size son 20 valores dispersos sin ratio sistemático) ni inventados. Colores de las 4 variantes derivados matemáticamente de los 3 hexadecimales ya verificados de tokens.ts, verificados con la fórmula WCAG real antes de fijarse. Autorización de investigación + planificación + implementación 100% autónoma del humano el 22/08/2026."
+      "status": "blocked",
+      "notas": "Contrato aprobado por el humano el 22/08/2026 (34 escenarios, 0 errores de sintaxis con el parser oficial de Gherkin). Nace de un hallazgo del craftsman_lead (22/08/2026) durante el cierre de accesibilidad (id 19): el sitio real no tiene ningún CSS pese a que tokens_marca/selector_paleta y 17 features de UI más están done. project-spec.md → Decisiones 23-24. Arquitectura de custom properties + [data-variante] tomada del mecanismo YA implementado por selector_paleta (index.html:30), no inventada. Valores numéricos (tipografía/espaciado) tomados de metodologías públicas citables (Utopia fluid type, rejilla de 8px de Material Design), nunca del prototipo heredado (cuyos font-size son 20 valores dispersos sin ratio sistemático) ni inventados. Colores de las 4 variantes derivados matemáticamente de los 3 hexadecimales ya verificados de tokens.ts, verificados con la fórmula WCAG real antes de fijarse. Autorización de investigación + planificación + implementación 100% autónoma del humano el 22/08/2026. 23/08/2026: pasa de in_progress a blocked, esperando a identidad_visual (22), igual que accesibilidad (19). Motivo: sus 8 escenarios de navegador real (@s12, @s27-@s32, @s34) no pueden pasar hasta que exista la maquetacion real que construye la 22, y su puerta de mutacion sobre src/lib/diseno/ quedo sin re-medir. El checkpoint C2 exige como mucho una feature in_progress."
     },
     {
       "id": 22,
@@ -344,7 +350,7 @@
         "pnpm run test:e2e es una puerta propia y separada (no entra en harness.config.json -> commands.test), mide siempre dist/ via vite preview con retries: 0, y su informe nombra uno a uno los 12 escenarios heredados de las features 21 y 19 que ejecuta"
       ],
       "sdd": true,
-      "status": "spec_ready",
+      "status": "in_progress",
       "notas": "Nace de la conversacion de spec del 23/08/2026 (project-spec.md -> Decisiones 25-41 y seccion \"Identidad visual - nueva feature: identidad_visual (feature 22)\"), apoyada en tres informes de investigacion: progress/estudio_diseno_referencia.md (arquitectura visual del prototipo, SIN su contenido), progress/investigacion_tecnica_visual.md (Playwright + axe, fuentes autoalojadas, reset, WCAG) y progress/plan_imagenes.md (inventario de los 26 huecos, logo y favicon). features/identidad_visual.feature: 51 escenarios, sintaxis validada con el parser oficial de Gherkin (@cucumber/gherkin-utils format, EXIT=0). Reparto de herramientas: 12 escenarios de modulo puro mordible por StrykerJS, 11 de lectura del texto real con ?raw, y 28 en NAVEGADOR REAL sobre el dist/ de produccion; mas de la mitad del contrato solo pasa si la web se ve de verdad, que es justo lo que le faltaba a la 21. LINEA ROJA del contrato: del prototipo \"Veterinaria La Sierra\" se toma SOLO la arquitectura visual; su contenido (12 servicios, 6 profesionales con colegiaciones, registro sanitario, valoracion de Google, telefonos y urgencias 24 h) esta PROHIBIDO. La unica fuente de contenido es docs/datos-galapavet.md y src/data/. Los colores tampoco salen del prototipo (Decision 8). DISCREPANCIA DOCUMENTADA, no tapada: la Decision 26 titula \"13 de color + 2 de sombra\" pero su propia enumeracion son 15 de color + 2 de sombra; el contrato resuelve a favor de la enumeracion con valores y deja al craftsman_lead corregir el titular en project-spec.md. PENDIENTES declarados en la cabecera del .feature (12): tabla completa de roles de lima/verde/noche (tdd_craftsman), techo de peso del CSS (tdd_craftsman), ancho maximo de contenedor (tdd_craftsman), pasos de radio/sombra/borde/altura de control (tdd_craftsman), lector de tokens de sombra en tokensColor.ts (tdd_craftsman), parque de navegadores objetivo (humano, NO VERIFICADO), -webkit-font-smoothing (se decide con la fuente instalada), og:image relativo contra ogp.me (craftsman_lead: exige enmendar seo_estructura, feature 15 ya done), favicon.svg vectorial (humano: pedirselo al cliente), peso de chromium --only-shell (NO VERIFICADO), sustitucion de las 24 fotos de banco (humano con el cliente), cursivas de DM Sans. Pendiente de la PUERTA HUMANA de aprobacion de los escenarios antes de pasar a in_progress."
     }
   ]
