@@ -7,6 +7,10 @@
 
 .cabecera {
   position: fixed;
+  // MISMA variable que gobierna el `scroll-padding-top` de `global.scss`: un
+  // solo número para el alto de la cabecera y para el hueco que el
+  // desplazamiento hasta un ancla tiene que reservar (@s14, SC 2.4.11).
+  min-height: var(--altura-cabecera);
   inset-block-start: 0;
   inset-inline: 0;
   z-index: 10;

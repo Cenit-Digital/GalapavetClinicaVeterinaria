@@ -28,7 +28,13 @@ export default defineConfig({
         // Silencia deprecaciones que nacen DENTRO de node_modules —las que no podemos
         // arreglar—. No silencia nada de nuestro código.
         quietDeps: true,
-        additionalData: '@use "tokens" as *;\n',
+        // LITERAL, nunca compuesto vía variable (patrón
+        // `valor-guardado-por-puerta-que-lee-config-como-texto-debe-ser-literal`,
+        // `src/styles/tokens-api.test.ts` lo lee del texto crudo de este fichero).
+        // Inyecta SOLO `_api.scss` (funciones y mixins, cero CSS): `_tokens.scss`
+        // (los custom properties, que sí emiten CSS) se `@use`a una única vez,
+        // desde `global.scss`, no aquí — paso 3 de `plan_adaptacion_scss.md` §5.
+        additionalData: '@use "api" as *;\n',
       },
     },
   },

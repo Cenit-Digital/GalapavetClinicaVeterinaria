@@ -48,5 +48,13 @@
     ".harness/**",
     ".memoria-cache/**",
     "docs/**"
+  ],
+  "overrides": [
+    {
+      "files": ["tools/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }

@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { calcularRatioContraste } from '../contraste'
-import { ejecutarComprobacionDeContrasteDeVariantes, extraerVariantesDeTokens, leerTokenDeVariante } from './tokensColor'
+import { calcularRatioContraste, ejecutarPuertaDeContraste } from '../contraste'
+import {
+  comprobarInventarioDeTokens,
+  declaraTokenEnVariante,
+  ejecutarComprobacionDeContrasteDeVariantes,
+  extraerVariantesDeTokens,
+  INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR,
+  leerDeclaracionDeVariante,
+  leerTokenDeRaizSinAtributo,
+  leerTokenDeVariante,
+  MATRIZ_DE_USO_MARCA,
+  resolverMatrizDeUso,
+  type NombreDeToken,
+  type RolDeColor,
+} from './tokensColor'
 
 function ratioRedondeado(color: string, fondo: string): number {
   return Math.round(calcularRatioContraste(color, fondo) * 100) / 100
@@ -185,6 +198,128 @@ describe('@s11 con el catálogo de variantes de color vacío la comprobación de
   })
 })
 
+describe('(paso 2 del plan) el ":root" sin atributo es la red de seguridad de los tokens sin JavaScript', () => {
+  it('declara los mismos tres roles y los mismos valores que la variante "marca"', () => {
+    for (const rol of ['fondo', 'texto', 'foco'] as const) {
+      expect(leerTokenDeRaizSinAtributo(TEXTO_TOKENS_REAL, rol)).toBe(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', rol))
+    }
+  })
+
+  it('no se cuenta como una quinta variante: el inventario de @s1 sigue siendo exactamente el de siempre', () => {
+    expect(extraerVariantesDeTokens(TEXTO_TOKENS_REAL)).toEqual(['marca', 'lima', 'verde', 'noche'])
+  })
+
+  it('reconoce el ":root" sin atributo aunque no haya ningún espacio entre "root" y la llave de apertura', () => {
+    const sinEspacio = ":root{ --color-fondo: #FFFFFF; }\n"
+
+    expect(leerTokenDeRaizSinAtributo(sinEspacio, 'fondo')).toBe('#FFFFFF')
+  })
+
+  it('lanza con un mensaje que nombra el bloque cuando el texto no tiene ningún ":root" sin atributo', () => {
+    const soloConVariantes = ":root[data-variante='marca'] { --color-fondo: #FFFFFF; }\n"
+
+    expect(() => leerTokenDeRaizSinAtributo(soloConVariantes, 'fondo')).toThrow(/no se encontró ningún bloque ":root"/)
+  })
+
+  it('lanza con un mensaje que nombra el token cuando un rol falta dentro del ":root" sin atributo', () => {
+    const rootSinRolDeTexto = ':root { --color-fondo: #FFFFFF; }\n'
+
+    expect(() => leerTokenDeRaizSinAtributo(rootSinRolDeTexto, 'texto')).toThrow(/no se encontró el token "--color-texto" en el ":root" sin atributo/)
+  })
+})
+
+describe('(paso 4 del plan, PENDIENTE 12 del contrato) el lector gana hermanos para leer CUALQUIER declaración, sin relajar el existente', () => {
+  const dosVariantes = [
+    ":root[data-variante='marca'] {",
+    '  --color-fondo: #FFFFFF;',
+    '  --sombra-reposo: 0 6px 18px rgba(83, 28, 75, 0.07);',
+    '}',
+    '',
+    ":root[data-variante='noche'] {",
+    '  --color-fondo: #000000;',
+    '}',
+    '',
+  ].join('\n')
+
+  it('leerDeclaracionDeVariante lee un valor con "rgba()" y comas, tal cual, recortado de espacios', () => {
+    expect(leerDeclaracionDeVariante(dosVariantes, 'marca', '--sombra-reposo')).toBe('0 6px 18px rgba(83, 28, 75, 0.07)')
+  })
+
+  it('leerDeclaracionDeVariante lanza con un mensaje que nombra el token cuando no está en el bloque', () => {
+    expect(() => leerDeclaracionDeVariante(dosVariantes, 'noche', '--sombra-reposo')).toThrow(/no se encontró el token "--sombra-reposo"/)
+  })
+
+  it('declaraTokenEnVariante distingue presencia de ausencia, sin heredar entre bloques', () => {
+    expect(declaraTokenEnVariante(dosVariantes, 'marca', '--sombra-reposo')).toBe(true)
+    expect(declaraTokenEnVariante(dosVariantes, 'noche', '--sombra-reposo')).toBe(false)
+  })
+
+  it('no confunde "--color-primario" con "--color-primario-fuerte" en ningún sentido', () => {
+    const texto = ":root[data-variante='marca'] {\n  --color-primario-fuerte: #6B2460;\n}\n"
+
+    expect(declaraTokenEnVariante(texto, 'marca', '--color-primario')).toBe(false)
+    expect(declaraTokenEnVariante(texto, 'marca', '--color-primario-fuerte')).toBe(true)
+  })
+
+  it('lee el cuerpo COMPLETO de un bloque que contiene un bloque anidado, sin cortarse en la primera llave de cierre', () => {
+    const conBloqueAnidado = [
+      ":root[data-variante='marca'] {",
+      '  --color-fondo: #FFFFFF;',
+      '  // un bloque anidado, a propósito, para forzar el conteo de llaves:',
+      '  @media (min-width: 1px) { --ruido: 1; }',
+      '  --color-texto: #77286B;',
+      '}',
+      '',
+    ].join('\n')
+
+    expect(leerDeclaracionDeVariante(conBloqueAnidado, 'marca', '--color-texto')).toBe('#77286B')
+  })
+
+  it('no se traga el bloque siguiente cuando hay dos bloques de variante consecutivos', () => {
+    const dosBloquesSeguidos = ":root[data-variante='marca'] { --color-fondo: #FFFFFF; }\n:root[data-variante='lima'] { --color-fondo: #F8F9E8; }\n"
+
+    expect(leerDeclaracionDeVariante(dosBloquesSeguidos, 'marca', '--color-fondo')).toBe('#FFFFFF')
+    expect(leerDeclaracionDeVariante(dosBloquesSeguidos, 'lima', '--color-fondo')).toBe('#F8F9E8')
+  })
+
+  it('localiza el bloque cuando su encabezado empieza en el índice 0 del texto', () => {
+    const desdeElInicio = ":root[data-variante='marca'] { --color-fondo: #FFFFFF; }\n"
+
+    expect(declaraTokenEnVariante(desdeElInicio, 'marca', '--color-fondo')).toBe(true)
+  })
+
+  it('lanza con un mensaje que nombra la variante cuando el bloque no se cierra', () => {
+    const sinCierre = ":root[data-variante='marca'] {\n  --color-fondo: #FFFFFF;\n"
+
+    expect(() => leerDeclaracionDeVariante(sinCierre, 'marca', '--color-fondo')).toThrow(/no se cierra/)
+  })
+
+  it('leerTokenDeVariante sigue rechazando un valor que no sea un hexadecimal de 6 dígitos: el lector estricto no se relaja', () => {
+    const conSombraDisfrazadaDeColor = ":root[data-variante='marca'] { --color-fondo: rgba(1, 2, 3, 0.5); }\n"
+
+    expect(() => leerTokenDeVariante(conSombraDisfrazadaDeColor, 'marca', 'fondo')).toThrow(/no se encontró el token/)
+  })
+
+  it('lanza con un mensaje que nombra el bloque no encontrado cuando la cabecera de la variante existe pero nunca abre ningún bloque', () => {
+    const cabeceraSinLlave = ":root[data-variante='marca']"
+
+    expect(() => leerTokenDeVariante(cabeceraSinLlave, 'marca', 'fondo')).toThrow(/no se encontró ningún bloque/)
+  })
+
+  it('recorta el valor devuelto por "leerDeclaracionDeVariante" cuando hay un espacio antes del ";" de cierre', () => {
+    const conEspacioAntesDelPuntoYComa = ":root[data-variante='marca'] {\n  --sombra-reposo: 0 6px 18px rgba(83, 28, 75, 0.07) ;\n}\n"
+
+    expect(leerDeclaracionDeVariante(conEspacioAntesDelPuntoYComa, 'marca', '--sombra-reposo')).toBe('0 6px 18px rgba(83, 28, 75, 0.07)')
+  })
+
+  it('no se traga el bloque siguiente cuando se pide un token AUSENTE en el bloque propio pero PRESENTE en el bloque siguiente', () => {
+    const dosBloquesConTokenSoloEnElSegundo =
+      ":root[data-variante='marca'] { --color-fondo: #FFFFFF; }\n:root[data-variante='lima'] { --color-fondo: #F8F9E8; --color-texto: #000000; }\n"
+
+    expect(declaraTokenEnVariante(dosBloquesConTokenSoloEnElSegundo, 'marca', '--color-texto')).toBe(false)
+  })
+})
+
 describe('extraerVariantesDeTokens no duplica una variante declarada dos veces en el texto', () => {
   it('un texto sintético con ":root[data-variante=\'marca\']" repetido da un único id "marca"', () => {
     const textoConDuplicado =
@@ -218,5 +353,218 @@ describe('ejecutarComprobacionDeContrasteDeVariantes con un catálogo no vacío 
 
     expect(informe.veredicto).toBe('aprobado')
     expect(informe.variantesComprobadas).toBe(4)
+  })
+})
+
+describe('identidad_visual @s1 el inventario de roles del sistema de color es exactamente los 17 tokens enumerados', () => {
+  // Literal escrito a mano — NO se obtiene del inventario que se comprueba (@s1: "ese literal está escrito a mano").
+  const LOS_17_NOMBRES_A_MANO: readonly string[] = [
+    '--color-fondo',
+    '--color-fondo-alterno',
+    '--color-superficie',
+    '--color-superficie-elevada',
+    '--color-tinta',
+    '--color-texto',
+    '--color-texto-suave',
+    '--color-primario',
+    '--color-primario-fuerte',
+    '--color-sobre-primario',
+    '--color-acento-tinta',
+    '--color-acento-suave',
+    '--color-borde-control',
+    '--color-borde',
+    '--color-foco',
+    '--sombra-reposo',
+    '--sombra-elevada',
+  ]
+
+  it('el inventario contiene exactamente esos 17 nombres y ninguno más', () => {
+    expect(INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR).toHaveLength(LOS_17_NOMBRES_A_MANO.length)
+    for (const nombre of INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR) {
+      expect(LOS_17_NOMBRES_A_MANO).toContain(nombre)
+    }
+    for (const nombre of LOS_17_NOMBRES_A_MANO) {
+      expect(INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR).toContain(nombre)
+    }
+  })
+
+  it('el recuento de roles de color es exactamente 15 y el de roles de sombra exactamente 2', () => {
+    const rolesDeColor = INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR.filter((nombre) => nombre.startsWith('--color-'))
+    const rolesDeSombra = INVENTARIO_DE_ROLES_DEL_SISTEMA_DE_COLOR.filter((nombre) => nombre.startsWith('--sombra-'))
+
+    expect(rolesDeColor).toHaveLength(15)
+    expect(rolesDeSombra).toHaveLength(2)
+  })
+})
+
+describe('identidad_visual @s3 los 12 roles nuevos de la variante "marca" valen exactamente los hexadecimales derivados y verificados', () => {
+  it('cada rol nuevo vale el hexadecimal de la tabla de derivaciones, y los tres roles ya fijados no se retocan', () => {
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'fondo-alterno')).toBe('#F4EEF3')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'superficie')).toBe('#FFFFFF')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'superficie-elevada')).toBe('#FAF6F9')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'tinta')).toBe('#531C4B')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'texto-suave')).toBe('#925389')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'primario')).toBe('#77286B')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'primario-fuerte')).toBe('#6B2460')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'sobre-primario')).toBe('#FFFFFF')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'acento-tinta')).toBe('#48704B')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'acento-suave')).toBe('#F6F8E3')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'borde-control')).toBe('#A06997')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'borde')).toBe('#DDC9DA')
+
+    // Los tres roles ya fijados por sistema_de_diseno_visual.feature @s2 no se retocan.
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'fondo')).toBe('#FFFFFF')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'texto')).toBe('#77286B')
+    expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'foco')).toBe('#77286B')
+  })
+})
+
+describe('identidad_visual @s2 los 17 tokens están declarados en las 4 variantes y ninguno se hereda', () => {
+  // Literal escrito a mano — NO se obtiene del inventario que se comprueba (patrón doble-de-test-anclado-al-literal).
+  const LOS_17_TOKENS: readonly NombreDeToken[] = [
+    '--color-fondo',
+    '--color-fondo-alterno',
+    '--color-superficie',
+    '--color-superficie-elevada',
+    '--color-tinta',
+    '--color-texto',
+    '--color-texto-suave',
+    '--color-primario',
+    '--color-primario-fuerte',
+    '--color-sobre-primario',
+    '--color-acento-tinta',
+    '--color-acento-suave',
+    '--color-borde-control',
+    '--color-borde',
+    '--color-foco',
+    '--sombra-reposo',
+    '--sombra-elevada',
+  ]
+  const LAS_4_VARIANTES: readonly string[] = ['marca', 'lima', 'verde', 'noche']
+
+  it('los 17 tokens están declarados en las 4 variantes, con el recuento de 68 pares efectivamente comprobados', () => {
+    const informe = comprobarInventarioDeTokens(TEXTO_TOKENS_REAL, LAS_4_VARIANTES, LOS_17_TOKENS)
+
+    expect(informe.paresComprobados).toBe(68)
+    expect(informe.faltantes).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+
+  it('un token declarado en "marca" y ausente en "noche" hace fallar la comprobación, en vez de heredarse en silencio, y el informe lo nombra', () => {
+    const textoSinteticoIncompleto = [
+      ":root[data-variante='marca'] { --color-fondo: #FFFFFF; }",
+      ":root[data-variante='noche'] { --color-texto: #FFFFFF; }",
+      '',
+    ].join('\n')
+
+    const informe = comprobarInventarioDeTokens(textoSinteticoIncompleto, ['marca', 'noche'], ['--color-fondo'])
+
+    expect(informe.pasa).toBe(false)
+    expect(informe.faltantes).toEqual([{ variante: 'noche', token: '--color-fondo' }])
+  })
+
+  it('con el catálogo de tokens o de variantes vacío la comprobación falla cerrada, nunca "0 de 0" en verde', () => {
+    const informe = comprobarInventarioDeTokens(TEXTO_TOKENS_REAL, [], [])
+
+    expect(informe.paresComprobados).toBe(0)
+    expect(informe.pasa).toBe(false)
+  })
+})
+
+describe('identidad_visual @s5 la matriz de uso de la variante "marca" alcanza su mínimo WCAG en todos sus pares', () => {
+  it('cada par resuelto desde el texto real da el ratio exacto de la tabla, y ninguno queda por debajo de su mínimo', () => {
+    const catalogoResuelto = resolverMatrizDeUso(TEXTO_TOKENS_REAL, 'marca', MATRIZ_DE_USO_MARCA)
+    const ratioDe = (rol: RolDeColor, fondo: RolDeColor): number =>
+      ratioRedondeado(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', rol), leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', fondo))
+
+    expect(ratioDe('tinta', 'fondo')).toBe(12.84)
+    expect(ratioDe('tinta', 'fondo-alterno')).toBe(11.23)
+    expect(ratioDe('texto', 'fondo-alterno')).toBe(7.99)
+    expect(ratioDe('texto-suave', 'fondo')).toBe(5.5)
+    expect(ratioDe('texto-suave', 'fondo-alterno')).toBeGreaterThanOrEqual(4.5)
+    expect(ratioDe('texto-suave', 'fondo-alterno')).toBe(4.81)
+    expect(ratioDe('texto', 'superficie-elevada')).toBe(8.53)
+    expect(ratioDe('sobre-primario', 'primario')).toBe(9.13)
+    expect(ratioDe('acento-tinta', 'acento-suave')).toBe(5.27)
+    expect(ratioDe('acento-tinta', 'fondo-alterno')).toBe(4.97)
+
+    const informe = ejecutarPuertaDeContraste(catalogoResuelto)
+    expect(informe.pasa).toBe(true)
+    expect(informe.parejasEvaluadas).toBeGreaterThan(0)
+  })
+})
+
+describe('identidad_visual @s5/@s6 la matriz de uso declara el "uso" WCAG exacto de sus 11 filas', () => {
+  it('nueve filas son "texto normal" y dos son "componente de interfaz o borde de foco", sin ninguna otra combinación', () => {
+    const textoNormal = MATRIZ_DE_USO_MARCA.filter((fila) => fila.uso === 'texto normal')
+    const componenteDeInterfaz = MATRIZ_DE_USO_MARCA.filter((fila) => fila.uso === 'componente de interfaz o borde de foco')
+
+    expect(textoNormal).toHaveLength(9)
+    expect(componenteDeInterfaz).toHaveLength(2)
+    expect(textoNormal.length + componenteDeInterfaz.length).toBe(MATRIZ_DE_USO_MARCA.length)
+  })
+})
+
+describe('identidad_visual @s6 el borde de control alcanza 3:1 contra las dos superficies sobre las que se dibuja', () => {
+  it('ratio contra el fondo 4.23 y contra el fondo alterno 3.70, los dos por encima del umbral 3', () => {
+    const UMBRAL_ESCRITO_A_MANO = 3
+    const bordeControl = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'borde-control')
+    const fondo = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'fondo')
+    const fondoAlterno = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'fondo-alterno')
+
+    expect(ratioRedondeado(bordeControl, fondo)).toBe(4.23)
+    expect(ratioRedondeado(bordeControl, fondoAlterno)).toBe(3.7)
+    expect(ratioRedondeado(bordeControl, fondo)).toBeGreaterThanOrEqual(UMBRAL_ESCRITO_A_MANO)
+    expect(ratioRedondeado(bordeControl, fondoAlterno)).toBeGreaterThanOrEqual(UMBRAL_ESCRITO_A_MANO)
+  })
+})
+
+describe('identidad_visual @s7 el borde decorativo nunca se declara como identificador de un control', () => {
+  it('ratio 1.56 < 3, y ningún par de la matriz de uso declara "--color-borde" con el uso de componente de interfaz', () => {
+    const borde = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'borde')
+    const fondo = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'fondo')
+
+    expect(ratioRedondeado(borde, fondo)).toBe(1.56)
+    expect(ratioRedondeado(borde, fondo)).toBeLessThan(3)
+    expect(MATRIZ_DE_USO_MARCA.filter((entrada) => entrada.rol === 'borde' && entrada.uso === 'componente de interfaz o borde de foco')).toEqual([])
+  })
+})
+
+describe('identidad_visual @s8 el estado de reposo del botón primario oscurece al pasar el puntero y por tanto mejora el contraste', () => {
+  it('9.13 en reposo, 10.26 con el puntero encima, el segundo estrictamente mayor', () => {
+    const sobrePrimario = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'sobre-primario')
+    const primario = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'primario')
+    const primarioFuerte = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'marca', 'primario-fuerte')
+
+    const ratioReposo = ratioRedondeado(sobrePrimario, primario)
+    const ratioConElPunteroEncima = ratioRedondeado(sobrePrimario, primarioFuerte)
+
+    expect(ratioReposo).toBe(9.13)
+    expect(ratioConElPunteroEncima).toBe(10.26)
+    expect(ratioConElPunteroEncima).toBeGreaterThan(ratioReposo)
+  })
+})
+
+describe('identidad_visual @s9 en la variante "noche" el morado de marca no hace de texto, ni de borde de control, ni de foco', () => {
+  it('el ratio del morado contra el fondo de "noche" es 2.30 < 3, y ningún rol de texto/borde/foco vale "#77286B"', () => {
+    const MORADO_DE_MARCA = '#77286B'
+    const fondoNoche = leerTokenDeVariante(TEXTO_TOKENS_REAL, 'noche', 'fondo')
+
+    expect(ratioRedondeado(MORADO_DE_MARCA, fondoNoche)).toBe(2.3)
+    expect(ratioRedondeado(MORADO_DE_MARCA, fondoNoche)).toBeLessThan(3)
+
+    for (const rol of ['texto', 'tinta', 'texto-suave', 'borde-control', 'foco'] as const) {
+      expect(leerTokenDeVariante(TEXTO_TOKENS_REAL, 'noche', rol)).not.toBe(MORADO_DE_MARCA)
+    }
+  })
+})
+
+describe('identidad_visual @s10 con la matriz de uso vacía la puerta de contraste del sistema de color falla cerrada', () => {
+  it('0 pares evaluados, suspenso, informe que declara que no se evaluó nada, incluso con 0 pares incumplidos', () => {
+    const informe = ejecutarPuertaDeContraste([])
+
+    expect(informe.parejasEvaluadas).toBe(0)
+    expect(informe.pasa).toBe(false)
+    expect(informe.motivo).toMatch(/vacío|0 parejas/i)
   })
 })

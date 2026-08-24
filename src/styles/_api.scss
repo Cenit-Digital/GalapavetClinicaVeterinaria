@@ -1,0 +1,85 @@
+// ============================================================================
+// API DE SASS — Galapavet
+// ============================================================================
+// SOLO funciones y mixins de Sass (paso 3 de `plan_adaptacion_scss.md` §5): la
+// escala tipográfica fluida, la escala de espaciado y los mixins de foco
+// visible / área táctil mínima. Emite CERO CSS por sí mismo — ninguna regla,
+// ningún selector — así que `additionalData` (`vite.config.ts`) puede
+// inyectarlo en cada una de las 17 compilaciones independientes de los
+// `.module.scss` sin coste: nada que duplicar.
+//
+// Es la mitad de la escisión que antes vivía junto a los tokens de color en
+// `_tokens.scss`. Esa mitad, la de los custom properties, SÍ emite CSS y por
+// eso se `@use`a una única vez, desde `global.scss` — nunca desde aquí, para
+// que este fichero no arrastre color y siga siendo cero-CSS.
+@use 'sass:map';
+
+// ----------------------------------------------------------------------------
+// B. Escala tipográfica fluida (Utopia, ratio 1.25, base 16px, 320-1024px)
+// ----------------------------------------------------------------------------
+// Con un único ratio y una única base para los dos extremos del viewport
+// (Decisión 24: "ratio 1.25", "base 16px", sin un segundo valor para el
+// extremo máximo), `base * ratio^paso` da el MISMO tamaño en los dos
+// extremos del viewport para cualquier paso — no solo el paso 0 — como
+// confirma `src/lib/diseno/escalaTipografica.ts` (misma fórmula, @s15/@s16).
+// Se declara como tamaño fijo por paso, no como un `clamp()` degenerado que
+// no aportaría nada sobre estos valores concretos.
+$escala-tipografica: (
+  -2: 10.24px,
+  -1: 12.8px,
+  0: 16px,
+  1: 20px,
+  2: 25px,
+  3: 31.25px,
+  4: 39.06px,
+  5: 48.83px,
+);
+
+@function paso-tipografico($paso) {
+  @return map.get($escala-tipografica, $paso);
+}
+
+// ----------------------------------------------------------------------------
+// C. Escala de espaciado (rejilla de 8px de Material Design)
+// ----------------------------------------------------------------------------
+$escala-espaciado: (
+  4: 4px,
+  8: 8px,
+  12: 12px,
+  16: 16px,
+  24: 24px,
+  32: 32px,
+  48: 48px,
+  64: 64px,
+  96: 96px,
+);
+
+@function espaciado($paso) {
+  @return map.get($escala-espaciado, $paso);
+}
+
+// ----------------------------------------------------------------------------
+// D. Mixins compartidos: foco visible, área táctil mínima
+// ----------------------------------------------------------------------------
+// Toda propiedad "animation"/"transition" que un módulo introduzca se declara
+// DIRECTAMENTE dentro de su propio `@media (prefers-reduced-motion: ...)`
+// (nunca a través de un mixin de este fichero): @s33 lee el texto REAL de
+// cada `.module.scss` y comprueba la cobertura literalmente.
+// SC 2.4.7/2.4.13: perímetro >= 2px CSS y >= 3:1 de contraste (el foco de cada
+// variante ya cumple 3:1 contra su propio fondo, @s7/@s9 de este mismo contrato).
+$grosor-foco: 2px;
+
+@mixin foco-visible {
+  &:focus-visible {
+    outline: $grosor-foco solid var(--color-foco);
+    outline-offset: $grosor-foco;
+  }
+}
+
+// SC 2.5.8: 24×24px CSS como área táctil mínima.
+$area-tactil-minima: 24px;
+
+@mixin area-tactil-minima {
+  min-width: $area-tactil-minima;
+  min-height: $area-tactil-minima;
+}

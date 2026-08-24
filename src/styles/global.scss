@@ -1,0 +1,216 @@
+// ============================================================================
+// CAPA BASE DEL DOCUMENTO — Galapavet
+// ============================================================================
+// La ÚNICA hoja global del proyecto. `src/main.tsx` la importa exactamente una
+// vez y ningún otro fichero de `src/` la importa (@s12). Es un fichero único, y
+// no un barril de parciales, porque el contrato lee su TEXTO CRUDO con `?raw`
+// en @s12, @s13, @s14, @s15, @s17 y @s18: un `?raw` sobre un barril devolvería
+// las líneas de `@use`, no las reglas.
+//
+// El orden de estas secciones ES la cascada:
+//   A. variables del documento → tipografía y altura de la cabecera fija
+//   B. reset                   → las nueve familias de la Decisión 29 (@s13)
+//   C. base                    → los tokens, aplicados de verdad al documento
+//   D. movimiento              → desplazamiento hasta anclas (@s14) y la
+//                                consulta de movimiento reducido (@s15)
+//
+// POR QUÉ EXISTE ESTE FICHERO. El 23/08/2026 se midió el `dist/` de producción
+// con un navegador real: 0 apariciones de `font-family` en todo el CSS
+// generado, 0 reglas para `html` o `body`, y el `body` arrastrando el margen de
+// 8px que la propia especificación HTML fija por defecto
+// (https://html.spec.whatwg.org/multipage/rendering.html). Los tokens existían,
+// resolvían… y nadie los aplicaba al documento, porque no había ninguna hoja
+// global enganchada al punto de entrada.
+@use 'tokens';
+
+// ----------------------------------------------------------------------------
+// A. Variables del documento
+// ----------------------------------------------------------------------------
+// Van en un `:root` SIN `[data-variante]` a propósito: ni la tipografía ni la
+// altura de la cabecera cambian con la paleta, así que no son roles de color y
+// no cuentan para el inventario de tokens de @s1 ni para los 68 pares de @s2.
+:root {
+  // PROVISIONAL, y declarado como tal: las familias de marca (Outfit y DM Sans,
+  // autoalojadas) entran con @s17/@s18, junto con sus `@font-face` y sus
+  // respaldos de métricas ajustadas. Hasta entonces, la pila del sistema — que
+  // ya es infinitamente mejor que el "Times New Roman" medido.
+  --fuente-texto: system-ui, sans-serif;
+
+  // Altura de la cabecera fija, en la rejilla de 8px del proyecto
+  // (`$escala-espaciado`, `_tokens.scss` sección C). Es UN SOLO número: lo
+  // consume la propia cabecera (`Cabecera.module.scss`) y lo consume el
+  // `scroll-padding-top` de la sección D (@s14). Escribirlo dos veces sería
+  // permitir que los dos diverjan.
+  --altura-cabecera: #{espaciado(64)};
+}
+
+// ----------------------------------------------------------------------------
+// B. Reset explícito, regla a regla (Decisión 29, @s13)
+// ----------------------------------------------------------------------------
+// No es Normalize, ni Meyer, ni una dependencia: cada familia arregla un
+// defecto MEDIDO y se justifica sola. Nueve familias, ni una más.
+
+// 1. Modelo de caja predecible, también en los pseudoelementos: sin `::before`
+//    y `::after` el borde y el relleno de un adorno se suman a su ancho.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// 2. El margen de 8px del `body` lo pone la hoja del agente de usuario. Es la
+//    causa directa del margen espurio medido en `dist/` (@s24).
+body {
+  margin: 0;
+}
+
+// 3. Los márgenes de bloque por defecto van en `em` y COLAPSAN entre hermanos:
+//    es imposible construir ritmo vertical encima. El ritmo lo gobierna
+//    `espaciado()`, no la hoja del agente de usuario.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+figure,
+dl,
+dd {
+  margin-block: 0;
+}
+
+// 4. Los controles NO heredan la tipografía: la spec de renderizado se la
+//    reasigna a la del sistema. Sin esta regla, los campos y botones del
+//    formulario de contacto y del chat de reserva seguirían fuera de la
+//    tipografía de marca aunque el `body` sí la use.
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+// 5. Los medios son `inline` por defecto, así que arrastran el hueco de la
+//    línea base bajo la imagen; y sin tope de ancho desbordan su contenedor.
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+// 6. LA REGLA QUE FALTABA. Las cinco declaraciones van juntas a propósito: es
+//    el punto en el que los tokens dejan de existir en el vacío y pintan el
+//    documento. `100svh` y no `100vh`, que provoca el salto por la barra de
+//    direcciones del móvil. `1.5` es además el mínimo de SC 1.4.12 Text
+//    Spacing (AA).
+body {
+  min-height: 100svh;
+  line-height: 1.5;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--fuente-texto);
+}
+
+// 7. Sin esto, iOS reescala el texto al girar el dispositivo a apaisado y la
+//    escala tipográfica del proyecto deja de mandar.
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+// 8. El contenedor de montaje crea su propio contexto de apilamiento, para que
+//    ningún `z-index` de dentro pueda competir con algo de fuera.
+#root {
+  isolation: isolate;
+}
+
+// 9. `balance` reparte las líneas de un titular corto; `pretty` evita la línea
+//    huérfana en la prosa. NUNCA sobre `body`: MDN avisa de que «has a negative
+//    performance impact — use cautiously». Ninguna de las dos necesita
+//    `@supports`: sin soporte, el navegador las ignora y solo se pierde un
+//    salto de línea más afortunado (Decisión 42).
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+// ----------------------------------------------------------------------------
+// C. Base: los tokens, aplicados de verdad al documento (foco)
+// ----------------------------------------------------------------------------
+// Anillo de foco GLOBAL, uno solo, desde el token de color de la variante
+// activa, con `:focus-visible` (no `:focus`) para que un simple clic de ratón
+// no lo dispare. El `outline-offset` NO es decorativo: `--color-foco` da 1.00
+// de ratio contra `--color-primario` en "marca"/"lima" (son el mismo morado):
+// el anillo es literalmente invisible pegado al borde del botón. Con el hueco
+// de `$grosor-foco` alrededor, los vecinos pasan a ser el fondo de página y el
+// hueco mismo, donde el ratio vuelve a ser ≥ 3 en las 4 variantes (paso 5 de
+// `plan_adaptacion_scss.md` §5; preparación textual de @s38/@s39, que la
+// automatiza como e2e Playwright en un paso posterior).
+:focus-visible {
+  outline: $grosor-foco solid var(--color-foco);
+  outline-offset: $grosor-foco;
+}
+
+// ----------------------------------------------------------------------------
+// D. Movimiento del documento
+// ----------------------------------------------------------------------------
+// Al saltar a un ancla (`#servicios`, `#contacto`…) el destino quedaría debajo
+// de la cabecera fija. `scroll-padding-top` reserva ese sitio en el propio
+// contenedor de desplazamiento: es la técnica suficiente C43 del W3C para
+// SC 2.4.11 Focus Not Obscured (Minimum), nivel AA
+// (https://www.w3.org/WAI/WCAG22/Techniques/css/C43), no una corrección
+// cosmética. Se escribe `scroll-padding-top` y no `scroll-padding-block-start`
+// porque es lo que el contrato exige literalmente; son equivalentes en
+// `horizontal-tb`, el único modo de escritura que este sitio usa.
+//
+// El valor sale de la MISMA variable que dimensiona la cabecera, más un hueco
+// de la escala de espaciado. Repetir la altura a mano sería crear dos números
+// que pueden divergir (@s14).
+html {
+  scroll-padding-top: calc(var(--altura-cabecera) + #{espaciado(16)});
+}
+
+// El movimiento es OPT-IN: se declara SOLO dentro de "no-preference", nunca a
+// pelo y revocado después (la forma que este proyecto prohíbe, Decisión 31).
+// `scroll-behavior` va sobre "html", nunca sobre "body": sobre "body" no se
+// propaga al viewport y el salto a un ancla seguiría siendo instantáneo.
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
+  }
+}
+
+// Red de seguridad SIN "!important" y SIN declarar-y-revocar: anula la
+// duración de cualquier animación/transición que el navegador o una librería
+// disparen por su cuenta. "0.01ms" y no "0" a propósito: con "0" los eventos
+// "transitionend"/"animationend" nunca se disparan y algo que espere a ese
+// evento se queda colgado (@s15, @s42).
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}
