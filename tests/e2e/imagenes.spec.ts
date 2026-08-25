@@ -99,12 +99,19 @@ test.describe('@s29 la imagen de compartición existe, tiene el tamaño que exig
     baseURL,
   }) => {
     await page.goto('/')
-    const rutaOgImage = await page.locator('meta[property="og:image"]').getAttribute('content')
-    if (rutaOgImage === null) {
+    const contenidoOgImage = await page.locator('meta[property="og:image"]').getAttribute('content')
+    if (contenidoOgImage === null) {
       throw new Error('no se encontró la etiqueta "og:image"')
     }
-    expect(rutaOgImage.toLowerCase()).not.toContain(CADENA_BANCO_DE_IMAGENES)
+    expect(contenidoOgImage.toLowerCase()).not.toContain(CADENA_BANCO_DE_IMAGENES)
 
+    // "og:image" es una URL ABSOLUTA (exigencia de ogp.me, enmienda del
+    // 25/08/2026 de `seo_estructura.feature` @s20): declara el dominio REAL
+    // de publicación, que hoy no sirve nada (GitHub Pages aún no activado).
+    // Esta verificación sigue "pidiendo ese fichero" (el `When` de @s29)
+    // pero contra el servidor LOCAL de `dist/` que arranca este mismo
+    // fichero de configuración, tomando de la URL absoluta solo su ruta.
+    const rutaOgImage = new URL(contenidoOgImage).pathname
     const respuesta = await request.get(rutaOgImage)
     expect(respuesta.status()).toBe(200)
     expect(respuesta.headers()['content-type']).toBe('image/png')

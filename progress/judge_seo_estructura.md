@@ -309,3 +309,186 @@ Verde de punta a punta: `oxlint --deny-warnings` limpio, `tsc -b` limpio,
 ## Cambios requeridos (si aplica)
 
 Ninguno. Aprobado para pasar de nuevo por `mutation_tester`.
+
+---
+
+## Enmienda PENDIENTE 7 -- og:image absoluto (25/08/2026)
+
+**Veredicto:** APPROVED
+
+Revision puntual del encargo de `craftsman_lead` sobre `progress/tdd_seo_estructura.md`
+(seccion "Ronda 2... Enmienda PENDIENTE 7 -- og:image absoluto (25/08/2026)",
+al final del fichero). No es una ronda nueva de la feature (sigue `done`,
+`feature_list.json:353`): es la correccion puntual del PENDIENTE 7 anotado por
+`identidad_visual` (feature 22, `done`).
+
+### Alcance del diff (verificado, sin fugas)
+
+`git diff --stat` sobre los 4 ficheros citados por `tdd_craftsman` -- y solo esos:
+
+```
+features/seo_estructura.feature         | 13 +++++++++++--
+src/components/MetadatosPagina.test.tsx |  9 ++++++---
+src/components/MetadatosPagina.tsx      | 23 ++++++++++++++++++++++-
+tests/e2e/imagenes.spec.ts              | 13 ++++++++++---
+```
+
+Leido cada diff completo. Coincide caracter a caracter con lo descrito en la
+bitacora: nueva constante `DOMINIO_SITIO` (`MetadatosPagina.tsx:36`) mas
+renombrado `IMAGEN_OPEN_GRAPH` a `RUTA_IMAGEN_OPEN_GRAPH` compuesto
+(`MetadatosPagina.tsx:43-44`); `@s20` cambia sus dos aserciones de
+`startsWith('/')`/`not.toMatch(/^https?:\/\//)` a
+`toMatch(/^https:\/\//)`/`startsWith('https://cenit-digital.github.io/')`
+(`MetadatosPagina.test.tsx:89-90`); `@s29` (heredado de `identidad_visual`)
+adapta solo la mecanica de la peticion con `new URL(contenidoOgImage).pathname`
+(`tests/e2e/imagenes.spec.ts:114`), ninguna asercion nueva ni eliminada. Otros
+ficheros presentes en `git status` (`feature_list.json`, `project-spec.md`,
+`progress/judge_accesibilidad.md`, `tests/e2e/accesibilidad.spec.ts`,
+`tests/e2e/movimiento.spec.ts`, y lo nuevo de `despliegue_github_pages`)
+pertenecen a la feature 23 en paralelo, fuera del alcance de esta enmienda --
+confirmado que ninguno modifica `og:image`/`IMAGEN_OPEN_GRAPH`/`DOMINIO_SITIO`
+salvo las referencias de contexto en `feature_list.json`/`project-spec.md` al
+propio PENDIENTE 7 (esperable, es la motivacion de la feature 23).
+
+### Verificacion independiente de la decision "dominio sin subpath"
+
+No acepte la afirmacion por herencia. Repliqué la mecanica exacta con la que
+un lector futuro razonaria sobre el codigo, en tres pasos:
+
+1. **Estado real hoy**: `vite.config.ts` no declara `base`; `package.json:13`
+   (`"build": "tsc -b && vite build && ..."`) no lleva `--base`. `git status`
+   confirma `package.json` sin modificar. `pnpm run build` real, `dist/`
+   servido con `vite preview` en `http://localhost:4174`: `GET
+   /img/og/galapavet.png` responde 200, `image/png`, PNG real 1200x630
+   (verificado con `curl -D -`).
+2. **Sabotaje propio** (independiente del de `tdd_craftsman`): edite a mano
+   `DOMINIO_SITIO` a
+   `'https://cenit-digital.github.io/GalapavetClinicaVeterinaria'`, reconstrui
+   (`pnpm run build`) y corri el test real `@s29`
+   (`pnpm exec playwright test tests/e2e/imagenes.spec.ts -g "@s29"`): falla,
+   confirmando que incluir el subpath hoy rompe el escenario heredado. La
+   decision de diseno de `tdd_craftsman` (declarar solo el origen, sin
+   subpath) es correcta y queda verificada de forma independiente.
+3. **Revertido** el sabotaje (copia desde backup), reconstruido: el hash del
+   bundle (`dist/assets/index-D6CE4i3M.js`) es identico al de la build previa
+   al sabotaje -- confirma reversion exacta. `pnpm exec playwright test
+   tests/e2e/imagenes.spec.ts` completo tras revertir: 16/16 verde, incluido
+   `@s29`.
+
+**Hallazgo NO bloqueante (correccion de bitacora recomendada, no de codigo):**
+`progress/tdd_seo_estructura.md` (seccion de esta enmienda, "Decision de
+diseno...") afirma que con el subpath `request.get()` "devolvia 404". Mi
+verificacion empirica (`curl -D -` y la corrida real de Playwright arriba)
+muestra que la respuesta real es 200 con `Content-Type: text/html`, no 404:
+`vite preview` cae al SPA fallback (sirve `index.html`) para cualquier ruta
+no estatica que no coincide con un fichero real, en vez de devolver 404. El
+test SI falla igualmente, pero en la asercion
+`expect(respuesta.headers()['content-type']).toBe('image/png')`
+(`imagenes.spec.ts:117`), no en `expect(respuesta.status()).toBe(200)` (esa
+asercion de hecho pasaria con el subpath puesto, porque el fallback tambien
+responde 200). La CONCLUSION de `tdd_craftsman` (declarar el dominio sin
+subpath es la decision correcta hoy) es correcta y queda confirmada por mi
+de forma independiente; el MECANISMO citado en la bitacora ("404") es
+inexacto. No afecta al codigo de produccion ni a los tests entregados (el
+"404" nunca aparece en `MetadatosPagina.tsx` ni en `imagenes.spec.ts`, solo
+en la prosa de `progress/tdd_seo_estructura.md`) -- no bloquea esta
+aprobacion, pero se deja constancia para que se corrija la prosa de la
+bitacora la proxima vez que se toque ese fichero, dado el estandar de rigor
+empirico que el propio proyecto se exige en cada ronda.
+
+### @s20 enmendado -- fidelidad a ogp.me
+
+`features/seo_estructura.feature:390-412`: el `Then` ahora exige "una URL
+absoluta, con esquema y dominio, tal y como exige https://ogp.me/ para el
+tipo og:image" y "esa URL absoluta usa el dominio real de publicacion del
+sitio". Cita el estandar correctamente (ogp.me define `og:image` como tipo
+`URL`, es decir absoluta). La nota de cabecera (lineas 390-400) documenta el
+motivo de la enmienda, cita el PENDIENTE 7 de `identidad_visual.feature`
+(feature 22, `done`) y aclara explicitamente que el subpath queda fuera --
+no es una reescritura silenciosa de un contrato ya cerrado: la enmienda esta
+justificada, fechada y trazada a su origen.
+
+### og:url -- confirmado sin cambios
+
+`grep -n "og:url" src/components/MetadatosPagina.tsx` devuelve la linea 86:
+`fijarMeta('property', 'og:url', window.location.href)`. Sin diff en esa
+linea. `window.location.href` es absoluta por construccion tanto en jsdom
+como en cualquier navegador real -- no necesitaba tocarse. Confirmado.
+
+### Tests y bin/harness init
+
+- `pnpm exec vitest run src/components/MetadatosPagina.test.tsx` (corrida
+  propia, aislada): 4/4 verde.
+- `pnpm exec vitest run src/accesibilidad-teclado.test.tsx` (corrida propia,
+  aislada, para descartar que el patron de fallo que reporta `tdd_craftsman`
+  sea real): 5/5 verde. Confirma que el fichero no tiene ningun defecto
+  propio; el patron de fallo que describe la bitacora a concurrencia por
+  defecto es coherente con contencion de CPU de la maquina (`tasklist`
+  durante esta revision: 2 `claude.exe` + 42 `node.exe` concurrentes), no un
+  bug introducido por esta enmienda.
+- `bash bin/harness init` (corrida propia, independiente, concurrencia por
+  defecto, sin `--maxWorkers`): verde de punta a punta -- lint
+  (`oxlint --deny-warnings`) limpio, `tsc -b` limpio, 916/916 tests en 70
+  ficheros. Mismo numero que reporta `tdd_craftsman` con `--maxWorkers=2`;
+  en esta corrida, sin forzar el flag, tambien fue limpia (la contencion de
+  CPU que describia la bitacora no se reprodujo en esta ejecucion).
+- `pnpm run build` (corrida propia): exito, puerta anti-terceros en verde (2
+  archivos inspeccionados, ningun dominio de terceros en `dist/`) -- confirma
+  que `og:image` absoluto no hornea el dominio en ningun artefacto estatico,
+  solo se fija en tiempo de ejecucion via `MetadatosPagina`.
+- `pnpm exec playwright test tests/e2e/imagenes.spec.ts` (corrida propia):
+  16/16 verde, incluido `@s29`.
+
+### Cobertura de escenarios (@s <-> test), esta enmienda
+
+- @s20 (`seo_estructura`, enmendado): [x] cubierto por
+  `src/components/MetadatosPagina.test.tsx` -> describe `@s20 ...` (`ogImagen`
+  absoluta con dominio real), verificado en verde de forma independiente.
+- @s29 (`identidad_visual`, heredado, mecanica adaptada): [x] cubierto por
+  `tests/e2e/imagenes.spec.ts` -> describe `@s29 ...`, verificado en verde
+  (16/16, incluido en solitario) y, ademas, verificado que SIGUE fallando si
+  se reintroduce el literal relativo o si se antepone el subpath prematuro
+  (dos sabotajes propios, ambos en rojo como se esperaba).
+
+### Disciplina TDD
+
+- ¿Produccion sin test que la pida? NO. El unico cambio de produccion
+  (`MetadatosPagina.tsx:36-44`) es composicion de dos constantes de cadena,
+  sin ninguna rama nueva de decision; esta exigido integramente por las dos
+  aserciones nuevas de `@s20` en `MetadatosPagina.test.tsx:89-90`. No anade
+  superficie mordible nueva relevante para Stryker (el componente sigue sin
+  logica de decision propia, mismo criterio ya aceptado en la Ronda 1/2 de
+  esta feature) -- no exige una nueva ronda de `mutation_tester`.
+- ¿Evidencia de Rojo->Verde->Refactor? SI, reproducida de forma
+  independiente: reversion manual de `IMAGEN_OPEN_GRAPH` al literal relativo
+  vuelve a poner `@s20` en rojo (mismo patron que describe la bitacora);
+  anteponer el subpath del repo pone `@s29` en rojo (confirmado por mi, con
+  el matiz del mecanismo de fallo senalado arriba).
+
+### Checkpoints (esta enmienda)
+
+- C1: [x] `bash bin/harness init` verde de punta a punta (lint + typecheck +
+  916/916 tests), corrida independiente de esta revision.
+- C2: [x] `seo_estructura` (id 15) sigue `done`; la unica feature
+  `in_progress` en `feature_list.json` es `despliegue_github_pages` (id 23),
+  que no toca ningun fichero de esta enmienda.
+- C3: [x] Sin dependencias nuevas; capas intactas (`MetadatosPagina.tsx`
+  sigue siendo solo cableo de `<head>`, sin decision de negocio nueva).
+- C4: [x] El cambio de produccion esta co-locado con su test
+  (`MetadatosPagina.test.tsx`).
+- C5: [ ] No aplica a esta revision puntual (no es cierre de sesion).
+- C6: [x] @s20 y @s29 con test concreto verificado; sin produccion sin test
+  que la exija.
+- C7: [x] No aplica nueva medicion -- el cambio no anade superficie mordible
+  nueva a los modulos ya medidos al 100% (`seo-logica.ts`, `site.ts`,
+  `datosEstructuradosNegocio.ts`); `MetadatosPagina.tsx` nunca ha sido
+  objetivo de Stryker en esta feature (ver Rondas 1-2 de este mismo fichero).
+
+### Cambios requeridos (si aplica)
+
+Ninguno bloqueante. Recomendado (no bloqueante): corregir en
+`progress/tdd_seo_estructura.md` la frase "request.get() contra el servidor
+local devolvia 404" por una descripcion precisa del fallback real observado
+(200, `Content-Type: text/html`, fallo en la asercion de content-type, no en
+la de status) -- ver detalle en "Verificacion independiente de la decision
+..." arriba.

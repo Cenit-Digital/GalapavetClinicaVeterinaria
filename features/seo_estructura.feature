@@ -387,6 +387,17 @@ Feature: SEO técnico y datos estructurados
   # ---------------------------------------------------------------------------
   # Open Graph
   # ---------------------------------------------------------------------------
+  # ENMIENDA (25/08/2026): el `Then` de "og:image" exigía originalmente una
+  # ruta RELATIVA. Era un error de fidelidad al estándar: https://ogp.me/
+  # define `og:image` como tipo `URL`, que la propia especificación aclara
+  # ABSOLUTA. Señalado como PENDIENTE 7 en `features/identidad_visual.feature`
+  # (feature 22, ya `done`) al descubrir la contradicción entre este contrato
+  # y `MetadatosPagina.tsx`; resuelto por el `craftsman_lead` en cuanto el
+  # humano fijó el dominio final de publicación (GitHub Pages,
+  # `cenit-digital.github.io`, repo `Cenit-Digital/GalapavetClinicaVeterinaria`).
+  # El subpath `/GalapavetClinicaVeterinaria` que tendrá la Page de proyecto
+  # es, a propósito, un problema de despliegue APARTE (aún sin resolver,
+  # afecta a `vite.config.ts`/`BrowserRouter`) y no entra en esta enmienda.
 
   @s20
   Scenario: Open Graph se declara con el separador de locale que exige su especificación
@@ -396,7 +407,9 @@ Feature: SEO técnico y datos estructurados
     And ninguno de esos cuatro valores es una cadena vacía ni solo espacios
     And el locale declarado es exactamente "es_ES" con guion bajo
     And ese locale no coincide carácter a carácter con el atributo "lang" del documento, que usa guion
-    And la imagen declarada se sirve desde el propio sitio, sin ninguna petición a un tercero
+    And la imagen declarada es una URL absoluta, con esquema y dominio, tal y como exige https://ogp.me/ para el tipo "og:image"
+    And esa URL absoluta usa el dominio real de publicación del sitio, "cenit-digital.github.io"
+    And la imagen se sigue sirviendo desde el propio sitio, sin ninguna petición a un tercero
 
   # ---------------------------------------------------------------------------
   # Casos límite añadidos en reparación: la omisión de un dato ausente no

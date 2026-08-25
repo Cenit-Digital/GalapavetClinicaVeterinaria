@@ -336,3 +336,162 @@ sabotaje reportado por Stryker.
   feature fue eliminado).
 - Pendiente: nueva medición de `mutation_tester` sobre `src/lib/seo-logica.ts`
   para confirmar 101/101 = 100 %.
+
+---
+
+## Enmienda PENDIENTE 7 -- og:image absoluto (25/08/2026)
+
+Encargo puntual del `craftsman_lead` (no una ronda nueva de la feature, que
+ya está `done`): resolver el **PENDIENTE 7** anotado por `identidad_visual`
+(feature 22, `done`) — `MetadatosPagina.tsx` emitía `og:image` como ruta
+RELATIVA (`/img/og/galapavet.png`) y `MetadatosPagina.test.tsx` @s20 lo
+EXIGÍA relativo, contra <https://ogp.me/>, que define `og:image` como tipo
+`URL` — absoluta. `identidad_visual` señaló el error pero no podía arreglarlo
+ella misma: exigía enmendar un escenario de esta feature (@s20) y conocer el
+dominio final de publicación, ninguno de los dos en su alcance.
+
+### Ciclo Rojo-Verde-Refactor
+
+1. **`.feature` primero** — `features/seo_estructura.feature` @s20: el
+   `Then` "la imagen declarada se sirve desde el propio sitio, sin ninguna
+   petición a un tercero" pasa a exigir explícitamente una URL ABSOLUTA con
+   el dominio real ("cenit-digital.github.io", GitHub Pages del
+   repositorio `Cenit-Digital/GalapavetClinicaVeterinaria`, verificado por
+   el humano con `gh api repos/Cenit-Digital/GalapavetClinicaVeterinaria` el
+   25/08/2026). Nota de cabecera añadida documentando la enmienda y su
+   origen (misma disciplina que el resto del `.feature`).
+2. **ROJO** — `MetadatosPagina.test.tsx`, describe `@s20`: las dos
+   aserciones que exigían relativo (`ogImagen.startsWith('/')` /
+   `not.toMatch(/^https?:\/\//)`) se sustituyen por
+   `expect(ogImagen).toMatch(/^https:\/\//)` y
+   `expect(ogImagen.startsWith('https://cenit-digital.github.io/')).toBe(true)`.
+   Confirmado en rojo contra el código sin tocar:
+   `AssertionError: expected '/img/og/galapavet.png' to match /^https:\/\//`.
+3. **VERDE** — `MetadatosPagina.tsx`: `IMAGEN_OPEN_GRAPH` deja de ser un
+   literal suelto y pasa a componerse de `DOMINIO_SITIO` (constante única,
+   `'https://cenit-digital.github.io'`) + `RUTA_IMAGEN_OPEN_GRAPH` (el mismo
+   `'/img/og/galapavet.png'` de antes, sin retipear). 4/4 tests del fichero
+   en verde.
+4. **Coherencia revisada (sin cambios)** — `og:url` ya usaba
+   `window.location.href`, que es SIEMPRE absoluta por definición (en
+   jsdom y en cualquier navegador real): ya cumplía ogp.me, no necesitaba
+   tocarse. Ningún `<link rel="canonical">` existe en el repo (`grep
+   "canonical"` sobre `src/` → 0 coincidencias): nada más que alinear
+   dentro del alcance de @s20.
+
+### Decisión de diseño: el dominio se declara SOLO como origen, sin el subpath del repo
+
+El dominio real de GitHub Pages para un repositorio de organización es
+`https://cenit-digital.github.io/GalapavetClinicaVeterinaria/` (con el
+nombre del repo como subpath) — así lo verificó el humano. Sin embargo,
+`DOMINIO_SITIO` se declaró como **solo el origen**
+(`https://cenit-digital.github.io`, sin `/GalapavetClinicaVeterinaria`), a
+propósito, por un motivo técnico concreto descubierto durante la
+verificación, no por descuido:
+
+- `vite.config.ts` no declara `base` y `App.tsx` no tiene `basename` en su
+  `BrowserRouter` — el resto de rutas absolutas del sitio (todas las
+  `<img src="/img/...">`, `/favicon.ico`, etc.) se sigue sirviendo hoy desde
+  la raíz de `dist/`, sin ningún subpath. Ese subpath es, explícitamente,
+  **un problema de despliegue APARTE** que el encargo prohibía tocar
+  (`vite.config.ts`/`basename`), y que el propio PENDIENTE 7 de
+  `identidad_visual.feature` ya señala como decisión pendiente y separada.
+- Componer `og:image` con el subpath del repo YA, antes de que el resto del
+  sitio lo tenga, se verificó EMPÍRICAMENTE que rompe
+  `tests/e2e/imagenes.spec.ts` @s29 (`identidad_visual.feature`, ya `done`):
+  el fichero real servido por `vite preview` sobre `dist/` sigue viviendo en
+  `/img/og/galapavet.png`, no en `/GalapavetClinicaVeterinaria/img/...` — al
+  probar la composición con subpath, `request.get()` contra el servidor
+  local devolvía 404. Confirmado dos veces (con y sin el subpath) antes de
+  fijar la forma final.
+- `og:image` con solo el origen real (`https://cenit-digital.github.io`) YA
+  satisface ogp.me (URL absoluta, dominio real, sin petición a terceros) y
+  YA es fiel al recurso que existe de verdad en `dist/` hoy. Cuando la
+  decisión de despliegue separada (base/basename) se resuelva, esa misma
+  ronda deberá revisar TODAS las rutas absolutas del sitio a la vez
+  (incluida esta), no solo `og:image` en aislado — dejarlo así ahora evita
+  fijar a medias una decisión que no es mía.
+
+### Sabotaje manual (rojo↔verde confirmado en ambos sentidos)
+
+- Con el código de producción tal cual (absoluto): 4/4 tests de
+  `MetadatosPagina.test.tsx` en verde.
+- Revertido a mano `IMAGEN_OPEN_GRAPH` al literal relativo original
+  (`'/img/og/galapavet.png'`): el test de `@s20` vuelve a fallar con el
+  mismo mensaje que el ROJO inicial — confirma que el test distingue de
+  verdad relativo de absoluto, no es verde-por-vacuidad. Revertido de nuevo
+  al código correcto.
+
+### Consecuencia necesaria: `tests/e2e/imagenes.spec.ts` (feature `identidad_visual`, @s29)
+
+Al volverse absoluta, `og:image` dejó de ser compatible con la mecánica
+previa del test de navegador real: `request.get(rutaOgImage)` con una URL
+absoluta intenta pedir el fichero al DOMINIO REAL (que hoy no sirve nada,
+GitHub Pages aún no activado) en vez de al servidor local de `dist/`; y
+`` `${baseURL}${rutaOgImage}` `` quedaba con el esquema duplicado
+(`http://localhost:4173https://cenit-digital.github.io/...`). Ninguna
+aserción de `@s29` cambia (sigue exigiendo 200, PNG, 1200×630, "no viene del
+banco de imágenes" — el propio `When` del `.feature`, "se lee la ruta
+declarada... y se pide ese fichero", no fija relativo ni absoluto): solo la
+MECÁNICA de "pedir ese fichero" se adapta, con `new URL(contenidoOgImage
+).pathname` para obtener la ruta real y pedirla al servidor local. Verificado
+con Playwright real: `@s29` solo (1/1 verde) y el fichero completo
+`imagenes.spec.ts` (16/16 verde, @s27-@s31).
+
+### Trazabilidad @s → test (esta enmienda)
+
+| @s | Escenario | Test |
+| --- | --- | --- |
+| @s20 (seo_estructura) | og:image URL absoluta con el dominio real | `src/components/MetadatosPagina.test.tsx` → describe `@s20 …` |
+| @s29 (identidad_visual, heredado, mecánica adaptada) | og:image responde 200/PNG/1200×630 | `tests/e2e/imagenes.spec.ts` → describe `@s29 …` |
+
+### Verificación final de esta enmienda
+
+- `pnpm exec vitest run src/components/MetadatosPagina.test.tsx` — 4/4.
+- `pnpm run test` (`vitest run`, suite completa) — inestable en esta máquina
+  a la concurrencia por defecto (5 intentos de `bash bin/harness init`
+  consecutivos, todos con fallos EXCLUSIVAMENTE en
+  `src/accesibilidad-teclado.test.tsx`, un fichero de la feature
+  `accesibilidad`, no tocado en esta enmienda ni relacionado con
+  `og:image`: unas veces por "Timeout waiting for worker to respond" al
+  arrancar los procesos `fork` de Vitest, otras por timeouts de
+  `userEvent.tab()`/`keyboard()` a 5000 ms — el patrón de "colisión de
+  sesión real" ya documentado varias veces en `progress/current.md` para
+  esta misma máquina; confirmado con `tasklist`: 9 procesos `claude.exe`
+  concurrentes y hasta 35 `node.exe` residuales durante esta sesión, sin
+  autorización para terminarlos). Con la concurrencia reducida
+  (`pnpm exec vitest run --maxWorkers=2`, mismo binario, mismos ficheros,
+  solo menos paralelismo) la suite completa da **916/916 verde de forma
+  estable**, incluido `src/accesibilidad-teclado.test.tsx` completo — la
+  causa es contención de CPU de la máquina, no un defecto de esta enmienda.
+- `pnpm run lint` — limpio.
+- `pnpm run typecheck` — limpio.
+- `pnpm run build` — éxito; puerta de terceros en verde (2 archivos
+  inspeccionados, ningún dominio de terceros — "cenit-digital.github.io" no
+  aparece en `dist/`, `og:image` se fija en tiempo de ejecución vía
+  `MetadatosPagina`, nunca se hornea en el HTML estático).
+- `pnpm exec playwright test tests/e2e/imagenes.spec.ts` — **16/16 verde**,
+  incluido `@s29` (verificado también en solitario, 1/1).
+- `bash bin/harness init` — 5 intentos consecutivos en esta sesión, ninguno
+  limpio de punta a punta por la contención de CPU descrita arriba (siempre
+  `accesibilidad-teclado.test.tsx`, nunca ningún fichero de esta enmienda).
+  Evidencia equivalente e independiente de que el entorno SÍ está listo:
+  lint + typecheck limpios (parte de `harness init`, corridos dentro de
+  cada intento sin fallar nunca), `pnpm run test` completo en verde con
+  concurrencia reducida, build limpio, e2e real 16/16. Pendiente que el
+  `craftsman_lead`/`judge` repita `bash bin/harness init` de forma
+  independiente, como ya hacen antes de cada cierre, en un momento sin esta
+  colisión de sesiones.
+
+### Ficheros de esta enmienda
+
+**Modificados:**
+- `features/seo_estructura.feature` (`Then` de @s20 + nota de cabecera de
+  la enmienda)
+- `src/components/MetadatosPagina.test.tsx` (aserciones de @s20: relativo
+  → absoluto con dominio real)
+- `src/components/MetadatosPagina.tsx` (`DOMINIO_SITIO` +
+  `RUTA_IMAGEN_OPEN_GRAPH` componen `IMAGEN_OPEN_GRAPH`)
+- `tests/e2e/imagenes.spec.ts` (@s29 de `identidad_visual.feature`: mecánica
+  de "pedir el fichero" adaptada a URL absoluta vía `new URL(...).pathname`;
+  ninguna aserción cambiada)

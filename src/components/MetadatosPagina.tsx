@@ -15,12 +15,33 @@ import type { MetadatosPagina as DatosMetadatosPagina } from '../lib/seo-logica'
 const LOCALE_OPEN_GRAPH = 'es_ES'
 const TIPO_OPEN_GRAPH = 'website'
 /**
+ * ogp.me define `og:image` con tipo `URL`, que la propia especificación
+ * aclara ABSOLUTA (enmienda del 25/08/2026 a `@s20` de
+ * `seo_estructura.feature`, PENDIENTE 7 de `identidad_visual.feature`). El
+ * dominio es el real de publicación: GitHub Pages del repositorio
+ * `Cenit-Digital/GalapavetClinicaVeterinaria`, verificado con
+ * `gh api repos/Cenit-Digital/GalapavetClinicaVeterinaria` — el host de una
+ * Page de organización es siempre el owner en minúsculas.
+ *
+ * Aquí solo se declara el ORIGEN (esquema + host), sin el subpath
+ * "/GalapavetClinicaVeterinaria" que tendrá la Page de proyecto: ese subpath
+ * es un problema de despliegue APARTE, todavía sin resolver
+ * (`vite.config.ts` no declara "base" y `App.tsx` no tiene "basename" — el
+ * resto de rutas absolutas del sitio, como esta misma imagen, se sigue
+ * sirviendo hoy desde la raíz de `dist/`). Anteponer aquí un subpath que el
+ * resto del sitio no tiene todavía rompería `tests/e2e/imagenes.spec.ts`
+ * (@s29 de `identidad_visual.feature`, ya `done`), que pide el fichero
+ * contra el `dist/` real servido en local.
+ */
+const DOMINIO_SITIO = 'https://cenit-digital.github.io'
+/**
  * PNG y no WebP (@s29 de `identidad_visual.feature`): la documentación oficial
  * de Meta no declara qué formatos acepta, así que WebP queda NO VERIFICADO en
  * sus rastreadores. Compuesta con el logotipo real sobre el morado de marca,
  * nunca una foto de banco (`progress/plan_imagenes.md` §4.3 «Open Graph»).
  */
-const IMAGEN_OPEN_GRAPH = '/img/og/galapavet.png'
+const RUTA_IMAGEN_OPEN_GRAPH = '/img/og/galapavet.png'
+const IMAGEN_OPEN_GRAPH = `${DOMINIO_SITIO}${RUTA_IMAGEN_OPEN_GRAPH}`
 
 const ID_SCRIPT_DATOS_ESTRUCTURADOS = 'datos-estructurados-pagina'
 

@@ -79,7 +79,14 @@ describe('@s20 Open Graph se declara con el separador de locale que exige su esp
     expect(ogLocale).toBe('es_ES')
     expect(ogLocale).not.toBe(document.documentElement.getAttribute('lang'))
 
-    expect(ogImagen.startsWith('/')).toBe(true)
-    expect(ogImagen).not.toMatch(/^https?:\/\//)
+    // ogp.me exige que "og:image" sea una URL ABSOLUTA (tipo "URL"), no una
+    // ruta relativa (enmienda del 25/08/2026, PENDIENTE 7 de
+    // `identidad_visual.feature`). El dominio real es el de GitHub Pages,
+    // verificado por el humano con `gh api repos/Cenit-Digital/
+    // GalapavetClinicaVeterinaria` (org "Cenit-Digital", repo
+    // "GalapavetClinicaVeterinaria"): el host de la Page es siempre el
+    // owner en minúsculas, "cenit-digital.github.io".
+    expect(ogImagen).toMatch(/^https:\/\//)
+    expect(ogImagen.startsWith('https://cenit-digital.github.io/')).toBe(true)
   })
 })
