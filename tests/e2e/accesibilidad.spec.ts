@@ -311,6 +311,51 @@ test.describe('@s40 al tabular por la página entera ningún control enfocado qu
   })
 })
 
+interface Rectangulo {
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
+
+interface HijoDeCabeceraMedido {
+  readonly etiqueta: string
+  readonly caja: Rectangulo
+}
+
+// Chromium devuelve `boundingBox()` con decimales: sin esta tolerancia, un
+// hijo que toca justo el borde interior de la cabecera (redondeo de
+// subpíxel) contaría como "desbordado" sin estarlo de verdad.
+const TOLERANCIA_SUBPIXEL_PX = 0.5
+
+function estaContenidoEn(hijo: Rectangulo, contenedor: Rectangulo): boolean {
+  return (
+    hijo.x >= contenedor.x - TOLERANCIA_SUBPIXEL_PX &&
+    hijo.y >= contenedor.y - TOLERANCIA_SUBPIXEL_PX &&
+    hijo.x + hijo.width <= contenedor.x + contenedor.width + TOLERANCIA_SUBPIXEL_PX &&
+    hijo.y + hijo.height <= contenedor.y + contenedor.height + TOLERANCIA_SUBPIXEL_PX
+  )
+}
+
+function seSuperponen(a: Rectangulo, b: Rectangulo): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
+/** Hijos DIRECTOS y visibles de la cabecera (logo, y según el ancho, nav o botón de menú). */
+async function hijosVisiblesDe(cabecera: Locator): Promise<HijoDeCabeceraMedido[]> {
+  const hijos = cabecera.locator('> *:visible')
+  const cuenta = await hijos.count()
+  const medidos: HijoDeCabeceraMedido[] = []
+  for (let indice = 0; indice < cuenta; indice += 1) {
+    const hijo = hijos.nth(indice)
+    const caja = await hijo.boundingBox()
+    if (caja === null) continue
+    const etiqueta = await hijo.evaluate((elemento) => `${elemento.tagName.toLowerCase()}.${elemento.className}`)
+    medidos.push({ etiqueta, caja })
+  }
+  return medidos
+}
+
 test.describe('El punto de corte de la navegación (1024/1023) coincide en JS y CSS en el navegador real (ejecuta @s27 de sistema_de_diseno_visual.feature)', () => {
   test('a 1024px la navegación horizontal es visible; a 1023px, el botón de menú', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 })
@@ -321,6 +366,37 @@ test.describe('El punto de corte de la navegación (1024/1023) coincide en JS y 
     await page.setViewportSize({ width: 1023, height: 800 })
     await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeHidden()
+  })
+
+  test('ningún elemento de la cabecera se desborda ni se superpone con otro, ni a 1024px ni a 1023px', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 })
+    await page.goto('/')
+
+    for (const ancho of [1024, 1023]) {
+      await page.setViewportSize({ width: ancho, height: 800 })
+      const cabecera = page.locator('header')
+      const cajaCabecera = await cabecera.boundingBox()
+      if (cajaCabecera === null) {
+        throw new Error(`no se pudo medir la cabecera a ${ancho}px`)
+      }
+
+      const hijos = await hijosVisiblesDe(cabecera)
+      expect(hijos.length, `a ${ancho}px: ningún hijo visible de la cabecera`).toBeGreaterThan(0)
+
+      for (const { etiqueta, caja } of hijos) {
+        expect(estaContenidoEn(caja, cajaCabecera), `a ${ancho}px: "${etiqueta}" se desborda de la cabecera`).toBe(true)
+      }
+
+      for (let i = 0; i < hijos.length; i += 1) {
+        for (let j = i + 1; j < hijos.length; j += 1) {
+          const superpuestos = seSuperponen(hijos[i]!.caja, hijos[j]!.caja)
+          expect(
+            superpuestos,
+            `a ${ancho}px: "${hijos[i]!.etiqueta}" se superpone con "${hijos[j]!.etiqueta}"`,
+          ).toBe(false)
+        }
+      }
+    }
   })
 })
 

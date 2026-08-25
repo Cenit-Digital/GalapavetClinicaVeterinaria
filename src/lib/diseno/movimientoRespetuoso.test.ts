@@ -89,6 +89,31 @@ describe('@s33 toda regla de animación o transición introducida vive dentro de
     expect(informe.pasa).toBe(true)
   })
 
+  it('una propiedad larga real ("transition-duration") fuera de cualquier bloque prefers-reduced-motion también se señala como incumplimiento', () => {
+    const ficheroFormaLarga = {
+      ruta: '/prueba/FormaLarga.module.scss',
+      contenido: '.boton {\n  transition-duration: 0.3s;\n}\n',
+    }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroFormaLarga])
+
+    expect(informe.ficherosComprobados).toBe(1)
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/FormaLarga.module.scss', linea: 2 }])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it('una propiedad larga real con un espacio antes de los dos puntos también se señala como incumplimiento', () => {
+    const ficheroEspacioAntesDeDosPuntos = {
+      ruta: '/prueba/EspacioAntesDeDosPuntos.module.scss',
+      contenido: '.boton {\n  transition-duration : 0.3s;\n}\n',
+    }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroEspacioAntesDeDosPuntos])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/EspacioAntesDeDosPuntos.module.scss', linea: 2 }])
+    expect(informe.pasa).toBe(false)
+  })
+
   it('un bloque "reduce" con dos espacios tras los dos puntos también se reconoce como cobertura', () => {
     const ficheroDosEspacios = {
       ruta: '/prueba/ReduceDosEspacios.module.scss',

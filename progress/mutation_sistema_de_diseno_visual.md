@@ -414,3 +414,358 @@ viewport intermedio (por ejemplo 672) en `escalaTipografica.ts` (mata el
 unico superviviente real de ese fichero); (6) formato CSS alternativo
 (sin espacio, doble espacio, `@media screen and (...)`) en `puntoDeCorte.ts`
 y en el resto de regex de `movimientoRespetuoso.ts`.
+
+---
+
+## Re-medicion tras Ronda 2 (25/08/2026)
+
+**Encargo:** re-medicion pedida por craftsman_lead, tras la revision de cierre
+de judge (progress/judge_sistema_de_diseno_visual.md, seccion "Revision de
+cierre (25/08/2026, tras identidad_visual)", punto 3), que confirmo
+fichero-por-fichero (via git log) que 3 de los 6 modulos de
+src/lib/diseno/ nunca se remidieron desde el refuerzo de Ronda 2
+(23/08/2026): movimientoRespetuoso.ts, puntoDeCorte.ts y
+escalaTipografica.ts. escalaEspaciado.ts se incluye en la misma tanda por
+higiene (1 solo mutante, ya PASS desde Ronda 1). tokensColor.ts e
+inventarioModulos.ts quedan fuera de alcance a proposito: ya fueron
+ampliados y remedidos con PASS 100% sobre no-equivalentes por el propio
+mutation_tester de identidad_visual (id 22, done) sobre su version
+actual -- remedirlos aqui seria trabajo redundante.
+
+### Pre-vuelo
+
+- git log --oneline -1 sobre los 4 ficheros: los 4 apuntan a 6ffd3b7
+  (commit WIP previo a Ronda 2), ningun commit posterior -- confirmado
+  intactos desde entonces, tal y como afirma el judge.
+- git status: sin cambios en src/lib/diseno/ ni en
+  tests/e2e/accesibilidad.spec.ts en el momento de arrancar -- sin
+  colision con el tdd_craftsman trabajando en paralelo sobre @s27.
+- Get-CimInstance Win32_Process antes de arrancar: sin ningun proceso
+  stryker vivo.
+- pnpm exec vitest run de los 4 .test.ts en aislamiento: 4 ficheros,
+  20 tests, verde (previo a mutar nada).
+- Las 4 corridas se lanzaron una detras de otra (nunca en paralelo),
+  cada una con --plugins @stryker-mutator/vitest-runner explicito.
+  Durante la corrida de movimientoRespetuoso.ts (la mas larga, ~9m25s)
+  se detecto una rafaga de ~20-25 procesos vitest adicionales -- el
+  tdd_craftsman corriendo pnpm run test / bin/harness init en paralelo
+  sobre su hueco de @s27, en un fichero fuera de este alcance --, pero la
+  columna "# timeout" se mantuvo en 0 en las 4 corridas (verificado en
+  cada informe antes de leer el score, incluida la de mayor contencion), asi
+  que ninguna corrida se repitio. concurrency: 1 de stryker.config.json
+  contuvo el riesgo de falsos "timeout = killed" descrito en su propio
+  comentario.
+- Cada score se verifico dos veces: una vez contra el texto de la terminal y
+  otra contra reports/mutation/mutation.json (el tail de la terminal
+  trunco el listado completo de sobrevivientes de escalaTipografica.ts;
+  el JSON no).
+
+### Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | score bruto | equivalentes | score sobre no-equivalentes | veredicto |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| escalaEspaciado.ts | 1 | 1 | 0 | 0 | 0 | 100.00% | 0 | 100.00% (1/1) | PASS |
+| escalaTipografica.ts | 28 | 13 | 0 | 15 | 0 | 46.43% | 15 | 100.00% (13/13) | PASS |
+| puntoDeCorte.ts | 9 | 9 | 0 | 0 | 0 | 100.00% | 0 | 100.00% (9/9) | PASS |
+| movimientoRespetuoso.ts | 70 | 67 | 0 | 3 | 0 | 95.71% | 2 | 98.53% (67/68) | FAIL |
+| Total (4 ficheros) | 108 | 90 | 0 | 18 | 0 | 83.33% | 17 | 98.90% (90/91) | FAIL |
+
+### escalaEspaciado.ts -- 1/1 = 100.00%
+
+PASS, sin cambios respecto a Ronda 1 (nunca tuvo supervivientes). Nada que
+reportar.
+
+### escalaTipografica.ts -- 13/28 = 46.43% bruto, 13/13 = 100.00% sobre no-equivalentes
+
+El unico superviviente real de Ronda 1 (81:22, "(maxPx - minPx)" a
+"(maxPx + minPx)") ahora aparece Killed, coherente con el nuevo test
+dirigido al punto medio del viewport (672px) que documenta
+progress/tdd_sistema_de_diseno_visual.md Ronda 2.
+
+Los 15 supervivientes restantes se cotejaron uno a uno contra el
+catalogo de equivalentes de Ronda 1 (reports/mutation/mutation.json, no
+solo la terminal, que el "tail -100" trunco): mismo mutatorName +
+location + replacement, caracter a caracter, en los 15 casos --
+74:7 x4 + 74:41-76:4 x1 (rama de saturacion inferior), 77:7 x4 +
+77:41-79:4 x1 (rama de saturacion superior), y 81:21, 81:40, 82:20,
+82:28, 82:41 (los 5 terminos aritmeticos de la interpolacion). Codigo
+fuente confirmado byte-identico desde Ronda 2 (git log da un unico commit,
+6ffd3b7, para el fichero). Acepto los 15 como equivalentes por
+herencia, re-verificada (no repito el analisis algebraico/empirico
+completo de Ronda 1, que ya demostro con script independiente que
+minPx === maxPx para los parametros reales de la Decision 24, haciendo
+"pendiente" identicamente 0 y las tres ramas de tamanoEnViewport
+observacionalmente indistinguibles de "siempre minPx").
+
+PASS sobre no-equivalentes: 13/13 = 100.00%.
+
+### puntoDeCorte.ts -- 9/9 = 100.00%
+
+Los 2 supervivientes reales de Ronda 1 (formato "@media screen and (...)" y
+espaciado alternativo tras los dos puntos) ahora estan Killed, por los 2
+tests nuevos de formato CSS alternativo que documenta
+progress/tdd_sistema_de_diseno_visual.md Ronda 2 (visibles en la salida:
+"un @media con tipo de medio explicito antes del parentesis tambien se
+reconoce" y "espaciado distinto tras los dos puntos... tambien se
+reconoce"). 0 equivalentes, 0 supervivientes. PASS limpio.
+
+### movimientoRespetuoso.ts -- 67/70 = 95.71% bruto, 67/68 = 98.53% sobre no-equivalentes -- FAIL
+
+De los 26 supervivientes reales + 2 equivalentes de Ronda 1, 24 de los 26
+reales estan ahora Killed por los tests nuevos de Ronda 2 (bloque "reduce"
+con dos declaraciones, fichero sin movimiento evaluado en solitario,
+contenido exacto del incumplimiento, formatos de espaciado alternativos en
+"no-preference"/"reduce", y el caso de la palabra "transition:" en medio de
+una linea que no es declaracion real).
+
+2 mutantes siguen siendo los mismos equivalentes ya documentados en Ronda
+1, re-verificados contra el codigo actual (identico desde 6ffd3b7, mismo
+mutatorName+location+replacement):
+
+- movimientoRespetuoso.ts:30:10 "return 'otro'" a "return \"\""
+  (StringLiteral). El tercer miembro de TipoDeBloque nunca se compara con
+  un literal concreto -- sigue siendo intercambiable con cualquier relleno
+  distinto de 'no-preference'/'reduce'.
+- movimientoRespetuoso.ts:39:32 "const pila: TipoDeBloque[] = []" a
+  "= [\"Stryker was here\"]" (ArrayDeclaration). El elemento de relleno
+  nunca llega a afectar ningun .includes(...) posterior -- mismo
+  argumento de Ronda 1.
+
+1 mutante sobreviviente es REAL (no equivalente) y es NUEVO respecto al
+catalogo de Ronda 1 -- no lo cubre ninguno de los 13 tests anadidos en
+Ronda 2:
+
+- src/lib/diseno/movimientoRespetuoso.ts:21:40 (Regex)
+
+  Original:
+      const PATRON_PROPIEDAD_DE_MOVIMIENTO = /^\s*(animation|transition)\s*:/
+  Mutante:
+      const PATRON_PROPIEDAD_DE_MOVIMIENTO = /^\s*(animation|transition)\S*:/
+
+  Cambia el \s* inmediatamente anterior a los dos puntos por \S*
+  (no-espacio), conservando el ancla ^ intacta -- por eso el nuevo test
+  de Ronda 2 ("la palabra 'transition:' en medio de una linea... no se
+  confunde con una", que ataca la falta de ancla) no lo distingue: ambas
+  variantes (original y mutante) siguen ancladas al inicio de linea, asi que
+  una linea tipo ".a:hover { color: red; } // transition: fake" no matchea
+  en ninguna de las dos.
+
+  Verificado que NO es equivalente (diferencia de comportamiento real, no
+  solo teorica): con una linea como "transition-duration: 0.3s;" (una
+  propiedad larga real de CSS, no la forma abreviada "transition:"), el
+  patron ORIGINAL no matchea -- entre "transition" y ":" hay "-duration"
+  (9 caracteres no-espacio), y \s* exige que ahi solo pueda haber espacio
+  en blanco (cero o mas), asi que la posicion falla y, al estar anclado, no
+  hay otro punto de inicio que probar. El patron MUTANTE si matchea:
+  \S* consume literalmente "-duration" (todo no-espacio) y luego encuentra
+  los dos puntos. Mismo razonamiento aplica a "transition-property:",
+  "transition-timing-function:", "animation-duration:",
+  "animation-name:", etc. -- cualquier propiedad larga real de transition/
+  animation que el proyecto pudiera declarar.
+
+  Falta: un test que llame extraerDeclaracionesDeMovimiento (o
+  ejecutarPuertaDeMovimientoRespetuoso) con un contenido sintetico que
+  contenga una linea con una propiedad larga real ("transition-duration:
+  0.3s;" o similar) fuera de cualquier bloque prefers-reduced-motion,
+  y compruebe que el codigo real la trata igual que hoy la trata realmente
+  (ningun test actual ejercita esta distincion, asi que primero habria que
+  confirmar con el propio tdd_craftsman/judge cual es el comportamiento
+  pretendido -- si PATRON_PROPIEDAD_DE_MOVIMIENTO deberia o no reconocer
+  las formas largas -- antes de decidir si el test espera 0 declaraciones o
+  1 declaracion no cubierta; en cualquier caso, sin ese test el mutante
+  sobrevive porque ninguna asercion actual distingue "propiedad larga
+  ignorada" de "propiedad larga detectada").
+
+  No es candidato a equivalente: hay al menos una entrada (transition-
+  duration: 0.3s;) que produce una salida observable distinta entre el
+  codigo real y el mutante.
+
+### Metodologia de verificacion de equivalencia (esta ronda)
+
+Para los 17 mutantes heredados de Ronda 1 (15 en escalaTipografica.ts, 2 en
+movimientoRespetuoso.ts) no se repitio el analisis algebraico/empirico
+completo desde cero -- se re-verifico que (a) el codigo fuente de cada
+fichero sigue siendo byte-identico desde Ronda 2 (git log --oneline -1 da
+un unico commit, 6ffd3b7, para los 4 ficheros de esta ronda) y (b) cada
+mutante sobreviviente coincide exactamente, por mutatorName + location +
+replacement, con el ya justificado en
+progress/mutation_sistema_de_diseno_visual.md (seccion Ronda 1, "Resumen y
+siguiente paso" y los apartados por fichero). Los 17 coinciden sin
+excepcion. El mutante nuevo (movimientoRespetuoso.ts:21:40, variante
+\S*) se analizo desde cero porque, aunque comparte linea:columna con un
+hueco ya catalogado en Ronda 1, su replacement es distinto del descrito
+entonces (Ronda 1 documento la falta de ancla ^; este mutante conserva el
+ancla y muta un caracter distinto de la misma expresion regular) -- no se
+acepto por herencia.
+
+### Resumen y siguiente paso
+
+FAIL. Score global de esta tanda (4 ficheros): 90/108 = 83.33% bruto,
+90/91 = 98.90% sobre mutantes no equivalentes -- por debajo del umbral de
+harness.config.json (mutation.threshold: 1.0). 3 de los 4 ficheros
+(escalaEspaciado.ts, escalaTipografica.ts, puntoDeCorte.ts) alcanzan
+100% sobre no-equivalentes y quedan cerrados. movimientoRespetuoso.ts
+queda con 1 mutante sobreviviente real (21:40, variante \S* de
+PATRON_PROPIEDAD_DE_MOVIMIENTO), sin tocar src/ ni ningun test: el
+trabajo de escribir el test que lo mate (y decidir, junto con
+craftsman_lead, si PATRON_PROPIEDAD_DE_MOVIMIENTO debe o no reconocer
+formas largas de transition-/animation-) corresponde al tdd_craftsman,
+seguido de un nuevo paso por judge y una nueva ronda de mutation_tester
+acotada a este unico fichero.
+
+tokensColor.ts e inventarioModulos.ts no se remidieron en esta tanda
+(fuera de alcance, ya PASS 100% sobre no-equivalentes por identidad_visual
+-- ver progress/mutation_identidad_visual.md). La feature sistema_de_diseno_visual
+(id 21) sigue sin poder cerrarse por mutacion hasta que
+movimientoRespetuoso.ts alcance 100% sobre no-equivalentes.
+
+## Remedicion final -- movimientoRespetuoso.ts (25/08/2026)
+
+**Encargo:** re-medicion acotada UNICAMENTE a `src/lib/diseno/movimientoRespetuoso.ts`,
+tras el refuerzo de una sola linea de tdd_craftsman (linea 21,
+`PATRON_PROPIEDAD_DE_MOVIMIENTO` ahora reconoce tambien formas largas
+hifenadas: `/^\s*(animation|transition)(-[\w-]+)?\s*:/`) mas 2 tests
+nuevos, aprobado por judge (progress/judge_sistema_de_diseno_visual.md,
+seccion "Refuerzo final -- formas largas (25/08/2026)").
+
+### Pre-vuelo
+
+- `Get-CimInstance Win32_Process` (filtro por nombre/linea de comando con
+  "stryker"): sin ningun proceso Stryker vivo antes de arrancar (los 4
+  procesos que devolvio el filtro eran, cada uno, la propia consulta
+  PowerShell ejecutandose a si misma via bash -- ningun `stryker run` real).
+- `pnpm exec vitest run src/lib/diseno/movimientoRespetuoso.test.ts` en
+  aislamiento, antes de mutar: 9 tests, 1 fichero, verde (los 7
+  originales de Ronda 1/2 mas los 2 nuevos del refuerzo: "una propiedad
+  larga real (transition-duration)... tambien se senala como incumplimiento"
+  y "una propiedad larga real con un espacio antes de los dos puntos...
+  tambien se senala como incumplimiento").
+
+### Corrida
+
+```
+pnpm exec stryker run --mutate src/lib/diseno/movimientoRespetuoso.ts --plugins "@stryker-mutator/vitest-runner"
+```
+
+Concurrency 1 de `stryker.config.json` (sin necesidad de forzarla por CLI).
+`# timeout` fue 0 en la unica corrida (verificado en el resumen de
+terminal antes de leer el score) -- no hizo falta repetir con
+`--concurrency 1` explicito.
+
+El numero total de mutantes subio de 70 (Ronda 1/2) a 74: el refuerzo de
+la linea 21 (nuevo grupo opcional `(-[\w-]+)?`) anade superficie mutable
+propia -- 9 mutantes de tipo Regex sobre esa linea en esta corrida, frente a
+los 2 de antes.
+
+### Resultado
+
+| Fichero | total | killed | timeout | survived | no cov | score bruto | equivalentes | score sobre no-equivalentes | veredicto |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| movimientoRespetuoso.ts | 74 | 72 | 0 | 2 | 0 | 97.30% | 2 | 100.00% (72/72) | PASS |
+
+Verificado dos veces: una vez contra el resumen de terminal ("All files ...
+97.30 ... 72 ... 0 ... 2 ... 0 ... 0") y otra contra
+`reports/mutation/mutation.json` (`file.mutants`, 74 entradas, conteo
+programatico de `status`: Killed 72, Survived 2, sin ninguna entrada
+Timeout ni NoCoverage).
+
+### Mutante 21:40 (el superviviente real de la re-medicion anterior) -- ahora Killed
+
+Los 9 mutantes de tipo Regex sobre la linea 21 en esta corrida (uno por
+cada variante que Stryker genero sobre la expresion ya reforzada, incluidos
+los que atacan especificamente el nuevo grupo opcional `(-[\w-]+)?` y su
+clase de caracteres interna) aparecen todos Killed, confirmado
+directamente contra `mutation.json` (ids 8-16, mutatorName Regex,
+status Killed en los 9 casos):
+
+- `/\s*(...)...` (quita el ancla `^`)
+- `/^\s(...)...` (`\s*` a `\s`, antes del grupo de propiedad)
+- `/^\S*(...)...` (`\s*` a `\S*`, antes del grupo de propiedad)
+- `(-[\w-]+)` (quita el `?`, grupo obligatorio en vez de opcional) -- este
+  es el que mas directamente ataca el refuerzo de la Ronda 3
+- `(-[\w-])?` (quita el `+`, un solo caracter tras el guion en vez de uno
+  o mas)
+- `(-[^\w-]+)?` (invierte la clase de caracteres a "no palabra, no guion")
+- `(-[\W-]+)?` (`\w` a `\W`, invierte solo la parte "palabra" de la clase)
+- `(-[\w-]+)?\s:` (el `\s*` final, justo antes de los dos puntos a `\s`)
+- `(-[\w-]+)?\S*:` (el `\s*` final a `\S*`, la variante EXACTA que
+  sobrevivio en la re-medicion anterior, referenciada entonces por su columna
+  antigua 21:40; en esta corrida cae dentro del mismo rango de columnas
+  21:40-21:82 que agrupa los 9 mutantes de la linea, y esta Killed)
+
+Los 2 tests nuevos del refuerzo ("transition-duration: 0.3s;" sin espacio
+antes de los dos puntos y "transition-duration : 0.3s;" con espacio extra
+antes de los dos puntos) juntos distinguen las 9 variantes: sin el grupo
+`(-[\w-]+)?` intacto (obligatorio en vez de opcional, cuantificador o clase
+de caracteres alterados), la linea sintetica "transition-duration: 0.3s;"
+(o su variante con espacio) deja de matchear el patron por completo -- el
+codigo real SI la reconoce como declaracion de movimiento (1 incumplimiento
+esperado), asi que cualquier mutacion que rompa el grupo opcional o su
+contenido hace que el test, que espera 1 incumplimiento con ruta y linea
+exactas, falle y mate al mutante. El segundo test (con el espacio extra
+antes de los dos puntos) ademas confirma que el `\s*` final sigue aceptando
+cero o mas espacios tal y como antes.
+
+### Equivalentes de Ronda 1 -- re-verificados, no re-analizados desde cero
+
+Los 2 supervivientes de esta corrida coinciden EXACTAMENTE (mutatorName,
+location y replacement, verificado contra `mutation.json`, no solo contra
+el resumen de terminal) con los 2 equivalentes ya documentados y aceptados en
+Ronda 1 y re-verificados en la re-medicion de Ronda 2:
+
+- movimientoRespetuoso.ts:30:10-30:16, mutatorName StringLiteral,
+  replacement una cadena vacia -- el codigo real dice devolver el literal
+  "otro" y el mutante devuelve cadena vacia. Mismo argumento de siempre: el
+  tercer miembro de TipoDeBloque (el literal "otro") nunca se compara con un
+  literal concreto en ningun punto del modulo -- solo participa en
+  pila.includes de "no-preference" y de "reduce", y cualquier valor de
+  relleno distinto de esos dos literales es intercambiable. El refuerzo de
+  la linea 21 no toca esta linea ni la logica de tipoDeAperturaEnLinea, asi
+  que el argumento de equivalencia sigue aplicando sin cambios.
+- movimientoRespetuoso.ts:39:32-39:34, mutatorName ArrayDeclaration,
+  replacement un array con el elemento de relleno "Stryker was here" en vez
+  del array vacio original. Mismo argumento: el elemento de relleno nunca es
+  igual a "no-preference" ni a "reduce", y para cualquier contenido bien
+  formado (incluidos los 9 tests actuales, con formas largas incluidas)
+  nunca llega a afectar un pila.includes posterior. El refuerzo de la linea
+  21 tampoco toca la inicializacion de la pila ni su logica de
+  apilado/desapilado.
+
+No se repite el analisis empirico/algebraico completo de Ronda 1 para estos
+2 -- solo se re-verifica la coincidencia exacta de identificador
+(mutatorName, location y replacement) contra el codigo actual, tal y como
+pide el encargo.
+
+### Cualquier superviviente nuevo o distinto -- no hay ninguno
+
+Se reviso explicitamente el listado completo de `mutation.json` (no solo el
+resumen de terminal) buscando cualquier mutante con status distinto de
+Killed que NO fuera uno de los 2 anteriores: no aparece ninguno. En
+particular, no sobrevive ningun mutante sobre el nuevo grupo opcional
+`(-[\w-]+)?` ni sobre su clase de caracteres `[\w-]+` (ver el desglose de
+los 9 mutantes de la linea 21 arriba, todos Killed) -- el riesgo que
+anticipaba el encargo (que el grupo entero pudiera volverse opcional-
+siempre-vacio, o que `[\w-]+` pudiera mutarse) no se materializo: los 2
+tests del refuerzo (con y sin espacio antes de los dos puntos, ambos usando
+"transition-duration", que exige que el grupo consuma "-duration" para que
+el patron matchee en absoluto) cubren de forma cruzada tanto la
+obligatoriedad como el contenido del grupo.
+
+### Resumen y siguiente paso
+
+PASS. movimientoRespetuoso.ts: 72/74 = 97.30% bruto, 72/72 = 100.00% sobre
+mutantes no equivalentes (umbral: 100%). Los 2 sobrevivientes son los
+mismos 2 equivalentes genuinos ya documentados y re-verificados desde
+Ronda 1, sin ningun mutante nuevo o distinto. No se ha tocado src/ ni
+ningun test durante esta medicion.
+
+Con este resultado, los 6 modulos puros de sistema_de_diseno_visual (id
+21) bajo src/lib/diseno/ quedan al 100% sobre no-equivalentes:
+escalaEspaciado.ts (1/1), escalaTipografica.ts (13/13), puntoDeCorte.ts
+(9/9) y movimientoRespetuoso.ts (72/72) medidos hoy en esta ronda y la
+anterior; tokensColor.ts e inventarioModulos.ts ya PASS 100% sobre
+no-equivalentes, medidos por el mutation_tester de identidad_visual (id
+22, done) sobre su version actual (ver progress/mutation_identidad_visual.md).
+La puerta de mutacion de sistema_de_diseno_visual (id 21) queda satisfecha
+para estos 6 ficheros; cualquier bloqueo restante de la feature (si lo hay)
+corresponde a otro alcance fuera de src/lib/diseno/.

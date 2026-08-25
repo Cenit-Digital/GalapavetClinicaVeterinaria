@@ -18,7 +18,7 @@ type TipoDeBloque = 'no-preference' | 'reduce' | 'otro'
 
 const PATRON_NO_PREFERENCE = /@media[^{]*prefers-reduced-motion:\s*no-preference/
 const PATRON_REDUCE = /@media[^{]*prefers-reduced-motion:\s*reduce\b/
-const PATRON_PROPIEDAD_DE_MOVIMIENTO = /^\s*(animation|transition)\s*:/
+const PATRON_PROPIEDAD_DE_MOVIMIENTO = /^\s*(animation|transition)(-[\w-]+)?\s*:/
 
 function tipoDeAperturaEnLinea(linea: string): TipoDeBloque {
   if (PATRON_NO_PREFERENCE.test(linea)) {

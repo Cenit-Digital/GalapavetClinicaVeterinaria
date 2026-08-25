@@ -4,6 +4,51 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **25/08/2026 — `sistema_de_diseno_visual` (id 21): DONE.** Desbloqueada por
+  `identidad_visual` (22, cerrada antes en esta misma sesión, ver entrada
+  siguiente). Arrastraba desde el 23/08/2026 dos deudas: `mutation_tester`
+  nunca remidió tras el refuerzo de Ronda 2 (13 tests, `judge` ya APROBADO),
+  y 8 escenarios de navegador real esperaban a que `identidad_visual`
+  existiera. `judge` hizo una revisión de cierre completa (no por herencia):
+  confirmó los 26 escenarios jsdom en verde tras los cambios de
+  `identidad_visual` sobre `tokensColor.ts`/`inventarioModulos.ts`, comparó
+  cada uno de los 8 `Then` de navegador real contra el test Playwright
+  heredado real (no solo la cita de `escenariosHeredados.ts`), y dio el
+  alcance exacto de mutación pendiente: `movimientoRespetuoso.ts`,
+  `puntoDeCorte.ts`, `escalaTipografica.ts` (+ `escalaEspaciado.ts`,
+  higiene) — `tokensColor.ts`/`inventarioModulos.ts` ya cerrados al 100%
+  por `identidad_visual`, no hacía falta remedirlos. Encontró 2 hallazgos
+  reales: **`@s27`** con una cláusula del `Then` (desbordamiento/
+  superposición de cabecera a 1024/1023px) sin ningún test, y **`@s34`**
+  con el literal del contrato desactualizado (exigía duración "distinta de
+  0", pero `identidad_visual` fija `0.01ms` a propósito, con razón técnica
+  documentada). Dos agentes en paralelo sobre ficheros independientes:
+  `tdd_craftsman` añadió el test de `@s27` (verificado con sabotaje real
+  sobre `Cabecera.module.scss` — **sin ningún problema real de producción**,
+  la cabecera ya estaba correcta) mientras `mutation_tester` remedía los 4
+  módulos (PASS en 3, **FAIL real en `movimientoRespetuoso.ts`**:
+  `PATRON_PROPIEDAD_DE_MOVIMIENTO` no reconocía formas largas de CSS como
+  `transition-duration:` — un hueco genuino de la propia puerta `@s33`, no
+  solo de cobertura de mutación). Decisión de diseño mía: extender el
+  reconocimiento a formas largas hifenadas (precedente en
+  `escalaMovimiento.ts` de `identidad_visual`). `tdd_craftsman` lo
+  implementó (1 línea + 2 tests, sabotaje verificado); `judge` APROBADO con
+  sabotaje propio reproducido a mano; `mutation_tester` remidió **PASS
+  100% (72/72)**. Reconcilié yo mismo el texto de `@s34` en
+  `features/sistema_de_diseno_visual.feature`. Revisión de cierre GLOBAL
+  final del `judge`: **APROBADO** — los 6 módulos puros de esta feature al
+  100% sobre no-equivalentes, 34/34 escenarios con cobertura real.
+  `bin/harness init` verde de punta a punta (**916/916**), repetido por mí
+  de forma independiente antes de marcar `done`.
+  **`accesibilidad` (id 19) queda `blocked` sin cerrar en esta sesión**: su
+  puerta de mutación ya estaba al 100% desde antes (sin cambios desde
+  entonces, confirmado por `git log`), y sus 4 escenarios de navegador real
+  pendientes son un subconjunto de lo que `identidad_visual` ya automatiza
+  — pero no se le ha hecho la misma revisión rigurosa escenario-a-escenario
+  que a la 21 (el `judge` de la 21 explícitamente no emitió veredicto sobre
+  la 19). Candidata natural para la próxima ronda de esta sesión o de la
+  siguiente.
+
 - **25/08/2026 — `identidad_visual` (id 22): DONE.** Cierra el plan maestro de
   12 pasos de `progress/plan_adaptacion_scss.md` §5, 51/51 escenarios de
   `features/identidad_visual.feature`. Estado al reanudar esta sesión: Ronda A

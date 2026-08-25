@@ -443,3 +443,257 @@ resultado real es siempre `minPx`; el mutante `(maxPx - minPx)` →
   por `harness.config.json` (`mutation.threshold: 1.0`), incluyendo la
   revisión de la reclasificación de `87:51` de `tokensColor.ts` como
   equivalente.
+
+## Refuerzo @s27 -- desbordamiento/superposición de cabecera (25/08/2026)
+
+Encargo puntual del `craftsman_lead`, derivado de un hallazgo del `judge` en
+su revisión de cierre (`progress/judge_sistema_de_diseno_visual.md`, sección
+"@s27 -- punto de corte de la cabecera real"): el `Then` de `@s27` tiene tres
+cláusulas —
+
+1. a 1024px la fila de navegación horizontal está presente y ocupa un ancho
+   mayor que 0;
+2. a 1023px esa fila no está presente y el botón de menú sí;
+3. **ningún elemento de la cabecera se desborda ni se superpone con otro en
+   ninguno de los dos anchos.**
+
+El test heredado (`tests/e2e/accesibilidad.spec.ts`, describe "El punto de
+corte de la navegación (1024/1023)...") solo automatizaba 1 y 2. La cláusula
+3 no la verificaba ningún test del repo (confirmado por el `judge` con grep
+de "solap|overlap|desborda|superpone" en `tests/e2e/`: el único resultado,
+`@s44` de `layout.spec.ts`, es desbordamiento HORIZONTAL DE LA RUTA a 320px,
+otro viewport y otro propósito).
+
+### Qué se añadió
+
+Un segundo test dentro del MISMO `test.describe` ya dedicado a `@s27` (no un
+describe nuevo, para no fragmentar la trazabilidad de un escenario que ya
+tenía su sitio): `'ningún elemento de la cabecera se desborda ni se superpone
+con otro, ni a 1024px ni a 1023px'`.
+
+Para cada uno de los dos anchos (1024 y 1023px, mismo patrón de
+`setViewportSize` que el test hermano):
+
+- mide el `boundingBox()` de la propia cabecera (`header`);
+- recoge los hijos DIRECTOS y visibles de la cabecera con
+  `cabecera.locator('> *:visible')` (a 1024px: el bloque de marca + `nav`; a
+  1023px: el bloque de marca + el botón de menú — el panel móvil no cuenta
+  porque solo se monta si `abierto` es `true`, que no lo es aquí);
+- comprueba que cada hijo está `estaContenidoEn` el rectángulo de la
+  cabecera (con `TOLERANCIA_SUBPIXEL_PX = 0.5` para el redondeo de subpíxel
+  real de Chromium, nombrada, no un número mágico suelto);
+- comprueba con `seSuperponen` (intersección de rectángulos AABB estándar)
+  que ningún par de hijos se solapa entre sí.
+
+Tres funciones nuevas a nivel de módulo (`estaContenidoEn`, `seSuperponen`,
+`hijosVisiblesDe`) siguiendo el mismo estilo que ya usa el fichero
+(`objetivosVisibles`, `puntoAdyacenteA`): tipos inline `{x, y, width,
+height}`, sin reimplementar `boundingBox()`.
+
+### Verificación con sabotaje real (no solo "el test pasó a la primera")
+
+El código de producción de `Cabecera.module.scss` no tenía ningún bug
+conocido, así que el test pasaba en verde de entrada — eso por sí solo NO
+demuestra que el test detecte nada. Verificado con sabotaje manual real,
+revertido cada vez antes de continuar (`git diff -- src/components/
+Cabecera.module.scss` limpio al final, confirmado):
+
+1. **Desbordamiento por ancho fijo.** `.navPrincipal { width: 2000px;
+   flex-shrink: 0; }` (imita el ejemplo del encargo). Rebuild real
+   (`pnpm exec playwright test ...` fuerza `pnpm run build && vite preview`
+   porque no había servidor de preview escuchando en el puerto 4173 —
+   confirmado con `netstat` antes de cada ronda). Resultado: **ROJO** —
+   `Error: a 1024px: "nav._navPrincipal_2hyt9_43" se desborda de la
+   cabecera`. Revertido; reejecutado: **VERDE**.
+2. **Desbordamiento por desplazamiento absoluto.** `.navPrincipal {
+   position: relative; inset-inline-start: -500px; }`. Resultado: **ROJO** —
+   mismo mensaje de desbordamiento (el desplazamiento saca el `nav` por la
+   izquierda de la cabecera antes de llegar a solapar con el bloque de
+   marca). Revertido; reejecutado: **VERDE**.
+
+Un tercer intento con `margin-inline-start` negativo (-40px, -150px, -500px)
+para forzar el solape SIN desbordamiento no llegó a disparar la rama de
+`seSuperponen` de forma aislada: con `justify-content: space-between` el
+motor de flexbox redistribuye el espacio libre según el tamaño exterior de
+cada ítem (que ya incluye el margen negativo), así que el desplazamiento
+visual neto queda parcialmente compensado — comportamiento real de flexbox,
+no un fallo del test. Decisión: no perseguir un tercer sabotaje aislado para
+la rama de solape puro. Los dos sabotajes de desbordamiento ya prueban que
+`estaContenidoEn` detecta un fallo real de layout con el mensaje correcto, y
+`seSuperponen` se ejecuta con coordenadas reales (no simuladas) en cada
+ejecución del test contra la cabecera real (siempre hay al menos 2 hijos
+visibles que comparar, en los dos anchos), quedando expuesta a
+`mutation_tester` igual que el resto del fichero.
+
+### Hallazgo real: ninguno
+
+La cabecera de producción (sin sabotaje) NO se desborda ni se superpone a
+1024px ni a 1023px. El hueco era exclusivamente de verificación (la
+cláusula 3 de `@s27` no tenía test), no un defecto de `Cabecera.module.scss`.
+
+### Trazabilidad @s27 (actualizada)
+
+| @s | test | notas |
+| --- | --- | --- |
+| @s27 (cláusulas 1-2) | `tests/e2e/accesibilidad.spec.ts` → describe "El punto de corte de la navegación (1024/1023)..." → `'a 1024px la navegación horizontal es visible; a 1023px, el botón de menú'` | sin cambios, test heredado de `identidad_visual` |
+| @s27 (cláusula 3, desbordamiento/superposición) | mismo describe → `'ningún elemento de la cabecera se desborda ni se superpone con otro, ni a 1024px ni a 1023px'` | **nuevo**, este refuerzo |
+
+### Verificación final de este refuerzo
+
+- `pnpm run test`: 914/914 (dos ejecuciones; una intermedia mostró 5 fallos
+  en `src/accesibilidad-teclado.test.tsx`, ficheros no tocados por este
+  refuerzo ni por ningún cambio de esta sesión — confirmado con `git diff
+  --stat` sobre ese fichero, sin diferencias frente a HEAD, y confirmado
+  también que en aislamiento (`vitest run
+  src/accesibilidad-teclado.test.tsx`) pasa 5/5 siempre. Es una
+  contaminación de orden/temporización preexistente, ajena a este refuerzo
+  puntual — no tocada, fuera de alcance de este encargo). La repetición
+  inmediata y la ejecución dentro de `bin/harness init` dieron 914/914
+  limpio.
+- `pnpm exec playwright test tests/e2e/accesibilidad.spec.ts`: **14/14**
+  verde, incluidos los dos tests de `@s27`.
+- `pnpm run lint` (`oxlint --deny-warnings`): sin salida, sin errores.
+- `pnpm run typecheck` (`tsc -b`, incluye `tsconfig.e2e.json` →
+  `tests/e2e/**`): sin errores.
+- `bash bin/harness init`: **verde de punta a punta** (lint, typecheck,
+  914/914 tests).
+- `git diff --stat -- tests/e2e src/components`: solo
+  `tests/e2e/accesibilidad.spec.ts` (+76 líneas). `Cabecera.module.scss`
+  vuelve a coincidir exactamente con `HEAD` — el sabotaje no dejó rastro.
+
+Ningún otro escenario ni fichero de `sistema_de_diseno_visual.feature` ni de
+`accesibilidad.spec.ts` se tocó en este refuerzo.
+
+## Refuerzo final -- formas largas de transition/animation (25/08/2026)
+
+Encargo puntual del `craftsman_lead` para cerrar el último mutante
+sobreviviente real de la Ronda 2 de `mutation_tester`
+(`progress/mutation_sistema_de_diseno_visual.md`, sección "Re-medicion tras
+Ronda 2 (25/08/2026)"): `movimientoRespetuoso.ts:21:40`, el patrón
+`PATRON_PROPIEDAD_DE_MOVIMIENTO` no reconocía las formas largas hifenadas de
+CSS (`transition-duration:`, `animation-name:`, etc.), solo las formas
+cortas (`transition:`, `animation:`). Decisión de diseño ya tomada por el
+`craftsman_lead` (no reabierta aquí): esto es un hueco real de la propia
+puerta de `@s33`, no solo de cobertura de mutación, y el patrón debe
+ampliarse.
+
+### Ciclo 1 -- Rojo/Verde: reconocer formas largas hifenadas
+
+**Rojo.** Test nuevo en `movimientoRespetuoso.test.ts` ("una propiedad larga
+real ('transition-duration') fuera de cualquier bloque
+prefers-reduced-motion también se señala como incumplimiento"): fichero
+sintético `.boton { transition-duration: 0.3s; }` sin ningún bloque
+`prefers-reduced-motion`, esperando `ficherosComprobados: 1`,
+`incumplimientos: [{ ruta: ..., linea: 2 }]` y `pasa: false`. Confirmado en
+rojo contra el código anterior: `informe.ficherosComprobados` daba `0`
+(la línea ni se reconocía como declaración de movimiento) — reproduce
+exactamente el hallazgo del `mutation_tester`.
+
+**Verde.** `PATRON_PROPIEDAD_DE_MOVIMIENTO` pasa de
+
+```
+/^\s*(animation|transition)\s*:/
+```
+
+a
+
+```
+/^\s*(animation|transition)(-[\w-]+)?\s*:/
+```
+
+Un grupo opcional `(-[\w-]+)?` tras `animation`/`transition` que consume
+cualquier sufijo hifenado (`-duration`, `-property`, `-timing-function`,
+`-delay`, `-name`, `-iteration-count`, `-fill-mode`, `-play-state`,
+`-direction`, etc.), manteniendo intactos el ancla `^` y el resto del
+patrón. Verificado con `node -e` sobre una batería de formas largas reales
+(`transition-duration:`, `animation-name:`) y cortas (`transition:`,
+`animation:`): todas siguen matcheando igual que antes para las cortas, y
+ahora también las largas. Suite completa del fichero: 8/8 verde.
+
+### Ciclo 2 -- Rojo/Verde: espacio antes de los dos puntos (hallazgo propio durante el sabotaje)
+
+Al aplicar el sabotaje manual exacto documentado por `mutation_tester`
+(`\s*` → `\S*` justo antes de los dos puntos, ancla `^` intacta) sobre la
+regex ya corregida, descubrí que **ningún test del fichero (los 8
+existentes, incluido el nuevo del Ciclo 1) distinguía este mutante**: con mi
+regex, el sufijo hifenado ya lo consume el grupo `(-[\w-]+)?`, así que en el
+caso `transition-duration: 0.3s;` (sin espacio antes de los dos puntos) no
+queda ningún carácter que `\s*`/`\S*` deba diferenciar — ambas variantes
+matchean igual. Verificado con un script `node -e` independiente comparando
+la regex original y la mutada sobre 6 casos: la única entrada que SÍ
+distingue ambas es cuando hay un **espacio antes de los dos puntos**
+(`transition-duration : 0.3s;`, `transition : color;`,
+`animation-name : girar;` → original matchea, mutante no, porque ni el
+grupo `(-[\w-]+)?` ni `\S*` pueden consumir un carácter de espacio).
+
+**Rojo.** Test nuevo ("una propiedad larga real con un espacio antes de los
+dos puntos también se señala como incumplimiento"): fichero sintético
+`.boton { transition-duration : 0.3s; }` (espacio antes de los dos puntos),
+esperando el incumplimiento señalado igual que sin espacio. Este test SÍ
+pasa contra el código real (no rompe Ley 2 de forma retorcida: es un test
+de robustez de formato, mismo patrón que los ya existentes de Ronda 2 —
+"sin espacio"/"dos espacios" tras los dos puntos de `prefers-reduced-motion`
+—, escrito específicamente para cerrar el hueco de mutación recién
+encontrado en el sabotaje manual, no para forzar un cambio de producción).
+
+**Confirmación cruzada:** con el sabotaje `\S*` reaplicado, corrí la suite
+completa (9 tests): **solo este test nuevo falla** (los otros 8, incluido el
+del Ciclo 1, siguen en verde) — el mutante queda limpiamente distinguido.
+Revertido el sabotaje: 9/9 verde de nuevo.
+
+### Sabotaje manual -- resultado final
+
+- Mutante aplicado: `/^\s*(animation|transition)(-[\w-]+)?\S*:/` (la
+  versión adaptada del mutante documentado, sobre la regex final con el
+  grupo hifenado ya incorporado).
+- Sin el test del Ciclo 2: el mutante sobrevive a los 8 tests entonces
+  existentes (documentado arriba, no es un mutante equivalente — hay
+  diferencia de comportamiento real y observable con CSS válido de verdad,
+  espacio antes de los dos puntos).
+- Con el test del Ciclo 2 añadido: el mutante muere (1/9 tests falla bajo
+  el mutante, exactamente el nuevo).
+- Revertido el sabotaje: 9/9 verde.
+
+### Mapa @s → test (este refuerzo)
+
+`@s33` — cubierto ahora por 9 tests en `movimientoRespetuoso.test.ts`
+(los 7 preexistentes de Ronda 2 más los 2 de este refuerzo):
+
+1. Los 17 ficheros reales del inventario (preexistente).
+2. Transición corta sin cobertura → incumplimiento (preexistente).
+3. Bloque `reduce` con dos declaraciones, una posterior sin cubrir
+   (preexistente).
+4. Fichero sin ninguna declaración de movimiento, evaluado en solitario
+   (preexistente).
+5. `transition:` en medio de una línea sin ser declaración real
+   (preexistente).
+6. **Nuevo (Ciclo 1)** — propiedad larga real (`transition-duration:`) sin
+   cobertura → incumplimiento.
+7. **Nuevo (Ciclo 2)** — propiedad larga real con espacio antes de los dos
+   puntos (`transition-duration :`) sin cobertura → incumplimiento.
+8. Bloque `no-preference` sin espacio tras los dos puntos (preexistente).
+9. Bloque `reduce` con dos espacios tras los dos puntos (preexistente).
+
+### Verificación final de este refuerzo
+
+- Único fichero de producción tocado: `src/lib/diseno/movimientoRespetuoso.ts`
+  (una línea, la regex). Único test tocado:
+  `src/lib/diseno/movimientoRespetuoso.test.ts` (2 tests nuevos). Ningún
+  otro fichero de `src/lib/diseno/`, ningún `.module.scss`, ni este
+  `progress/tdd_identidad_visual.md` (no tocado, tal y como exigía el
+  encargo).
+- `git status --porcelain -- src/lib/diseno/`: solo los 2 ficheros de
+  `movimientoRespetuoso`.
+- `pnpm run test`: **916/916** verde (914 previos + 2 nuevos de este
+  refuerzo).
+- `pnpm run lint` (`oxlint --deny-warnings`): sin salida, sin errores.
+- `pnpm run typecheck` (`tsc -b`): sin errores.
+- `bash bin/harness init`: **verde de punta a punta** (lint, typecheck,
+  916/916 tests).
+
+Pendiente: nueva ronda de `judge` sobre este refuerzo puntual y nueva
+re-medición de `mutation_tester` acotada a
+`src/lib/diseno/movimientoRespetuoso.ts` para confirmar 100% sobre
+mutantes no equivalentes (los 2 ya aceptados como equivalentes en Ronda 1/2
+— `30:10` y `39:32` — no deberían cambiar, al no haberse tocado esas
+líneas).

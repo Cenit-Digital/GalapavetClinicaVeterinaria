@@ -521,5 +521,5 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
     And esta verificación se ejecuta con navegador real, según la Decisión 11 de project-spec.md, porque exige interrogar el motor de animaciones CSS con las hojas de estilo aplicadas
     When se carga la portada y se interactúa con cualquier control que en condiciones normales anima (por ejemplo, expandir una tarjeta del acordeón)
     Then ningún elemento tiene una animación en curso
-    And ninguna transición se ejecuta con una duración distinta de 0
+    And ninguna transición se ejecuta con una duración perceptible: el techo real es "0.01ms" (no "0" literal), a propósito, para que sigan disparándose los eventos "transitionend"/"animationend" que algo pueda estar esperando (ver src/styles/global.scss)
     And esto cierra @s19 de accesibilidad.feature (feature 19)
