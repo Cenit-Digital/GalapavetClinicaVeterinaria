@@ -33,6 +33,7 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
       aria-label="Campañas de prevención"
       aria-describedby="campanas-aviso-demostracion"
       className={styles.campanasPortada}
+      data-contenedor-principal
     >
       <h2>Campañas de prevención</h2>
       <p id="campanas-aviso-demostracion">
@@ -44,7 +45,9 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
         {modelo.map((campana) => (
           <li key={campana.titulo}>
             <a href="/campanas">
-              {campana.imagen !== undefined && <img src={campana.imagen} alt="" />}
+              {campana.imagen !== undefined && (
+                <img src={campana.imagen} alt="" width={800} height={450} loading="lazy" decoding="async" />
+              )}
               <span>Demostración</span>
               <h3>{campana.titulo}</h3>
             </a>

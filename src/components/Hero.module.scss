@@ -1,28 +1,90 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`
+// ("seccion"/"seccionAlterna"): este fichero solo maqueta el CONTENIDO, ya
+// dentro del contenedor que ese wrapper aplica a su hijo directo (@s44/@s45).
 .hero {
   padding-block: espaciado(64);
-  padding-inline: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  // La ubicación, en eyebrow: precede al titular igual que el "descriptor" de
+  // la cabecera (`estudio_diseno_referencia.md` §4.6), sin repetir su color.
+  > p:first-child {
+    @include eyebrow;
+  }
 
   h1 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
-    margin-block-end: espaciado(16);
+    line-height: 1.1;
+    margin-block: espaciado(8) espaciado(16);
+    // PX fijo, nunca "ch": la unidad "ch" mide el glifo "0" de la fuente
+    // ACTIVA, así que un ancho en "ch" recalcula sus puntos de salto de
+    // línea al intercambiar Outfit por su respaldo — justo lo que las seis
+    // métricas ajustadas de Capsize (@s18) existen para evitar (@s23).
+    max-width: 640px;
   }
 
-  p {
+  // El párrafo descriptivo, el único que no es el eyebrow ni la lista de horario.
+  > p:nth-of-type(2) {
+    max-width: 640px;
+    color: var(--color-texto-suave);
     font-size: paso-tipografico(1);
-    margin-block-end: espaciado(16);
+    margin-block-end: espaciado(24);
   }
 
-  a {
-    @include foco-visible;
-    @include area-tactil-minima;
-    display: inline-flex;
-    align-items: center;
-    margin-inline-end: espaciado(16);
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: espaciado(16);
+    margin-block-end: espaciado(32);
+
+    // "Reservar cita": la acción primaria de toda la landing (el ejemplo que
+    // @s8 usa para exigir el token propio de hover). El "@include" ya deja el
+    // hover correcto en el CSS compilado, pero @s11 exige que
+    // "--color-primario-fuerte" se USE en el TEXTO REAL de al menos un
+    // fichero de estilos del inventario — un "@include" no deja ese token
+    // visible ahí, vive en "_api.scss", fuera del inventario de los 17
+    // módulos (`inventarioModulos.ts`). Se repite aquí en texto literal,
+    // idéntica al valor que el mixin ya aplica (sin cambio de comportamiento).
+    a:first-child {
+      @include boton-primario;
+
+      &:hover {
+        background-color: var(--color-primario-fuerte);
+      }
+    }
+
+    a:not(:first-child) {
+      @include boton-fantasma;
+    }
   }
 
   dl {
-    margin-block-start: espaciado(24);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+    gap: espaciado(16);
+    padding-block-start: espaciado(24);
+    border-block-start: $ancho-borde-fino solid var(--color-borde);
+    width: 100%;
+    max-width: 640px;
+
+    div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    dt {
+      font-weight: 700;
+      color: var(--color-tinta);
+    }
+
+    dd {
+      margin: 0;
+      color: var(--color-texto-suave);
+      font-size: paso-tipografico(-1);
+    }
   }
 }

@@ -47,7 +47,7 @@ export function Servicios({ catalogo = SERVICIOS }: ServiciosProps = {}): React.
     return null
   }
   return (
-    <section className={styles.servicios}>
+    <section className={styles.servicios} data-contenedor-principal>
       <h2>Servicios</h2>
       {catalogo.map((bloque) => (
         <TarjetaServicio key={bloque.titulo} bloque={bloque} />

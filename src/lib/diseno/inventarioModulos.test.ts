@@ -1,6 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { ejecutarPuertaDeLiteralesColor } from '../puertaLiteralesColor'
-import { INVENTARIO_MODULOS_CON_ESTILOS, comprobarCoLocalizacion } from './inventarioModulos'
+import {
+  INVENTARIO_MODULOS_CON_ESTILOS,
+  MODULOS_SIN_REPRESENTACION_VISUAL,
+  comprobarCoLocalizacion,
+  comprobarInventarioCompleto,
+} from './inventarioModulos'
+
+function nombreDeArchivo(ruta: string): string {
+  return (ruta.split('/').pop() ?? ruta).replace(/\.tsx?$/, '')
+}
+
+function nombresRealesConRepresentacionVisual(): readonly string[] {
+  const componentes = Object.keys(
+    import.meta.glob(['../../components/*.tsx', '!../../components/*.test.tsx']),
+  ).map(nombreDeArchivo)
+  const paginas = Object.keys(import.meta.glob(['../../pages/*.tsx', '!../../pages/*.test.tsx'])).map(
+    nombreDeArchivo,
+  )
+
+  return [...componentes, ...paginas].filter((nombre) => !MODULOS_SIN_REPRESENTACION_VISUAL.includes(nombre))
+}
 
 describe('@s21 el inventario de módulos con maquetación propia coincide con la lista escrita a mano de 17 nombres', () => {
   it('12 componentes + 5 páginas, sin MetadatosPagina', () => {
@@ -77,6 +97,33 @@ describe('@s22 cada nombre del inventario tiene su propio fichero de estilos co-
     expect(informe.modulosComprobados).toBe(17)
     expect(informe.pasa).toBe(true)
     expect(informe.faltantes).toHaveLength(0)
+  })
+})
+
+describe('identidad_visual @s51 un componente compartido nuevo entra en el inventario de módulos o la puerta falla', () => {
+  it('el inventario contiene todos los componentes visuales reales, y el recuento coincide', () => {
+    const nombresReales = nombresRealesConRepresentacionVisual()
+
+    const informe = comprobarInventarioCompleto(INVENTARIO_MODULOS_CON_ESTILOS, nombresReales)
+
+    expect(informe.pasa).toBe(true)
+    expect(informe.ausentesDelInventario).toEqual([])
+    expect(informe.modulosEnInventario).toBe(informe.componentesVisualesReales)
+    expect(informe.modulosEnInventario).toBe(17)
+  })
+
+  it('"MetadatosPagina" sigue fuera del inventario, por no tener representación visual propia', () => {
+    expect(nombresRealesConRepresentacionVisual()).not.toContain('MetadatosPagina')
+    expect(INVENTARIO_MODULOS_CON_ESTILOS.map((m) => m.nombre)).not.toContain('MetadatosPagina')
+  })
+
+  it('un componente visual presente en el árbol y ausente del inventario hace fallar la comprobación', () => {
+    const nombresRealesConUnoInventado = [...nombresRealesConRepresentacionVisual(), 'ComponenteNuevoSinAlta']
+
+    const informe = comprobarInventarioCompleto(INVENTARIO_MODULOS_CON_ESTILOS, nombresRealesConUnoInventado)
+
+    expect(informe.pasa).toBe(false)
+    expect(informe.ausentesDelInventario).toEqual(['ComponenteNuevoSinAlta'])
   })
 })
 

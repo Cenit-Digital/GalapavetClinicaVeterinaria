@@ -38,7 +38,7 @@ export function Equipo({ listado = EQUIPO }: EquipoProps = {}): React.JSX.Elemen
     return null
   }
   return (
-    <section aria-label="Equipo" className={styles.equipo}>
+    <section aria-label="Equipo" className={styles.equipo} data-contenedor-principal>
       <h2>Equipo</h2>
       {validos.map((profesional) => (
         <TarjetaProfesional key={profesional.nombre} profesional={profesional} />

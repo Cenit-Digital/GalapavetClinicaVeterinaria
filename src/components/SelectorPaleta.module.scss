@@ -4,26 +4,47 @@
   inset-inline-end: espaciado(16);
   z-index: 20;
 
-  button {
+  > button {
     @include foco-visible;
-    @include area-tactil-minima;
+    @include boton-primario;
+    min-height: $altura-control-media;
   }
 }
 
 .panel {
+  @include tarjeta;
+  position: absolute;
+  inset-block-end: calc(100% + #{espaciado(8)});
+  inset-inline-end: 0;
   display: flex;
   flex-direction: column;
-  gap: espaciado(8);
+  gap: espaciado(4);
   padding: espaciado(12);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
-  border: 1px solid var(--color-texto);
-  border-radius: espaciado(8);
+  min-width: 220px;
+
+  &:hover {
+    box-shadow: var(--sombra-reposo);
+  }
 
   button {
+    @include foco-visible;
+    @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
-    gap: espaciado(4);
+    gap: espaciado(8);
+    padding-inline: espaciado(12);
+    border: none;
+    border-radius: $radio-medio;
+    background: none;
+    color: inherit;
+    font-size: paso-tipografico(-1);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background-color: var(--color-acento-suave);
+      color: var(--color-acento-tinta);
+      font-weight: 700;
+    }
   }
 }
 
@@ -31,5 +52,5 @@
   display: inline-block;
   width: espaciado(12);
   height: espaciado(12);
-  border-radius: 50%;
+  border-radius: $radio-circulo;
 }

@@ -1,13 +1,34 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45).
 .reservaChat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: espaciado(32);
+  align-items: start;
   padding-block: espaciado(64);
-  padding-inline: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
 
-  a,
-  button {
+  a {
     @include foco-visible;
     @include area-tactil-minima;
+  }
+
+  > div:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: espaciado(12);
+
+    a {
+      @include boton-fantasma;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      color: var(--color-texto-suave);
+    }
   }
 
   fieldset {
@@ -16,18 +37,58 @@
     margin: 0;
   }
 
+  // El panel del chat: el patrón "tarjeta" (panel elevado, `estudio_diseno_referencia.md`
+  // §4.11), sin la sombra de hover de una tarjeta clicable (el panel no es un enlace).
+  > fieldset {
+    @include tarjeta;
+    padding: espaciado(24);
+    gap: espaciado(16);
+
+    &:hover {
+      box-shadow: var(--sombra-reposo);
+    }
+  }
+
   [role='log'] {
     display: flex;
     flex-direction: column;
     gap: espaciado(8);
     margin-block: espaciado(16);
+    max-height: 320px;
+    overflow-y: auto;
+
+    p {
+      margin: 0;
+      padding: espaciado(8) espaciado(12);
+      border-radius: $radio-medio;
+      background-color: var(--color-fondo-alterno);
+    }
   }
 
   input {
     @include foco-visible;
     @include area-tactil-minima;
-    padding: espaciado(8);
-    border: 1px solid var(--color-texto);
-    border-radius: espaciado(4);
+    display: block;
+    width: 100%;
+    margin-block-end: espaciado(8);
+    padding-inline: espaciado(12);
+    border: $ancho-borde-control solid var(--color-borde-control);
+    border-radius: $radio-medio;
+    background-color: var(--color-superficie-elevada);
+    color: inherit;
+  }
+
+  // Botón por defecto: la acción primaria de cada paso ("Enviar respuesta",
+  // "Pedir otra cita", "Empezar de nuevo").
+  button {
+    @include boton-primario;
+  }
+
+  // Las respuestas rápidas de un paso son alternativas entre sí, no UNA sola
+  // acción: píldora seleccionable, no botón primario repetido N veces.
+  [aria-label='Respuestas rápidas'] button {
+    @include pildora-filtro;
+    margin-inline-end: espaciado(8);
+    margin-block-end: espaciado(8);
   }
 }

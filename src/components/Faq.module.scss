@@ -1,10 +1,12 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45).
 .faq {
   padding-block: espaciado(64);
-  padding-inline: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
+  max-width: 860px;
 
   h2 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(4);
     margin-block-end: espaciado(24);
   }
@@ -12,26 +14,38 @@
   button {
     @include foco-visible;
     @include area-tactil-minima;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
     text-align: start;
-    padding-block: espaciado(12);
+    gap: espaciado(16);
+    padding-block: espaciado(16);
     font-size: paso-tipografico(1);
+    font-weight: 600;
     border: none;
-    border-block-end: 1px solid var(--color-texto);
+    border-block-end: $ancho-borde-fino solid var(--color-borde);
     background: none;
     color: inherit;
-
-    &:hover {
-      padding-inline-start: espaciado(8);
-    }
+    cursor: pointer;
 
     // Transición funcional mínima (hover del acordeón), nunca decorativa por
     // sí sola: la propiedad "transition" vive DENTRO de esta consulta, nunca
     // fuera (@s33 lee el texto real y lo comprueba literalmente).
     @media (prefers-reduced-motion: no-preference) {
-      transition: padding-inline-start 150ms ease;
+      transition: padding-inline-start 150ms ease-out;
     }
+
+    &:hover {
+      padding-inline-start: espaciado(8);
+    }
+  }
+
+  section {
+    max-width: 70ch;
+    padding-block: espaciado(16);
+    color: var(--color-texto-suave);
+    line-height: 1.7;
   }
 
   a {

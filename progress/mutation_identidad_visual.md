@@ -1238,3 +1238,362 @@ propia y verificacion del JSON resultante, no aceptado por herencia de ningun in
 antes de esta re-medicion). Corresponde al craftsman_lead decidir el siguiente paso del pipeline
 para identidad_visual -- esta re-medicion es una CONFIRMACION independiente de un resultado ya
 cerrado y aprobado, no un hallazgo nuevo.
+
+---
+
+## Ronda C
+
+**Alcance de esta medición** (confirmado por `craftsman_lead` con `git status --porcelain -- src/lib/diseno/` antes de lanzar esta ronda, y re-confirmado por mí leyendo cada fichero completo antes de mutar nada): los 5 módulos `.ts` puros nuevos o ampliados por la Ronda C de `tdd_craftsman` (`progress/tdd_identidad_visual.md`, sección "RONDA C"), ya aprobados por `judge` (`progress/judge_identidad_visual.md`, sección "## Ronda C", veredicto APPROVED):
+
+- `src/lib/diseno/rolesDescartados.ts` (nuevo, @s11)
+- `src/lib/diseno/escalaMovimiento.ts` (nuevo, @s16)
+- `src/lib/diseno/analisisAutomaticoAxe.ts` (nuevo, @s35)
+- `src/lib/diseno/escenariosHeredados.ts` (nuevo, @s50)
+- `src/lib/diseno/inventarioModulos.ts` (ampliado -- ya `done` de la feature 21; esta ronda añadió `MODULOS_SIN_REPRESENTACION_VISUAL` y `comprobarInventarioCompleto` para @s51; medido el fichero completo, Stryker no distingue líneas viejas de nuevas)
+
+`src/lib/diseno/puertaNavegadorReal.test.ts` (@s48) NO tiene módulo de producción propio: lee texto real de `package.json`/`harness.config.json`/`playwright.config.ts`, ya existentes, así que no hay nada que mutar ahí, tal y como ya advirtió `craftsman_lead` al encargar esta medición. Los `tests/e2e/*.spec.ts` quedan excluidos por el propio glob `mutate` de `stryker.config.json` (mismo patrón que cualquier `.test.ts`), y ningún otro fichero de `src/lib/diseno/` fue tocado por esta ronda (confirmado leyendo `progress/tdd_identidad_visual.md`, sección "Ficheros ampliados"/"No tocados").
+
+## Cómo se corrió (ficha de reproducción)
+
+Comprobado antes de arrancar, con PowerShell `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` (más preciso que `tasklist` a secas, que no muestra la línea de comandos): 12 procesos `node.exe` en la máquina en ese momento, ninguno de ellos con `stryker` en su línea de comandos -- todos son agentes ACP de IntelliJ (`codex-acp`), un `harness.mjs init` y un `tsc -b` de otra sesión concurrente. Regla dura de "nunca dos Strykers a la vez sobre este repo" respetada; no se lanzó ninguna corrida en paralelo durante toda esta ronda (cada uno de los 5 ficheros se midió en su propio proceso de fondo, esperando a que terminara el anterior antes de lanzar el siguiente).
+
+`pnpm exec vitest run` de los 5 ficheros de test en aislamiento, ANTES de mutar nada:
+
+    pnpm exec vitest run src/lib/diseno/rolesDescartados.test.ts src/lib/diseno/escalaMovimiento.test.ts src/lib/diseno/analisisAutomaticoAxe.test.ts src/lib/diseno/escenariosHeredados.test.ts src/lib/diseno/inventarioModulos.test.ts
+
+Resultado: 5 ficheros, 34 tests, verde (recuento base confirmado antes de cualquier mutación).
+
+Por cada fichero, en orden, esperando a que cada corrida terminara del todo antes de lanzar la siguiente:
+
+    pnpm exec stryker run --mutate src/lib/diseno/rolesDescartados.ts       --plugins "@stryker-mutator/vitest-runner"   # 6m 15s
+    pnpm exec stryker run --mutate src/lib/diseno/escalaMovimiento.ts      --plugins "@stryker-mutator/vitest-runner"   # 8m 14s
+    pnpm exec stryker run --mutate src/lib/diseno/analisisAutomaticoAxe.ts --plugins "@stryker-mutator/vitest-runner"   # 1m 21s
+    pnpm exec stryker run --mutate src/lib/diseno/escenariosHeredados.ts   --plugins "@stryker-mutator/vitest-runner"   # 2m 01s
+    pnpm exec stryker run --mutate src/lib/diseno/inventarioModulos.ts    --plugins "@stryker-mutator/vitest-runner"   # 2m 55s
+
+`--plugins "@stryker-mutator/vitest-runner"` explícito, mismo motivo ya documentado en todas las mediciones anteriores de esta feature (el glob por defecto no resuelve el plugin en esta máquina). En las 5 corridas la columna "# timeout" dio 0 -- la regla dura de "si `# timeout` no es 0, repetir a `--concurrency 1`" no se activó en ninguna; el score se toma directamente de estas 5 corridas únicas (`concurrency: 1` ya es el valor por defecto de `stryker.config.json`, "Creating 1 test runner process(es)" en los 5 logs).
+
+Tras cada corrida se leyó el `reports/mutation/mutation.json` resultante con un script Node propio (no solo el resumen de consola) para obtener `id`, `mutatorName`, `location`, `replacement` y `status` exactos de cada mutante no matado (`Survived` + `NoCoverage`), y para los mutantes cuya equivalencia no era evidente a primera vista se escribió un script Node desechable que reproduce la función real y compara la salida original vs. mutada contra los fixtures reales de cada test (scratchpad de sesión, nunca comprometido al repositorio).
+
+## Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | equivalentes | reales | score bruto | score s/no-equiv. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `rolesDescartados.ts` | 42 | 27 | 0 | 8 | 7 | 8 | 7 | 64.29% | 79.41% (27/34) |
+| `escalaMovimiento.ts` | 65 | 55 | 0 | 10 | 0 | 0 | 10 | 84.62% | 84.62% (55/65) |
+| `analisisAutomaticoAxe.ts` | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 100.00% | 100.00% (11/11) |
+| `escenariosHeredados.ts` | 38 | 32 | 0 | 6 | 0 | 2 | 4 | 84.21% | 88.89% (32/36) |
+| `inventarioModulos.ts` | 58 | 58 | 0 | 0 | 0 | 0 | 0 | 100.00% | 100.00% (58/58) |
+| Total | 214 | 183 | 0 | 24 | 7 | 10 | 21 | 85.51% | 89.71% (183/204) |
+
+Cifras extraídas del `mutation.json` de cada corrida (copiados al scratchpad de sesión antes de que la siguiente corrida los sobrescribiera), no solo del resumen de consola.
+
+---
+
+## analisisAutomaticoAxe.ts -- 100.00% (11/11), sin supervivientes
+
+Los 11 mutantes (constantes `ETIQUETAS_AXE_ACUMULATIVAS`/`ETIQUETA_QUE_ACTIVA_AREA_TACTIL`, el objeto de `configuracionDeAnalisisAxeDeclarada` y el `.includes(...)` de `etiquetasIncluyenLaQueActivaAreaTactil`) mueren todos contra los 6 tests reales del fichero (literal a mano de las 5 etiquetas, comprobación de que no hay una sexta, `usaOpciones: false` explícito, y la presencia de `wcag22aa`). Nada que anotar.
+
+## inventarioModulos.ts -- 100.00% (58/58), sin supervivientes
+
+Los 58 mutantes (los dos arrays `COMPONENTES`/`PAGINAS`, la construcción de `INVENTARIO_MODULOS_CON_ESTILOS`, `MODULOS_SIN_REPRESENTACION_VISUAL`, `rutaEstiloDe`, `comprobarCoLocalizacion` completa -incluida su guarda de vacuidad- y la nueva `comprobarInventarioCompleto` de @s51) mueren todos, incluidos los 26 mutantes estáticos que Stryker avisó que consumirían el 85% del tiempo (`MutantTestPlanner WARN`, informativo, no bloqueante). Nada que anotar.
+
+---
+
+## rolesDescartados.ts -- 64.29% bruto (27/42), 79.41% s/no-equiv. (27/34)
+
+### Mutantes EQUIVALENTES (8), con prueba algebraica + verificación empírica
+
+Los 8 mutantes de las líneas 51-58 (la guarda `if (todos.length === CERO_FICHEROS) { return {...} }`, el "falla cerrado con 0 ficheros" del propio diseño) son código estructuralmente inalcanzable, no solo difícil de disparar:
+
+    export function ejecutarPuertaDeRolesDescartados(
+      tokens: FicheroDeTexto,                              // parámetro OBLIGATORIO, no un array
+      ficherosDeEstilos: readonly FicheroDeTexto[],
+    ): InformeRolesDescartados {
+      const todos = [tokens, ...ficherosDeEstilos]          // `tokens` SIEMPRE es el primer elemento
+      if (todos.length === CERO_FICHEROS) { ... }           // por tanto todos.length >= 1 SIEMPRE
+
+Prueba algebraica: `todos` se construye como `[tokens, ...ficherosDeEstilos]`. Como `tokens` es un parámetro posicional obligatorio (no opcional, no un array que se pueda "vaciar"), SIEMPRE ocupa la posición 0 del array resultante, sea cual sea su valor -- incluso si alguien violase el tipo en tiempo de ejecución y pasara `undefined`/`null`, `[undefined, ...[]]` sigue teniendo `length === 1`. La única forma de que `todos.length` fuera 0 sería que el propio literal `[tokens, ...ficherosDeEstilos]` no antepusiera `tokens`, lo cual contradice la sintaxis del propio código. Por tanto `todos.length === CERO_FICHEROS` (0) es una proposición falsa para cualquier invocación posible de esta función, incluidas las que violan el tipo.
+
+Verificación empírica (script Node desechable, scratchpad de sesión):
+
+    tokens={ruta:"",contenido:""}, estilos=[] -> todos.length = 1
+    tokens=undefined (viola el tipo), estilos=[] -> todos.length = 1
+    tokens=null (viola el tipo), estilos=[] -> todos.length = 1
+    sin argumentos -> lanza: ficherosDeEstilos is not iterable   (falla ANTES de llegar a la guarda)
+
+Ningún intento, ni siquiera violando el contrato de tipos, consigue que `todos.length === 0`. El propio test `"con 0 ficheros la puerta falla cerrada"` lo confirma sin saberlo: llama con `{ruta:'', contenido:''}` (no con un array vacío), y su comentario ya lo admite explícitamente ("Un `_tokens.scss` vacío SÍ cuenta como fichero inspeccionado... la vacuidad real de esta puerta es 'ni tokens ni estilos', que aquí se fuerza con contenido vacío" -- `rolesDescartados.test.ts:66-67`). La vacuidad real que este módulo comprueba es "contenido vacío", no "cero ficheros"; la guarda de `todos.length === 0` es, con la firma actual, inalcanzable en la práctica. Cualquier mutación dentro de ese bloque (los 7 `NoCoverage`) o sobre su condición (el `ConditionalExpression` que la fuerza a `if (false)`, id 16, `Survived`) produce un programa observacionalmente idéntico al original para cualquier entrada válida:
+
+| id | mutator | ubicación | reemplazo |
+| --- | --- | --- | --- |
+| 16 | ConditionalExpression | 51:7-51:37 | `if (false) {` |
+| 18 | BlockStatement | 51:39-60:4 | `{}` |
+| 19 | ObjectLiteral | 52:12-59:6 | `{}` |
+| 20 | BooleanLiteral | 53:13-53:18 | `pasa: true` |
+| 21 | ArrayDeclaration | 55:25-55:27 | `tokensDeUrgencia: ["Stryker was here"]` |
+| 22 | BooleanLiteral | 56:36-56:41 | `tokenAcentoASecasEncontrado: true` |
+| 23 | BooleanLiteral | 57:32-57:37 | `primarioFuerteDeclarado: true` |
+| 24 | BooleanLiteral | 58:28-58:33 | `primarioFuerteUsado: true` |
+
+No abuso esta vía: solo excluyo estos 8, todos dentro del mismo bloque muerto, con la misma prueba. El resto de mutantes de este fichero (34) sí se juzgan uno a uno abajo.
+
+### Mutantes REALES (7)
+
+1. `rolesDescartados.ts:63:39` -- `MethodExpression`, id 27. `.some(...)` -> `.every(...)` en `tokenAcentoASecasEncontrado = todos.some((fichero) => PATRON_ACENTO_A_SECAS.test(fichero.contenido))`.
+   Sobrevive porque en todos los casos de test actuales, `todos` es un array cuyos elementos dan el mismo resultado booleano para `PATRON_ACENTO_A_SECAS.test(...)` (o todos `false` -- los 3 tests `@s11` con `ficherosDeEstilosReales()`, el de 0 ficheros, el de urgencia sintética, el de "declarado pero no usado"-- o todos `true` con un único elemento -- el test de acento sintético--). Con elementos homogéneos, `.some` y `.every` devuelven idéntico resultado.
+   Falta: un test con `ficherosDeEstilos` de 2+ elementos con resultados MIXTOS (uno con `--color-acento` a secas, otro sin él), esperando `tokenAcentoASecasEncontrado === true` -- eso distingue `.some` (true) de `.every` (false).
+
+2-6. Los 5 mutantes de la línea 69 (`pasa: A && B && C && D`, con A=`tokensDeUrgencia.length === CERO_FICHEROS`, B=`!tokenAcentoASecasEncontrado`, C=`primarioFuerteDeclarado`, D=`primarioFuerteUsado`).
+
+| id | mutator | ubicación | efecto |
+| --- | --- | --- | --- |
+| 35 | ConditionalExpression | 69:7-71:30 | `A&&B&&C` -> `true`, deja `pasa = D` |
+| 36 | LogicalOperator | 69:7-71:30 | `A&&B&&C` -> `(A&&B) OR C`, deja `pasa = ((A&&B) OR C) && D` |
+| 37 | ConditionalExpression | 69:7-70:35 | `A&&B` -> `true`, deja `pasa = C&&D` |
+| 38 | LogicalOperator | 69:7-70:35 | `A&&B` -> `A OR B`, deja `pasa = (A OR B)&&C&&D` |
+| 39 | ConditionalExpression | 69:7-69:48 | `A` -> `true`, deja `pasa = B&&C&&D` |
+
+Verificado con script Node (evaluando la expresión real de cada mutante contra los 3 casos negativos del fichero: "0 ficheros", "urgencia sintética", "declarado pero no usado") que ninguno de los 5 produce un valor distinto del original en NINGÚN test actual: en los 3 casos negativos, `C` y `D` nunca son ambos `true` a la vez que `A` o `B` son `false`, así que sustituir cualquier prefijo de la cadena `A&&B&&C` por `true` (o por una versión con OR) no cambia el resultado final: siempre queda determinado por `C&&D`, que ya vale `false` en los 3 casos negativos, y por `A&&B` en el positivo, que ya vale `true`.
+
+Falta (un único test nuevo mata los 5): un caso donde A o B sea `false` (violación de urgencia o de acento) a la vez que C y D sean `true` (primario-fuerte declarado Y usado), esperando `pasa === false`. Ejemplo concreto: `tokens = { contenido: ':root { --color-urgencia: #fff; --color-primario-fuerte: #6B2460; }' }`, `ficherosDeEstilos = [{ contenido: '.boton { background: var(--color-primario-fuerte); }' }]` -> `A=false, B=true, C=true, D=true`; original `pasa = false`, los 5 mutantes darían `pasa = true` (verificado con el mismo script: mut1(D)=true, mut2=true, mut3(C&&D)=true, mut4=true, mut5(B&&C&&D)=true).
+
+7. `rolesDescartados.ts:33:42` -- `Regex`, id 8. `PATRON_PRIMARIO_FUERTE_DECLARADO = /--color-primario-fuerte\s*:/` -> `/--color-primario-fuerte\S*:/` (cambia `\s*` por `\S*` antes de los dos puntos). Para el caso habitual sin espacio (`--color-primario-fuerte:`) ambos coinciden (los dos aceptan cero caracteres). La diferencia solo se manifiesta con espacio(s) entre el nombre de la custom property y los dos puntos (SCSS/CSS válido: `--color-primario-fuerte : #fff;`), que ningún test actual usa.
+   Falta: un test con contenido `':root { --color-primario-fuerte : #6B2460; }'` (espacio antes de los dos puntos), esperando `primarioFuerteDeclarado === true`.
+
+---
+
+## escalaMovimiento.ts -- 84.62% bruto y s/no-equiv. (55/65), sin equivalentes
+
+Ningún mutante de este fichero es equivalente: los 10 supervivientes son huecos reales de cobertura de mutación, no código muerto.
+
+1-2. `escalaMovimiento.ts:76` -- el guardián de `analizarFichero` que descarta líneas que no son de movimiento.
+
+    fichero.contenido.split('\n').forEach((linea, indice) => {
+      if (!PATRON_LINEA_DE_MOVIMIENTO.test(linea)) {
+        return                                          // <- líneas 76-78
+      }
+      ...
+
+| id | mutator | ubicación | reemplazo |
+| --- | --- | --- | --- |
+| 34 | ConditionalExpression | 76:9-76:48 | `if (false)` |
+| 35 | BlockStatement | 76:50-78:6 | `{}` (elimina el `return`) |
+
+Los dos anulan el guardián por vías distintas pero con el MISMO efecto observable: toda línea (incluso las que no son de `animation`/`transition`) pasa a analizarse en busca de duraciones/`all`. Los 18 ficheros reales del inventario no tienen ninguna línea no-movimiento con un valor `Xms` fuera de escala ni con la palabra `all`, así que el mutante no se distingue con los fixtures actuales.
+Falta: una línea sintética que el propio patrón excluye a propósito por diseño (documentado en el comentario de la línea 55: "nunca -timing-function a secas") pero que SÍ lleve una duración fuera de escala, p. ej. `'animation-delay: 500ms;'` (no matchea `PATRON_LINEA_DE_MOVIMIENTO`, que exige `animation`/`transition` opcionalmente seguido de literalmente `-duration`, nunca `-delay`), esperando `duracionesFueraDeEscala` vacío -- con el guardián anulado, ese `500ms` se colaría en el informe.
+
+3-4. `escalaMovimiento.ts:98` -- el retorno de la guarda de 0 ficheros.
+
+    if (ficheros.length === CERO_FICHEROS) {
+      return { pasa: false, ficherosInspeccionados: CERO_FICHEROS, duracionesFueraDeEscala: [], usosDePalabraClaveAll: [] }
+    }
+
+| id | mutator | ubicación | reemplazo |
+| --- | --- | --- | --- |
+| 56 | ArrayDeclaration | 98:91-98:93 | `duracionesFueraDeEscala: ["Stryker was here"]` |
+| 57 | ArrayDeclaration | 98:118-98:120 | `usosDePalabraClaveAll: ["Stryker was here"]` |
+
+A diferencia del caso de `rolesDescartados.ts`, aquí la guarda sí es alcanzable de verdad (`ficheros: readonly FicheroEstilos[]` es un array normal, `ejecutarPuertaDeEscalaDeMovimiento([])` la dispara realmente -- el test "con 0 ficheros la puerta falla cerrada..." lo hace). El test solo comprueba `informe.ficherosInspeccionados` y `informe.pasa`, nunca los otros dos campos del mismo objeto devuelto.
+Falta: añadir a ese mismo test `expect(informe.duracionesFueraDeEscala).toEqual([])` y `expect(informe.usosDePalabraClaveAll).toEqual([])`.
+
+5-6. `escalaMovimiento.ts:56` -- `PATRON_LINEA_DE_MOVIMIENTO`.
+
+    const PATRON_LINEA_DE_MOVIMIENTO = /^\s*(?:animation|transition)(?:-duration)?\s*:/
+
+| id | mutator | reemplazo |
+| --- | --- | --- |
+| 4 | Regex | `/\s*(?:animation|transition)(?:-duration)?\s*:/` (quita el ancla `^`) |
+| 9 | Regex | `/^\s*(?:animation|transition)(?:-duration)?\S*:/` (`\s*` -> `\S*` antes de los dos puntos) |
+
+id 4: sin el ancla `^`, la búsqueda deja de exigir que "animation"/"transition" empiece la línea (tras espacios). Falta: una línea donde ese texto aparezca DESPUÉS del inicio (p. ej. un comentario `/* antes: transition: 999ms */`), que bajo el patrón real (anclado) NO se analiza -- la línea no empieza por "transition" -- pero con el ancla quitada SÍ, colando un `999ms` fuera de escala.
+id 9 (mismo patrón `\s*`/`\S*` que en `rolesDescartados.ts:33`): falta una línea con espacio antes de los dos puntos, `'transition : color 150ms;'`, que debe seguir contando como línea de movimiento (sin el espacio interfiriendo).
+
+7-10. `escalaMovimiento.ts:60` -- `PATRON_PALABRA_CLAVE_ALL`, dos alternativas separadas por `|`.
+
+    const PATRON_PALABRA_CLAVE_ALL = /(?:animation|transition)(?:-property)?\s*:\s*all\b|,\s*all\b/
+
+| id | mutator | alternativa | reemplazo |
+| --- | --- | --- | --- |
+| 17 | Regex | A (antes de `:`) | `\s*` -> `\S*` |
+| 18 | Regex | A (entre `:` y `all`) | `\s*` -> `\s` (exactamente un espacio) |
+| 20 | Regex | B (tras la coma) | `\s*` -> `\s` (exactamente un espacio) |
+| 21 | Regex | B (tras la coma) | `\s*` -> `\S*` |
+
+id 17: falta una línea `'transition : all 150ms;'` (espacio antes de los dos puntos) que deba seguir detectando `all`.
+id 18: el único test sintético actual (`'transition: all 150ms ease-out;'`) usa exactamente UN espacio entre `:` y `all`, que es indistinguible de "cero o más espacios". Falta una variante sin espacio (`'transition:all 150ms;'`) o con dos (`'transition:  all 150ms;'`).
+id 20/21: la alternativa B completa (`,\s*all\b` -- "all" como uno más de una lista de propiedades separada por comas, p. ej. `transition-property: color, all;`) no está ejercitada por NINGÚN test actual (el único test de "all" dispara solo la alternativa A). Falta un test nuevo dedicado a esa rama, p. ej. `'transition-property: color, all;'`, que de paso distinguiría `\s`/`\S`/`\s*` entre sí si se varía el espaciado tras la coma.
+
+---
+
+## escenariosHeredados.ts -- 84.21% bruto (32/38), 88.89% s/no-equiv. (32/36)
+
+### Mutantes EQUIVALENTES (2), con prueba algebraica + verificación empírica
+
+    export function comprobarEscenariosHeredadosCitados(
+      declarados: readonly string[],
+      textosDePruebasDeNavegador: readonly string[],
+    ): InformeEscenariosHeredados {
+      if (declarados.length === CERO_DECLARADOS) {                          // línea 50
+        return { pasa: false, declarados: CERO_DECLARADOS, noCitados: [] }  // línea 51
+      }
+      const noCitados = declarados.filter((identificador) => !citadoEn(identificador, textosDePruebasDeNavegador))
+      return {
+        pasa: noCitados.length === CERO_DECLARADOS && declarados.length === DOCE,  // línea 57
+        declarados: declarados.length,
+        noCitados,
+      }
+    }
+
+A diferencia de `rolesDescartados.ts`, aquí `declarados` sí puede ser `[]` de verdad (es un array normal recibido tal cual, sin ningún elemento anteponido): la guarda es alcanzable. Pero su comportamiento es redundante: para `declarados === []`, el camino normal (sin guarda) calcula exactamente lo mismo que el camino de la guarda, para cualquier `textosDePruebasDeNavegador`:
+
+- `noCitados = [].filter(...)` es SIEMPRE `[]` (filtrar un array vacío da vacío, sin importar el predicado ni los textos).
+- `pasa = (noCitados.length === 0) && (declarados.length === DOCE)` = `(0===0) && (0===12)` = `true && false` = `false`, SIEMPRE, porque `declarados.length` es `0` y `DOCE` es la constante `12` (no depende de los textos).
+- `declarados: declarados.length` = `0`, igual en ambos caminos.
+
+Prueba algebraica: para `declarados.length === 0`, el resultado del camino normal es `{ pasa: false, declarados: 0, noCitados: [] }`, idéntico campo a campo al que devuelve la guarda, para cualquier valor de `textosDePruebasDeNavegador`, porque `noCitados` no depende de si `declarados` está vacío salvo en que su longitud (siempre 0 si el `filter` parte de `[]`) y porque el segundo término del AND (`declarados.length === DOCE`) ya es `false` de forma independiente de los textos.
+
+Verificación empírica (script Node desechable, comparando `conGuarda` vs. `sinGuarda` con `declarados=[]` contra 4 juegos de `textos` distintos, incluido uno que cita los 12 identificadores reales):
+
+    textos=[]                                          conGuarda={pasa:false,declarados:0,noCitados:[]}  sinGuarda=IGUAL
+    textos=["nada que citar aquí"]                     conGuarda={pasa:false,declarados:0,noCitados:[]}  sinGuarda=IGUAL
+    textos=["@s12 @s27 ... todos citados"]              conGuarda={pasa:false,declarados:0,noCitados:[]}  sinGuarda=IGUAL
+    textos=["texto con @s99 y otras cosas raras"]       conGuarda={pasa:false,declarados:0,noCitados:[]}  sinGuarda=IGUAL
+
+Los 4 casos dan resultados idénticos. Por tanto, los 2 mutantes que se limitan a saltarse la guarda sin tocar su cuerpo son equivalentes:
+
+| mutator | ubicación | reemplazo |
+| --- | --- | --- |
+| ConditionalExpression | 50:7-50:37 | `if (false) {` |
+| BlockStatement | 50:46-52:6 | `if (declarados.length === CERO_DECLARADOS) {}` (elimina el `return`) |
+
+(Ids exactos no re-anotados aquí porque el `mutation.json` de esta corrida ya fue sobrescrito por la corrida del siguiente fichero antes de extraerlos numéricamente; identificados sin ambigüedad por `mutatorName` + `location` + `replacement`, únicos en el log de consola de esta corrida.)
+
+Importante -- esto NO excusa al mutante que sí toca el CONTENIDO de la guarda (ver primer punto de "Mutantes reales" abajo): ese mutante deja la condición intacta (la guarda SÍ se dispara para `declarados=[]`) y solo cambia el valor devuelto DENTRO de ella, que es observable si el test comprobara `noCitados`, cosa que no hace. No es la misma situación algebraica que los 2 de arriba.
+
+### Mutantes REALES (4)
+
+1. `escenariosHeredados.ts:51:67` -- `ArrayDeclaration`. `noCitados: []` -> `noCitados: ["Stryker was here"]`, dentro del `return` de la guarda (la condición NO está mutada aquí, la guarda se ejecuta de verdad para `declarados=[]`).
+   Falta: el test "con la lista de declarados vacía, la comprobación falla cerrada" solo comprueba `informe.declarados` y `informe.pasa`; falta `expect(informe.noCitados).toEqual([])`.
+
+2-4. Los 3 mutantes de la línea 57 (`pasa: noCitados.length === CERO_DECLARADOS && declarados.length === DOCE`, con A=`noCitados.length===0`, B=`declarados.length===12`).
+
+| mutator | ubicación | efecto |
+| --- | --- | --- |
+| LogicalOperator | 57:11 | `A&&B` -> `A OR B` |
+| ConditionalExpression | 57:11 | `A` -> `true`, deja `pasa = B` |
+| ConditionalExpression | 57:51 | `B` -> `true`, deja `pasa = A` |
+
+En todos los tests que llegan a esta línea, A y B valen lo mismo entre sí: en el caso feliz (los 12 reales, todos citados) A=true, B=true; en el caso "+@s99" (13 declarados, uno sin citar) A=false, B=false (13 distinto de 12). El test de frontera de palabra (@s2/@s27/@s25) ni siquiera comprueba `pasa`. Con A y B siempre iguales entre sí, `A&&B`, `A OR B`, `A` a secas y `B` a secas dan el mismo resultado en los 3 tests que sí comprueban `pasa`.
+
+Falta (dos casos nuevos, entre los dos matan los 3):
+- A=true, B=false: un subconjunto de identificadores reales, TODOS citados, pero de longitud distinta de 12 (p. ej. solo 2 de los 12), esperando `pasa === false` (los mutantes darían `true` vía `A OR B` o vía `A` a secas).
+- A=false, B=true: exactamente 12 identificadores declarados pero con uno inventado sustituyendo a uno real (longitud se mantiene en 12, pero queda 1 sin citar), esperando `pasa === false` (el mutante "B a secas" daría `true`).
+
+---
+
+## Estado del repositorio tras la medición
+
+`git status --porcelain -- src/lib/diseno/` antes y después de las 5 corridas: idéntico (los 5 ficheros de producción siguen exactamente como los dejó `tdd_craftsman`, sin ninguna marca de modificación residual -- Stryker restaura cada fichero tras cada mutante, y las 5 corridas terminaron limpias). No se ha editado ningún fichero de `src/` ni de test durante esta medición; los `mutation.json`/`reports/mutation/` de cada corrida quedan en `reports/mutation/` (`.gitignore`) y una copia de cada uno en el scratchpad de sesión, no comprometidos al repositorio.
+
+## Resumen y siguiente paso
+
+FAIL. 21 mutantes supervivientes reales sobre 214 mutantes totales de los 5 módulos de esta ronda (10 mutantes adicionales son equivalentes genuinos, documentados uno a uno arriba con prueba algebraica + verificación empírica). Score bruto 85.51% (183/214); score excluyendo los 10 equivalentes 89.71% (183/204) -- por debajo del umbral de 100% exigido por `harness.config.json` -> `mutation.threshold` / `stryker.config.json` -> `thresholds.break`.
+
+Reparto de los 21 supervivientes reales por fichero: 7 en `rolesDescartados.ts`, 10 en `escalaMovimiento.ts`, 0 en `analisisAutomaticoAxe.ts`, 4 en `escenariosHeredados.ts`, 0 en `inventarioModulos.ts`. `analisisAutomaticoAxe.ts` e `inventarioModulos.ts` ya están al 100.00% y no requieren ninguna acción.
+
+No se ha tocado ningún fichero de `src/` ni de test durante esta medición: los tests que faltan (detallados uno a uno arriba, con el caso concreto que mata cada mutante o grupo de mutantes) corresponden al `tdd_craftsman`, seguido de un nuevo paso por `judge` y una nueva ronda de `mutation_tester` sobre estos mismos ficheros.
+
+Prioridad sugerida (por retorno/esfuerzo): en `rolesDescartados.ts`, UN test combinado (urgencia + primario-fuerte declarado y usado a la vez) mata 5 de los 7 supervivientes reales de ese fichero de un solo golpe; en `escenariosHeredados.ts`, dos tests (A distinto de B) matan 3 de los 4. El resto son correcciones de una línea (asertar campos que ya se calculan pero no se comprueban) o casos de espaciado/rama-no-ejercitada en regexes, ya descritos caso a caso arriba.
+
+---
+
+## Re-medición tras refuerzo (Ronda C)
+
+**Alcance** (idéntico al de la medición "Ronda C" anterior, FAIL): los mismos 5 módulos `.ts` puros de `src/lib/diseno/`:
+
+- `src/lib/diseno/rolesDescartados.ts`
+- `src/lib/diseno/escalaMovimiento.ts`
+- `src/lib/diseno/analisisAutomaticoAxe.ts`
+- `src/lib/diseno/escenariosHeredados.ts`
+- `src/lib/diseno/inventarioModulos.ts`
+
+Mismas exclusiones de siempre: `.test.ts`/`tests/e2e/*.spec.ts` fuera del glob `mutate` de `stryker.config.json`, `.tsx`/`.module.scss` excluidos por diseño (issue `stryker-mutator/stryker-js#4375`), `puertaNavegadorReal.test.ts` (@s48) sin módulo de producción propio -- nada que mutar ahí.
+
+Motivo de esta ronda: `tdd_craftsman` añadió 12 tests de refuerzo en `rolesDescartados.test.ts` (+3), `escalaMovimiento.test.ts` (+7) y `escenariosHeredados.test.ts` (+2, con una aserción añadida a un test existente), ya aprobados por `judge` (`progress/judge_identidad_visual.md`, sección "## Refuerzo mutación Ronda C", veredicto APPROVED), destinados a matar los 21 mutantes supervivientes reales que esta misma bitácora reportó en la sección "## Ronda C" (FAIL, 183/214 = 85.51% bruto, 89.71% s/no-equiv.).
+
+## Antes de arrancar
+
+`Get-CimInstance Win32_Process -Filter "Name='node.exe'"` filtrado por `CommandLine -match 'stryker'` (script propio, `check-stryker.ps1`, en el scratchpad de sesión -- más fiable que `tasklist` a secas porque sí expone la línea de comandos): **0 procesos con "stryker" en su línea de comandos** antes de cada una de las 5 corridas, repetido entre cada fichero. Sí había, de forma estable durante toda la sesión, más de 30 procesos `node.exe` de otro origen: agentes ACP de IntelliJ (`codex-acp`), un `harness.mjs init` de otra sesión, y un `pnpm run test`/`vitest run` completo de otra sesión concurrente (confirmado por su línea de comandos, nada de `stryker`) -- nunca dos Strykers a la vez sobre este repo, que es la regla dura. Esa contención de fondo es la explicación más probable de que esta corrida, con la máquina más cargada que en la medición "Ronda C" original, tardara un poco más por fichero sin que ningún timeout apareciera.
+
+`pnpm exec vitest run` de los 5 ficheros de test en aislamiento, ANTES de mutar nada:
+
+    pnpm exec vitest run src/lib/diseno/rolesDescartados.test.ts src/lib/diseno/escalaMovimiento.test.ts src/lib/diseno/analisisAutomaticoAxe.test.ts src/lib/diseno/escenariosHeredados.test.ts src/lib/diseno/inventarioModulos.test.ts
+
+Resultado: **5 ficheros, 46 tests, verde** -- exactamente 34 (recuento base de la medición anterior) + 12 (refuerzo del `tdd_craftsman`), confirmando el recuento antes de cualquier mutación.
+
+## Cómo se corrió (ficha de reproducción)
+
+Un fichero detrás de otro, esperando a que cada corrida terminara del todo antes de lanzar la siguiente, comprobando "0 Strykers activos" antes de cada una:
+
+    pnpm exec stryker run --mutate src/lib/diseno/rolesDescartados.ts       --plugins "@stryker-mutator/vitest-runner"   # 1m 42s
+    pnpm exec stryker run --mutate src/lib/diseno/escalaMovimiento.ts      --plugins "@stryker-mutator/vitest-runner"   # 3m 37s
+    pnpm exec stryker run --mutate src/lib/diseno/analisisAutomaticoAxe.ts --plugins "@stryker-mutator/vitest-runner"   # 0m 46s
+    pnpm exec stryker run --mutate src/lib/diseno/escenariosHeredados.ts   --plugins "@stryker-mutator/vitest-runner"   # 2m 11s
+    pnpm exec stryker run --mutate src/lib/diseno/inventarioModulos.ts    --plugins "@stryker-mutator/vitest-runner"   # 3m 04s
+
+`--plugins "@stryker-mutator/vitest-runner"` explícito, mismo motivo de siempre (el glob por defecto no resuelve el plugin en esta máquina). En las 5 corridas la columna "# timeout" dio **0** -- la regla dura de "si `# timeout` no es 0, repetir a `--concurrency 1`" no se activó en ninguna de las 5; el score se toma directamente de estas 5 corridas únicas, sin necesidad de repetir ninguna (`concurrency: 1` ya es el valor por defecto de `stryker.config.json`, "Creating 1 test runner process(es)" en los 5 logs).
+
+Tras cada corrida se copió `reports/mutation/mutation.json` al scratchpad de sesión (`mutation_rolesDescartados.json`, `mutation_escalaMovimiento.json`, `mutation_analisisAutomaticoAxe.json`, `mutation_escenariosHeredados.json`, `mutation_inventarioModulos.json`) antes de que la siguiente corrida lo sobrescribiera, y se extrajo `id`, `mutatorName`, `location`, `replacement` y `status` de cada mutante `Survived`/`NoCoverage` con un script Node propio (`extract-survivors.mjs`), no solo del resumen de consola.
+
+## Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | equivalentes | reales | score bruto | score s/no-equiv. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `rolesDescartados.ts` | 42 | 34 | 0 | 1 | 7 | 8 | 0 | 80.95% | 100.00% (34/34) |
+| `escalaMovimiento.ts` | 65 | 65 | 0 | 0 | 0 | 0 | 0 | 100.00% | 100.00% (65/65) |
+| `analisisAutomaticoAxe.ts` | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 100.00% | 100.00% (11/11) |
+| `escenariosHeredados.ts` | 38 | 36 | 0 | 2 | 0 | 2 | 0 | 94.74% | 100.00% (36/36) |
+| `inventarioModulos.ts` | 58 | 58 | 0 | 0 | 0 | 0 | 0 | 100.00% | 100.00% (58/58) |
+| **Total** | **214** | **204** | **0** | **3** | **7** | **10** | **0** | **95.33% (204/214)** | **100.00% (204/204)** |
+
+**21 de 21 mutantes reales de la medición anterior ahora mueren** (183 killed -> 204 killed, +21, exactamente los 21 que el refuerzo pretendía matar). `total` idéntico al de la medición anterior en los 5 ficheros (214 = 214) -- mismo catálogo de mutantes, confirmando que el refuerzo no tocó producción (ver también verificación de `git status` más abajo). `analisisAutomaticoAxe.ts` e `inventarioModulos.ts` siguen exactamente en 100.00% (11/11 y 58/58, ningún cambio, tal y como se esperaba sin tocarlos).
+
+## Los 10 supervivientes restantes -- confirmados como los MISMOS 10 equivalentes ya probados en "Ronda C" (no vueltos a demostrar desde cero)
+
+Cruce por `mutatorName` + `location` (línea:columna de inicio) + `replacement` contra la tabla de la sección "## Ronda C" de esta misma bitácora -- ningún mutante nuevo, ninguno distinto:
+
+### `rolesDescartados.ts` (8/8 -- bloque muerto de la guarda `todos.length === CERO_FICHEROS`, líneas 51-58)
+
+| status (esta ronda) | mutator | location | replacement | ¿coincide con "Ronda C"? |
+| --- | --- | --- | --- | --- |
+| Survived | ConditionalExpression | 51:7 | `false` | sí -- `if (false) {` |
+| NoCoverage | BlockStatement | 51:39-60:4 | `{}` | sí |
+| NoCoverage | ObjectLiteral | 52:12-59:6 | `{}` | sí |
+| NoCoverage | BooleanLiteral | 53:13-53:18 | `true` | sí -- `pasa: true` |
+| NoCoverage | ArrayDeclaration | 55:25-55:27 | `["Stryker was here"]` | sí -- `tokensDeUrgencia: [...]` |
+| NoCoverage | BooleanLiteral | 56:36-56:41 | `true` | sí -- `tokenAcentoASecasEncontrado: true` |
+| NoCoverage | BooleanLiteral | 57:32-57:37 | `true` | sí -- `primarioFuerteDeclarado: true` |
+| NoCoverage | BooleanLiteral | 58:28-58:33 | `true` | sí -- `primarioFuerteUsado: true` |
+
+Los 8 mueren exactamente en las mismas líneas, con el mismo `mutatorName` y el mismo `replacement` que en "Ronda C" (donde la tabla los listaba con sus ids de aquella corrida, 16 y 18-24 -- los ids de Stryker no son estables entre corridas, pero el trío `mutatorName`+`location`+`replacement` sí identifica sin ambigüedad al mismo mutante). La prueba de equivalencia ya está hecha en "Ronda C" (álgebra: `todos = [tokens, ...ficherosDeEstilos]` con `tokens` parámetro obligatorio posicional, por lo que `todos.length === 0` es una proposición falsa para cualquier invocación posible, incluso violando el tipo en tiempo de ejecución; verificación empírica con script Node contra 4 casos, incluidos los que violan el contrato de tipos). No repito esa prueba aquí -- nada ha cambiado que la invalide: los 12 tests nuevos del refuerzo no tocan esta guarda (matan otros mutantes, en las líneas 33, 63 y 69, todos alcanzables), y el código de la guarda (líneas 51-58) sigue byte a byte igual, confirmado por el hash del `judge` en "## Refuerzo mutación Ronda C" (`24343da7...`) y por mi propia relectura del fichero en esta ronda.
+
+### `escenariosHeredados.ts` (2/2 -- guarda `declarados.length === CERO_DECLARADOS`, líneas 50-52)
+
+| status (esta ronda) | mutator | location | replacement | ¿coincide con "Ronda C"? |
+| --- | --- | --- | --- | --- |
+| Survived | ConditionalExpression | 50:7 | `false` | sí -- `if (false) {` |
+| Survived | BlockStatement | 50:46-52:4 | `{}` (elimina el `return`) | sí -- `if (declarados.length === CERO_DECLARADOS) {}` |
+
+Mismos dos mutantes que en "Ronda C" (allí sin id numérico re-anotado, por la misma razón de siempre -- el `mutation.json` de esa corrida ya estaba sobrescrito al extraerlos -- pero identificados sin ambigüedad por `mutatorName`+`location`+`replacement`, que coinciden dígito a dígito con esta corrida). Prueba de equivalencia ya hecha en "Ronda C": para `declarados.length === 0`, el camino sin guarda calcula exactamente `{ pasa: false, declarados: 0, noCitados: [] }` para cualquier `textosDePruebasDeNavegador` (porque `[].filter(...)` es siempre `[]`, y `declarados.length === DOCE` ya es `false` de forma independiente de los textos), idéntico al que devuelve la guarda; verificado empíricamente contra 4 juegos de `textos`. Los 2 tests nuevos del refuerzo ("con menos de doce identificadores..." y "con exactamente doce... uno inventado") atacan la línea 57 (`pasa: A && B`), no la guarda de la línea 50 -- coherente con que estos 2 mutantes de la guarda sigan sobreviviendo intactos, tal y como predecía el propio informe de "Ronda C".
+
+**Ningún superviviente nuevo o distinto de estos 10.** No hace falta ninguna prueba algebraica/empírica adicional porque no hay nada nuevo que justificar: son literalmente los mismos 10 mutantes, en las mismas líneas, con el mismo reemplazo, ya juzgados equivalentes con prueba completa en la sección "## Ronda C" de esta misma bitácora.
+
+## Estado del repositorio tras la medición
+
+`git status --porcelain -- src/lib/diseno/rolesDescartados.ts src/lib/diseno/escalaMovimiento.ts src/lib/diseno/analisisAutomaticoAxe.ts src/lib/diseno/escenariosHeredados.ts src/lib/diseno/inventarioModulos.ts` antes y después de las 5 corridas: idéntico (`M` en `inventarioModulos.ts`, `??` en los otros 4 -- el mismo estado que ya tenían por el trabajo de `tdd_craftsman`/`judge` antes de que esta ronda empezara, sin ninguna marca de modificación residual introducida por Stryker). `pnpm exec vitest run` de los 5 ficheros de test, repetido después de las 5 corridas de Stryker: **46/46 verdes**, igual que antes de mutar. Ningún fichero de `src/` ni de test fue editado durante esta medición.
+
+## Resumen y siguiente paso
+
+**PASS.** 0 mutantes supervivientes reales sobre 214 mutantes totales de los 5 módulos de esta ronda. Score bruto 95.33% (204/214); **score excluyendo los 10 equivalentes genuinos (ya probados en "## Ronda C", re-confirmados aquí como los mismos por `mutatorName`+`location`+`replacement`): 100.00% (204/204)** -- cumple el umbral de `harness.config.json` -> `mutation.threshold` = 1.0 / `stryker.config.json` -> `thresholds.break` = 100.
+
+Los 21 mutantes que en "Ronda C" sobrevivían de verdad (7 en `rolesDescartados.ts`, 10 en `escalaMovimiento.ts`, 4 en `escenariosHeredados.ts`) mueren todos con el refuerzo de 12 tests del `tdd_craftsman`. `analisisAutomaticoAxe.ts` e `inventarioModulos.ts` se mantienen en 100.00%, sin cambios. No queda ningún trabajo pendiente de mutación para `tdd_craftsman` en estos 5 ficheros de la Ronda C.

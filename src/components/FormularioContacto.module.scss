@@ -1,13 +1,25 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45). "#contacto" tiene DOS hijos directos
+// (este formulario e "InformacionContacto"): ambos reciben el mismo
+// contenedor, así que comparten el mismo ancho máximo (@s45) aunque vivan en
+// ficheros distintos.
 .formulario {
+  @include tarjeta;
+  padding: espaciado(24);
   display: flex;
   flex-direction: column;
   gap: espaciado(12);
-  padding: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
+  margin-block-end: espaciado(32);
+
+  &:hover {
+    // Un formulario no es una tarjeta "clicable": no sube de sombra al pasar el ratón por encima.
+    box-shadow: var(--sombra-reposo);
+  }
 
   label {
     font-size: paso-tipografico(0);
+    font-weight: 600;
   }
 
   input,
@@ -15,35 +27,52 @@
   textarea {
     @include foco-visible;
     @include area-tactil-minima;
-    padding: espaciado(8);
-    border: 1px solid var(--color-texto);
-    border-radius: espaciado(4);
+    padding-inline: espaciado(12);
+    border: $ancho-borde-control solid var(--color-borde-control);
+    border-radius: $radio-medio;
+    background-color: var(--color-superficie-elevada);
+    color: inherit;
     font-size: paso-tipografico(0);
   }
 
-  button {
-    @include foco-visible;
-    @include area-tactil-minima;
+  textarea {
+    padding-block: espaciado(8);
+    min-height: espaciado(96);
+  }
+
+  input[type='checkbox'] {
+    width: auto;
+    min-width: $area-tactil-minima;
   }
 
   a {
     @include foco-visible;
   }
+
+  button {
+    @include boton-primario;
+    align-self: flex-start;
+    margin-block-start: espaciado(8);
+  }
 }
 
 .confirmacion {
+  @include tarjeta;
   padding: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
+  margin-block-end: espaciado(32);
 
   h2 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(3);
     margin-block-end: espaciado(12);
   }
 
-  a,
-  button {
+  a {
     @include foco-visible;
-    @include area-tactil-minima;
+  }
+
+  button {
+    @include boton-fantasma;
+    margin-block-start: espaciado(16);
   }
 }

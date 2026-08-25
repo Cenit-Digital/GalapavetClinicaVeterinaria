@@ -61,7 +61,7 @@ export function FormularioContacto(): React.JSX.Element {
     const enlaceClinica = construirEnlaceTelefono(datosNegocio.telefonoClinica.textoVisible)
     const enlaceUrgencias = construirEnlaceTelefono(datosNegocio.telefonoUrgencias.textoVisible)
     return (
-      <output className={styles.confirmacion}>
+      <output className={styles.confirmacion} data-contenedor-principal>
         <h2>Formulario completado</h2>
         <p>
           Tu mensaje no se ha enviado a ningún servidor. Para hablar con nosotros, llama al{' '}
@@ -78,7 +78,13 @@ export function FormularioContacto(): React.JSX.Element {
   }
 
   return (
-    <form aria-label="Escríbenos" onSubmit={manejarEnvio} noValidate className={styles.formulario}>
+    <form
+      aria-label="Escríbenos"
+      onSubmit={manejarEnvio}
+      noValidate
+      className={styles.formulario}
+      data-contenedor-principal
+    >
       <label htmlFor={ID_NOMBRE}>Tu nombre</label>
       <input id={ID_NOMBRE} ref={refNombre} type="text" required aria-invalid={validez.nombreInvalido} />
 

@@ -40,7 +40,9 @@ interface TarjetaCampanaProps {
 function TarjetaCampana({ campana }: TarjetaCampanaProps): React.JSX.Element {
   return (
     <li>
-      {campana.imagen !== undefined && <img src={campana.imagen} alt="" />}
+      {campana.imagen !== undefined && (
+        <img src={campana.imagen} alt="" width={800} height={450} loading="lazy" decoding="async" />
+      )}
       <span>Demostración</span>
       <p>Bloque de servicios: {campana.bloque}</p>
       <h2>{campana.titulo}</h2>
@@ -117,7 +119,7 @@ function BloquePublicado({ campana }: BloquePublicadoProps): React.JSX.Element |
   }
 
   return (
-    <section>
+    <section className={styles.bloquePublicado}>
       <h2>Qué publica la clínica</h2>
       <p>
         «{campana.titulo}» es uno de los puntos que Galapavet publica dentro del bloque «{campana.bloque}».
@@ -154,7 +156,7 @@ function PanelDatosPendientes(): React.JSX.Element {
 /** Llamadas a la acción de la ficha: llamar al teléfono real de la clínica (@s16). */
 function LlamadasAAccion(): React.JSX.Element {
   return (
-    <p>
+    <p className={styles.llamadasAAccion}>
       <a href={datosNegocio.telefonoClinica.enlaceLlamada}>Llamar al {datosNegocio.telefonoClinica.textoVisible}</a>
       <Link to="/#reservar">Reservar cita</Link>
     </p>
@@ -196,7 +198,7 @@ function BloqueOtrasCampanas({ campanas }: BloqueOtrasCampanasProps): React.JSX.
   }
 
   return (
-    <section>
+    <section className={styles.otrasCampanas}>
       <h2>Otras campañas</h2>
       <ul>
         {campanas.map((campana) => (
@@ -248,7 +250,7 @@ export function PaginaCampanas({ catalogo: catalogoDemo = CAMPANAS_DEMO }: Pagin
   const vista = resolverVista(catalogo, searchParams.get('campana'))
 
   return (
-    <main className={styles.pagina}>
+    <main className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina
         metadatos={vista.tipo === 'ficha' ? METADATOS_FICHA_CAMPANA : METADATOS_CAMPANAS}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

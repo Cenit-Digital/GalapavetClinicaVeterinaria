@@ -35,6 +35,16 @@ export const INVENTARIO_MODULOS_CON_ESTILOS: readonly ModuloConEstilos[] = [
   ...PAGINAS.map((nombre) => ({ nombre, carpeta: 'pages' as const })),
 ]
 
+/**
+ * Los nombres de `src/components` que SÍ son `.tsx` reales (no de test, no
+ * `-logica`) pero NO tienen representación visual propia y por tanto quedan
+ * fuera de `INVENTARIO_MODULOS_CON_ESTILOS` a propósito (@s51 de
+ * `identidad_visual.feature`: "MetadatosPagina sigue fuera del inventario,
+ * por no tener representación visual propia" — `return null`, solo escribe
+ * en `<head>`).
+ */
+export const MODULOS_SIN_REPRESENTACION_VISUAL: readonly string[] = ['MetadatosPagina']
+
 const CERO_MODULOS = 0
 
 export interface InformeCoLocalizacion {
@@ -71,4 +81,36 @@ export function comprobarCoLocalizacion(
     .map((modulo) => modulo.nombre)
 
   return { pasa: faltantes.length === CERO_MODULOS, modulosComprobados: inventario.length, faltantes }
+}
+
+export interface InformeInventarioCompleto {
+  readonly pasa: boolean
+  readonly modulosEnInventario: number
+  readonly componentesVisualesReales: number
+  readonly ausentesDelInventario: readonly string[]
+}
+
+/**
+ * El complemento de `comprobarCoLocalizacion` (@s51): en vez de comprobar
+ * que cada nombre del INVENTARIO tenga fichero de estilos, comprueba que
+ * cada COMPONENTE VISUAL REAL del árbol de ficheros esté en el inventario.
+ * Un componente compartido nuevo con representación visual que nadie dio de
+ * alta en `INVENTARIO_MODULOS_CON_ESTILOS` hace fallar esta comprobación en
+ * vez de quedar invisible para la puerta de literales de color.
+ */
+export function comprobarInventarioCompleto(
+  inventario: readonly ModuloConEstilos[],
+  nombresRealesConRepresentacionVisual: readonly string[],
+): InformeInventarioCompleto {
+  const nombresDelInventario = new Set(inventario.map((modulo) => modulo.nombre))
+  const ausentesDelInventario = nombresRealesConRepresentacionVisual.filter(
+    (nombre) => !nombresDelInventario.has(nombre),
+  )
+
+  return {
+    pasa: ausentesDelInventario.length === CERO_MODULOS,
+    modulosEnInventario: inventario.length,
+    componentesVisualesReales: nombresRealesConRepresentacionVisual.length,
+    ausentesDelInventario,
+  }
 }

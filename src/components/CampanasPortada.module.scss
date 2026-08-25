@@ -1,38 +1,65 @@
+// Sección SIN ancla propia (@s26): a diferencia de las demás secciones de la
+// landing, no vive envuelta por "Landing.module.scss" — así que este fichero
+// cablea su propio fondo Y su propio contenedor (@s44/@s45), en vez de
+// heredarlos de un wrapper.
 .campanasPortada {
-  padding-block: espaciado(64);
-  padding-inline: espaciado(24);
+  @include contenedor;
+  padding-block: espaciado(56);
   background-color: var(--color-fondo);
   color: var(--color-texto);
 
   h2 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(4);
-    margin-block-end: espaciado(16);
+    margin-block-end: espaciado(8);
+  }
+
+  > p {
+    color: var(--color-texto-suave);
+    margin-block-end: espaciado(24);
   }
 
   ul {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
     gap: espaciado(24);
     list-style: none;
-    margin: 0;
+    margin: 0 0 espaciado(32);
     padding: 0;
   }
 
   li {
-    border: 1px solid var(--color-texto);
-    border-radius: espaciado(8);
-    overflow: hidden;
+    @include tarjeta;
   }
 
-  h3 {
-    font-size: paso-tipografico(2);
-    padding: espaciado(12);
-  }
-
-  a {
+  li > a {
     @include foco-visible;
-    @include area-tactil-minima;
-    display: inline-flex;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+
+    img {
+      // 16/9 (`estudio_diseno_referencia.md` §3.6), el mismo que las 3
+      // fotografías reales de "public/img/campanas/" (800×450).
+      @include hueco-de-imagen(16, 9);
+    }
+
+    span {
+      @include pildora-etiqueta;
+      align-self: flex-start;
+      margin: espaciado(16) espaciado(16) espaciado(8);
+    }
+
+    h3 {
+      margin: 0 espaciado(16) espaciado(16);
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(1);
+    }
+  }
+
+  > a {
+    @include boton-fantasma;
   }
 }

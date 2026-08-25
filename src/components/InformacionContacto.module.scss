@@ -1,16 +1,19 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45). Comparte el mismo ancho máximo que
+// "FormularioContacto" (mismo wrapper "#contacto").
 .informacionContacto {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: espaciado(16);
-  padding: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
   font-size: paso-tipografico(0);
 
   iframe {
+    grid-column: 1 / -1;
     width: 100%;
     aspect-ratio: 16 / 9;
-    border: none;
+    border: $ancho-borde-fino solid var(--color-borde);
+    border-radius: $radio-grande;
   }
 
   fieldset {
@@ -24,5 +27,31 @@
     @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
+  }
+
+  dl {
+    margin: 0;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: espaciado(8);
+      padding-block: espaciado(4);
+      border-block-end: $ancho-borde-fino solid var(--color-borde);
+    }
+
+    dt {
+      font-weight: 600;
+    }
+
+    dd {
+      margin: 0;
+      color: var(--color-texto-suave);
+    }
+  }
+
+  [aria-label='Urgencias fuera de horario'] a {
+    color: var(--color-acento-tinta);
+    font-weight: 700;
   }
 }

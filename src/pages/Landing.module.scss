@@ -1,7 +1,36 @@
-// Envoltorio de cada sección anclada. `Hero`/`Servicios`/`Equipo`/etc. ya
-// traen su propia maquetación en su `.module.scss` co-localizado; este
-// fichero solo separa una sección de la siguiente para que la landing no
-// quede con todo pegado verticalmente.
+// El envoltorio de cada sección anclada. Dos responsabilidades, separadas a
+// propósito de las de cada componente de sección:
+//
+// 1. EL BANDEADO (@s26): el fondo de banda completa vive AQUÍ, en el
+//    wrapper — nunca en el hijo —, porque @s26 mide el color de fondo
+//    COMPUTADO del propio elemento con `id` (el `<div id="…">` que envuelve
+//    cada sección), no el de un descendiente. Dos clases, ninguna
+//    transparente, alternadas en `Landing.tsx` (paso 10 de
+//    `plan_adaptacion_scss.md` §5): fondo → alterno → fondo (CampanasPortada,
+//    sin ancla propia, cablea su propio "--color-fondo") → alterno → fondo →
+//    alterno → fondo → alterno. Nunca 3 seguidas del mismo color.
+// 2. EL CONTENEDOR (@s44/@s45): "contenedor" (`_api.scss`) se aplica al hijo
+//    directo, no al wrapper — así el color de la banda llega borde a borde
+//    de la ventana y solo el CONTENIDO queda acotado al ancho máximo
+//    compartido por las 6 rutas. Cada componente de sección deja de declarar
+//    su propio "padding-inline"/"max-width": ese trabajo lo hace este único
+//    punto.
 .seccion {
   scroll-margin-block-start: espaciado(96);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+
+  > * {
+    @include contenedor;
+  }
+}
+
+.seccionAlterna {
+  scroll-margin-block-start: espaciado(96);
+  background-color: var(--color-fondo-alterno);
+  color: var(--color-texto);
+
+  > * {
+    @include contenedor;
+  }
 }

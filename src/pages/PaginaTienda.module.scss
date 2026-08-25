@@ -1,53 +1,181 @@
 .pagina {
-  padding: espaciado(64) espaciado(24);
-  background-color: var(--color-fondo);
+  @include contenedor;
+  padding-block: espaciado(64);
   color: var(--color-texto);
 
   h1 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
-    margin-block-end: espaciado(16);
+    margin-block-end: espaciado(8);
   }
 
-  h2 {
-    font-size: paso-tipografico(2);
+  > p {
+    color: var(--color-texto-suave);
+    max-width: 62ch;
+    margin-block-end: espaciado(24);
   }
 
   a,
-  button,
   input {
     @include foco-visible;
-    @include area-tactil-minima;
   }
 
-  a,
-  button {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  ul {
+  fieldset[aria-label='Filtrar por categoría'] {
     display: flex;
     flex-wrap: wrap;
+    gap: espaciado(8);
+    margin-block-end: espaciado(24);
+    border: none;
+    padding: 0;
+
+    button {
+      @include pildora-filtro;
+    }
+  }
+
+  section[aria-label='Catálogo'] > ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     gap: espaciado(24);
     list-style: none;
-    margin: 0;
+    margin: 0 0 espaciado(48);
     padding: 0;
+
+    li {
+      @include tarjeta;
+      padding: espaciado(20);
+    }
+
+    img {
+      // 4/3 (`estudio_diseno_referencia.md` §3.6), el mismo que las 8
+      // fotografías reales de "public/img/tienda/" (800×600).
+      @include hueco-de-imagen(4, 3);
+      margin-block-end: espaciado(16);
+      border-radius: $radio-medio;
+    }
+
+    h2 {
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(1);
+      margin-block-end: espaciado(4);
+    }
+
+    > li > p:first-of-type {
+      @include eyebrow;
+      margin-block-end: espaciado(4);
+    }
+
+    > li > p:last-of-type {
+      font-family: var(--fuente-titulares);
+      font-weight: 700;
+      font-size: paso-tipografico(2);
+      color: var(--color-tinta);
+      margin-block: espaciado(8) espaciado(16);
+    }
+
+    button {
+      @include boton-primario;
+      margin-block-start: auto;
+      width: 100%;
+    }
+  }
+
+  section[aria-label='Catálogo'] > p {
+    color: var(--color-texto-suave);
   }
 }
 
+// El botón flotante de la cesta y su contador ("BotonCesta").
+.pagina > output {
+  @include pildora-etiqueta;
+  margin-inline-end: espaciado(8);
+}
+
+.pagina > button {
+  @include boton-primario;
+}
+
 .dialogoCesta {
+  @include tarjeta;
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  margin: 0;
+  width: min(420px, 100%);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
   padding: espaciado(24);
-  background-color: var(--color-fondo);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   color: var(--color-texto);
-  border: 1px solid var(--color-texto);
-  border-radius: espaciado(8);
+
+  &:hover {
+    box-shadow: var(--sombra-elevada);
+  }
 
   @include foco-visible;
+
+  h2 {
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(2);
+    margin-block-end: espaciado(16);
+  }
 
   a,
   button,
   input {
     @include foco-visible;
     @include area-tactil-minima;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0 0 espaciado(16);
+    padding: 0;
+    flex: 1;
+
+    li {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: espaciado(8);
+      padding-block: espaciado(12);
+      border-block-end: $ancho-borde-fino solid var(--color-borde);
+
+      p:first-child {
+        flex: 1 1 100%;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      button {
+        @include boton-fantasma;
+        min-height: $altura-control-pequena;
+        padding-inline: espaciado(12);
+      }
+    }
+  }
+
+  > button {
+    @include boton-fantasma;
+    margin-block-end: espaciado(16);
+  }
+
+  > p {
+    font-weight: 700;
+    font-size: paso-tipografico(1);
+  }
+
+  > a {
+    @include boton-primario;
+    margin-block-start: espaciado(8);
+
+    &[aria-disabled='true'] {
+      pointer-events: none;
+      opacity: 0.5;
+    }
   }
 }

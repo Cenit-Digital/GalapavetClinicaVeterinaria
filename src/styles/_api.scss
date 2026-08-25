@@ -13,6 +13,7 @@
 // eso se `@use`a una única vez, desde `global.scss` — nunca desde aquí, para
 // que este fichero no arrastre color y siga siendo cero-CSS.
 @use 'sass:map';
+@use 'sass:math';
 
 // ----------------------------------------------------------------------------
 // B. Escala tipográfica fluida (Utopia, ratio 1.25, base 16px, 320-1024px)
@@ -82,4 +83,277 @@ $area-tactil-minima: 24px;
 @mixin area-tactil-minima {
   min-width: $area-tactil-minima;
   min-height: $area-tactil-minima;
+}
+
+// ----------------------------------------------------------------------------
+// E. Radio, ancho de borde, altura de control y contenedor (paso 10 de
+// `plan_adaptacion_scss.md` §5, PENDIENTES 3 y 4 del contrato — la parte de
+// sombra ya vive en `_tokens.scss` desde la Ronda A). Cada valor MEDIDO sobre
+// las escalas ya existentes de este mismo fichero, nunca copiado del
+// prototipo heredado (Decisión 24 lo prohíbe expresamente, `estudio_diseno_referencia.md`
+// §3: "No copies estos valores" — solo se porta el RECUENTO de pasos: 5
+// radios, 2 anchos de borde, 3 alturas de control, `estudio_diseno_referencia.md`
+// §3.1/§3.3/§3.4).
+// ----------------------------------------------------------------------------
+
+// 5 pasos de radio. Los 3 intermedios son valores YA existentes de
+// `$escala-espaciado` (nunca un número nuevo): pequeño/medio/grande. Los dos
+// extremos, "completo" y "círculo", no son medidas de diseño sino MECANISMOS
+// de CSS (un `border-radius` mayor que la mitad de cualquier lado posible
+// siempre da una píldora; `50%` siempre da un círculo sobre una caja
+// cuadrada) — no hay "escala" de la que derivarlos porque no son magnitudes,
+// son la forma de pedir "el máximo posible".
+$radio-pequeno: espaciado(4);
+$radio-medio: espaciado(12);
+$radio-grande: espaciado(24);
+$radio-completo: 999px;
+$radio-circulo: 50%;
+
+// 2 pasos de ancho de borde, derivados como fracciones del propio paso base
+// de `$escala-espaciado` (4px), nunca del prototipo (que también usaba 1px/
+// 1.5px, pero como valor propio, no medido): "fino" es 1/4 del paso base,
+// "control" 3/8. `$grosor-foco` (arriba) es un TERCER grosor exclusivo del
+// foco: ningún borde de este par puede coincidir con él.
+$ancho-borde-fino: math.div(espaciado(4), 4); // 1px — perímetro decorativo, separadores
+$ancho-borde-control: math.div(espaciado(4), 4) * 1.5; // 1.5px — el borde que IDENTIFICA un control
+
+// 3 pasos de altura de control, derivados sumando el área táctil mínima ya
+// exigida por SC 2.5.8 (`$area-tactil-minima`, arriba) con 3 pasos crecientes
+// de `$escala-espaciado` — nunca un número inventado.
+$altura-control-pequena: $area-tactil-minima + espaciado(16); // 24 + 16 = 40px
+$altura-control-media: $area-tactil-minima + espaciado(24); // 24 + 24 = 48px
+$altura-control-grande: $area-tactil-minima + espaciado(32); // 24 + 32 = 56px
+
+// Ancho máximo de contenedor (@s44/@s45, PENDIENTE 3): el MISMO número que ya
+// gobierna el techo de la escala tipográfica y de espaciado fluidas
+// (`PUNTO_DE_CORTE_NAVEGACION_PX`, `escalaTipografica.ts`) — por encima de
+// ese ancho de viewport el sistema ya deja de crecer, así que el contenido
+// tampoco necesita seguir ensanchando. Un único valor, compartido por las 6
+// rutas vía este mismo mixin (@s45: "un único ancho máximo de contenedor").
+$ancho-maximo-contenedor: 1024px;
+
+@mixin contenedor {
+  // "width: 100%" explícito — no "auto" — es necesario porque el elemento
+  // "contenedor" de las 5 páginas de "src/pages" (a diferencia de las
+  // secciones de la landing, envueltas por un `<div>` normal no-flex en
+  // `Landing.module.scss`) es HIJO DIRECTO de "#root", que es un contenedor
+  // flex en columna (`global.scss`, @s46). En un ítem flex con "width: auto",
+  // un "margin-inline: auto" ABSORBE el espacio de "stretch" en vez de
+  // limitarse a centrar (regla real del algoritmo de Flexbox, medida en vivo:
+  // sin esto, cada ruta quedaba con un ancho DISTINTO, dependiente de su
+  // propio contenido — justo lo que @s45 prohíbe). Con "width: 100%" el
+  // elemento ocupa el ancho completo disponible y SOLO ENTONCES "max-width"
+  // lo recorta y "margin-inline: auto" lo centra, igual en las 6 rutas.
+  width: 100%;
+  max-width: $ancho-maximo-contenedor;
+  margin-inline: auto;
+  padding-inline: espaciado(24);
+}
+
+// ----------------------------------------------------------------------------
+// F. Patrones de componente compartidos (paso 10): tarjeta, botón primario/
+// fantasma, píldora, eyebrow, prosa del blog. Mixins, no clases: cada
+// `.module.scss` que los `@include`a sigue emitiendo su propia clase — nunca
+// se comparte un `className` entre dos ficheros, así que la puerta anti-clase-CSS
+// (`vite.config.ts`) no puede verse comprometida por esta capa. Cada
+// declaración usa SOLO tokens de `_tokens.scss` (nunca un color literal, la
+// puerta `puertaLiteralesColor.ts` ya vigila los `.module.scss` que
+// `@include`an estos mixins) y los pasos de radio/borde/altura de la sección E
+// (nunca copiados del prototipo, Decisión 24).
+// ----------------------------------------------------------------------------
+
+// El patrón madre (`estudio_diseno_referencia.md` §4.1): superficie elevada,
+// borde decorativo (nunca de control: @s7 exige que el borde decorativo no
+// identifique nada), sombra de reposo que sube a elevada en :hover — LA razón
+// de ser de los dos tokens de sombra de la Ronda A. "overflow: hidden" para
+// que la zona de imagen (si la tarjeta lleva una) respete el radio de la
+// tarjeta sin declarar su propio radio.
+@mixin tarjeta {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-superficie);
+  border: $ancho-borde-fino solid var(--color-borde);
+  border-radius: $radio-grande;
+  box-shadow: var(--sombra-reposo);
+  overflow: hidden;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: box-shadow 300ms ease-out;
+  }
+
+  &:hover {
+    box-shadow: var(--sombra-elevada);
+  }
+}
+
+// La fila de acción anclada al pie de la tarjeta (`estudio_diseno_referencia.md`
+// §4.1, punto 3: "margin-top:auto" + borde superior): es lo que alinea los
+// pies de todas las tarjetas de una fila aunque el texto sea desigual (@s47),
+// sin que ninguna tarjeta declare una altura fija.
+@mixin fila-de-accion-de-tarjeta {
+  margin-block-start: auto;
+  padding-block-start: espaciado(16);
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+}
+
+// El hueco de una imagen de tarjeta que aún no ha decodificado (@s31): reserva
+// su alto con "aspect-ratio" y se pinta con "--color-fondo-alterno", nunca
+// transparente. $ancho/$alto son números SIN unidad (4, 3 — no "4px"): es la
+// sintaxis que exige la propiedad CSS "aspect-ratio".
+@mixin hueco-de-imagen($ancho, $alto) {
+  aspect-ratio: #{$ancho} / #{$alto};
+  width: 100%;
+  height: auto;
+  background-color: var(--color-fondo-alterno);
+  object-fit: cover;
+  display: block;
+}
+
+// Botón primario (`estudio_diseno_referencia.md` §4.2): relleno con
+// "--color-primario", NUNCA "filter: brightness()" en el estado con el
+// puntero encima — usa "--color-primario-fuerte", el token propio que @s8/@s11
+// existen para exigir.
+@mixin boton-primario {
+  @include foco-visible;
+  @include area-tactil-minima;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: espaciado(8);
+  min-height: $altura-control-grande;
+  padding-inline: espaciado(24);
+  border: none;
+  border-radius: $radio-completo;
+  background-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+  font-weight: 700;
+  font-size: paso-tipografico(0);
+  cursor: pointer;
+  text-decoration: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: background-color 150ms ease-out;
+  }
+
+  &:hover {
+    background-color: var(--color-primario-fuerte);
+  }
+}
+
+// Botón fantasma/secundario (`estudio_diseno_referencia.md` §4.3): el borde
+// es lo que lo identifica como control, así que usa "--color-borde-control"
+// (>= 3:1, SC 1.4.11) y nunca "--color-borde" (decorativo, @s7).
+@mixin boton-fantasma {
+  @include foco-visible;
+  @include area-tactil-minima;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: espaciado(8);
+  min-height: $altura-control-media;
+  padding-inline: espaciado(20);
+  border: $ancho-borde-control solid var(--color-borde-control);
+  border-radius: $radio-completo;
+  background-color: transparent;
+  color: var(--color-texto);
+  font-weight: 600;
+  font-size: paso-tipografico(0);
+  cursor: pointer;
+  text-decoration: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: border-color 150ms ease-out;
+  }
+
+  &:hover {
+    border-color: var(--color-primario);
+  }
+}
+
+// Píldora — etiqueta estática (`estudio_diseno_referencia.md` §4.4, primer
+// uso): distintivo de categoría/estado, sin interacción.
+@mixin pildora-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: espaciado(12);
+  padding-block: espaciado(4);
+  border-radius: $radio-completo;
+  background-color: var(--color-acento-suave);
+  color: var(--color-acento-tinta);
+  font-size: paso-tipografico(-1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+// Píldora — filtro seleccionable (`estudio_diseno_referencia.md` §4.4,
+// segundo uso): el estado activo/inactivo vive en "aria-pressed" (patrón
+// `estado-condicional-en-atributo-aria-no-en-clase-css`), nunca en una clase.
+@mixin pildora-filtro {
+  @include foco-visible;
+  @include area-tactil-minima;
+  display: inline-flex;
+  align-items: center;
+  min-height: $altura-control-pequena;
+  padding-inline: espaciado(16);
+  border-radius: $radio-completo;
+  border: $ancho-borde-fino solid var(--color-borde);
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+  font-size: paso-tipografico(-1);
+  font-weight: 600;
+  cursor: pointer;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+
+  &[aria-pressed='true'] {
+    background-color: var(--color-primario);
+    border-color: var(--color-primario);
+    color: var(--color-sobre-primario);
+  }
+}
+
+// Eyebrow: el rótulo en versalitas espaciadas que precede a un titular
+// (`estudio_diseno_referencia.md` §4.6, el "descriptor" de marca, y §4.9/§4.10
+// para categoría de producto/artículo).
+@mixin eyebrow {
+  display: block;
+  margin-block-end: espaciado(4);
+  font-size: paso-tipografico(-1);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-acento-tinta);
+}
+
+// Prosa del artículo de blog (`estudio_diseno_referencia.md` §4.10): línea
+// más alta que el cuerpo general (1.8 frente a 1.5) porque es lectura larga,
+// no interfaz.
+@mixin prosa {
+  font-size: paso-tipografico(1);
+  line-height: 1.8;
+  color: var(--color-texto);
+
+  p {
+    margin-block-end: espaciado(16);
+  }
+
+  h2 {
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(3);
+    margin-block: espaciado(32) espaciado(16);
+  }
+
+  blockquote {
+    margin-block: espaciado(24);
+    padding-inline-start: espaciado(16);
+    border-inline-start: $ancho-borde-control solid var(--color-acento-tinta);
+    color: var(--color-texto-suave);
+    font-style: italic;
+  }
 }

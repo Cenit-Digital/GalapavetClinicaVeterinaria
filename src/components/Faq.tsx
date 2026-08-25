@@ -74,7 +74,7 @@ export function Faq({
   }
 
   return (
-    <section aria-label="Preguntas frecuentes" className={styles.faq}>
+    <section aria-label="Preguntas frecuentes" className={styles.faq} data-contenedor-principal>
       <h2>Preguntas frecuentes</h2>
       {validas.map((entrada, indice) => {
         const abierto = indiceAbierto === indice

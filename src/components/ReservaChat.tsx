@@ -118,7 +118,7 @@ export function ReservaChat(): React.JSX.Element {
   }
 
   return (
-    <section className={styles.reservaChat}>
+    <section className={styles.reservaChat} data-contenedor-principal>
       <div>
         <EnlaceLlamada etiqueta="Llamar a la clínica" telefono={datosNegocio.telefonoClinica} />
         <EnlaceLlamada etiqueta="Llamar al móvil" telefono={datosNegocio.telefonoMovil} />

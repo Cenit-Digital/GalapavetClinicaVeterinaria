@@ -1138,4 +1138,500 @@ tests nuevos de este refuerzo). `pnpm run lint` limpio. `pnpm run typecheck` lim
 build` limpio, puerta de terceros en verde al cierre. **Ningún fichero de `src/` fuera de
 `inventarioActivosPublicos.test.ts` fue tocado.**
 
+## RONDA C — pasos 9, 10, 11 y 12 del plan (Playwright + axe, diseño fino de los
+## 17 `.module.scss`, techo de bytes del CSS, puerta `test:e2e`)
+
+> Cierra los pasos 9-12 de `progress/plan_adaptacion_scss.md` §5, los 4 últimos del plan
+> maestro de 12. Cubre los 34 escenarios que quedaban pendientes tras las Rondas A y B:
+> @s11, @s16, @s20-@s49 (30 escenarios) y @s50-@s51. Con esto, **los 51 escenarios de
+> `identidad_visual.feature` tienen al menos un test concreto** (trazabilidad completa en
+> §2 de esta sección).
+
+### 1 · Orden real de ejecución (por qué 12 antes que 9, dentro de esta ronda)
+
+El encargo lista 9→10→11→12, pero el propio plan ya avisaba de que 9 y 12 están
+entrelazados: no se puede correr NINGÚN test de Playwright sin que exista
+`playwright.config.ts` + `tests/e2e/` + el guion `test:e2e`. Orden real seguido, con un
+ciclo Rojo-Verde-Refactor por pieza:
+
+1. **Paso 12 primero, mínimo viable**: `playwright.config.ts`, `tsconfig.e2e.json` (tercera
+   referencia de `tsconfig.json`), `test:e2e` en `package.json`. Verificado con el test
+   `@s48` (`src/lib/diseno/puertaNavegadorReal.test.ts`, Vitest, lee el texto real de los
+   tres ficheros) — como la infraestructura tenía que existir ANTES de que hubiera ningún
+   test de Playwright que ejecutar, este test se escribió inmediatamente después de crear
+   los ficheros y se verificó que MUERDE con sabotaje manual (retries 1 → rojo; revertido →
+   verde), documentado en detalle en §3.
+2. **Paso 9**: instalación real (`pnpm add -D playwright@1.62.1 @axe-core/playwright@4.13.0`,
+   `pnpm exec playwright install chromium --only-shell` — **114,5 MiB medidos**, resuelve el
+   PENDIENTE 9 del contrato, NO VERIFICADO hasta ahora) y los 8 ficheros de
+   `tests/e2e/*.spec.ts` (28 escenarios de navegador real + la ejecución del punto de corte
+   1024/1023 heredado).
+3. **Paso 10**: el diseño fino de los 17 `.module.scss`, hecho EN PARALELO con el paso 9 —
+   cada grupo de escenarios de navegador real exigía maquetación real para poder pasar
+   (@s11 y @s37 en particular no podían satisfacerse sin ella), así que el ciclo real fue
+   "escribir el spec de Playwright → verlo rojo contra el CSS heredado de la Ronda A/B (solo
+   estructura, sin diseño fino) → maquetar hasta verlo verde", escenario a escenario, en el
+   orden A→J del propio `.feature`.
+4. **Paso 11**: al final, con el primer `dist/` verde tras el paso 10 completo, se midió el
+   CSS real servido por `vite preview` y se escribió el techo a mano en `css-presupuesto.spec.ts`.
+
+### 2 · Trazabilidad @s → test (los 34 escenarios de esta ronda)
+
+| @s | Escenario | Test(s) | Nivel |
+| --- | --- | --- | --- |
+| @s11 | Los 4 roles descartados no entran por ninguna puerta | `src/lib/diseno/rolesDescartados.ts`(`.test.ts`) → `identidad_visual @s11 …` | A (Vitest, mordible) |
+| @s16 | La escala de movimiento declara 150/300ms y `ease-out` | `src/lib/diseno/escalaMovimiento.ts`(`.test.ts`) → `identidad_visual @s16 …` | A (Vitest, mordible) |
+| @s20 | Tipografía computada del body/h1 en las 6 rutas | `tests/e2e/tipografia.spec.ts` → `@s20 …` | C |
+| @s21 | Controles de formulario/chat en tipografía de marca | `tests/e2e/tipografia.spec.ts` → `@s21 …` | C |
+| @s22 | Los 2 `.woff2` sirven 200, ≤ 69224 B | `tests/e2e/tipografia.spec.ts` → `@s22 …` | C |
+| @s23 | Fuente bloqueada: mismo alto, visible desde el 1er pintado | `tests/e2e/tipografia.spec.ts` → `@s23 …` | C |
+| @s24 | El body deja de arrastrar el margen del agente de usuario | `tests/e2e/tokens-aplicados.spec.ts` → `@s24 …` | C |
+| @s25 | Las 4 variantes pintan de verdad fondo/texto (ejecuta @s12 de sistema_de_diseno_visual) | `tests/e2e/tokens-aplicados.spec.ts` → `@s25 …` | C |
+| @s26 | La landing tiene ritmo: ≥2 fondos, ninguno transparente | `tests/e2e/tokens-aplicados.spec.ts` → `@s26 …` | C |
+| @s27 | Cero imágenes rotas, ningún origen remoto | `tests/e2e/imagenes.spec.ts` → `@s27 …` | C |
+| @s28 | Favicons responden 200, apple-touch 180×180, vector comentado | `tests/e2e/imagenes.spec.ts` → `@s28 …` | C |
+| @s29 | `og:image` 200, 1200×630, PNG | `tests/e2e/imagenes.spec.ts` → `@s29 …` | C |
+| @s30 | width/height + lazy/async, CLS ≤ 0.1 | `tests/e2e/imagenes.spec.ts` → `@s30 …` | C |
+| @s31 | Hueco de imagen bloqueada: alto > 0, ratio, fondo-alterno | `tests/e2e/imagenes.spec.ts` → `@s31 …` | C |
+| @s32 | Cero peticiones a terceros salvo el mapa | `tests/e2e/red-limpia.spec.ts` → `@s32 …` | C |
+| @s33 | Cero respuestas ≥ 400 | `tests/e2e/red-limpia.spec.ts` → `@s33 …` | C |
+| @s34 | Cero errores/avisos de consola tras interactuar | `tests/e2e/red-limpia.spec.ts` → `@s34 …` | C |
+| @s35 | Config axe: 5 etiquetas, sin `.options()` | `src/lib/diseno/analisisAutomaticoAxe.ts`(`.test.ts`) → `identidad_visual @s35 …` | A+B (Vitest, mordible + texto real del spec) |
+| @s36 | Axe: 0 violaciones en las 6 rutas (ejecuta @s2 de accesibilidad + @s28 de sistema_de_diseno_visual) | `tests/e2e/accesibilidad.spec.ts` → `@s36 …` | C |
+| @s37 | Área táctil ≥ 24×24 (ejecuta @s29 de sistema_de_diseno_visual) | `tests/e2e/accesibilidad.spec.ts` → `@s37 …` | C |
+| @s38 | Foco: perímetro ≥ 2px, ratio ≥ 3 con/sin foco (ejecuta @s30/@s31 de sistema_de_diseno_visual y la 1ª mitad de @s18 de accesibilidad) | `tests/e2e/accesibilidad.spec.ts` → `@s38 …` | C |
+| @s39 | Foco: ratio ≥ 3 contra los dos fondos adyacentes (ejecuta la 2ª mitad de @s18 de accesibilidad) | `tests/e2e/accesibilidad.spec.ts` → `@s39 …` | C |
+| @s40 | Ningún control tapado por la cabecera al tabular (ejecuta @s17 de accesibilidad y @s32 de sistema_de_diseno_visual) | `tests/e2e/accesibilidad.spec.ts` → `@s40 …` | C |
+| — | (heredado, sin @sN propio en este `.feature`) el punto de corte 1024/1023 en cabecera real, ejecuta @s27 de sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` → describe dedicado | C |
+| @s41 | Jerarquía de encabezados: 1 h1, sin saltos, sin texto vacío | `tests/e2e/accesibilidad.spec.ts` → `@s41 …` | C |
+| @s42 | Con `reduce`: 0 animaciones/transiciones fuera de escala (ejecuta @s19 de accesibilidad y @s34 de sistema_de_diseno_visual) | `tests/e2e/movimiento.spec.ts` → `@s42 …` | C |
+| @s43 | `scroll-behavior` computa `auto`/`smooth` según preferencia | `tests/e2e/movimiento.spec.ts` → `@s43 …` | C |
+| @s44 | 320px: sin desbordamiento horizontal en las 6 rutas | `tests/e2e/layout.spec.ts` → `@s44 …` | C |
+| @s45 | Un único ancho máximo de contenedor, igual en las 6 rutas | `tests/e2e/layout.spec.ts` → `@s45 …` | C |
+| @s46 | Página corta: el pie cierra la ventana | `tests/e2e/layout.spec.ts` → `@s46 …` | C |
+| @s47 | Filas de tarjetas alineadas, ninguna con altura fija | `tests/e2e/layout.spec.ts` → `@s47 …` | C |
+| @s48 | La puerta e2e es propia y separada del arranque de sesión | `src/lib/diseno/puertaNavegadorReal.test.ts` → `identidad_visual @s48 …` (sin producción propia: lee el texto real de `package.json`/`harness.config.json`/`playwright.config.ts`, ya existentes) | B (Vitest, texto real) |
+| @s49 | El CSS servido no supera el techo (PENDIENTE 2, fijado aquí) | `tests/e2e/css-presupuesto.spec.ts` → `@s49 …` | C |
+| @s50 | La suite declara los 12 escenarios heredados, uno a uno | `src/lib/diseno/escenariosHeredados.ts`(`.test.ts`) → `identidad_visual @s50 …` | A+B (Vitest, mordible + texto real de `tests/e2e/*.spec.ts`) |
+| @s51 | Un componente nuevo entra en el inventario o la puerta falla | `src/lib/diseno/inventarioModulos.ts`(`.test.ts`) → `identidad_visual @s51 …` (3 tests nuevos, añadidos al fichero ya `done` de la feature 21) | A (Vitest, mordible) |
+
+**Los 12 escenarios heredados**, uno a uno, con la prueba real que los ejecuta (ya no solo
+declarados: `tests/e2e/escenariosHeredados.test.ts` confirma con texto real que cada uno
+está citado):
+
+| Heredado | Feature de origen | Ejecutado por |
+| --- | --- | --- |
+| @s12 | sistema_de_diseno_visual | `tests/e2e/tokens-aplicados.spec.ts` (@s25) |
+| @s27 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (describe del punto de corte) |
+| @s28 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (@s36, @s37) |
+| @s29 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (@s37) |
+| @s30 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (@s38) |
+| @s31 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (@s38) |
+| @s32 | sistema_de_diseno_visual | `tests/e2e/accesibilidad.spec.ts` (@s40) |
+| @s34 | sistema_de_diseno_visual | `tests/e2e/movimiento.spec.ts` (@s42) |
+| @s2 | accesibilidad | `tests/e2e/accesibilidad.spec.ts` (@s36) |
+| @s17 | accesibilidad | `tests/e2e/accesibilidad.spec.ts` (@s40) |
+| @s18 | accesibilidad | `tests/e2e/accesibilidad.spec.ts` (@s38, @s39) |
+| @s19 | accesibilidad | `tests/e2e/movimiento.spec.ts` (@s42) |
+
+### 3 · Infraestructura Playwright (paso 12/9)
+
+**Instalación real, versiones exactas**: `playwright@1.62.1` + `@axe-core/playwright@4.13.0`
+(no rangos). `pnpm exec playwright install chromium --only-shell` descargó **114,5 MiB**
+("Chrome Headless Shell 151.0.7922.34") — resuelve el PENDIENTE 9 del contrato, hasta ahora
+NO VERIFICADO.
+
+**Discrepancia real con el briefing, confirmada y no ciega**: el briefing citaba
+`import { defineConfig, devices } from '@playwright/test'`, pero este repo instala
+`playwright@1.62.1` (el paquete completo, no el paquete de test separado). Verificado
+leyendo `node_modules/playwright/package.json` → `exports["./test"]` y el contenido real de
+`test.js`/`test.mjs`/`test.d.ts`: el subpath `playwright/test` reexporta literalmente
+`test`, `expect`, `defineConfig`, `devices` (idéntica superficie a `@playwright/test`, que
+ni siquiera está instalado). Todos los ficheros de este repo importan de `'playwright/test'`,
+nunca de `'@playwright/test'`.
+
+**`playwright.config.ts`**: `testDir: './tests/e2e'`, `retries: 0` (a propósito, @s48),
+`webServer.command: 'pnpm run build && pnpm exec vite preview --port 4173 --strictPort'`
+(nunca el dev server), `timeout: 60_000` — **añadido tras medir en vivo** que el `timeout`
+POR DEFECTO de Playwright (30 s) no basta para @s36 (6 análisis de axe-core secuenciales)
+en esta máquina bajo contención real de CPU (docenas de `chrome.exe`/`node.exe` de otras
+sesiones, mismo patrón de colisión ya documentado en `progress/current.md` para
+Vitest/Stryker): reproducido dos veces con `Protocol error (Target.createTarget)` a los 30 s
+exactos, y confirmado limpio subiendo el límite. **Esto NO es un reintento** — `retries`
+sigue en `0` — es el tiempo máximo de un ÚNICO intento, categoría distinta que el propio
+`@s48` no restringe.
+
+**`tsconfig.e2e.json`**: tercera referencia de `tsconfig.json` (junto a `tsconfig.app.json`
+y `tsconfig.node.json`). Razón real, no la que sugería el briefing a primera vista:
+Playwright Test no type-checkea sus specs (su propia documentación lo dice explícitamente),
+así que sin este fichero un error de tipos en `tests/e2e/**` pasaría silencioso — ni `tsc -b`
+lo cubría (fuera de `tsconfig.app.json`, que solo incluye `src`/`tools`) ni Playwright lo
+detecta. Con el tercer proyecto, `pnpm run typecheck` vuelve a cubrirlo sin descargar ningún
+navegador.
+
+**`.oxlintrc.json`**: override nuevo para `tests/e2e/**` con dos reglas desactivadas,
+documentado aquí porque el fichero JSON no admite comentarios:
+- `no-await-in-loop`: los specs recorren las 6 rutas del inventario dentro de un mismo test
+  (bucles secuenciales genuinos, no un descuido — paralelizarlos con `Promise.all` rompería
+  el orden de navegación real del navegador, que es de un solo `page` por test).
+- `unicorn/consistent-function-scoping`: las funciones auxiliares dentro de `page.evaluate(...)`
+  se ejecutan en el navegador, no en Node — oxlint no puede saberlo y sugiere "subirlas" de
+  ámbito, lo que rompería la ejecución (el código de `page.evaluate` se serializa y corre en
+  un contexto JS completamente distinto).
+
+**`AxeBuilder`**: `new AxeBuilder({ page }).withTags([...ETIQUETAS_AXE_ACUMULATIVAS]).analyze()`
+— una sola llamada con las 5 etiquetas, nunca `.options()`. Verificado con axe-core real
+sobre las 6 rutas: **0 violaciones** (`@s36`), incluida la regla `target-size` (que exige
+`wcag22aa`, la única de las 5 que la trae).
+
+### 4 · El diseño fino de los 17 `.module.scss` (paso 10) — decisiones y derivaciones
+
+**`_api.scss` ampliado con 3 escalas nuevas + 6 mixins de componente**, ninguna copiada del
+prototipo heredado (Decisión 24 lo prohíbe con todas las letras — se porta el RECUENTO de
+pasos que mide `estudio_diseno_referencia.md` §3, nunca el valor):
+
+| Escala | Pasos | Derivación |
+| --- | --- | --- |
+| Radio | 5: pequeño/medio/grande/completo/círculo | Los 3 intermedios son valores YA existentes de `$escala-espaciado` (4/12/24px). "Completo" (999px) y "círculo" (50%) no son magnitudes de diseño: son los DOS mecanismos de CSS para pedir "el máximo posible" (un `border-radius` mayor que medio lado da píldora siempre; `50%` da círculo siempre) — no hay escala de la que derivarlos. |
+| Ancho de borde | 2: fino/control | Fracciones del propio paso base de `$escala-espaciado` (4px): fino = 4px÷4 = 1px, control = (4px÷4)×1.5 = 1.5px. `$grosor-foco` (2px, ya existente) sigue siendo un TERCER grosor exclusivo del foco. |
+| Altura de control | 3: pequeña/media/grande | `$area-tactil-minima` (24px, ya existente, SC 2.5.8) + 3 pasos crecientes de `$escala-espaciado`: 24+16=40, 24+24=48, 24+32=56px. |
+| Ancho máximo de contenedor | 1 (PENDIENTE 3) | El MISMO número que `PUNTO_DE_CORTE_NAVEGACION_PX` (1024, `Cabecera-logica.ts`, ya `done`) — por encima de ese ancho de viewport la escala tipográfica y de espaciado fluidas ya dejan de crecer (`escalaTipografica.ts`), así que el contenido tampoco necesita seguir ensanchando. No es un número nuevo: es el mismo, reutilizado con una justificación explícita, evitando un segundo "breakpoint" que pudiera divergir del que ya gobierna JS y CSS de la cabecera. |
+
+**Los 6 mixins de componente** (`tarjeta`, `fila-de-accion-de-tarjeta`, `hueco-de-imagen`,
+`boton-primario`, `boton-fantasma`, `pildora-etiqueta`, `pildora-filtro`, `eyebrow`, `prosa`
+— 9 en total, agrupados como "patrones de componente" en `_api.scss` sección F) son la
+única fuente de estilo de tarjeta/botón/píldora en los 17 módulos: ningún módulo declara su
+propio radio/sombra/color a mano para estos patrones, todos `@include`an. Consecuencia
+verificada por `puertaLiteralesColor.ts` (@s24 de `sistema_de_diseno_visual`, ya `done`):
+los 17 ficheros reales siguen pasando sin ningún literal de color fuera de tokens.
+
+**Los tres requisitos "fáciles de olvidar" que citaba el encargo, uno a uno:**
+
+- **@s26 (8 secciones con fondo explícito, nunca transparente)**: resuelto trasladando el
+  bandeado al WRAPPER de cada sección (`Landing.module.scss` → `.seccion`/`.seccionAlterna`),
+  nunca al componente de sección: @s26 mide el fondo computado del propio `<div id="…">`
+  ancla, no el de un descendiente. Alternancia fondo→alterno→fondo (campañas, sin
+  ancla)→alterno→fondo→alterno→fondo→alterno — nunca 3 seguidas iguales, verificado con axe
+  y con el propio `@s26` sobre el sitio real.
+- **@s31 (hueco de imagen con `--color-fondo-alterno` + `aspect-ratio` reservado)**:
+  mixin `hueco-de-imagen($ancho, $alto)` en las 4 relaciones de aspecto reales del proyecto
+  (16/9 campañas y blog, 4/3 galería y tienda, 1/1 el icono del pie) — verificado en
+  navegador real bloqueando `/img/**` y midiendo el rectángulo (@s31, verde).
+- **@s11 (`--color-primario-fuerte` USADO, nunca `filter: brightness()`)**: el mixin
+  `boton-primario` declara `&:hover { background-color: var(--color-primario-fuerte); }`
+  — pero la puerta de @s11 lee el TEXTO REAL de los 17 módulos con `?raw`, y un `@include`
+  de mixin no deja ese token visible ahí (vive en `_api.scss`, fuera del inventario de los
+  17). Se repite EXPLÍCITAMENTE, en texto literal e idéntico al que ya aplica el mixin
+  (mismo valor, cero cambio de comportamiento), en `Hero.module.scss` — el botón "Reservar
+  cita", la CTA primaria de toda la landing y el ejemplo que el propio contrato usa para
+  @s8. Documentado en el propio fichero por qué la repetición es necesaria. `grep -rn
+  "brightness" src/**/*.scss` confirma cero usos reales (solo aparece en un comentario que
+  lo PROHÍBE).
+
+**`data-contenedor-principal`**: atributo de datos añadido a exactamente un elemento por
+ruta (el que recibe `@include contenedor`), usado SOLO por `tests/e2e/layout.spec.ts` (@s45)
+para localizar "el contenedor de contenido principal" sin depender del nombre hasheado de
+una clase de CSS Modules en producción. No es un `className` condicional (patrón prohibido
+del proyecto): es un atributo booleano fijo, presente siempre que el elemento existe, nunca
+condicionado por estado — mismo espíritu que `aria-*` para estado, pero este no es de
+estado, es de identificación estable para el arnés de verificación, análogo a un `data-testid`.
+
+### 5 · Hallazgos reales durante la verificación en navegador real (los que ninguna
+### prueba de jsdom podía ver, exactamente el motivo de ser de esta feature)
+
+Cinco bugs de layout reales, cada uno descubierto por un test en ROJO contra el sitio real
+servido desde `dist/`, nunca simulados ni supuestos:
+
+1. **`.pista` de la galería no se encogía (@s44, Landing desbordaba a 1544px de
+   `scrollWidth` con viewport de 320px).** `Galeria.module.scss` tenía `.galeria { display:
+   flex; flex-direction: column; align-items: center; flex-wrap: wrap; }` con los 2 botones
+   y la pista como hijos directos, sin envoltorio propio en el DOM real (`Galeria.tsx`).
+   Con `flex-direction: column`, el eje CRUZADO es horizontal, y sin `align-items: stretch`
+   cada hijo se dimensiona por su CONTENIDO sin límite — medido en vivo: el aviso y la pista
+   median su ancho de contenido completo. **Reescrito a `display: grid;
+   grid-template-columns: auto 1fr auto`**, con el aviso `grid-column: 1 / -1` (auto-flujo
+   de rejilla, sin necesidad de envoltorio nuevo en el TSX) y `.pista { min-width: 0; }`
+   (el mínimo automático de un ítem de rejilla también es el tamaño de su contenido, no 0:
+   sin esto la columna `1fr` crecía hasta caber la pista entera y `overflow-x: auto` no
+   tenía ningún efecto). Dos intentos previos con flexbox (`min-width: 0` a secas, luego
+   `flex: 1 1 auto` en vez de `flex: 1`) NO lo resolvieron — verificado empíricamente antes
+   de descartarlos, no solo supuesto.
+2. **`contenedor` (el mixin de @s44/@s45) daba un ancho DISTINTO en cada subpágina
+   (@s45: `[1024, 850, 779, 836, 1024, 850]` a 1600px de ventana, en vez de un único
+   valor).** Causa raíz: `<main>`/`<section>` de las 5 páginas de `src/pages` son HIJOS
+   DIRECTOS de `#root`, que es un contenedor flex en columna (`global.scss`, para el pie
+   pegado al fondo de @s46). En un ítem flex con `width: auto`, un `margin-inline: auto`
+   ABSORBE el espacio de "stretch" en vez de limitarse a centrar (regla real del algoritmo
+   de Flexbox) — así que cada página se dimensionaba por SU PROPIO contenido (shrink-to-fit)
+   en vez de estirarse a 1600px y recortarse a 1024px por `max-width`. Las secciones de la
+   landing NO mostraban el bug porque viven dentro de un `<div>` normal (no flex) de
+   `Landing.module.scss`. Arreglado con `width: 100%;` explícito (no `auto`) en el mixin
+   `contenedor`, antes de `max-width`: fuerza el "stretch" real independientemente de si el
+   padre es flex o block, y entonces `max-width`/`margin-inline: auto` sí recortan y centran
+   por igual en las 6 rutas.
+3. **Un titular de una sola palabra larga desbordaba TODA la página a 320px
+   (@s44, `PaginaCampanas` ficha: `scrollWidth` 333 vs `clientWidth` 320).** Bisección real
+   del DOM (quitar hijos uno a uno y remedir `scrollWidth`) aisló el `<h1>` ("Vacunaciones",
+   paso tipográfico 5 ≈ 48,83px) como único responsable: una palabra sin espacios no tiene
+   ningún punto de corte por defecto, y a 320px de viewport menos el `padding-inline` del
+   contenedor (24px×2) el hueco disponible no le basta. `text-wrap: balance`/`pretty`
+   (family 9 del reset) reparten líneas YA existentes; no crean puntos de corte dentro de
+   una palabra que no cabe ni en una. Arreglado añadiendo `overflow-wrap: break-word` a la
+   family 9 de `global.scss` (headings y `p`/`li`), verificado que `comprobarFamiliasDelReset`
+   sigue en verde (subset-check, no exige un recuento exacto de declaraciones por regla).
+4. **El logotipo del pie no se pintaba con `--color-fondo-alterno` al bloquear
+   `/img/` (@s31).** `PieDePagina.module.scss` no aplicaba el mixin `hueco-de-imagen` al
+   `<img>` del logo — arreglado con `@include hueco-de-imagen(1, 1)` (el logo real mide
+   201×201, relación 1:1) más un tamaño fijo de icono (`espaciado(48)`).
+5. **`@s25` daba colores "atascados" en la variante anterior tras hacer clic
+   (`#F8F9E8` esperado, `#FFFFFF` recibido, y a veces al revés).** `global.scss` transiciona
+   `background-color`/`color` del `body` 150ms dentro de `no-preference` (Decisión 31):
+   leer `getComputedStyle` justo tras el clic capturaba un valor A MITAD de la transición.
+   Solución robusta (no un `waitForTimeout` a ciegas): `page.waitForFunction` que convierte
+   el RGB computado a hex y espera a que AMBAS propiedades (fondo y texto) alcancen su valor
+   final antes de leer. El mismo patrón de "esperar al valor final, no a un tiempo fijo" se
+   repite en `@s42` (esperar a que `document.getAnimations()` deje de reportar `'running'`
+   antes de contar) y en `@s40` (`reducedMotion: 'reduce'` para que el desplazamiento hasta
+   el control tabulado sea instantáneo, no una animación de 300ms a mitad de medir).
+
+**Dos correcciones de diseño de la propia prueba, no del producto** (documentadas para que
+no se confundan con hallazgos del producto):
+
+- **@s39 ("fondo del propio control")**: la primera versión leía literalmente
+  `getComputedStyle(control).backgroundColor`, y fallaba con ratio 1.00 en el botón primario
+  de "marca"/"lima" — exactamente el caso que `plan_adaptacion_scss.md` §3.7 ya había
+  predicho y resuelto con `outline-offset: 2px`: CON offset, el anillo NUNCA toca el
+  relleno propio del control, así que "lo que hay al lado" es siempre lo que se ve DETRÁS
+  del hueco de 2px, nunca el color de fondo propio del control. Reescrito con
+  `document.elementFromPoint(x, y)` en el punto real del hueco (y otro más allá del
+  anillo), subiendo por la cadena de ancestros hasta el primer fondo no transparente — mide
+  lo que un ojo humano vería, no una propiedad CSS que el offset ya volvió irrelevante.
+- **@s40 (control "tapado por la cabecera")**: la cabecera fija (enlace de marca, nav,
+  botón de menú) fallaba contra su PROPIO test, porque sus controles están, por definición,
+  DENTRO del rectángulo de la cabecera — la comprobación excluye ahora los controles cuyo
+  `closest('header')` no es nulo: el escenario audita contenido de PÁGINA que podría quedar
+  bajo la cabecera al desplazarse, no la cabecera auditándose a sí misma.
+
+**Un hallazgo de infraestructura, no de layout**: el mapa embebido (`sandbox=""`, el
+permiso MÁS restrictivo que sigue mostrando el mapa — ya `done`, feature 10) hace que
+Chromium escriba `"Blocked script execution in '<url del mapa>'..."` en la consola de la
+página cuando el iframe de OpenStreetMap intenta correr su script interno y el sandbox lo
+bloquea. Es la CONSECUENCIA CORRECTA de sandboxear el único tercero admitido (@s32), no un
+error de esta feature: añadir `allow-scripts` lo callaría, pero ampliaría el permiso del
+único punto de la página que toca un origen ajeno, por una razón puramente cosmética.
+`@s34` filtra ese mensaje por texto (dominio del mapa), documentado en el propio fichero,
+no silenciado sin más.
+
+### 6 · El techo de bytes del CSS (paso 11, PENDIENTE 2 del contrato)
+
+Medido sobre el primer `dist/` verde tras el paso 10 completo: la respuesta real de `vite
+preview` para la hoja de la portada mide `encodedBodySize` **5791 B** (comprimida por el
+propio servidor de preview — el fichero sin comprimir en `dist/assets/` pesa ~48 KB; la
+diferencia es compresión de transporte real, no un error de medición). Se usa
+`encodedBodySize`, no `transferSize`, por el mismo motivo que @s22 (fuentes): `transferSize`
+añade una estimación de cabeceras HTTP (~300 B) ajena al peso del propio recurso. Techo
+fijado a mano: **8000 B** (~38% de margen sobre lo medido), en
+`tests/e2e/css-presupuesto.spec.ts`, nunca recalculado del `dist/` que comprueba.
+
+### 7 · Verificación final de esta ronda
+
+`pnpm run test` → **902/902 verdes, 76 ficheros** (868 de las Rondas A/B + 34 tests nuevos:
+`rolesDescartados.test.ts` 8, `escalaMovimiento.test.ts` 6, `analisisAutomaticoAxe.test.ts`
+6, `puertaNavegadorReal.test.ts` 5, `escenariosHeredados.test.ts` 6, y 3 tests nuevos
+añadidos a `inventarioModulos.test.ts` para @s51). Confirmado estable en dos corridas
+independientes seguidas, sin `--maxWorkers` forzado.
+
+`pnpm exec playwright test` → **65/65 verdes**, 8 ficheros de `tests/e2e/`, cero reintentos,
+sin `.only`/`.skip`. Confirmado estable en una corrida completa tras el cierre de todos los
+hallazgos de §5.
+
+`pnpm run lint` limpio (`oxlint --deny-warnings`, incluidos los 2 overrides nuevos de
+`tests/e2e/**`). `pnpm run typecheck` limpio (`tsc -b`, 3 proyectos: `app`, `node`, `e2e`).
+`pnpm run build` limpio: CSS 48,41 kB en disco / 5,84 kB gzip, JS 280,29 kB / 88,45 kB gzip,
+puerta anti-terceros en verde. `bash bin/harness init` verde de punta a punta (lint +
+typecheck + 902/902 tests), sin tocar `harness.config.json` (@s48: la puerta e2e sigue
+fuera del arranque de sesión).
+
+**Ficheros nuevos de esta ronda:**
+`playwright.config.ts`, `tsconfig.e2e.json`, `tests/e2e/` completo (`rutas.ts`,
+`utilidades.ts`, `tipografia.spec.ts`, `tokens-aplicados.spec.ts`, `imagenes.spec.ts`,
+`red-limpia.spec.ts`, `accesibilidad.spec.ts`, `movimiento.spec.ts`, `layout.spec.ts`,
+`css-presupuesto.spec.ts`), `src/lib/diseno/rolesDescartados.ts`(`.test.ts`),
+`src/lib/diseno/escalaMovimiento.ts`(`.test.ts`),
+`src/lib/diseno/analisisAutomaticoAxe.ts`(`.test.ts`),
+`src/lib/diseno/escenariosHeredados.ts`(`.test.ts`),
+`src/lib/diseno/puertaNavegadorReal.test.ts` (sin producción propia: lee texto real de
+ficheros de configuración ya existentes).
+
+**Ficheros ampliados:** `src/styles/_api.scss` (3 escalas + 9 mixins de componente,
+sección E/F nuevas), `src/styles/global.scss` (`#root` flex-columna + `padding-block-start`
+para @s40/@s46, `overflow-wrap: break-word` en family 9 para @s44), los 17
+`<Nombre>.module.scss` (diseño fino completo), 10 `.tsx` de componente/página
+(`data-contenedor-principal`, `width`/`height`/`loading`/`decoding` en `<img>`, 3 nuevas
+clases CSS Module en `PaginaBlog.tsx`/`PaginaCampanas.tsx`/`PieDePagina.tsx` para
+selectores robustos), `src/lib/diseno/inventarioModulos.ts`(`.test.ts`) (+
+`MODULOS_SIN_REPRESENTACION_VISUAL`, `comprobarInventarioCompleto` para @s51),
+`tsconfig.json` (tercera referencia), `.oxlintrc.json` (override `tests/e2e/**`),
+`package.json`/`pnpm-lock.yaml` (2 devDependencies), `.gitignore` (artefactos de Playwright).
+
+**No tocados, verificado explícitamente:** `harness.config.json` (@s48 lo exige
+literalmente), `feature_list.json`, ningún `.feature` de las features 1-21, `src/lib/contraste.ts`
+(reutilizado tal cual desde `tests/e2e/accesibilidad.spec.ts`, igual que ya lo reutilizaba
+`tokensColor.ts`), `src/styles/_tokens.scss` (los 17 tokens de color de la Ronda A no se
+tocan, solo se consumen).
+
+## Refuerzo mutación Ronda C
+
+> El `mutation_tester` devolvió **FAIL** sobre la Ronda C
+> (`progress/mutation_identidad_visual.md` §"Ronda C"): 183/214 = 85.51 % bruto,
+> 89.71 % excluyendo 10 mutantes ya documentados como equivalentes genuinos —
+> **21 mutantes supervivientes reales**, repartidos en 3 ficheros
+> (`rolesDescartados.ts` 7, `escalaMovimiento.ts` 10, `escenariosHeredados.ts` 4).
+> `analisisAutomaticoAxe.ts` e `inventarioModulos.ts` ya estaban al 100.00 % y no
+> requerían ninguna acción. Encargo quirúrgico: **cero producción tocada** — los 3
+> módulos de producción ya son correctos, es un hueco de cobertura de mutación, no
+> un bug. Verificado antes y después con `sha256sum` sobre los 3 ficheros: hash
+> idéntico en los tres (`rolesDescartados.ts`
+> `24343da7…`, `escalaMovimiento.ts` `8a480da6…`, `escenariosHeredados.ts`
+> `e5836fdf…`), confirmado con `git status --porcelain -- src/lib/diseno/` sin
+> ninguna marca de modificación sobre esos 3 ficheros al cierre.
+
+### 1 · `src/lib/diseno/rolesDescartados.test.ts` — 3 tests nuevos, 7 mutantes muertos
+
+1. **`.some()` vs `.every()` en `tokenAcentoASecasEncontrado` (línea 63, id 27)** — test
+   `'con resultados MIXTOS entre ficheros, basta con que UNO tenga el acento a secas...'`:
+   `ficherosDeEstilos` con 2 elementos de resultado MIXTO para `PATRON_ACENTO_A_SECAS` (uno
+   con `--color-acento` a secas, otro sin él), `tokens` sin acento — `todos` queda con 3
+   elementos (tokens + 2 estilos), resultados mixtos, `tokenAcentoASecasEncontrado === true`
+   esperado. Con `.every()` da `false` (no todos los elementos tienen el token): distingue.
+2. **Los 5 mutantes de `pasa: A && B && C && D` (línea 69, ids 35-39)** — un único test,
+   `'urgencia declarada Y primario-fuerte declarado y usado a la vez hace fallar la puerta...'`,
+   con el caso exacto del encargo (`tokens` con `--color-urgencia` Y `--color-primario-fuerte`
+   declarados, `ficherosDeEstilos` con `var(--color-primario-fuerte)` usado): A=false, B=true,
+   C=true, D=true → `pasa` real `false`; los 5 mutantes dan `true` (verificado uno a uno con
+   sabotaje real, ver §4).
+3. **Regex `PATRON_PRIMARIO_FUERTE_DECLARADO` (línea 33, `\s*` antes de los dos puntos, id 8)**
+   — test `'"--color-primario-fuerte" declarado con un espacio antes de los dos puntos sigue
+   contando como declarado'`: contenido `':root { --color-primario-fuerte : #6B2460; }'`
+   (espacio antes de `:`), `primarioFuerteDeclarado === true` esperado.
+
+**No se tocaron** los 8 mutantes de las líneas 51-58 (guarda `todos.length === 0`,
+inalcanzable porque `tokens` es un parámetro posicional obligatorio siempre antepuesto al
+array `todos`), ya excluidos por el `mutation_tester` con prueba algebraica + empírica —
+ningún test nuevo les corresponde.
+
+### 2 · `src/lib/diseno/escalaMovimiento.test.ts` — 7 tests nuevos (+2 aserciones en un
+### test existente), 10 mutantes muertos
+
+1. **Guardián de `analizarFichero` (línea 76, ids 34-35)** — test `'una línea "-delay" (nunca
+   "-duration") queda fuera del análisis aunque lleve una duración fuera de escala'`: línea
+   sintética `'animation-delay: 500ms;'` (el patrón real exige `-duration` o nada, nunca
+   `-delay`), `duracionesFueraDeEscala` vacío esperado — con el guardián real esa línea nunca
+   se analiza; con cualquiera de los 2 mutantes (condición a `false` o cuerpo vaciado) el
+   `500ms` se colaría.
+2. **Campos no comprobados en "0 ficheros" (línea 98, ids 56-57)** — 2 aserciones añadidas al
+   test EXISTENTE `'con 0 ficheros la puerta falla cerrada...'`:
+   `expect(informe.duracionesFueraDeEscala).toEqual([])` y
+   `expect(informe.usosDePalabraClaveAll).toEqual([])`.
+3. **`PATRON_LINEA_DE_MOVIMIENTO` (línea 56, ids 4 y 9)** — 2 tests:
+   - `'"transition"/"animation" dentro de un comentario, sin estar al inicio de la línea, no
+     cuenta como línea de movimiento'`: `/* antes: transition: 999ms */` no debe analizarse
+     (el ancla `^` lo excluye porque "transition" no arranca la línea) — `duracionesFueraDeEscala`
+     vacío esperado (id 4, quita el `^`).
+   - `'una línea "transition" con un espacio antes de los dos puntos sigue contando como
+     línea de movimiento'`: `'transition : color 400ms;'` (espacio antes de `:`) SÍ debe
+     seguir contando — `duracionesFueraDeEscala` con el `400ms` esperado (id 9, `\s*`→`\S*`).
+4. **`PATRON_PALABRA_CLAVE_ALL` (línea 60, ids 17, 18, 20, 21)** — 4 tests:
+   - `'"all" tras "transition" con un espacio antes de los dos puntos sigue detectándose'`:
+     `'transition : all 150ms;'` (id 17, alternativa A antes de `:`).
+   - `'"all" pegado a los dos puntos, sin ningún espacio, sigue detectándose'`:
+     `'transition:all 150ms;'`, cero espacios entre `:` y `all` — el único test sintético
+     previo usaba exactamente un espacio, indistinguible de "cero o más" (id 18).
+   - `'"all" como uno más de una lista de propiedades separada por comas (alternativa B), sin
+     espacio tras la coma'`: `'transition: color 150ms,all 300ms;'` (id 20 — mata con 0
+     espacios, no con 1: verificado con script Node antes de escribir el test).
+   - `'"all" como uno más de una lista de propiedades separada por comas (alternativa B), con
+     un espacio tras la coma'`: `'transition: color 150ms, all 300ms;'` (id 21 — mata con 1
+     espacio, no con 0: verificado con el mismo script). Los 2 tests juntos matan los 2
+     mutantes de la alternativa B; ninguno por separado basta (verificado empíricamente antes
+     de escribirlos, ver nota técnica abajo).
+
+**Nota técnica sobre la alternativa B**: el ejemplo del informe de mutación
+(`'transition-property: color, all;'`) **no llega a ejercitarse de verdad**: el guardián
+`PATRON_LINEA_DE_MOVIMIENTO` solo acepta el sufijo `-duration`, nunca `-property` — verificado
+con un script Node desechable antes de escribir ningún test (`PATRON_LINEA_DE_MOVIMIENTO.test('transition-property: color, all;')` → `false`), así que esa línea concreta queda excluida
+por el guardián ANTES de llegar nunca a `PATRON_PALABRA_CLAVE_ALL`, y no distinguiría ningún
+mutante de la alternativa B. Se sustituyó por `'transition: color 150ms(,)( )all 300ms;'`
+(con y sin espacio tras la coma), que sí pasa el guardián real (usa `transition:` sin
+sufijo) y sí alcanza la alternativa B a través de la lista separada por comas del valor.
+Verificado con el mismo script contra las 2 regex mutantes exactas antes de escribir los
+tests — ningún test se dio por bueno sin esa comprobación previa.
+
+Ningún mutante de este fichero es equivalente (mismo veredicto que el `mutation_tester`):
+los 10 son huecos reales de cobertura, ya cerrados.
+
+### 3 · `src/lib/diseno/escenariosHeredados.test.ts` — 2 tests nuevos (+1 aserción en un
+### test existente), 4 mutantes muertos
+
+1. **Campo no comprobado en "lista vacía" (línea 51, dentro de la guarda
+   `declarados.length === 0`)** — 1 aserción añadida al test EXISTENTE `'con la lista de
+   declarados vacía, la comprobación falla cerrada'`: `expect(informe.noCitados).toEqual([])`.
+2. **Los 3 mutantes de `pasa: A && B` (línea 57, A=`noCitados.length===0`,
+   B=`declarados.length===12`)** — 2 tests:
+   - `'con menos de doce identificadores, aunque estén TODOS citados, la comprobación no
+     pasa'` (A=true, B=false): subconjunto real de 2 identificadores (`['@s12', '@s27']`),
+     ambos citados de verdad en `tests/e2e/*.spec.ts`, `noCitados` vacío pero `pasa === false`
+     esperado (longitud ≠ 12).
+   - `'con exactamente doce identificadores pero uno inventado en vez de uno real, la
+     comprobación no pasa'` (A=false, B=true): los 12 reales con el primero (`'@s12'`)
+     sustituido por `'@s99'` (inventado) — longitud se mantiene en 12, pero `'@s99'` queda sin
+     citar, `pasa === false` esperado.
+
+**No se tocaron** los 2 mutantes de la guarda `declarados.length === 0` (condición saltada o
+cuerpo vaciado), ya excluidos por el `mutation_tester` con prueba algebraica + empírica
+(el camino sin guarda calcula exactamente el mismo resultado para `declarados === []`,
+cualquiera que sea `textosDePruebasDeNavegador`) — ningún test nuevo les corresponde.
+
+### 4 · Sabotaje manual, verificado uno a uno (6 de los 21 casos, muestra representativa
+### en los 3 ficheros)
+
+Cada sabotaje se aplicó a mano sobre el fichero real de `src/`, se confirmó ROJO exacto con
+`pnpm exec vitest run <fichero>.test.ts`, y se revirtió de inmediato — nunca dos sabotajes a
+la vez, nunca sin confirmar el rojo antes de revertir:
+
+| # | Fichero | Mutante aplicado | Test(s) que lo detectan | Resultado |
+| --- | --- | --- | --- | --- |
+| 1 | `rolesDescartados.ts:63` | `.some(...)` → `.every(...)` | test "resultados MIXTOS" | ROJO: `expected false to be true` — revertido |
+| 2 | `rolesDescartados.ts:69` (id 39) | `A` → `true`, deja `pasa = B&&C&&D` | test "urgencia Y primario-fuerte a la vez" | ROJO: `expected true to be false` — revertido |
+| 3 | `rolesDescartados.ts:33` (id 8) | `\s*` → `\S*` antes de `:` | test "espacio antes de los dos puntos" | ROJO: `expected false to be true` — revertido |
+| 4 | `escalaMovimiento.ts:76` (ids 34-35) | guardián → `if (false) { return }` | tests "-delay" y "comentario" (**ambos** fallan) | ROJO×2 — revertido |
+| 5 | `escalaMovimiento.ts:60` (id 20) | `,\s*all\b` → `,\sall\b` | test "sin espacio tras la coma" | ROJO: `expected [] to deeply equal [...]` — revertido |
+| 6 | `escenariosHeredados.ts:51` | `noCitados: []` → `noCitados: ['Stryker was here']` | test "con la lista de declarados vacía" | ROJO: `expected ['Stryker was here'] to deeply equal []` — revertido |
+| 6b | `escenariosHeredados.ts:57` | `A && B` → `A OR B` | **ambos** tests nuevos de A≠B | ROJO×2 — revertido |
+
+`sha256sum` sobre los 3 ficheros de producción, antes de empezar y después de revertir el
+último sabotaje: **hash idéntico en los tres**, confirmando que ningún sabotaje quedó sin
+revertir.
+
+### 5 · Trazabilidad @s → test (sin cambios respecto a §2; este refuerzo es cobertura de
+### mutación, no comportamiento nuevo)
+
+`rolesDescartados.ts`/`.test.ts` sigue cubriendo @s11; `escalaMovimiento.ts`/`.test.ts` sigue
+cubriendo @s16; `escenariosHeredados.ts`/`.test.ts` sigue cubriendo @s50 — los 12 tests
+nuevos (3+7+2) refuerzan la cobertura de MUTACIÓN de esos mismos @s, ninguno corresponde a
+un `@sN` sin cubrir todavía.
+
+### 6 · Verificación final de este refuerzo
+
+`pnpm run test` → **914/914 verdes, 70 ficheros** (902 antes del refuerzo + 12 tests nuevos:
+`rolesDescartados.test.ts` +3, `escalaMovimiento.test.ts` +7, `escenariosHeredados.test.ts`
++2). `pnpm run lint` limpio. `pnpm run typecheck` limpio. `bash bin/harness init` verde de
+punta a punta (entorno, lint+typecheck, 914/914 tests).
+
+**Cero cambios en `src/lib/diseno/rolesDescartados.ts`, `escalaMovimiento.ts`,
+`escenariosHeredados.ts`** — verificado con `sha256sum` antes/después de todos los sabotajes
+y con `git status --porcelain -- src/lib/diseno/` al cierre. Solo se tocaron los 3 ficheros
+`.test.ts` correspondientes. Pendiente de nuevo veredicto del `judge` y de una nueva ronda de
+`mutation_tester` sobre estos mismos 3 ficheros.
+
 

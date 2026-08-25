@@ -47,7 +47,12 @@ export function Galeria({ catalogo = GALERIA }: GaleriaProps = {}): React.JSX.El
   }
 
   return (
-    <section aria-label="Galería" aria-describedby="galeria-aviso-demostracion" className={styles.galeria}>
+    <section
+      aria-label="Galería"
+      aria-describedby="galeria-aviso-demostracion"
+      className={styles.galeria}
+      data-contenedor-principal
+    >
       <p id="galeria-aviso-demostracion">
         Contenido de demostración. Estas fotografías y sus pies son de ejemplo, no fotografías reales de pacientes de
         Galapavet: la clínica todavía no ha cedido fotografías propias ni el consentimiento de las familias
@@ -66,7 +71,7 @@ export function Galeria({ catalogo = GALERIA }: GaleriaProps = {}): React.JSX.El
       <div ref={pistaRef} role="group" aria-label="Fotografías de la galería" tabIndex={0} className={styles.pista}>
         {validas.map((entrada) => (
           <figure key={entrada.nombre}>
-            <img src={entrada.src} alt={entrada.nombre} />
+            <img src={entrada.src} alt={entrada.nombre} width={800} height={600} loading="lazy" decoding="async" />
             <figcaption>{`${entrada.nombre} · ${entrada.pie}`}</figcaption>
           </figure>
         ))}

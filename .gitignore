@@ -14,6 +14,12 @@ htmlcov/
 coverage/
 reports/
 
+# Playwright (puerta e2e, paso 12 de identidad_visual)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Verificación en vivo (experimentos contra navegador real, nunca se versionan)
 .experimentos-tmp/
 

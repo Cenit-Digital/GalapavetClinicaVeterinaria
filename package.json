@@ -18,6 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cobertura": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "mutate": "stryker run"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "react-router": "^8.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@fontsource-variable/dm-sans": "5.3.0",
     "@fontsource-variable/outfit": "5.3.0",
     "@stryker-mutator/core": "^10.0.0",
@@ -42,6 +44,7 @@
     "axe-core": "^4.13.0",
     "jsdom": "^30.0.1",
     "oxlint": "^1.78.0",
+    "playwright": "1.62.1",
     "sass-embedded": "^1.102.0",
     "typescript": "~6.0.3",
     "vite": "^8.2.1",

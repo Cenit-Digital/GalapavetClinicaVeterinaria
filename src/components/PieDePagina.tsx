@@ -62,26 +62,28 @@ export function PieDePagina({
 
   return (
     <footer className={styles.pie}>
-      <div>
-        {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
-        <img src={SRC_LOGO} alt="" />
-        <p>{datosNegocio.identidad.nombreComercial}</p>
-        <p>{datosNegocio.identidad.descriptorConLocalidad}</p>
-      </div>
-      <ColumnaEnlaces titulo="Clínica" enlaces={ENLACES_CLINICA} />
-      <ColumnaEnlaces titulo="Contenido" enlaces={ENLACES_CONTENIDO} />
-      <ColumnaEnlaces titulo="Contacto" enlaces={enlacesContacto} />
-      <div>
-        <p>{copyright}</p>
-        <ul aria-label="Enlaces legales">
-          {enlacesLegales.map((enlace) => (
-            <li key={enlace.destino}>
-              <a href={enlace.destino} target="_blank" rel="noopener noreferrer">
-                {enlace.nombreAccesible}
-              </a>
-            </li>
-          ))}
-        </ul>
+      <div className={styles.interior} data-contenedor-principal>
+        <div className={styles.marca}>
+          {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
+          <img src={SRC_LOGO} alt="" width={201} height={201} loading="lazy" decoding="async" />
+          <p>{datosNegocio.identidad.nombreComercial}</p>
+          <p>{datosNegocio.identidad.descriptorConLocalidad}</p>
+        </div>
+        <ColumnaEnlaces titulo="Clínica" enlaces={ENLACES_CLINICA} />
+        <ColumnaEnlaces titulo="Contenido" enlaces={ENLACES_CONTENIDO} />
+        <ColumnaEnlaces titulo="Contacto" enlaces={enlacesContacto} />
+        <div className={styles.barraInferior}>
+          <p>{copyright}</p>
+          <ul aria-label="Enlaces legales">
+            {enlacesLegales.map((enlace) => (
+              <li key={enlace.destino}>
+                <a href={enlace.destino} target="_blank" rel="noopener noreferrer">
+                  {enlace.nombreAccesible}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </footer>
   )

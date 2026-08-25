@@ -147,7 +147,7 @@ function CuerpoArticulo({ cuerpo }: CuerpoArticuloProps): React.JSX.Element {
 /** Cierre del artículo: invita a reservar cita sin prometer nada (@s24). */
 function CierreArticulo(): React.JSX.Element {
   return (
-    <section>
+    <section className={styles.cierreArticulo}>
       <h2>{TITULO_CIERRE}</h2>
       <Link to="/#reservar">Reservar cita</Link>
     </section>
@@ -164,13 +164,13 @@ function BloqueSigueLeyendo({ relacionados }: BloqueSigueLeyendoProps): React.JS
     return null
   }
   return (
-    <section>
+    <section className={styles.sigueLeyendo}>
       <h2>{TITULO_SIGUE_LEYENDO}</h2>
       <ul>
         {relacionados.map((articulo) => (
           <li key={articulo.identificador}>
             <Link to={`/blog/${articulo.identificador}`}>
-              <img src={articulo.imagen} alt="" />
+              <img src={articulo.imagen} alt="" width={1600} height={900} loading="lazy" decoding="async" />
               {articulo.titulo}
             </Link>
           </li>
@@ -212,7 +212,14 @@ function VistaArticulo({ catalogo, identificador, categoriaParam }: VistaArticul
       <p>{AVISO_DEMOSTRACION}</p>
       <article>
         <h1>{articulo.titulo}</h1>
-        <img src={articulo.imagen} alt={articulo.textoAlternativoImagen} />
+        <img
+          src={articulo.imagen}
+          alt={articulo.textoAlternativoImagen}
+          width={1600}
+          height={900}
+          loading="lazy"
+          decoding="async"
+        />
         {minutos !== null && <div>{formatearTiempoDeLectura(minutos)}</div>}
         <CuerpoArticulo cuerpo={articulo.cuerpo} />
       </article>
@@ -234,7 +241,7 @@ export function PaginaBlog({ catalogo: catalogoDemo = ARTICULOS_DEMO }: PaginaBl
   const [searchParams, setSearchParams] = useSearchParams()
 
   return (
-    <main className={styles.pagina}>
+    <main className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina
         metadatos={identificador === undefined ? METADATOS_BLOG : METADATOS_ARTICULO_BLOG}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

@@ -1,14 +1,32 @@
+// Pie de página del shell (`App.tsx`, todas las rutas). Banda completa +
+// contenedor interior, mismo patrón que "Landing.module.scss": el color de
+// fondo llega borde a borde, el contenido queda acotado al ancho máximo
+// compartido (@s44/@s45). "margin-block-start: auto" es la mitad que falta
+// de la técnica del pie pegado al fondo (@s46): con "#root" ya en
+// "display: flex; flex-direction: column; min-height: 100svh"
+// (`global.scss`), este margen automático absorbe todo el hueco sobrante en
+// una página corta y empuja el pie al borde inferior de la ventana.
 .pie {
+  margin-block-start: auto;
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+  font-size: paso-tipografico(-1);
+}
+
+.interior {
+  @include contenedor;
   display: flex;
   flex-wrap: wrap;
   gap: espaciado(32);
-  padding: espaciado(48) espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
-  font-size: paso-tipografico(-1);
+  padding-block: espaciado(48) espaciado(24);
 
   h3 {
-    font-size: paso-tipografico(1);
+    font-size: paso-tipografico(0);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-tinta);
     margin-block-end: espaciado(12);
   }
 
@@ -26,5 +44,54 @@
     @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
+    color: inherit;
+  }
+}
+
+.marca {
+  flex: 1 1 260px;
+
+  img {
+    // 1/1 (el logotipo real mide 201×201): mismo mecanismo de hueco
+    // reservado que las fotografías de contenido (@s31), a escala de icono.
+    @include hueco-de-imagen(1, 1);
+    width: espaciado(48);
+    height: espaciado(48);
+    border-radius: $radio-medio;
+    margin-block-end: espaciado(8);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  p:first-of-type {
+    font-family: var(--fuente-titulares);
+    font-weight: 700;
+    color: var(--color-tinta);
+  }
+
+  p:last-of-type {
+    color: var(--color-texto-suave);
+  }
+}
+
+.barraInferior {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: espaciado(16);
+  margin-block-start: espaciado(16);
+  padding-block-start: espaciado(16);
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+  color: var(--color-texto-suave);
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: espaciado(16);
   }
 }

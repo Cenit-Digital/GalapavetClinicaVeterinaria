@@ -1,18 +1,16 @@
 .paginaNoEncontrada {
-  padding: espaciado(64) espaciado(24);
+  @include contenedor;
+  padding-block: espaciado(96);
   text-align: center;
-  background-color: var(--color-fondo);
   color: var(--color-texto);
 
   h1 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(4);
     margin-block-end: espaciado(16);
   }
 
   a {
-    @include foco-visible;
-    @include area-tactil-minima;
-    display: inline-flex;
-    align-items: center;
+    @include boton-primario;
   }
 }

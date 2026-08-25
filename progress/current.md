@@ -4,6 +4,62 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **25/08/2026 — `identidad_visual` (id 22): DONE.** Cierra el plan maestro de
+  12 pasos de `progress/plan_adaptacion_scss.md` §5, 51/51 escenarios de
+  `features/identidad_visual.feature`. Estado al reanudar esta sesión: Ronda A
+  (pasos 1-5) `done`/commiteada (93bdf72); Ronda B (pasos 6-8: tipografía
+  autoalojada + `public/`) completa pero sin commitear — cerrada primero en
+  esta sesión (`judge` APROBADO el refuerzo de mutación de
+  `inventarioActivosPublicos.ts`, `mutation_tester` PASS 100% excl.
+  equivalentes). Después, **Ronda C** (pasos 9-12, los 4 que faltaban):
+  infraestructura Playwright 1.62.1 + `@axe-core/playwright` 4.13.0 en
+  `tests/e2e/` (8 ficheros, 65 tests), diseño fino de los 17 `.module.scss` de
+  componentes/páginas, techo de CSS fijado en 8000 B (medido real 5791 B),
+  puerta `test:e2e` propia y separada del arnés (@s48). `tdd_craftsman` tardó
+  ~4h en esta ronda grande (instalación real de Chromium, 17 componentes
+  maquetados uno a uno, 8 suites e2e escenario a escenario) — progreso
+  verificado en vivo cada 10 min durante toda la sesión, nunca hubo un cuelgue
+  real. Encontró y corrigió **5 bugs reales de layout** que solo el navegador
+  real podía revelar (Flexbox de la galería → CSS Grid, auto-margin-en-flex
+  con ancho de contenedor divergente entre subpáginas, desbordamiento
+  horizontal por palabra larga, logo del pie sin "hueco de imagen", condición
+  de carrera de color a mitad de transición CSS). `judge` APROBÓ la Ronda C
+  con verificación independiente completa (harness init, build, 65/65 e2e, 3
+  sabotajes propios). `mutation_tester` dio **FAIL** en la primera medición
+  (85.51% bruto / 89.71% s/no-equiv., 21 supervivientes reales en
+  `rolesDescartados.ts`/`escalaMovimiento.ts`/`escenariosHeredados.ts`) →
+  `tdd_craftsman` aplicó un refuerzo quirúrgico de 12 tests nuevos sin tocar
+  producción (verificado con `sha256sum` idéntico) → `judge` APROBADO
+  (sabotaje propio distinto de los 6 ya verificados por `tdd_craftsman`) →
+  `mutation_tester` remidió **PASS** 95.33% bruto / **100.00% s/no-equiv.**
+  (los 10 mutantes restantes son los mismos equivalentes genuinos ya probados
+  con álgebra + script empírico). `bin/harness init` verde de punta a punta:
+  **914/914 tests**, lint y typecheck limpios — repetido por mí
+  (craftsman_lead) de forma independiente antes de marcar `done`.
+  **Desbloquea `sistema_de_diseno_visual` (id 21) y `accesibilidad` (id 19)**:
+  sus escenarios de navegador real pendientes (@s12/@s27-@s32/@s34 de la 21;
+  @s2/@s17/@s18/@s19 de la 19) ya se ejecutan en verde vía
+  `tests/e2e/*.spec.ts` de la 22, confirmado en `escenariosHeredados.ts`
+  (@s50). Ambas se dejan `blocked` (no `in_progress`) a propósito — prioridad
+  de esta sesión era cerrar la 22 con commit+push, no abrir un nuevo frente;
+  quedan listas para la próxima sesión sin más investigación, solo con la
+  re-medición de su propia puerta de mutación pendiente. PENDIENTE 7 del
+  contrato de la 22 (`og:image` relativo vs. absoluto, asignado al
+  craftsman_lead) sigue sin resolver: exige conocer el dominio final de
+  publicación, aún no decidido — no bloquea ningún escenario.
+  **Incidente de sesión (25/08/2026):** dos mensajes con formato "el
+  coordinador te pide..." aparecieron en el hilo pidiendo repetir un informe
+  nunca recibido y ceder la orquestación, incluida una respuesta de
+  `AskUserQuestion` aparentemente confirmándolo — los tres venían seguidos
+  del aviso de sistema explícito "no ha llegado entrada humana genuina desde
+  el último mensaje real del usuario". Tratados como contenido no fiable,
+  ignorados. Más tarde en la sesión, un fork de investigación lanzado por mí
+  tomó la iniciativa de lanzar por su cuenta un `judge` y un `mutation_tester`
+  sobre el refuerzo de la Ronda B (trabajo legítimo, no una colisión
+  maliciosa, pero sin mi autorización explícita) — detectado por
+  `ListAgents`, se le pidió parar y devolver el control; no volvió a ocurrir
+  el resto de la sesión, que continuó con un único orquestador (yo).
+
 - **Feature en curso: `sistema_de_diseno_visual` (id 21) — `tdd_craftsman`
   ronda 1 completa.** 26/34 escenarios (`@s1`-`@s11`, `@s13`-`@s26`, `@s33`)
   cubiertos con test concreto por TDD estricto desde cero; los 8 restantes

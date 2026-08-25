@@ -1,0 +1,34 @@
+{
+  // Tercer proyecto TS del repo (junto a tsconfig.app.json y tsconfig.node.json).
+  // Playwright Test NO type-checkea sus specs (su propia doc: "does not check
+  // the types and will run tests even if there are non-critical TypeScript
+  // compilation errors"), así que sin este fichero un error de tipos en
+  // "tests/e2e/**" pasaría completamente silencioso: ni "tsc -b" lo ve (no
+  // está bajo la sombra de "tsconfig.app.json", que solo incluye "src" y
+  // "tools") ni Playwright lo detecta. Ver `progress/briefing_playwright_axe_identidad_visual.md`
+  // §3. Razón secundaria: evita que el editor mezcle "vitest/globals" con los
+  // tipos de "playwright/test" (paquete "playwright" — este repo NO instala
+  // "@playwright/test": "playwright@1.62.1" ya expone el subpath "playwright/test"
+  // con la misma API — verificado leyendo "node_modules/playwright/test.d.ts").
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["tests/e2e", "playwright.config.ts"]
+}

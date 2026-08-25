@@ -36,7 +36,7 @@ export function Hero({
   horario = datosNegocio.horario,
 }: HeroProps = {}): React.JSX.Element {
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} data-contenedor-principal>
       <p>{UBICACION}</p>
       <h1>{TITULAR}</h1>
       <p>{TEXTO_DESCRIPTIVO}</p>

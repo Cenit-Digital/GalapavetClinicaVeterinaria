@@ -1,32 +1,151 @@
 .pagina {
-  padding: espaciado(64) espaciado(24);
-  background-color: var(--color-fondo);
+  @include contenedor;
+  padding-block: espaciado(64);
   color: var(--color-texto);
 
   h1 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
-    margin-block-end: espaciado(16);
-  }
-
-  h2 {
-    font-size: paso-tipografico(3);
     margin-block: espaciado(16);
   }
 
-  ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: espaciado(24);
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  h2 {
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(3);
+    margin-block: espaciado(32) espaciado(16);
   }
 
-  a,
-  button {
+  > p {
+    color: var(--color-texto-suave);
+    max-width: 62ch;
+    margin-block-end: espaciado(24);
+  }
+
+  a {
     @include foco-visible;
     @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
+  }
+
+  // Migas de pan (`RutaListado`/`RutaFicha`).
+  nav[aria-label='Ruta'] ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: espaciado(8);
+    list-style: none;
+    margin: 0 0 espaciado(16);
+    padding: 0;
+    font-size: paso-tipografico(-1);
+    color: var(--color-texto-suave);
+
+    li:not(:last-child)::after {
+      content: '/';
+      margin-inline-start: espaciado(8);
+    }
+  }
+
+  // Listado.
+  ul[aria-label='Listado de campañas'] {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+    gap: espaciado(24);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      @include tarjeta;
+      position: relative;
+      padding-block-end: espaciado(20);
+    }
+
+    img {
+      // 16/9 (`estudio_diseno_referencia.md` §3.6), el mismo que las 3
+      // fotografías reales de "public/img/campanas/" (800×450).
+      @include hueco-de-imagen(16, 9);
+    }
+
+    > li > span {
+      @include pildora-etiqueta;
+      position: absolute;
+      inset-block-start: espaciado(16);
+      inset-inline-end: espaciado(16);
+    }
+
+    p {
+      margin: espaciado(16) espaciado(20) 0;
+      color: var(--color-texto-suave);
+      font-size: paso-tipografico(-1);
+    }
+
+    h2 {
+      margin: espaciado(4) espaciado(20) espaciado(12);
+      font-size: paso-tipografico(2);
+    }
+
+    li > a {
+      @include boton-fantasma;
+      margin: 0 espaciado(20) espaciado(4);
+      align-self: flex-start;
+    }
+  }
+
+  // Ficha de detalle.
+  > span {
+    @include pildora-etiqueta;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+    gap: espaciado(16);
+    margin: espaciado(16) 0;
+
+    dt {
+      font-weight: 600;
+      color: var(--color-texto-suave);
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 700;
+    }
+  }
+
+  .llamadasAAccion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: espaciado(12);
+    margin-block: espaciado(24);
+
+    a:first-child {
+      @include boton-primario;
+    }
+
+    a:last-child {
+      @include boton-fantasma;
+    }
+  }
+
+  // "Otras campañas": tarjetas reducidas, sin imagen.
+  .otrasCampanas ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: espaciado(12);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      @include tarjeta;
+      padding: espaciado(16);
+    }
+
+    h3 {
+      margin: 0;
+      font-size: paso-tipografico(1);
+    }
   }
 }

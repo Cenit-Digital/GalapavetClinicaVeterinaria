@@ -129,9 +129,23 @@ html {
 }
 
 // 8. El contenedor de montaje crea su propio contexto de apilamiento, para que
-//    ningún `z-index` de dentro pueda competir con algo de fuera.
+//    ningún `z-index` de dentro pueda competir con algo de fuera. Además:
+//    (a) reserva el hueco de la cabecera fija en la parte alta con la MISMA
+//    variable que dimensiona `Cabecera.module.scss` (nunca un número
+//    repetido a mano — mismo criterio que `scroll-padding-top` de la
+//    sección D), para que ningún control del principio de la página
+//    arranque tapado por la cabecera (SC 2.4.11, @s40); (b) es un contenedor
+//    flex en columna a toda la altura de la ventana, para que el pie de
+//    página (`PieDePagina.module.scss`, `margin-block-start: auto`) cierre
+//    la ventana en vez de quedar flotando a media altura en una página corta
+//    (@s46) — `Cabecera`/`SelectorPaleta` son `position: fixed`, así que
+//    quedan fuera de este flujo y no lo alteran.
 #root {
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding-block-start: var(--altura-cabecera);
 }
 
 // 9. `balance` reparte las líneas de un titular corto; `pretty` evita la línea
@@ -139,6 +153,14 @@ html {
 //    performance impact — use cautiously». Ninguna de las dos necesita
 //    `@supports`: sin soporte, el navegador las ignora y solo se pierde un
 //    salto de línea más afortunado (Decisión 42).
+// "overflow-wrap: break-word" en las dos reglas de abajo: hallazgo real
+// medido en navegador (@s44, viewport de 320px) — un titular corto en una
+// sola palabra larga ("Vacunaciones") al tamaño de la escala fluida
+// (paso 5, ~48.83px) no cabe en el ancho disponible del contenedor a
+// 320px y desborda horizontalmente TODA la página, porque el texto no
+// tiene ningún punto de corte dentro de la palabra por defecto. "text-wrap:
+// balance/pretty" (arriba) reparten líneas ya existentes; no crean puntos de
+// corte nuevos dentro de una palabra que no cabe ni en una sola línea.
 h1,
 h2,
 h3,
@@ -146,11 +168,13 @@ h4,
 h5,
 h6 {
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 p,
 li {
   text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 // ----------------------------------------------------------------------------

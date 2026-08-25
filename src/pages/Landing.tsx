@@ -51,24 +51,24 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
       <div id="inicio" className={styles.seccion}>
         <Hero />
       </div>
-      <div id="servicios" className={styles.seccion}>
+      <div id="servicios" className={styles.seccionAlterna}>
         <Servicios />
       </div>
       <CampanasPortada />
-      <div id="equipo" className={styles.seccion}>
+      <div id="equipo" className={styles.seccionAlterna}>
         <Equipo />
       </div>
       <div id="reservar" className={styles.seccion}>
         <ReservaChat />
       </div>
-      <div id="galeria" className={styles.seccion}>
+      <div id="galeria" className={styles.seccionAlterna}>
         <Galeria />
       </div>
       <div id="contacto" className={styles.seccion}>
         <FormularioContacto />
         <InformacionContacto direccion={direccionVisible} />
       </div>
-      <div id="faq" className={styles.seccion}>
+      <div id="faq" className={styles.seccionAlterna}>
         <Faq />
       </div>
     </>

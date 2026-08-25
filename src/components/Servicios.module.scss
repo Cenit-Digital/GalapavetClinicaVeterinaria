@@ -1,34 +1,52 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45). El propio "section.servicios" ES la
+// rejilla (sus hijos son "h2" + N "article.tarjeta" ya en el DOM real,
+// `Servicios.tsx`), sin envoltorio adicional.
 .servicios {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: espaciado(24);
   padding-block: espaciado(64);
-  padding-inline: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
 
   h2 {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(4);
-    margin-block-end: espaciado(24);
+    margin-block-end: espaciado(8);
   }
 }
 
 .tarjeta {
-  border: 1px solid var(--color-texto);
-  border-radius: espaciado(8);
-  padding: espaciado(16);
+  @include tarjeta;
+  padding: espaciado(24);
 
   h3 {
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(2);
+    margin-block-end: espaciado(12);
   }
 
   button {
     @include foco-visible;
     @include area-tactil-minima;
+    margin-block-start: auto;
+    align-self: flex-start;
+    padding-inline: 0;
+    border: none;
+    background: none;
+    color: var(--color-acento-tinta);
+    font-weight: 600;
+    cursor: pointer;
   }
 
   ul {
-    margin-block-start: espaciado(12);
+    margin-block: espaciado(12) 0;
+    padding-inline-start: espaciado(20);
+    color: var(--color-texto-suave);
+
+    li {
+      margin-block-end: espaciado(4);
+    }
   }
 }

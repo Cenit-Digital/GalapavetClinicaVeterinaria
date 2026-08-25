@@ -92,7 +92,7 @@ interface TarjetaProductoProps {
 function TarjetaProducto({ producto, cantidadEnCesta, onAnadir }: TarjetaProductoProps): React.JSX.Element {
   return (
     <li>
-      <img src={producto.imagen} alt="" />
+      <img src={producto.imagen} alt="" width={800} height={600} loading="lazy" decoding="async" />
       <h2>{producto.nombre}</h2>
       <p>{producto.categoria}</p>
       <p>{etiquetaImporte(PREFIJO_IMPORTE, producto.importeCentimos)}</p>
@@ -305,7 +305,7 @@ export function PaginaTienda({ catalogo: catalogoDemo = PRODUCTOS_DEMO }: Pagina
   }
 
   return (
-    <main className={styles.pagina}>
+    <main className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina metadatos={METADATOS_TIENDA} datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO} />
       <h1>Tienda</h1>
       <p id={idAviso}>{AVISO_DEMOSTRACION}</p>

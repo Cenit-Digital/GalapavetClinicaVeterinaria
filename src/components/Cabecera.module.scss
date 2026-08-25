@@ -3,13 +3,13 @@
 // fixed a pantalla completa). El punto de corte de esta cobertura CSS es EL
 // MISMO valor que ya decide `esMovil` en JS (`Cabecera-logica.ts`,
 // `PUNTO_DE_CORTE_NAVEGACION_PX = 1024`): @s25/@s26 de
-// `sistema_de_diseno_visual.feature` verifican que no diverja.
+// `sistema_de_diseno_visual.feature` verifican que no diverja. El hueco que
+// deja en el flujo del documento lo reserva "#root" con
+// "padding-block-start: var(--altura-cabecera)" (`global.scss`), la MISMA
+// variable que dimensiona esta regla — nunca un número repetido a mano.
 
 .cabecera {
   position: fixed;
-  // MISMA variable que gobierna el `scroll-padding-top` de `global.scss`: un
-  // solo número para el alto de la cabecera y para el hueco que el
-  // desplazamiento hasta un ancla tiene que reservar (@s14, SC 2.4.11).
   min-height: var(--altura-cabecera);
   inset-block-start: 0;
   inset-inline: 0;
@@ -22,10 +22,34 @@
   padding-inline: espaciado(24);
   background-color: var(--color-fondo);
   color: var(--color-texto);
+  border-block-end: $ancho-borde-fino solid var(--color-borde);
   font-size: paso-tipografico(0);
 
-  a {
-    @include foco-visible;
+  // El bloque de marca: nombre comercial + descriptor en versalitas espaciadas
+  // (`estudio_diseno_referencia.md` §4.6) — el detalle que convierte "un
+  // enlace con el nombre" en un logotipo, sin ningún icono de marca propio.
+  > div:first-child {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    a {
+      @include foco-visible;
+      font-family: var(--fuente-titulares);
+      font-weight: 700;
+      font-size: paso-tipografico(1);
+      color: var(--color-tinta);
+      text-decoration: none;
+    }
+
+    p {
+      margin: 0;
+      font-size: paso-tipografico(-2);
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-texto-suave);
+    }
   }
 }
 
@@ -47,22 +71,42 @@
   ul {
     display: flex;
     align-items: center;
-    gap: espaciado(24);
+    gap: espaciado(8);
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
   a {
+    @include foco-visible;
     @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
+    padding-inline: espaciado(12);
+    border-radius: $radio-completo;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: background-color 150ms ease-out, color 150ms ease-out;
+    }
+
+    &:hover {
+      background-color: var(--color-acento-suave);
+      color: var(--color-acento-tinta);
+    }
+
+    &[aria-current='page'] {
+      color: var(--color-primario);
+    }
   }
 }
 
 .botonMenu {
   @include foco-visible;
   @include area-tactil-minima;
+  @include boton-fantasma;
 
   @media (min-width: 1024px) {
     display: none;
@@ -70,18 +114,34 @@
 }
 
 .panelMovil {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: var(--altura-cabecera);
+  z-index: 9;
+  max-height: 70vh;
+  overflow-y: auto;
+  background-color: var(--color-fondo);
+  border-block-end: $ancho-borde-fino solid var(--color-borde);
+  box-shadow: var(--sombra-elevada);
+
   ul {
     display: flex;
     flex-direction: column;
-    gap: espaciado(12);
+    gap: espaciado(4);
     list-style: none;
     margin: 0;
     padding: espaciado(16);
   }
 
   a {
+    @include foco-visible;
     @include area-tactil-minima;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    padding-inline: espaciado(12);
+    border-radius: $radio-medio;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
   }
 }

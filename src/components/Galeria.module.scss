@@ -1,16 +1,33 @@
+// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
+// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
+// aplica a su hijo directo (@s44/@s45).
+// REJILLA, no flexbox: no hay envoltorio propio en el DOM real
+// (`Galeria.tsx`) alrededor de los dos botones de desplazamiento y la
+// pista, así que la disposición depende de que ".galeria" coloque a sus 4
+// hijos directos (p, button, div.pista, button) sola. Con
+// "flex-direction: column" (el primer intento) el eje CRUZADO es horizontal
+// y, sin "align-items: stretch", cada hijo se dimensiona por su CONTENIDO
+// sin límite — medido en vivo: el aviso y la pista medían su ancho de
+// contenido completo (1544px/1520px) a 320px de viewport, @s44. La rejilla
+// evita esa ambigüedad: "grid-template-columns" fija el hueco de cada
+// columna de antemano, y "1fr" para la pista es lo que permite que
+// "min-width: 0" (abajo) la encoja de verdad.
 .galeria {
-  padding-block: espaciado(64);
-  padding-inline: espaciado(24);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: espaciado(16);
+  padding-block: espaciado(64);
 
-  button {
-    @include foco-visible;
-    @include area-tactil-minima;
-    flex-shrink: 0;
+  > p {
+    grid-column: 1 / -1;
+    color: var(--color-texto-suave);
+  }
+
+  > button {
+    @include boton-fantasma;
+    padding-inline: espaciado(12);
+    font-size: paso-tipografico(2);
   }
 }
 
@@ -19,24 +36,31 @@
   gap: espaciado(16);
   overflow-x: auto;
   scroll-snap-type: x proximity;
+  // El mínimo automático de un ítem de rejilla es también el tamaño de su
+  // CONTENIDO (no 0): sin este "min-width: 0" la columna "1fr" crece hasta
+  // caber la pista entera y "overflow-x: auto" deja de tener efecto.
+  min-width: 0;
 
   @include foco-visible;
 
   figure {
-    flex: 0 0 auto;
-    width: 240px;
+    flex: 0 0 clamp(240px, 32vw, 360px);
     margin: 0;
+    scroll-snap-align: start;
   }
 
   img {
-    width: 100%;
-    height: auto;
-    border-radius: espaciado(8);
+    // Retrato 4/3 (`estudio_diseno_referencia.md` §3.6), el mismo que las
+    // 6 fotografías reales de "public/img/galeria/" (800×600). El hueco se
+    // pinta con "--color-fondo-alterno" antes de decodificar (@s31).
+    @include hueco-de-imagen(4, 3);
+    border-radius: $radio-grande;
   }
 
   figcaption {
     font-size: paso-tipografico(-1);
-    margin-block-start: espaciado(4);
+    color: var(--color-texto-suave);
+    margin-block-start: espaciado(8);
   }
 
   // El propio desplazamiento "smooth" ya lo decide `Galeria-logica.ts`

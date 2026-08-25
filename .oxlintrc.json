@@ -55,6 +55,13 @@
       "rules": {
         "no-console": "off"
       }
+    },
+    {
+      "files": ["tests/e2e/**"],
+      "rules": {
+        "no-await-in-loop": "off",
+        "unicorn/consistent-function-scoping": "off"
+      }
     }
   ]
 }
