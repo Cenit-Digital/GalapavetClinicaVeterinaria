@@ -14,8 +14,13 @@ import type { MetadatosPagina as DatosMetadatosPagina } from '../lib/seo-logica'
  */
 const LOCALE_OPEN_GRAPH = 'es_ES'
 const TIPO_OPEN_GRAPH = 'website'
-/** PENDIENTE: fichero real de imagen para Open Graph — ruta local provisional, mismo criterio que `src/data/galeria.ts`. */
-const IMAGEN_OPEN_GRAPH = '/img/og/galapavet.webp'
+/**
+ * PNG y no WebP (@s29 de `identidad_visual.feature`): la documentación oficial
+ * de Meta no declara qué formatos acepta, así que WebP queda NO VERIFICADO en
+ * sus rastreadores. Compuesta con el logotipo real sobre el morado de marca,
+ * nunca una foto de banco (`progress/plan_imagenes.md` §4.3 «Open Graph»).
+ */
+const IMAGEN_OPEN_GRAPH = '/img/og/galapavet.png'
 
 const ID_SCRIPT_DATOS_ESTRUCTURADOS = 'datos-estructurados-pagina'
 

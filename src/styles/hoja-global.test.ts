@@ -165,6 +165,146 @@ describe('@s15 el desplazamiento suave se activa por opt-in y nunca se declara f
   })
 })
 
+describe('@s17 las dos familias se declaran con su fichero local, su rango de pesos y su subconjunto', () => {
+  const bloquesFontFace = (): readonly ReturnType<typeof extraerReglas>[number][] => extraerReglas(hojaGlobal()).filter((regla) => regla.selectores.includes('@font-face'))
+
+  const bloqueDeFamilia = (familia: string): ReturnType<typeof extraerReglas>[number] | undefined =>
+    bloquesFontFace().find((regla) => regla.declaraciones.includes(`font-family: '${familia}'`))
+
+  it('existe una "@font-face" para "Outfit" y otra para "DM Sans"', () => {
+    expect(bloqueDeFamilia('Outfit')).toBeDefined()
+    expect(bloqueDeFamilia('DM Sans')).toBeDefined()
+  })
+
+  it('ambas declaran "font-display: swap"', () => {
+    for (const familia of ['Outfit', 'DM Sans']) {
+      expect(bloqueDeFamilia(familia)?.declaraciones).toContain('font-display: swap')
+    }
+  })
+
+  it('el origen de ambas es una ruta local que empieza por "/fuentes/" y termina en ".woff2", nunca una URL de "fonts.googleapis.com" ni de "fonts.gstatic.com"', () => {
+    for (const familia of ['Outfit', 'DM Sans']) {
+      const origen = bloqueDeFamilia(familia)?.declaraciones.find((declaracion) => declaracion.startsWith('src:'))
+
+      expect(origen).toBeDefined()
+      expect(origen).toMatch(/url\('\/fuentes\/[\w-]+\.woff2'\)/)
+      expect(origen).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/)
+    }
+  })
+
+  it('la de "Outfit" declara el rango de pesos "100 900" y la de "DM Sans" el rango "100 1000"', () => {
+    expect(bloqueDeFamilia('Outfit')?.declaraciones).toContain('font-weight: 100 900')
+    expect(bloqueDeFamilia('DM Sans')?.declaraciones).toContain('font-weight: 100 1000')
+  })
+
+  it('ambas declaran "unicode-range", aunque solo se sirva el subconjunto latino', () => {
+    for (const familia of ['Outfit', 'DM Sans']) {
+      expect(bloqueDeFamilia(familia)?.declaraciones.some((declaracion) => declaracion.startsWith('unicode-range:'))).toBe(true)
+    }
+  })
+
+  it('la variable de tipografía de titulares nombra "Outfit" y la de texto nombra "DM Sans"', () => {
+    expect(valorDeclarado(hojaGlobal(), ':root', '--fuente-titulares')).toMatch(/^'Outfit'/)
+    expect(valorDeclarado(hojaGlobal(), ':root', '--fuente-texto')).toMatch(/^'DM Sans'/)
+  })
+})
+
+describe('@s18 las dos familias de respaldo declaran las seis métricas ajustadas calculadas con Capsize', () => {
+  const bloquesFontFace = (): readonly ReturnType<typeof extraerReglas>[number][] => extraerReglas(hojaGlobal()).filter((regla) => regla.selectores.includes('@font-face'))
+
+  const bloqueDeFamilia = (familia: string): ReturnType<typeof extraerReglas>[number] | undefined =>
+    bloquesFontFace().find((regla) => regla.declaraciones.includes(`font-family: '${familia}'`))
+
+  it('la de respaldo de "Outfit" declara "size-adjust: 99.8204%", "ascent-override: 100.18%" y "descent-override: 26.0468%"', () => {
+    const declaraciones = bloqueDeFamilia('Outfit Fallback')?.declaraciones ?? []
+
+    expect(declaraciones).toContain('size-adjust: 99.8204%')
+    expect(declaraciones).toContain('ascent-override: 100.18%')
+    expect(declaraciones).toContain('descent-override: 26.0468%')
+  })
+
+  it('la de respaldo de "DM Sans" declara "size-adjust: 104.531%", "ascent-override: 94.9001%" y "descent-override: 29.6563%"', () => {
+    const declaraciones = bloqueDeFamilia('DM Sans Fallback')?.declaraciones ?? []
+
+    expect(declaraciones).toContain('size-adjust: 104.531%')
+    expect(declaraciones).toContain('ascent-override: 94.9001%')
+    expect(declaraciones).toContain('descent-override: 29.6563%')
+  })
+
+  it('ambas familias de respaldo declaran su origen con "local(...)", nunca una URL', () => {
+    for (const familia of ['Outfit Fallback', 'DM Sans Fallback']) {
+      const origen = bloqueDeFamilia(familia)?.declaraciones.find((declaracion) => declaracion.startsWith('src:'))
+
+      expect(origen).toBeDefined()
+      expect(origen).toMatch(/^src: local\(/)
+      expect(origen).not.toContain('url(')
+    }
+  })
+
+  it('ambas familias de respaldo aparecen en la pila de la variable de tipografía correspondiente, por detrás de la familia de marca', () => {
+    const pilaDeTitulares = valorDeclarado(hojaGlobal(), ':root', '--fuente-titulares') ?? ''
+    const pilaDeTexto = valorDeclarado(hojaGlobal(), ':root', '--fuente-texto') ?? ''
+
+    expect(pilaDeTitulares.indexOf("'Outfit'")).toBeGreaterThanOrEqual(0)
+    expect(pilaDeTitulares.indexOf("'Outfit Fallback'")).toBeGreaterThan(pilaDeTitulares.indexOf("'Outfit'"))
+    expect(pilaDeTexto.indexOf("'DM Sans'")).toBeGreaterThanOrEqual(0)
+    expect(pilaDeTexto.indexOf("'DM Sans Fallback'")).toBeGreaterThan(pilaDeTexto.indexOf("'DM Sans'"))
+  })
+})
+
+describe('(paso 6 del plan) allowlist de familias tipográficas: solo las de marca, sus respaldos o un genérico CSS sin comillas', () => {
+  /** Genéricos CSS reales (https://developer.mozilla.org/en-US/docs/Web/CSS/font-family#generic-name): el único identificador sin comillas que este proyecto admite. */
+  const GENERICOS_CSS: readonly string[] = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui']
+  const FAMILIAS_CON_COMILLAS_PERMITIDAS: readonly string[] = ["'Outfit'", "'Outfit Fallback'", "'DM Sans'", "'DM Sans Fallback'", "'Arial'"]
+
+  const identificadoresDeLasPilas = (): readonly string[] => {
+    const pilaDeTitulares = valorDeclarado(hojaGlobal(), ':root', '--fuente-titulares') ?? ''
+    const pilaDeTexto = valorDeclarado(hojaGlobal(), ':root', '--fuente-texto') ?? ''
+    return [pilaDeTitulares, pilaDeTexto].flatMap((pila) => pila.split(',').map((identificador) => identificador.trim()))
+  }
+
+  it('las dos pilas tipográficas declaran al menos un identificador', () => {
+    expect(identificadoresDeLasPilas().length).toBeGreaterThan(0)
+  })
+
+  it('todo identificador sin comillas de las pilas es un genérico CSS', () => {
+    const sinComillas = identificadoresDeLasPilas().filter((identificador) => !identificador.startsWith("'"))
+
+    expect(sinComillas.length).toBeGreaterThan(0)
+    for (const identificador of sinComillas) {
+      expect(GENERICOS_CSS).toContain(identificador)
+    }
+  })
+
+  it('todo identificador entre comillas de las pilas está en la allowlist de familias de marca y respaldo', () => {
+    const conComillas = identificadoresDeLasPilas().filter((identificador) => identificador.startsWith("'"))
+
+    expect(conComillas.length).toBeGreaterThan(0)
+    for (const identificador of conComillas) {
+      expect(FAMILIAS_CON_COMILLAS_PERMITIDAS).toContain(identificador)
+    }
+  })
+
+  it('un genérico real como "Georgia" escrito sin comillas se rechazaría por no estar en la lista de genéricos CSS', () => {
+    expect(GENERICOS_CSS).not.toContain('Georgia')
+  })
+})
+
+describe('(paso 6 del plan) el texto de "global.scss" nunca abre una @font-face de terceros', () => {
+  it('no contiene "url(https:" en ningún @font-face', () => {
+    expect(hojaGlobal()).not.toMatch(/url\(https:/)
+  })
+
+  it('no contiene ningún "@import url("', () => {
+    expect(hojaGlobal()).not.toMatch(/@import\s+url\(/)
+  })
+
+  it('declara exactamente 4 bloques "@font-face" (2 familias de marca + 2 de respaldo)', () => {
+    const bloques = extraerReglas(hojaGlobal()).filter((regla) => regla.selectores.includes('@font-face'))
+    expect(bloques.length).toBe(4)
+  })
+})
+
 describe('(paso 5 del plan) el anillo de foco global usa el token de color y nunca se anula sin sustituto', () => {
   const reglaDeFocoVisible = (): ReturnType<typeof extraerReglas>[number] | undefined =>
     extraerReglas(hojaGlobal()).find((regla) => regla.selectores.includes(':focus-visible'))

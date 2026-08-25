@@ -729,3 +729,413 @@ refuerzo). `pnpm run lint` limpio (`oxlint --deny-warnings`). `pnpm run typechec
 822−796=26. **Ningún fichero de `src/` fuera de tests fue tocado**: el informe de mutación no
 señaló ningún comportamiento incorrecto, solo huecos de test.
 
+# TDD — `identidad_visual` (feature 22) · RONDA B: tipografía autoalojada y `public/`
+
+> Segunda ronda de implementación, tras `judge` APROBADO y mutación 100 % (no-equivalentes)
+> sobre la Ronda A (commit `93bdf72`, "identidad_visual (22): Ronda A completa"). Esta sección
+> se AÑADE; no se borra ni se reescribe nada de la Ronda A de arriba.
+
+## 0 · Alcance declarado de esta ronda
+
+Exactamente el **paso 6** (tipografía autoalojada: `public/fuentes/` + `@font-face` +
+`index.html`) y el **paso 8** (`public/`: los 26 huecos de imagen, el logo, los tres iconos
+raster y la imagen de Open Graph) de `progress/plan_adaptacion_scss.md` §5. Escenarios de esta
+ronda: **@s17, @s18, @s19** — los tres de tipografía que el propio contrato clasifica como
+herramienta **(b) lectura `?raw` + Vitest**, no navegador real (cabecera del `.feature`,
+«Reparto de los 51 escenarios» — línea b: «…@s17, @s18, @s19…»). Fuera, sin cambios: el paso 9
+(Playwright), el paso 10 (maquetación fina de los 17 `.module.scss` — **no** se cablea ninguna
+imagen nueva dentro de un componente), 11 y 12. @s20-@s23 (navegador real: familia computada,
+peso servido, CLS del intercambio de fuente) y @s27-@s31 (navegador real: imágenes) quedan
+PENDIENTES del paso 9, igual que @s24 quedó pendiente al cierre de la Ronda A.
+
+### Una divergencia arquitectura-contra-encargo, resuelta igual que la D-4 de la Ronda A
+
+El encargo de esta ronda nombraba `src/styles/_fuentes.scss` como fichero nuevo. **El contrato
+aprobado exige leer estas declaraciones con `?raw` sobre `"src/styles/global.scss"` literalmente**
+(@s17 y @s18, cabecera «Given el texto real de "src/styles/global.scss"»): un `?raw` sobre un
+`@use` a un parcial devolvería la línea de `@use`, no las reglas, y los seis escenarios (b) ya
+resueltos en la Ronda A dependen de que **todo** viva en el único fichero. Se resuelve exactamente
+como la D-4 de la Ronda A: los cuatro `@font-face` entran en `global.scss` como una nueva
+sección E, rotulada, no en un parcial separado. Ninguna decisión del encargo se pierde — la
+tipografía real, sus dos respaldos con métricas ajustadas, `font-display: swap`, el
+`unicode-range` — cambia el reparto en ficheros, no el contenido.
+
+### Material de imagen: verificado de nuevo, no heredado por confianza
+
+`progress/plan_imagenes.md` documenta (commit `6f9640e`) que una sesión previa ya preparó y
+verificó 60 ficheros (57 en `material/webp/` + 3 en `material/raiz/`, manifiesto en
+`progress/material_MANIFIESTO.md`), dejados **a propósito** fuera del repositorio "hasta que un
+test rojo de la feature 22 las pida". Antes de copiar una sola línea de ese material a `public/`
+se verificó de forma **independiente**, sin fiarse del manifiesto:
+
+- Localizado el directorio real (`.../scratchpad/material` de la sesión `643fa357-…`, seguía en
+  disco).
+- **Byte a byte**: `ls -l` de los 57+3 ficheros contra la tabla del manifiesto — coinciden los
+  60/60.
+- **Dimensiones y formato con `ffprobe` (no con el manifiesto)** sobre los 25 ficheros "sin
+  sufijo" que esta ronda necesita (las variantes `-400w`/`-800w`/`-1200w` de `srcset` NO se
+  copian: son del paso 10, fuera de esta ronda) + los 3 de `raiz/`: los 28 coinciden con la
+  tabla — incluido `apple-touch-icon.png` en `pix_fmt=rgb24` (sin canal alfa, tal y como exige
+  iOS) y `favicon.ico` con `nb_streams=3` (las tres imágenes 16+32+48).
+- **Inspección visual** de la imagen de Open Graph (logo real sobre morado de marca, "Galapavet"
+  y el descriptor con localidad) y de una fotografía de la familia B (`galeria/bruno.webp`,
+  lebrel sobre una cama, coincide con "Graceful greyhound lounging on a comfortable bed with
+  soft cushions") — ninguna imagen en blanco, rota ni fuera de tema.
+
+Con esas cuatro comprobaciones independientes superadas, se da el material por verificado y se
+copia. **No se descarga nada de nuevo de Pexels en esta ronda**: las URL de la sección 4.3 de
+`plan_imagenes.md` ya están ejecutadas y verificadas en el informe de la sesión previa
+(`progress/material_informe_descarga.md`), y repetir la descarga sin motivo sería trabajo sin
+valor añadido. La imagen de Open Graph **no procede del banco**: es la composición real
+(logotipo + morado de marca) documentada en `progress/material_informe_marca.md` y verificada
+aquí de nuevo por inspección visual directa, no solo por el dicho del manifiesto.
+
+## 1 · Medición de partida
+
+`pnpm exec vitest run` → **866/866 verdes, 65 ficheros** al cierre (frente a los 822/62 con los
+que arrancó la sesión — 44 tests nuevos, ver §3). `public/` no existía; `pnpm add` no había
+instalado ninguna fuente. `MetadatosPagina.tsx:18` declaraba `/img/og/galapavet.webp` (WebP,
+que @s29 prohíbe para `og:image`). `index.html` tenía un único `<link rel="icon"
+type="image/svg+xml" href="/favicon.svg">` **activo** apuntando a un fichero que no existe.
+
+## 2 · Los ciclos Rojo → Verde → Refactor
+
+### Ciclo 1 — Paso 6 · instalación y medición REAL de las dos fuentes
+
+Sin test (es una instalación de material, no una decisión de comportamiento): `pnpm add -D
+@fontsource-variable/outfit@5.3.0 @fontsource-variable/dm-sans@5.3.0`. Verificado, no asumido:
+
+- `node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2` → **32 292 B**
+  (coincide dígito a dígito con la Decisión 32/`investigacion_tecnica_visual.md` §3.2).
+- `node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2` →
+  **36 932 B**. Suma **69 224 B**, el techo exacto de @s22.
+- `LICENSE` de ambos paquetes: SIL Open Font License, Version 1.1, `license: "OFL-1.1"` en
+  ambos `package.json` — releído del fichero real, no citado de memoria.
+- `index.css` de ambos paquetes: `font-weight: 100 900` (Outfit) y `100 1000` (DM Sans),
+  `unicode-range` idéntico al citado en la Decisión 32 — releído del CSS real del paquete
+  instalado, no heredado de la investigación vieja.
+
+Copiados byte a byte a `public/fuentes/outfit-latin-wght-normal.woff2` y
+`public/fuentes/dm-sans-latin-wght-normal.woff2`; `ls -l` tras la copia confirma los mismos
+32 292 / 36 932 B.
+
+### Ciclo 2 — @s17 · las dos familias reales, con su fichero, su rango de pesos y su subconjunto
+
+*Rojo:* seis `it` nuevos en `src/styles/hoja-global.test.ts`, describe `@s17 …`, contra
+`extraerReglas(hojaGlobal())` filtrado por `selectores.includes('@font-face')` (reutilizado tal
+cual de `hojaGlobal.ts`, sin tocarlo) y `valorDeclarado(hojaGlobal(), ':root',
+'--fuente-titulares')`. Verificado: `pnpm exec vitest run src/styles/hoja-global.test.ts` → el
+describe `@s17` falla en los seis `it` (ningún `@font-face` en el texto, `--fuente-titulares` no
+declarada).
+
+*Verde (mínimo):* nueva sección **E. Tipografía autoalojada** en `global.scss` (ver §0, la
+reconciliación con el contrato): dos `@font-face` reales, `font-display: swap`, `src:
+url('/fuentes/…woff2') format('woff2-variations')`, `unicode-range` copiado literal del
+`index.css` del paquete instalado, `font-weight: 100 900` / `100 1000`. `--fuente-titulares` y
+`--fuente-texto` en el `:root` de la sección A, con la familia de marca primero.
+
+*Verificado:* `pnpm exec vitest run src/styles/hoja-global.test.ts` → describe `@s17` en verde,
+6/6.
+
+### Ciclo 3 — @s18 · las dos familias de respaldo, con las seis métricas ajustadas
+
+*Rojo:* cuatro `it` nuevos, describe `@s18 …`, contra las mismas herramientas del Ciclo 2 pero
+buscando el bloque `font-family: 'Outfit Fallback'` / `'DM Sans Fallback'`. Verificado fallando
+(los bloques de respaldo no existían todavía).
+
+*Verde (mínimo):* los dos `@font-face` de respaldo, con los seis valores de la Decisión 33
+copiados **literales** (nunca recalculados a ojo): `size-adjust: 99.8204%` / `ascent-override:
+100.18%` / `descent-override: 26.0468%` (Outfit) y `size-adjust: 104.531%` / `ascent-override:
+94.9001%` / `descent-override: 29.6563%` (DM Sans), `src: local('Arial'), local('ArialMT')` —
+nunca una URL — y las dos pilas (`--fuente-titulares`/`--fuente-texto`) con el respaldo
+inmediatamente después de la familia de marca.
+
+*Verificado:* `pnpm exec vitest run src/styles/hoja-global.test.ts` → describe `@s18` en verde,
+4/4.
+
+### Ciclo 4 — (paso 6 del plan) allowlist de familias y anti-terceros dentro de `@font-face`
+
+*Por qué:* el encargo pide explícitamente el "caso especial de un genérico CSS sin comillas
+(Georgia desnudo se rechaza)" y "cero `url(https:` y cero `@import url(`" — ninguno de los dos
+lo exige literalmente ningún `@sN`, así que se documentan como tests sin `@sN` propio, mismo
+patrón que la Ronda A usó para el paso 2/3/5/7.
+
+*Rojo:* siete `it` nuevos (dos describes: la allowlist de identificadores de las dos pilas, y el
+recuento de exactamente 4 bloques `@font-face` + ausencia de `url(https:`/`@import url(`).
+Verificado fallando antes del Ciclo 2 (sin `@font-face` ni pilas reales, `bloques.length` daba
+0, no 4).
+
+*Verde:* ya cubierto por los Ciclos 2 y 3 — este ciclo solo AÑADE la aserción, no producción
+nueva. Único ajuste de producción: las pilas usan `'Arial'` **entre comillas** (no `Arial`
+desnudo, que el propio `investigacion_tecnica_visual.md` §3.7 escribe sin comillas): la regla
+que el encargo pide ("el único identificador sin comillas admitido es un genérico CSS") exige
+que cualquier nombre de familia real, incluido `Arial`, vaya entre comillas; el único
+identificador desnudo de las dos pilas es el genérico final `sans-serif`.
+
+*Verificado:* `pnpm exec vitest run src/styles/hoja-global.test.ts` → **32/32 verdes** (los 15
+`it` preexistentes de @s12-@s15 y el paso 5 + los 17 nuevos de @s17/@s18/allowlist/anti-terceros).
+
+### Ciclo 5 — (paso 6 del plan) puerta de nivel A: los `.woff2` referenciados existen de verdad
+
+*Por qué:* el encargo pide una puerta que compare rutas declaradas contra ficheros reales, tanto
+para fuentes (paso 6) como para imágenes (paso 8). Una sola pieza de lógica sirve para ambas
+("una ruta declarada tiene que tener un fichero real detrás"), así que nace en un módulo
+compartido.
+
+*Rojo:* nuevo fichero `src/lib/diseno/inventarioActivosPublicos.test.ts`, importando
+`extraerRutasDeImagenDeclaradas`, `extraerRutasDeFuenteDeclaradas` y
+`compararRutasDeclaradasConFicherosReales` de un módulo que no existe. Verificado:
+`pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts` → `Failed to resolve
+import "./inventarioActivosPublicos"` (no compila, cuenta como rojo — `docs/tdd.md`).
+
+*Verde (mínimo):* `src/lib/diseno/inventarioActivosPublicos.ts` — módulo PURO (sin `node:fs`,
+mordible por Stryker): dos extractores por regex (`/img/….<ext-de-imagen>` entre comillas;
+`url('/fuentes/….woff2')` dentro de un `@font-face`) y un comparador fail-closed (mismo patrón
+que `ejecutarPuertaDeContraste`/`ejecutarPuertaDeTerceros`: ni la lista declarada ni la lista
+real pueden estar vacías para que `pasa` sea `true`).
+
+*Verificado:* 14 `it` unitarios (extractores + comparador, con sus casos de vacuidad) → **14/14
+verdes** de inmediato, sin necesitar ajuste — la primera implementación ya los satisface.
+
+*El tramo de integración, contra el árbol real:* en el mismo fichero, cinco `it` más que leen
+`src/data/*.ts` + `MetadatosPagina.tsx` + `PieDePagina.tsx` con `import.meta.glob(…, {query:
+'?raw'})` y `public/img/`/`public/fuentes/` con `readdirSync(…, {recursive: true})` (Node
+22.15.0 soporta `recursive` de forma nativa). Como la producción de los Ciclos 1-3 ya estaba
+hecha antes de escribir este ciclo, estos `it` de integración **no nacieron en rojo**: para no
+darlos por buenos sin más, se aplicó el mismo patrón de "verificación honesta" que la Ronda A ya
+usó en su Ciclo 5 — se renombró temporalmente `public/fuentes/outfit-latin-wght-normal.woff2` a
+`.bak` y se re-ejecutó solo ese `it`: falló nombrando exactamente la ruta que faltaba. Restaurado
+el fichero, vuelve a verde. Repetido igual con `public/img/galeria/kira.webp` para el `it` de
+imágenes. Los dos casos confirman que la puerta detecta de verdad un hueco, no que pasa por
+vacuidad.
+
+*Verificado:* `pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts` →
+**19/19 verdes** (14 unitarios + 5 de integración, tras el Ciclo 6 de más abajo que resuelve el
+único hueco real que este ciclo destapó: la extensión del Open Graph).
+
+### Ciclo 6 — Paso 8 · `og:image` de `.webp` a `.png`, forzado por la propia puerta del Ciclo 5
+
+*Rojo (el mismo ciclo 5, antes de tocar `MetadatosPagina.tsx`):* con las 25 imágenes ya copiadas
+a `public/img/` (ver §0, material verificado), el `it` "ninguna ruta declarada carece de fichero
+real" fallaba con `rutasFaltantes: ['/img/og/galapavet.webp']` — la ÚNICA ruta declarada sin
+correspondencia, porque `MetadatosPagina.tsx:18` seguía declarando `.webp` y el fichero real
+copiado es `.png` (@s29 prohíbe servir WebP como `og:image`: la documentación oficial de Meta no
+declara qué formatos acepta).
+
+*Verde (mínimo):* `MetadatosPagina.tsx:18`, `'/img/og/galapavet.webp'` →
+`'/img/og/galapavet.png'`. `MetadatosPagina.test.tsx:82-83` (@s20 de `seo_estructura`) sigue en
+verde sin tocarlo: solo exige que la ruta sea relativa y no absoluta, la extensión le da igual.
+
+*Verificado:* `pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts
+src/components/MetadatosPagina.test.tsx` → **23/23 verdes**.
+
+### Ciclo 7 — @s19 · exactamente dos precargas de fuente, con `crossorigin`
+
+*Rojo:* nuevo fichero `src/documento-fuentes.test.ts` (mismo patrón que
+`src/documento.test.ts`: `import htmlIndice from '../index.html?raw'`), cuatro `it`. Verificado:
+`pnpm exec vitest run src/documento-fuentes.test.ts` → 2/4 fallan (cero `<link rel="preload">`
+en el documento).
+
+*Verde (mínimo):* dos `<link rel="preload" href="/fuentes/…woff2" as="font" type="font/woff2"
+crossorigin />` en el `<head>` de `index.html`, uno por familia, con el comentario que cita la
+cita literal de MDN sobre `crossorigin` (ya usada en la Decisión 32/investigación, no repetida a
+ciegas).
+
+*Verificado:* `pnpm exec vitest run src/documento-fuentes.test.ts src/documento.test.ts` →
+**8/8 verdes** (los 4 nuevos + los 4 de @s1-@s3 de `documento.test.ts`, que no se tocan y siguen
+pasando).
+
+### Ciclo 8 — Paso 8 · los tres iconos raster y el vector comentado
+
+*Por qué:* ningún `@sN` de esta ronda lo exige literalmente (@s28 es navegador real, fuera de
+esta ronda), pero modificar `index.html` sin ningún test rojo que lo pida violaría la Ley 1 —
+así que se escribe una prueba de texto igual que el Ciclo 7, sin `@sN` propio, documentada como
+tal (mismo patrón que la Ronda A usó para sus ciclos "paso N del plan").
+
+*Rojo:* nuevo fichero `src/documento-iconos.test.ts`, cuatro `it`: el `<link>` del vector NO
+debe estar activo (fuera de un comentario HTML) pero SÍ debe seguir mencionado (comentado, no
+borrado — @s28 lo permite explícitamente); y deben existir enlaces activos a `/favicon.ico`,
+`/favicon-32.png` (con `type="image/png"`) y `/apple-touch-icon.png` (con
+`rel="apple-touch-icon"`). Verificado: `pnpm exec vitest run src/documento-iconos.test.ts` →
+4/4 fallan (el `<link>` del SVG seguía activo y sin comentar; no existía ningún otro `<link>` de
+icono).
+
+*Verde (mínimo):* en `index.html`, el `<link>` del SVG pasa a comentario (con la nota de por qué
+— @s28, «no se puede derivar un SVG fiel de un raster de 201×201» — y el `sizes="any"` que MDN
+documenta para cuando llegue el vector) y se añaden los tres `<link>` raster:
+`rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"`,
+`rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32"`,
+`rel="apple-touch-icon" href="/apple-touch-icon.png"`. Los tres ficheros ya estaban copiados en
+`public/` desde §0 (verificados: `favicon.ico` con 3 imágenes internas 16+32+48,
+`apple-touch-icon.png` en 180×180 sin canal alfa).
+
+*Verificado:* `pnpm exec vitest run src/documento-iconos.test.ts src/documento-fuentes.test.ts
+src/documento.test.ts` → **12/12 verdes**.
+
+### Ciclo 9 — Cierre: suite completa, lint, typecheck y build de producción
+
+*Verificado, en este orden:*
+
+1. `pnpm exec vitest run` → **866/866 verdes, 65 ficheros** (822 con los que arrancó la sesión +
+   44 nuevos: 17 en `hoja-global.test.ts` + 19 en `inventarioActivosPublicos.test.ts` + 4 en
+   `documento-fuentes.test.ts` + 4 en `documento-iconos.test.ts` = 44; 822+44=866, cuadra).
+2. `pnpm run lint` → limpio tras un ajuste (`unicorn/no-array-sort`: `.sort()` mutante →
+   `.toSorted()` en `inventarioActivosPublicos.ts`; refactor en verde, re-ejecutado el test
+   correspondiente tras el cambio, sigue en 19/19).
+3. `pnpm run typecheck` → limpio (`tsc -b`).
+4. `pnpm run build` → limpio, con la puerta de terceros de la Ronda A en verde al cierre («2
+   archivo(s) de "dist/" inspeccionados, ninguna referencia a un dominio de terceros»).
+   Verificado sobre el `dist/` real:
+   - `dist/fuentes/` — los dos `.woff2`, 32 292 + 36 932 = **69 224 B**.
+   - `dist/favicon.ico`, `dist/favicon-32.png`, `dist/apple-touch-icon.png` — copiados tal cual
+     desde `public/` (Vite no los procesa, política ya documentada en la investigación §3.6).
+   - `dist/img/` — **25 ficheros** (los 23 fotografías + logo + OG).
+   - `grep -c "font-family" dist/assets/*.css` → **1** (sigue siendo una sola declaración real,
+     family 6 del reset — no se ha duplicado nada).
+   - `grep -o "@font-face" dist/assets/*.css | wc -l` → **4**.
+   - `grep -r "fonts.googleapis\|fonts.gstatic" dist/` → **0** coincidencias.
+   - `grep -ril "pexels" dist/` → **0** coincidencias (ningún nombre de fichero ni URL de origen
+     sobrevive al proceso de descarga-y-servir-en-local).
+
+*Refactor:* el comentario de cabecera de `global.scss` (líneas 10-16) listaba solo las
+secciones A-D; se actualizó para nombrar también la E, en verde, re-ejecutada la suite completa
+tras el cambio (comentario puro, sin efecto en ningún test).
+
+## 3 · Trazabilidad de esta ronda (pasos 6 y 8 del plan)
+
+| @s (identidad_visual.feature) | Escenario | Test(s) | Estado |
+| --- | --- | --- | --- |
+| @s17 | Las dos familias reales: fichero, `font-display`, rango de pesos, `unicode-range`, variables de pila | `hoja-global.test.ts` → `@s17 …` | ✅ verde |
+| @s18 | Las dos familias de respaldo: las seis métricas ajustadas de Capsize | `hoja-global.test.ts` → `@s18 …` | ✅ verde |
+| @s19 | Exactamente 2 precargas de fuente, con `crossorigin`, nada más | `documento-fuentes.test.ts` → `@s19 …` | ✅ verde |
+| @s20-@s23 | Tipografía computada en navegador real, controles, peso servido con 200, CLS del intercambio | — | ⏸ FUERA de esta ronda — navegador real, paso 9 |
+| @s27-@s31 | Imágenes en navegador real: `naturalWidth`, favicon 200, OG 200+1200×630+PNG, CLS, hueco reservado | — | ⏸ FUERA de esta ronda — navegador real, paso 9. Condición de producción (ficheros reales, rutas correctas) SÍ queda cumplida, ver tabla siguiente |
+
+**Cobertura añadida sin `@sN` propio, exigida por el plan para sostener lo anterior (mismo
+patrón que la Ronda A):**
+
+| Qué | Test(s) | Por qué no tiene `@sN` |
+| --- | --- | --- |
+| Allowlist de familias tipográficas (genérico CSS sin comillas vs. familia real) y anti-terceros dentro de `@font-face` (`url(https:`, `@import url(`, exactamente 4 bloques) | `hoja-global.test.ts` → `(paso 6 del plan) …` (dos describes) | Detalle del ENCARGO de esta ronda, no de un `@sN` individual del contrato |
+| Los `.woff2` referenciados en `global.scss` existen de verdad en `public/fuentes/` | `inventarioActivosPublicos.test.ts` → `(paso 6 del plan) …` | Condición de producción del paso 6; su automatización en navegador real es @s22, fuera de esta ronda |
+| Las rutas de imagen declaradas en `src/data/*.ts` + `MetadatosPagina.tsx` + `PieDePagina.tsx` existen de verdad en `public/img/` | `inventarioActivosPublicos.test.ts` → `(paso 8 del plan) …` | Condición de producción de @s27-@s29; su automatización en navegador real (`naturalWidth`, 200, dimensiones) es del paso 9 |
+| El documento comenta el icono vectorial que aún no existe y declara los tres raster reales | `documento-iconos.test.ts` → `(paso 8 del plan) …` | Condición de producción de @s28; el código de respuesta HTTP y las dimensiones son navegador real, paso 9 |
+
+## 4 · Los 26 huecos de imagen, uno a uno
+
+| # | Ruta | Estado en esta ronda |
+| --- | --- | --- |
+| 1 | `/favicon.svg` | Deliberadamente NO creado — `<link>` comentado en `index.html`, tal y como @s28 permite explícitamente mientras no llegue el vector del cliente (`plan_imagenes.md` §3.3, PENDIENTE 8 del contrato) |
+| 2 | `/img/og/galapavet.png` (extensión cambiada de `.webp`, Ciclo 6) | ✅ fichero real, 1200×630 PNG, compuesto con el logo real sobre el morado de marca |
+| 3 | `/img/logo-galapavet.webp` | ✅ copia literal del logo real, 201×201 |
+| 4-6 | `/img/campanas/{vacunaciones,chequeo,odontologia}.webp` | ✅ ficheros reales, 800×450 |
+| 7-12 | `/img/galeria/{nala-y-coco,bruno,luna,toby,milo,kira}.webp` | ✅ ficheros reales, 800×600 |
+| 13-18 | `/img/blog/demo-{1..6}.webp` | ✅ ficheros reales, 1600×900 |
+| 19-26 | `/img/tienda/{8 productos}.webp` | ✅ ficheros reales, 800×600 |
+
+**26/26 huecos resueltos** (25 con fichero real + 1 diferido a propósito, exactamente como el
+contrato lo permite). Más los tres iconos raster que el plan documenta aparte de la tabla de 26
+(`favicon.ico`, `favicon-32.png`, `apple-touch-icon.png`, ya verificados en §0).
+
+**Deliberadamente NO copiado a `public/`:** las variantes de `srcset` (`-400w`/`-800w`/`-1200w`,
+≈32 ficheros del material preparado) y el fondo del hero (`opcional/hero/`, ni siquiera tiene
+hueco en el código hoy). Ninguna de las dos se necesita para que la puerta de esta ronda pase —
+son del paso 10, cableado dentro de componentes, explícitamente fuera de este encargo.
+
+## 5 · Lo que esta ronda NO tocó, verificado explícitamente
+
+- **Ningún `.module.scss` de componente.** Ninguna imagen nueva se cablea dentro de un `<img>`
+  de `Galeria.tsx`, `CampanasPortada.tsx`, `PaginaTienda.tsx` ni `PaginaBlog.tsx`: siguen
+  exactamente con los mismos recuentos ya fijados (`PaginaTienda.test.tsx` 8, `PaginaBlog.test.tsx`
+  3, `CampanasPortada.test.tsx` 3, `Servicios.test.tsx`/`Equipo.test.tsx` 0) — verificado, la
+  suite completa de esos cuatro ficheros sigue en verde sin haberlos tocado.
+- **`src/data/blog.ts`: los `textoAlternativoImagen` no se corrigieron**, aunque
+  `progress/material_MANIFIESTO.md` §10.5 documenta que cuatro de los seis describen algo que la
+  foto elegida no muestra. No estaba en el encargo explícito de esta ronda (que solo pedía
+  ficheros + puerta) y es una decisión de contenido más que de estructura — queda anotado aquí
+  para que el `craftsman_lead` decida si entra en el paso 10 o en una ronda propia.
+- **@s11** (los 4 roles de color descartados no entran por ninguna puerta) sigue PENDIENTE,
+  exactamente como lo dejó la Ronda A: exige un `.module.scss` de componente real (paso 10).
+- **Ningún fichero de las features 1-21** fuera de `MetadatosPagina.tsx` (Ciclo 6, forzado por
+  la propia puerta) e `index.html` (Ciclos 7-8, explícitamente asignados a esta ronda por el
+  `craftsman_lead`, y con test rojo propio en ambos casos, no editado a mano sin más).
+
+## 6 · Verificación final de esta ronda
+
+`pnpm run test` → **866/866 verdes, 65 ficheros**. `pnpm run lint` → limpio
+(`oxlint --deny-warnings`). `pnpm run typecheck` → limpio (`tsc -b`). `pnpm run build` → limpio,
+puerta de terceros de la Ronda A en verde al cierre. Peso de fuentes servidas: **69 224 B**
+exactos (32 292 Outfit + 36 932 DM Sans), igual al techo ya fijado por @s22. 26/26 huecos de
+imagen del inventario maestro resueltos.
+
+**Ficheros nuevos de esta ronda:** `src/lib/diseno/inventarioActivosPublicos.ts`(`.test.ts`),
+`src/documento-fuentes.test.ts`, `src/documento-iconos.test.ts`, `public/` completo (fuentes,
+favicons e imágenes, 30 ficheros).
+
+**Ficheros ampliados:** `src/styles/global.scss` (sección E, dos variables de pila
+tipográfica), `src/styles/hoja-global.test.ts` (+17 tests), `src/components/MetadatosPagina.tsx`
+(extensión del OG), `index.html` (2 precargas de fuente + 3 iconos raster + vector comentado),
+`package.json`/`pnpm-lock.yaml` (dos devDependencies de Fontsource).
+
+**No tocados, verificado explícitamente:** `src/styles/_tokens.scss`, `src/styles/_api.scss`,
+`tools/puerta-terceros.ts`, cualquier `.module.scss` de componente, `src/data/*.ts` (solo
+leídos, no escritos — las rutas que declaraban ya eran correctas salvo la del OG, que vive en
+`MetadatosPagina.tsx` y no en `src/data/`).
+
+## 7 · REFUERZO MUTACIÓN 1 (Ronda B) — matando el único superviviente real
+
+> El `mutation_tester` devolvió FAIL sobre la Ronda B (`progress/mutation_identidad_visual.md`
+> §"Ronda B"): 30/33 = 90.91 % bruto, 3 mutantes no matados en el único módulo puro `.ts` de esta
+> ronda, `src/lib/diseno/inventarioActivosPublicos.ts`. De los 3, **2 son equivalentes genuinos**
+> (verificados por el propio `mutation_tester` con prueba algebraica + script Node de 12 casos,
+> ambos sobre `compararRutasDeclaradasConFicherosReales:61:50`) y **1 es un superviviente real**:
+> la regex `PATRON_RUTA_DE_IMAGEN` (`:18`), mutada de `jpe?g` a `jpeg` (pierde la alternancia que
+> hace la "e" opcional, dejando de aceptar `.jpg`). Cero producción nueva: el hallazgo no señala
+> ningún comportamiento incorrecto — `jpe?g` ya acepta jpg y jpeg correctamente — solo un hueco de
+> *cobertura de mutación* (ningún test del corpus real ni sintético usaba nunca una ruta `.jpg`
+> sin "e", porque el inventario real de imágenes de esta feature es todo `.webp` salvo el Open
+> Graph, que es `.png`).
+
+**Test nuevo**, en `src/lib/diseno/inventarioActivosPublicos.test.ts`, describe
+`extraerRutasDeImagenDeclaradas`:
+
+```ts
+it('extrae una ruta "/img/…" con extensión ".jpg" (sin "e"), la mitad corta de la alternancia "jpe?g"', () => {
+  expect(extraerRutasDeImagenDeclaradas(["dato: '/img/galeria/ejemplo.jpg'"])).toEqual(['/img/galeria/ejemplo.jpg'])
+})
+
+it('extrae una ruta "/img/…" con extensión ".jpeg" (con "e"), la mitad larga de la misma alternancia', () => {
+  expect(extraerRutasDeImagenDeclaradas(["dato: '/img/galeria/ejemplo.jpeg'"])).toEqual(['/img/galeria/ejemplo.jpeg'])
+})
+```
+
+El primero es el que mata al mutante (el segundo se añade junto a él, tal y como sugería el propio
+informe, para dejar constancia explícita de que la alternancia cubre las dos grafías, no solo una
+— no distingue por sí solo al mutante, porque `jpeg` con la "e" sigue matcheando igual en ambas
+versiones de la regex).
+
+**Verificado con mutante aplicado** (script Node desechable en el scratchpad de sesión, copia
+literal de `extraerConPatron`/`extraerRutasDeImagenDeclaradas` y de las dos regex — la real
+`/['"](\/img\/[^'"]+\.(?:webp|png|jpe?g|svg))['"]/g` y la mutante
+`/['"](\/img\/[^'"]+\.(?:webp|png|jpeg|svg))['"]/g` — nunca aplicado a `src/`, que permaneció
+intacto salvo el fichero de test):
+
+```
+real   : ["/img/galeria/ejemplo.jpg"]
+mutante: []
+el test nuevo distingue el mutante: true
+```
+
+Con el mutante activo, el test `.jpg` esperaría `['/img/galeria/ejemplo.jpg']` y recibiría `[]`:
+falla. Con el código real, pasa. Mata el único superviviente real.
+
+**Trazabilidad:** este refuerzo no corresponde a ningún `@sN` sin cubrir — `extraerRutasDeImagenDeclaradas`
+ya estaba cubierta por @s27-@s29 (condición de producción, tabla de §3) desde antes de este
+refuerzo; era un hueco de *cobertura de mutación* de una rama de la regex, no de comportamiento.
+
+**Verificación final:** `pnpm run test` → **868/868 verdes, 65 ficheros** (866 de la Ronda B + 2
+tests nuevos de este refuerzo). `pnpm run lint` limpio. `pnpm run typecheck` limpio. `pnpm run
+build` limpio, puerta de terceros en verde al cierre. **Ningún fichero de `src/` fuera de
+`inventarioActivosPublicos.test.ts` fue tocado.**
+
+

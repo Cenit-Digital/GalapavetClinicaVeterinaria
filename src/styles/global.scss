@@ -13,6 +13,8 @@
 //   C. base                    → los tokens, aplicados de verdad al documento
 //   D. movimiento              → desplazamiento hasta anclas (@s14) y la
 //                                consulta de movimiento reducido (@s15)
+//   E. tipografía autoalojada  → los cuatro `@font-face` de marca y respaldo
+//                                (@s17, @s18)
 //
 // POR QUÉ EXISTE ESTE FICHERO. El 23/08/2026 se midió el `dist/` de producción
 // con un navegador real: 0 apariciones de `font-family` en todo el CSS
@@ -30,11 +32,14 @@
 // altura de la cabecera cambian con la paleta, así que no son roles de color y
 // no cuentan para el inventario de tokens de @s1 ni para los 68 pares de @s2.
 :root {
-  // PROVISIONAL, y declarado como tal: las familias de marca (Outfit y DM Sans,
-  // autoalojadas) entran con @s17/@s18, junto con sus `@font-face` y sus
-  // respaldos de métricas ajustadas. Hasta entonces, la pila del sistema — que
-  // ya es infinitamente mejor que el "Times New Roman" medido.
-  --fuente-texto: system-ui, sans-serif;
+  // Outfit (titulares) y DM Sans (texto), autoalojadas, subconjunto latino
+  // (Decisiones 32/33, `progress/investigacion_tecnica_visual.md` §3). Cada
+  // pila lleva su familia de marca, su respaldo de métricas ajustadas
+  // (sección E, @s18) y "Arial" — el sistema que esas métricas igualan — antes
+  // del genérico CSS final, para que el intercambio de `font-display: swap`
+  // no mueva un solo píxel (@s23, fuera de esta ronda).
+  --fuente-titulares: 'Outfit', 'Outfit Fallback', 'Arial', sans-serif;
+  --fuente-texto: 'DM Sans', 'DM Sans Fallback', 'Arial', sans-serif;
 
   // Altura de la cabecera fija, en la rejilla de 8px del proyecto
   // (`$escala-espaciado`, `_tokens.scss` sección C). Es UN SOLO número: lo
@@ -213,4 +218,72 @@ html {
     animation-iteration-count: 1;
     transition-duration: 0.01ms;
   }
+}
+
+// ----------------------------------------------------------------------------
+// E. Tipografía autoalojada (paso 6 de `plan_adaptacion_scss.md`, @s17/@s18)
+// ----------------------------------------------------------------------------
+// Los cuatro bloques viven AQUÍ, dentro de la única hoja global, y no en un
+// parcial `_fuentes.scss` separado: el contrato lee estas declaraciones con
+// `?raw` sobre "src/styles/global.scss" literalmente (@s17, @s18), y un `?raw`
+// sobre un `@use` a un parcial devolvería la línea de `@use`, no las reglas —
+// la misma reconciliación arquitectura-contra-plan ya resuelta en la Ronda A
+// (D-4, `progress/tdd_identidad_visual.md`). Manda el contrato.
+//
+// Ficheros reales: `@fontsource-variable/outfit` y `@fontsource-variable/dm-sans`
+// 5.3.0, SIL OFL 1.1 (Decisión 32), subconjunto "latin" ÚNICAMENTE — nunca
+// "latin-ext" — copiados byte a byte a `public/fuentes/`:
+//   outfit-latin-wght-normal.woff2  = 32 292 B
+//   dm-sans-latin-wght-normal.woff2 = 36 932 B
+//   total                           = 69 224 B  (techo de @s22, fuera de esta ronda)
+// Peso re-medido AL INSTALAR en esta ronda, no heredado de la investigación.
+
+// Outfit — titulares y datos numéricos. Variable: un solo fichero cubre los
+// pesos 100-900 (`font-weight: 100 900`), el rango real de `index.css` del
+// paquete, no un valor inventado.
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fuentes/outfit-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+// DM Sans — texto corrido. Variable: `font-weight: 100 1000`, el rango real
+// de esta familia (distinto del de Outfit: no se copian a ciegas).
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url('/fuentes/dm-sans-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+// Las dos familias de respaldo (@s18): un `local('Arial')` con sus métricas
+// RE-ESCALADAS para ocupar EXACTAMENTE el mismo espacio que la fuente web, así
+// el intercambio de `font-display: swap` no mueve un solo píxel (CLS 0, @s23).
+// Los seis valores (dos por métrica, tres métricas) están CALCULADOS con
+// `@capsizecss/core` a partir de las tablas reales `head`/`OS/2`/`hhea` de los
+// ficheros — no se recalculan a ojo aquí — y ya viven citados en la Decisión
+// 33 y en `progress/investigacion_tecnica_visual.md` §3.5. `@capsizecss/*` NO
+// entra como dependencia del proyecto: se usó una vez, como herramienta de
+// investigación; su salida es estática.
+@font-face {
+  font-family: 'Outfit Fallback';
+  src: local('Arial'), local('ArialMT');
+  ascent-override: 100.18%;
+  descent-override: 26.0468%;
+  line-gap-override: 0%;
+  size-adjust: 99.8204%;
+}
+
+@font-face {
+  font-family: 'DM Sans Fallback';
+  src: local('Arial'), local('ArialMT');
+  ascent-override: 94.9001%;
+  descent-override: 29.6563%;
+  line-gap-override: 0%;
+  size-adjust: 104.531%;
 }

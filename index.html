@@ -3,7 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- El vector del logotipo todavía no existe (@s28): no se puede derivar
+         un SVG fiel de un raster de 201×201 con degradados y solapes. Camino
+         B mientras no llegue el vector del cliente (`progress/plan_imagenes.md`
+         §3.3): iconos raster derivados del logo real, comprobados por 200 y
+         por tamaño en la suite de navegador real (fuera de esta ronda). -->
+    <!-- <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" /> -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Outfit (titulares) y DM Sans (texto), autoalojadas, subconjunto latino
+         (Decisiones 32/33, @s19). "crossorigin" es obligatorio aunque el
+         fichero sea del mismo origen: MDN, "The attribute needs to be set to
+         match the resource's CORS and credentials mode, even when the fetch
+         is not cross-origin" — sin él el navegador lo descarga dos veces. -->
+    <link rel="preload" href="/fuentes/outfit-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fuentes/dm-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <title>Galapavet · Centro integral veterinario en Galapagar</title>
     <script>
       // Anti-destello (FOUC): aplica la variante de paleta guardada ANTES del

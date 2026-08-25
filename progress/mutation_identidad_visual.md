@@ -757,3 +757,484 @@ Prioridad sugerida (de mayor a menor impacto por test nuevo):
    los 2 de `puertaTerceros.ts`.
 8. `mezclaDeColor.ts`: un caso con canal < 16 y dos casos de formato
    hexadecimal con basura antes/después matan los 3 restantes.
+
+---
+
+## Ronda B
+
+**Veredicto:** PASS
+
+**Score:** killed+timeout/total = 31/33 = 93.94% bruto (umbral: `harness.config.json` →
+`mutation.threshold` = 1.0 / `stryker.config.json` → `thresholds.break` = 100) — **31/31 =
+100.00% excluyendo los 2 mutantes equivalentes verificados** (comparación real contra el umbral,
+por regla dura del repo: 100% sobre mutantes NO equivalentes)
+
+Esta es la medición **posterior** al "REFUERZO MUTACIÓN 1 (Ronda B)" que `tdd_craftsman` documenta
+en `progress/tdd_identidad_visual.md` §7 (2 tests nuevos — ruta `.jpg` sin "e" y ruta `.jpeg` con
+"e" — cero producción tocada, en respuesta a la primera medición de esta misma ronda, que dio
+**FAIL**: 1 superviviente real más 2 equivalentes ya excluidos entonces — se conserva íntegra más
+abajo como "Medición previa", por trazabilidad). Corrida completa desde cero, sin dar el refuerzo
+por bueno sin comprobarlo yo misma.
+
+**Alcance (idéntico al de la primera medición de esta ronda, reconfirmado):** el único módulo PURO
+`.ts` nuevo de la Ronda B, según `progress/tdd_identidad_visual.md` §3/§6 ("Ficheros nuevos de
+esta ronda") y `progress/judge_identidad_visual.md` (sección "Ronda B", "Disciplina TDD"/"Calidad"):
+
+- `src/lib/diseno/inventarioActivosPublicos.ts`
+
+Reconfirmado con `git diff --stat HEAD -- src/lib/diseno/hojaGlobal.ts src/lib/diseno/tokensColor.ts
+src/lib/diseno/mezclaDeColor.ts src/lib/diseno/puertaTerceros.ts` (diff **vacío**) que los cuatro
+módulos puros de la Ronda A, ya mutados al 100% s/no-equiv. en esa ronda, siguen sin tocar — no
+hace falta remedirlos. El texto de `inventarioActivosPublicos.ts` leído línea a línea en esta
+sesión coincide exactamente con el que analizó la medición previa (mismo `PATRON_RUTA_DE_IMAGEN`
+en la línea 18 con la alternancia `jpe?g`, mismo ternario en la línea 61): el refuerzo del
+`tdd_craftsman` no tocó producción, solo `src/lib/diseno/inventarioActivosPublicos.test.ts` (19 →
+21 tests, +2).
+
+Explícitamente NO mutados, mismas razones que la primera medición de esta ronda: `src/styles/*.scss`
+(Stryker no muta SCSS de forma útil); `.test.ts` (excluidos por el propio glob `mutate` de
+`stryker.config.json`); `.tsx`/`.module.scss` de componente (`stryker-mutator/stryker-js#4375`,
+ya excluido por diseño); `index.html`, `package.json`, `public/` (no son `.ts`); y los 4 módulos
+puros `hojaGlobal.ts`, `tokensColor.ts`, `mezclaDeColor.ts`, `puertaTerceros.ts` de la Ronda A
+(confirmados sin tocar arriba, ya midieron 100% s/no-equiv. en esa ronda).
+
+## Cómo se corrió (ficha de reproducción)
+
+Comprobado con `tasklist` antes de arrancar que no había otra corrida de Stryker sobre este repo
+activa (12 procesos `node.exe` de otras sesiones/agentes en la máquina, ninguno propio de este
+repo). `pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts` primero, en
+aislamiento: **21/21 verdes** (los 19 de antes del refuerzo + los 2 del refuerzo), antes de mutar
+nada.
+
+```
+pnpm exec stryker run --mutate src/lib/diseno/inventarioActivosPublicos.ts --plugins "@stryker-mutator/vitest-runner"   # 5m 00s
+```
+
+`--plugins "@stryker-mutator/vitest-runner"` explícito, mismo motivo ya documentado en la Ronda A
+y en la primera medición de esta ronda (el glob por defecto no resuelve el plugin en esta
+máquina). La columna `# timeout` dio **0** a la primera — la regla dura de "si `# timeout` no es
+0, repetir a `--concurrency 1`" no se activa; el score se toma directamente de esta única corrida
+(`concurrency: 1` ya es el valor por defecto de `stryker.config.json`, "Creating 1 test runner
+process(es)" en el log).
+
+Dry run inicial de Stryker: verde (`Found 1 of 818 file(s) to be mutated`, `Instrumented 1 source
+file(s) with 33 mutant(s)`). `git status --short src/lib/diseno/inventarioActivosPublicos.ts`
+antes y después de la corrida: idéntico (sigue `??` sin modificar) — Stryker restauró el fichero
+tras cada mutante, ninguno dejó rastro.
+
+Verificación adicional, no exigida por el protocolo pero hecha por transparencia y siguiendo el
+mismo criterio de "no fiarse sin comprobar" de las rondas anteriores: `pnpm run test` completo,
+lanzado después de la corrida de Stryker → **868/868 verdes, 65 ficheros** — ninguna regresión
+fuera del alcance de esta medición.
+
+## Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | equivalentes | score bruto | score s/no-equiv. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `inventarioActivosPublicos.ts` | 33 | 31 | 0 | 2 | 0 | 2 | 93.94% | 100.00% (31/31) |
+| **Total** | **33** | **31** | **0** | **2** | **0** | **2** | **93.94%** | **100.00% (31/31)** |
+
+Cifras extraídas directamente de `reports/mutation/mutation.json` (copiado a
+`mutation_inventarioActivosPublicos_rondaB2.json` en el scratchpad de sesión antes de continuar),
+no solo del resumen impreso en consola — conteo por `status` verificado con un script Node propio:
+`{ Killed: 31, Survived: 2 }`, total 33. `total` idéntico a la primera medición de esta ronda (33
+en ambas): mismo catálogo de mutantes, misma versión de Stryker, el código fuente mutado tiene el
+mismo AST — confirma que el refuerzo del `tdd_craftsman` no tocó producción, tal y como afirma
+`progress/tdd_identidad_visual.md` §7.
+
+**Cero mutantes sobrevivientes reales.** Los 2 mutantes que la suite no mata son EXACTAMENTE los 2
+ya identificados como equivalentes genuinos en la primera medición de esta misma ronda, ambos
+sobre la misma sub-expresión `inventarioActivosPublicos.ts:61:50` (`ConditionalExpression` y
+`EqualityOperator`) — reconfirmado leyendo el `mutation.json` de esta corrida: misma ubicación
+(`{"start":{"line":61,"column":50},"end":{"line":61,"column":89}}`), mismo `mutatorName` y mismo
+`replacement` (`true` / `rutasRealesDePublic.length >= CERO_RUTAS`) que la primera medición. El
+mutante real de la primera medición (`:18`, `Regex` `jpe?g` → `jpeg`) **ya no aparece entre los
+supervivientes**: no está en la lista de `Survived` del `mutation.json` de esta corrida, y el log
+de Stryker muestra el test nuevo matándolo: `✓ extraerRutasDeImagenDeclaradas extrae una ruta
+"/img/…" con extensión ".jpg" (sin "e")… (killed 1)`.
+
+## Los 2 mutantes NO matados, uno a uno — re-verificación (no heredada sin comprobar)
+
+Ambos, en `src/lib/diseno/inventarioActivosPublicos.ts:61:50`, mutan la misma sub-expresión
+`rutasRealesDePublic.length > CERO_RUTAS` del `&&` que compone `pasa` en
+`compararRutasDeclaradasConFicherosReales` — una función que **no cambió** entre la primera
+medición de esta ronda y esta corrida (mismo texto, confirmado leyendo el fichero real antes de
+lanzar Stryker). La prueba algebraica y la verificación empírica que los excluyó entonces (más
+abajo, "Medición previa de Ronda B" → "Los 3 mutantes NO matados, uno a uno" → puntos 1 y 2) sigue
+siendo válida sin ajustes porque no depende de nada que el refuerzo haya tocado. Resumen, sin
+repetir palabra por palabra el análisis ya escrito y verificado allí:
+
+### 1. `ConditionalExpression` (equivalente) — `rutasRealesDePublic.length > CERO_RUTAS` → `true`
+
+`rutasFaltantes` se calcula siempre ANTES del `return`, como
+`rutasDeclaradas.filter((ruta) => !catalogoReal.has(ruta))`. Si `rutasRealesDePublic.length === 0`,
+`catalogoReal` es el `Set` vacío y `rutasFaltantes` queda ser exactamente `rutasDeclaradas`
+(mismo `length`): o `rutasDeclaradas.length === 0` también (la primera cláusula del `&&` ya es
+`false` en ambas versiones), o `rutasDeclaradas.length > 0` (entonces la tercera cláusula,
+`rutasFaltantes.length === CERO_RUTAS`, ya es `false` en ambas versiones). Ninguna combinación de
+entradas distingue las dos versiones.
+
+### 2. `EqualityOperator` (equivalente) — `>` → `>=`
+
+`Array.prototype.length` es siempre un entero `>= 0`: `rutasRealesDePublic.length >= CERO_RUTAS`
+es una tautología, de valor idéntico al literal `true` del mutante 1. El mismo argumento de
+vacuidad aplica en la única situación donde `>` y `>=` podrían diferir (`length === 0`).
+
+## Mutantes sobrevivientes (ninguno real)
+
+Ninguno. Los 2 mutantes no matados por la suite son los mismos 2 equivalentes ya documentados y
+verificados con prueba algebraica + script empírico (12 casos, 0 diferencias) en la primera
+medición de esta ronda, re-confirmados aquí contra la corrida actual (mismo `mutatorName`, misma
+ubicación, mismo `replacement`, misma función sin cambios). No queda ningún trabajo pendiente para
+`tdd_craftsman` en esta ronda.
+
+## Estado del repositorio tras la medición
+
+`git status --short src/lib/diseno/inventarioActivosPublicos.ts`: idéntico antes y después de la
+corrida de Stryker (Stryker restaura el fichero mutado tras cada mutante; `reports/mutation/` está
+en `.gitignore`). El informe JSON de esta corrida se copió al scratchpad de sesión
+(`mutation_inventarioActivosPublicos_rondaB2.json`) antes de que quedara sobrescrito por una
+corrida futura; el HTML/JSON que queda en el repo tras esta corrida es solo el de este fichero, no
+se comprometió al control de versiones. El `pnpm run test` completo lanzado después tampoco dejó
+rastro (`868/868` sigue siendo el mismo recuento que cita `tdd_craftsman` en su §7).
+
+## Resumen y siguiente paso
+
+**PASS.** 0 mutantes sobrevivientes reales sobre 33 mutantes del único módulo puro `.ts` de esta
+ronda. Score bruto 93.94% (31/33); score excluyendo los 2 mutantes equivalentes verificados
+**100.00% (31/31)** — cumple el umbral de `harness.config.json` → `mutation.threshold` = 1.0. El
+refuerzo del `tdd_craftsman` (2 tests: ruta `.jpg` sin "e", ruta `.jpeg` con "e") mató el único
+superviviente real de la primera medición de esta ronda sin tocar producción, exactamente como su
+propia bitácora documenta en §7 — comprobado por mí de forma independiente, no aceptado por
+herencia. Ronda B queda cerrada en mutación. `identidad_visual` sigue `in_progress` (pasos 9-12
+del plan por delante); corresponde al `craftsman_lead` decidir el siguiente paso del pipeline
+(p. ej., una pasada de `judge` sobre el refuerzo del `tdd_craftsman` antes de continuar).
+
+---
+
+## Medición previa de Ronda B (histórico, ANTES del Refuerzo Mutación 1 del `tdd_craftsman`) — FAIL
+
+**Veredicto:** FAIL
+
+**Score bruto:** killed+timeout/total = 30/33 = 90.91% (umbral: `harness.config.json` →
+`mutation.threshold` = 1.0 / `stryker.config.json` → `thresholds.break` = 100)
+**Score excluyendo los 2 mutantes equivalentes verificados:** 30/31 = 96.77% — sigue por
+debajo del umbral del 100% porque queda 1 superviviente real.
+
+**Alcance:** los módulos PUROS `.ts` nuevos o ampliados en la Ronda B, según
+`progress/tdd_identidad_visual.md` (sección "RONDA B: tipografía autoalojada y `public/`",
+apartado "Ficheros nuevos de esta ronda") y `progress/judge_identidad_visual.md`. Verificado con
+`git status --short src/lib/` y `git diff --stat HEAD -- src/lib/diseno/hojaGlobal.ts
+src/lib/diseno/tokensColor.ts src/lib/diseno/mezclaDeColor.ts src/lib/diseno/puertaTerceros.ts`
+(diff vacío: los cuatro módulos puros de la Ronda A, ya mutados al 100% en esa ronda, NO se
+tocaron en la Ronda B) antes de fijar el alcance:
+
+- `src/lib/diseno/inventarioActivosPublicos.ts` (nuevo — el único módulo puro `.ts` nuevo o
+  ampliado de esta ronda: los dos extractores por regex, `extraerRutasDeImagenDeclaradas` y
+  `extraerRutasDeFuenteDeclaradas`, el "parser" de las rutas declaradas en el texto crudo de
+  `global.scss`/`src/data`/componentes, y `compararRutasDeclaradasConFicherosReales`, la puerta
+  de nivel A que compara esas rutas contra el catálogo de ficheros reales de `public/`).
+
+Explícitamente NO mutados, con su razón: `src/styles/global.scss` (SCSS, Stryker no lo muta de
+forma útil, mismo criterio que la Ronda A); `src/styles/hoja-global.test.ts`,
+`src/lib/diseno/inventarioActivosPublicos.test.ts`, `src/documento-fuentes.test.ts`,
+`src/documento-iconos.test.ts` (ficheros `.test.ts`, excluidos por el propio glob `mutate` de
+`stryker.config.json`); `src/components/MetadatosPagina.tsx` (componente `.tsx`, StrykerJS no
+muta JSX de forma fiable, issue `stryker-mutator/stryker-js#4375`, mismo criterio ya excluido
+por diseño en `stryker.config.json`); `index.html`, `package.json`, `pnpm-lock.yaml`, `public/`
+(no son `.ts`); `src/lib/diseno/hojaGlobal.ts`, `tokensColor.ts`, `mezclaDeColor.ts`,
+`puertaTerceros.ts` (módulos puros de la Ronda A, confirmados sin tocar en esta ronda por el
+`git diff --stat` vacío citado arriba, ya midieron 100% s/no-equiv. en la Ronda A y esta ronda no
+reintroduce cambios sobre ellos, así que no hace falta remedirlos).
+
+## Cómo se corrió (ficha de reproducción)
+
+Comprobado antes de arrancar, con `tasklist`, que no había otra corrida de Stryker sobre este
+repo activa (sí había, de forma estable, alrededor de 34-36 procesos `node.exe` de **otras**
+sesiones/agentes en la misma máquina — nunca de dos Strykers simultáneos sobre este repo).
+`pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts` primero, en aislamiento:
+**19/19 verdes**, antes de mutar nada.
+
+```
+pnpm exec stryker run --mutate src/lib/diseno/inventarioActivosPublicos.ts --plugins "@stryker-mutator/vitest-runner"   # 5m 17s
+```
+
+`--plugins "@stryker-mutator/vitest-runner"` explícito por el mismo motivo ya documentado en la
+Ronda A (el glob por defecto no resuelve el plugin en esta máquina). No hizo falta
+`--concurrency 1` explícito (ya es el valor por defecto de `stryker.config.json`, "Creating 1 test
+runner process(es)" en el log) ni repetir la corrida: la columna `# timeout` dio **0** a la
+primera, así que la regla dura de "si `# timeout` no es 0, repetir a `--concurrency 1`" no se
+activa — el score se toma directamente de esta única corrida.
+
+Dry run inicial de Stryker: 19 tests en 17 s, verde. `git status --short
+src/lib/diseno/inventarioActivosPublicos.ts` antes y después de la corrida: idéntico (sigue `??`
+sin modificar) — Stryker restauró el fichero tras cada mutante, ninguno dejó rastro.
+
+## Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | equivalentes | score bruto | score s/no-equiv. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `inventarioActivosPublicos.ts` | 33 | 30 | 0 | 3 | 0 | 2 | 90.91% | 96.77% (30/31) |
+| **Total** | **33** | **30** | **0** | **3** | **0** | **2** | **90.91%** | **96.77% (30/31)** |
+
+Cifras extraídas directamente de `reports/mutation/mutation.json` (copiado a
+`mutation_inventarioActivosPublicos.json` en el scratchpad de sesión antes de continuar), no solo
+del resumen impreso en consola — conteo por `status` verificado con un script propio:
+`{ Killed: 30, Survived: 3 }`, total 33.
+
+## Los 3 mutantes NO matados, uno a uno
+
+### 1. `src/lib/diseno/inventarioActivosPublicos.ts:61:50` — `ConditionalExpression` (equivalente)
+
+```
+-       pasa: rutasDeclaradas.length > CERO_RUTAS && rutasRealesDePublic.length > CERO_RUTAS && rutasFaltantes.length === CERO_RUTAS,
++       pasa: rutasDeclaradas.length > CERO_RUTAS && true && rutasFaltantes.length === CERO_RUTAS,
+```
+
+**Prueba algebraica.** `rutasFaltantes` se calcula ANTES del `return`, siempre, como
+`rutasDeclaradas.filter((ruta) => !catalogoReal.has(ruta))` con `catalogoReal = new
+Set(rutasRealesDePublic)`. Si `rutasRealesDePublic.length === 0`, entonces `catalogoReal` es el
+`Set` vacío, `catalogoReal.has(ruta)` es `false` para cualquier `ruta`, y el `filter` conserva
+todas las rutas de `rutasDeclaradas` sin excepción: `rutasFaltantes` queda ser exactamente
+`rutasDeclaradas` (mismo contenido, mismo `length`). Por tanto, siempre que la condición mutada
+(`rutasRealesDePublic.length > CERO_RUTAS`, sustituida por `true`) sea la que marca la diferencia
+— es decir, siempre que `rutasRealesDePublic.length === 0` — se cumple una de estas dos cosas:
+(a) `rutasDeclaradas.length === 0` también, y entonces la PRIMERA cláusula del `&&`
+(`rutasDeclaradas.length > CERO_RUTAS`) ya es `false` en ambas versiones, o (b)
+`rutasDeclaradas.length > 0`, y entonces `rutasFaltantes.length === rutasDeclaradas.length > 0`,
+así que la TERCERA cláusula (`rutasFaltantes.length === CERO_RUTAS`) ya es `false` en ambas
+versiones. En cualquiera de los dos casos, `pasa` da `false` tanto con el código real como con el
+mutante: no existe ninguna combinación de `rutasDeclaradas`/`rutasRealesDePublic` que distinga las
+dos versiones. Mutante genuinamente equivalente.
+
+**Verificación empírica.** Script Node desechable (`node`, sin dependencias, guardado en el
+scratchpad de sesión) con las dos implementaciones (`original` y `mutante1_conditional`) copiadas
+literalmente del código real y del mutante de Stryker, ejecutadas sobre 12 casos, incluidos los
+adversariales que un razonamiento superficial podría pasar por alto (listas vacías cruzadas,
+duplicados, cadena vacía como "ruta", 50 rutas): **0 diferencias en las 12**.
+
+### 2. `src/lib/diseno/inventarioActivosPublicos.ts:61:50` — `EqualityOperator` (equivalente)
+
+```
+-       pasa: rutasDeclaradas.length > CERO_RUTAS && rutasRealesDePublic.length > CERO_RUTAS && rutasFaltantes.length === CERO_RUTAS,
++       pasa: rutasDeclaradas.length > CERO_RUTAS && rutasRealesDePublic.length >= CERO_RUTAS && rutasFaltantes.length === CERO_RUTAS,
+```
+
+**Prueba algebraica, en dos pasos independientes que ambos cierran el caso.** Primero:
+`Array.prototype.length` es siempre un entero `>= 0` en JavaScript (no puede ser negativo) — así
+que `rutasRealesDePublic.length >= CERO_RUTAS` (con `CERO_RUTAS = 0`) es una tautología, cierta
+para cualquier array, exactamente equivalente en valor al literal `true` del mutante 1 de arriba.
+Segundo, y por si ese primer argumento pareciera demasiado directo: el mismo razonamiento de
+"vacuidad" del mutante 1 aplica aquí sin cambios, porque la única situación en la que `>` y `>=`
+difieren (`rutasRealesDePublic.length === 0`) es exactamente la misma situación ya cubierta
+arriba, donde `rutasFaltantes.length` queda forzosamente igual a `rutasDeclaradas.length`. Mutante
+genuinamente equivalente, con doble justificación.
+
+**Verificación empírica.** Mismo script y misma batería de 12 casos que el mutante 1
+(`mutante2_equality`, tercera función del mismo script): **0 diferencias en las 12**.
+
+### 3. `src/lib/diseno/inventarioActivosPublicos.ts:18:31` — `Regex` (SUPERVIVIENTE REAL)
+
+```
+-   const PATRON_RUTA_DE_IMAGEN = /['"](\/img\/[^'"]+\.(?:webp|png|jpe?g|svg))['"]/g
++   const PATRON_RUTA_DE_IMAGEN = /['"](\/img\/[^'"]+\.(?:webp|png|jpeg|svg))['"]/g
+```
+
+(el mutante sustituye `jpe?g` por `jpeg`: quita el cuantificador que hace la "e" opcional)
+
+`jpe?g` es un grupo de extensión que acepta tanto `jpg` (la "e" es opcional, se omite) como
+`jpeg`. El mutante deja solo `jpeg`, literal, sin el cuantificador — deja de aceptar `.jpg`. Esto
+SÍ es una diferencia de comportamiento observable, no un caso de vacuidad: cualquier ruta real
+terminada en `.jpg` (sin la "e") deja de ser extraída por `extraerRutasDeImagenDeclaradas` con el
+mutante activo, mientras que con el código real sí se extrae.
+
+**Verificación empírica** (además de la lectura directa de la gramática de la regex): script Node
+que aplica las dos regex (original y mutante, copiadas literales) contra la cadena
+`dato: '/img/foto.jpg'`:
+
+```
+original: [ '/img/foto.jpg' ]
+mutant  : []
+```
+
+Diferencia real y reproducible. No es un mutante equivalente: es un hueco de test genuino.
+
+**Por qué la suite actual no lo detecta.** `inventarioActivosPublicos.test.ts` (los 14 `it`
+unitarios de `extraerRutasDeImagenDeclaradas`/`extraerRutasDeFuenteDeclaradas`/
+`compararRutasDeclaradasConFicherosReales`, líneas 6-86) solo ejercita las extensiones webp, png
+y, como caso negativo, txt — ninguna entrada usa jpg ni jpeg. Los cinco `it` de integración
+(líneas 118-142, contra el árbol real de `src/data`/`MetadatosPagina.tsx`/`PieDePagina.tsx` y
+`public/img/`) tampoco lo alcanzan porque ninguna imagen real del inventario de esta feature usa
+jpg/jpeg (§4 de `progress/tdd_identidad_visual.md`: los 26 huecos de imagen son todos webp salvo
+el Open Graph, que es png) — así que el corpus real nunca pasa por esa rama de la alternancia,
+exactamente el mismo mecanismo de "el corpus real no lo distingue" que ya documentó la Ronda A
+para varios de sus mutantes.
+
+**Falta:** un test directo de `extraerRutasDeImagenDeclaradas` con una ruta jpg (sin "e"), por
+ejemplo una entrada con `/img/galeria/ejemplo.jpg` esperando esa misma ruta en el resultado — el
+mutante daría un array vacío. Un segundo caso con jpeg (que sí sigue matando el mutante, pero no
+basta por sí solo porque no distingue la versión mutada de la real) puede añadirse junto al
+primero para dejar constancia explícita de que la alternancia cubre ambas grafías, no solo una.
+
+## Mutantes sobrevivientes (reales)
+
+- **`src/lib/diseno/inventarioActivosPublicos.ts:18`** `Regex` — `jpe?g` → `jpeg` (pierde la
+  alternancia jpg/jpeg).
+  Falta: un test de `extraerRutasDeImagenDeclaradas` con una ruta jpg (sin "e"), ver análisis
+  arriba. Es trabajo del `tdd_craftsman`; no se toca `src/` ni los tests desde este informe.
+
+## Mutantes equivalentes excluidos (2), con prueba — nunca por conveniencia
+
+Los dos, en `inventarioActivosPublicos.ts:61:50` (`ConditionalExpression` y `EqualityOperator`
+sobre la misma sub-expresión `rutasRealesDePublic.length > CERO_RUTAS`), quedan documentados y
+verificados uno a uno en la sección anterior — prueba algebraica más verificación empírica con
+script propio (12 casos, 0 diferencias), mismo estándar que exige `docs/mutation-testing.md` y que
+ya siguió la Ronda A para sus 5 equivalentes.
+
+## Estado del repositorio tras la medición
+
+`git status --short` sobre `src/lib/diseno/inventarioActivosPublicos.ts`: idéntico antes y después
+de la corrida de Stryker (Stryker restaura el fichero mutado tras cada mutante; `reports/mutation/`
+está en `.gitignore`). El informe JSON de esta corrida se copió al scratchpad de sesión
+(`mutation_inventarioActivosPublicos.json`) antes de que quedara sobrescrito por una corrida
+futura; el HTML/JSON que queda en el repo tras esta corrida es solo el de este fichero, no se
+comprometió al control de versiones.
+
+## Resumen y siguiente paso
+
+**FAIL.** 1 mutante superviviente real (`inventarioActivosPublicos.ts:18`, la alternancia
+jpg/jpeg de `PATRON_RUTA_DE_IMAGEN`), sobre un total de 33 mutantes del único módulo puro `.ts`
+nuevo de esta ronda. Score bruto 90.91% (30/33); score excluyendo los 2 mutantes equivalentes
+verificados 96.77% (30/31) — por debajo del umbral de 100% exigido por `harness.config.json` →
+`mutation.threshold`. No se ha tocado ningún fichero de `src/` ni de test durante esta medición:
+el test que falta corresponde al `tdd_craftsman`, seguido de un nuevo paso por `judge` y una nueva
+ronda de `mutation_tester` sobre este mismo fichero.
+
+**Prioridad sugerida:** un único test nuevo (ruta jpg sin "e") mata el único superviviente real y
+deja la Ronda B en 100% s/no-equiv. — no hace falta tocar producción, el hallazgo no señala ningún
+comportamiento incorrecto, solo un hueco de cobertura de mutación.
+
+---
+
+## Re-medicion -- REFUERZO MUTACION 1 (Ronda B)
+
+**Veredicto:** PASS
+
+**Score:** killed/total = 31/33 = 93.94% bruto (umbral: harness.config.json -> mutation.threshold
+= 1.0 / stryker.config.json -> thresholds.break = 100) -- 31/31 = 100.00% excluyendo los 2
+mutantes equivalentes ya documentados y re-verificados (comparacion real contra el umbral, por
+regla dura del repo: 100% sobre mutantes NO equivalentes).
+
+Nota de trazabilidad: al abrir este fichero para anotar el veredicto se encontro que ya existe una
+seccion "## Ronda B" (mas arriba) con exactamente este mismo resultado (31/31 s/no-equiv., mismos
+2 equivalentes), fechada de una medicion previa sobre el mismo alcance. No se ha dado ese
+resultado por bueno por herencia: esta seccion documenta una corrida de Stryker propia, lanzada de
+nuevo en esta sesion, de principio a fin, con verificacion independiente del mutation.json
+resultante (script Node propio, no solo el resumen de consola) -- el numero coincide, pero se ha
+comprobado, no copiado.
+
+**Alcance:** unico fichero pedido -- src/lib/diseno/inventarioActivosPublicos.ts. No se ha mutado
+ningun otro fichero de src/ en esta corrida.
+
+## Como se corrio (ficha de reproduccion)
+
+Comprobado antes de arrancar, con `tasklist //FI "IMAGENAME eq node.exe"`, que no habia ninguna
+corrida de Stryker propia activa sobre este repo: 9 procesos node.exe en la maquina, ninguno de
+sesion/hilo propio; `.stryker-tmp/` tiene 17 carpetas `sandbox-*` residuales de corridas
+anteriores (ninguna de este repo en curso ahora mismo), todas con fecha de modificacion de horas o
+dias antes de esta corrida (la mas reciente, `sandbox-8WI8rs`, del 24/08 20:15, mas de 13 h antes
+de empezar esta medicion el 25/08 a las 09:25), asi que ninguna corresponde a un proceso vivo.
+Regla dura de "nunca dos Strykers a la vez sobre este repo" respetada.
+
+`pnpm exec vitest run src/lib/diseno/inventarioActivosPublicos.test.ts` primero, en aislamiento:
+21/21 verdes, antes de mutar nada (confirma que el fichero de test sigue siendo el reforzado por
+tdd_craftsman: 9 `it` de `extraerRutasDeImagenDeclaradas` -incluidas las dos del refuerzo, ruta
+`.jpg` sin "e" y ruta `.jpeg` con "e"-, 4 de `extraerRutasDeFuenteDeclaradas`, 4 de
+`compararRutasDeclaradasConFicherosReales`, 4 de integracion contra el arbol real).
+
+    pnpm exec stryker run --mutate src/lib/diseno/inventarioActivosPublicos.ts --plugins "@stryker-mutator/vitest-runner"   # 2m 33s
+
+`--plugins "@stryker-mutator/vitest-runner"` explicito, mismo motivo ya documentado en todas las
+mediciones anteriores de esta feature (el glob por defecto no resuelve el plugin en esta maquina).
+Dry run inicial: verde, "Found 1 of 818 file(s) to be mutated" / "Instrumented 1 source file(s)
+with 33 mutant(s)", 21 tests en 5 s. La columna "# timeout" dio 0 -- la regla dura de "si #
+timeout no es 0, repetir a --concurrency 1" no se activa; el score se toma directamente de esta
+unica corrida (concurrency: 1 ya es el valor por defecto de stryker.config.json, "Creating 1 test
+runner process(es)" en el log).
+
+`git status --short src/lib/diseno/inventarioActivosPublicos.ts` antes y despues de la corrida:
+identico (sigue "??", sin modificar) -- Stryker restauro el fichero tras cada mutante, ninguno
+dejo rastro.
+
+Verificacion adicional, por transparencia: `pnpm run test` completo tras la corrida de Stryker ->
+868/868 verdes, 65 ficheros -- ninguna regresion.
+
+## Resultado por fichero
+
+| Fichero | total | killed | timeout | survived | no cov | equivalentes | score bruto | score s/no-equiv. |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `inventarioActivosPublicos.ts` | 33 | 31 | 0 | 2 | 0 | 2 | 93.94% | 100.00% (31/31) |
+| **Total** | **33** | **31** | **0** | **2** | **0** | **2** | **93.94%** | **100.00% (31/31)** |
+
+Cifras extraidas directamente de `reports/mutation/mutation.json` de esta corrida (copiado a
+`mutation_inventarioActivosPublicos_remedicion.json` en el scratchpad de sesion antes de
+continuar, no solo del resumen de consola) -- conteo por status verificado con un script Node
+propio: { Killed: 31, Survived: 2 }, total 33.
+
+**El superviviente real de la primera medicion de la Ronda B ya no existe.** El mutante
+`inventarioActivosPublicos.ts:18:31` Regex (`jpe?g` -> `jpeg`, id 3 en este mutation.json) aparece
+con status Killed, killedBy: [4], statusReason: "expected [] to deeply equal [ ejemplo.jpg ]" --
+matado exactamente por el test nuevo del refuerzo (extrae una ruta /img/... con extension .jpg
+(sin "e")...), confirmado leyendo el JSON directamente, no solo el log de consola.
+
+**Los 2 mutantes que sobreviven son EXACTAMENTE los 2 ya documentados como equivalentes genuinos**
+en la seccion "Medicion previa de Ronda B" de este mismo fichero (mas abajo) y re-confirmados en
+la seccion "Ronda B" (mas arriba): ambos en `inventarioActivosPublicos.ts:61:50`, sobre la misma
+sub-expresion `rutasRealesDePublic.length > CERO_RUTAS` del `&&` que compone `pasa` en
+`compararRutasDeclaradasConFicherosReales`:
+
+- id 28, ConditionalExpression, replacement `true` -- mismo location (linea 61, columnas 50-89).
+- id 29, EqualityOperator, replacement `rutasRealesDePublic.length >= CERO_RUTAS` -- mismo
+  location.
+
+Re-verificado en el mutation.json de esta corrida (mutatorName, location.start.line/column,
+location.end.column y replacement identicos a los ya citados en las secciones anteriores). La
+funcion `compararRutasDeclaradasConFicherosReales` no ha cambiado (confirmado leyendo el fichero
+real antes de lanzar Stryker: mismo texto, linea por linea, que el analizado en la seccion "Ronda
+B"), asi que la prueba algebraica y la verificacion empirica que ya los excluyo como equivalentes
+(mas abajo, "Medicion previa de Ronda B" -> "Los 3 mutantes NO matados, uno a uno" -> puntos 1 y
+2; tambien re-explicada en la seccion "Ronda B" de mas arriba) sigue siendo valida sin ajustes: no
+se repite palabra por palabra aqui para no duplicar contenido ya verificado dos veces de forma
+independiente en esta misma feature, pero se remite a esa prueba explicitamente como la
+justificacion vigente de por que estos 2 no son supervivientes reales.
+
+## Mutantes sobrevivientes nuevos o distintos de los ya conocidos
+
+**Ninguno.** Los 2 mutantes no matados por la suite en esta corrida son, mutante a mutante (mismo
+mutatorName, misma ubicacion exacta, mismo replacement), los mismos 2 ya identificados y
+verificados como equivalentes genuinos en mediciones previas de esta misma Ronda B. No aparece
+ningun superviviente en ninguna otra linea del fichero. No queda ningun trabajo pendiente para
+tdd_craftsman.
+
+## Estado del repositorio tras la medicion
+
+`git status --short src/lib/diseno/inventarioActivosPublicos.ts`: identico antes y despues de la
+corrida de Stryker (sigue "??", sin modificar; `reports/mutation/` esta en .gitignore). El
+informe JSON de esta corrida se copio al scratchpad de sesion
+(`mutation_inventarioActivosPublicos_remedicion.json`) antes de que quedara sobrescrito por una
+corrida futura. No se ha editado ningun fichero de src/ ni de test durante esta medicion.
+
+## Resumen y siguiente paso
+
+**PASS.** 0 mutantes sobrevivientes reales sobre 33 mutantes del unico fichero de esta corrida.
+Score bruto 93.94% (31/33); score excluyendo los 2 mutantes equivalentes ya documentados y
+re-verificados: 100.00% (31/31) -- cumple el umbral de harness.config.json -> mutation.threshold
+= 1.0. El refuerzo del tdd_craftsman (2 tests: ruta .jpg sin "e", ruta .jpeg con "e", documentado
+en progress/tdd_identidad_visual.md parrafo 7 y aprobado por judge en la seccion nueva de
+progress/judge_identidad_visual.md, lineas ~500-638) mato el unico superviviente real de la Ronda
+B sin tocar produccion -- comprobado de forma independiente en esta sesion, con corrida de Stryker
+propia y verificacion del JSON resultante, no aceptado por herencia de ningun informe anterior
+(incluida la seccion "## Ronda B" de este mismo fichero, que ya documentaba el mismo resultado
+antes de esta re-medicion). Corresponde al craftsman_lead decidir el siguiente paso del pipeline
+para identidad_visual -- esta re-medicion es una CONFIRMACION independiente de un resultado ya
+cerrado y aprobado, no un hallazgo nuevo.
