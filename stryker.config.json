@@ -4,6 +4,7 @@
 
   "packageManager": "pnpm",
   "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": { "fileName": "reports/mutation/index.html" },
   "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
@@ -12,8 +13,7 @@
     "src/lib/**/*.ts",
     "src/**/*-logica.ts",
     "!src/**/*.test.ts",
-    "!src/**/*.test.tsx",
-    "!src/**/*.d.ts"
+    "!src/**/*.test.tsx"
   ],
 
   "thresholds": {

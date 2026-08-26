@@ -386,6 +386,21 @@
       "sdd": true,
       "status": "in_progress",
       "notas": "Contrato aprobado explícitamente por el humano el 26/08/2026. Implementación iniciada; la medición comparativa y el análisis de partida están documentados en progress/rediseno/."
+    },
+    {
+      "id": 25,
+      "name": "integridad_puerta_mutacion",
+      "title": "Configuración ejecutable de la puerta de mutación",
+      "description": "Corrige el fallo reproducible de configuración: con mutation.targets vacío, commands.mutate añadía --mutate sin argumento y Stryker abortaba antes de medir. Esta entrega deja a Stryker como fuente única de la superficie mutable, carga explícitamente su runner bajo pnpm y protege el contrato con una prueba que forma parte de la puerta estándar. No reabre la deuda histórica de mutación global de código de producto.",
+      "acceptance": [
+        "commands.mutate es exactamente pnpm exec stryker run y no contiene --mutate ni {{target}}; stryker.config.json conserva exactamente la superficie mutable y sus límites aprobados",
+        "Stryker carga explícitamente el runner de Vitest y una ejecución seca llega a ese runner con código de salida 0, sin los avisos de configuración y patrones inertes detectados",
+        "La regresión literal de configuración se ejecuta mediante pnpm run test:config en el CI; siguen verdes bin/harness init, la red del motor, la puerta E2E y el build",
+        "No cambia código de producto ni pruebas de producto; la medición global previa de 97,95 % queda documentada como deuda separada y no se utiliza para certificar esta corrección de configuración"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "DONE (26/08/2026). Redefinición autorizada explícitamente por el humano: se certifica exclusivamente la corrección de configuración y su ejecución seca; no se declara ni oculta una mutación global de producto fallida. Evidencia final: test:config 5/5, motor 49/49, bin/harness init con lint/typecheck y 1047/1047 Vitest, E2E 75/75, build y dry-run de Stryker salida 0 (970 tests, runner Vitest). La deuda global previa de 97,95 % queda separada y documentada en progress/mutation_integridad_puerta_mutacion.md."
     }
   ]
 }

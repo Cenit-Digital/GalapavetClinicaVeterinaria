@@ -7,7 +7,7 @@
     "install": "pnpm install",
     "lint": "pnpm run lint && pnpm run typecheck",
     "test": "pnpm run test",
-    "mutate": "pnpm exec stryker run --mutate {{target}}",
+    "mutate": "pnpm exec stryker run",
     "build": "pnpm run build"
   },
   "paths": {

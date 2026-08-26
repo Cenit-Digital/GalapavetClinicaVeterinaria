@@ -32,6 +32,8 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
       - run: node .harness/harness.mjs init
+      - name: Regresión de configuración de mutación
+        run: pnpm run test:config
 
   python-example:
     name: Ejemplo Python (init + mutación 100%)

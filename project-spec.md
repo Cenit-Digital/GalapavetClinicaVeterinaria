@@ -135,6 +135,9 @@ implementarse.
 | 54 | **La resolución de base se aplica en el punto de consumo — dentro del `.tsx` que renderiza la imagen (`PieDePagina.tsx`, `Galeria.tsx`, `CampanasPortada.tsx`/`PaginaCampanas.tsx`, `PaginaBlog.tsx`, `PaginaTienda.tsx`) —, nunca dentro de los ficheros de datos (`src/data/galeria.ts`, `src/data/campanas.ts`, `src/data/blog.ts`, `src/data/tienda.ts`), que siguen declarando la ruta cruda `/img/...` igual que hoy.** | Pre-resolver la ruta dentro del propio fichero de datos (p. ej. `src: hrefDeDestino('/img/galeria/nala-y-coco.webp')` ya en `galeria.ts`) — descartada. | Mismo patrón que ya adoptaron los 4 ficheros de enlace bajo la Decisión 48 (`resolverDestinos` de `PieDePagina.tsx` envuelve los datos crudos de `pieDePaginaEnlaces.ts` DENTRO del componente, no dentro del fichero de datos), y la misma razón que dio esa decisión: los ficheros de `src/data/*.ts` son catálogos estáticos tipados con `as const satisfies` (sección «Arquitectura», más abajo) sin ninguna dependencia del entorno de build; importar `hrefDeDestino` —que lee `import.meta.env.BASE_URL`— dentro de un módulo de datos le añadiría una dependencia del entorno que hoy no tiene. Resolver en el punto de renderizado es además coherente con que `import.meta.env.BASE_URL` sigue siendo `/` en Vitest (Decisión 47): ningún test ya `done` que afirme el literal crudo de un catálogo se rompe, porque el catálogo no cambia — solo cambia lo que el componente hace con él al pintar el `src` real. |
 | 55 | **Se resuelve la PREGUNTA ABIERTA 2 de `despliegue_github_pages`: `IMAGEN_OPEN_GRAPH` en `MetadatosPagina.tsx` pasa a componerse como `DOMINIO_SITIO + hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)`, no como `DOMINIO_SITIO + RUTA_IMAGEN_OPEN_GRAPH` (concatenación literal actual).** `DOMINIO_SITIO` (`https://cenit-digital.github.io`, solo esquema+host) no cambia: sigue siendo el origen puro. El subpath lo aporta `hrefDeDestino`, la misma función y el mismo mecanismo que ya resuelve el resto de rutas internas. | Escribir el subpath como un segundo literal dentro de `MetadatosPagina.tsx` (p. ej. `DOMINIO_SITIO + '/GalapavetClinicaVeterinaria' + RUTA_IMAGEN_OPEN_GRAPH`) — descartada: sería una tercera copia del literal del subpath (la Decisión 47 ya fijó que vive en un solo sitio, el script `build`), exactamente el riesgo de divergencia que la propia PREGUNTA ABIERTA 2 advertía. Hacer que `DOMINIO_SITIO` lea `import.meta.env.BASE_URL` directamente en vez de usar `hrefDeDestino` — descartada: duplicaría dentro de `MetadatosPagina.tsx` la misma lógica de «sin barra doble» que `hrefDeDestino` ya resuelve y ya tiene cubierta por mutación. | Cierra la PREGUNTA ABIERTA 2 exactamente como el propio hallazgo del `tdd_craftsman` la dejó anticipada: «es el MISMO mecanismo: `DOMINIO_SITIO` necesitaría convertirse en `DOMINIO_SITIO` + subpath, la misma resolución de base que el resto de las 27 imágenes» — sin inventar un segundo mecanismo para un caso que ya tiene uno aprobado. Verificado que no rompe ningún test `done`: en Vitest, `hrefDeDestino('/img/og/galapavet.png', '/')` sigue devolviendo exactamente `/img/og/galapavet.png` (Decisión 47: `BASE_URL` sigue siendo `/` en test), así que `IMAGEN_OPEN_GRAPH` calcula el mismo valor que hoy en toda la suite existente — el cambio solo se manifiesta bajo el `--base` real de producción, que es precisamente donde estaba el 404. |
 
+| 56 | **La puerta de mutación del cierre usa `stryker.config.json` como única fuente de la superficie mutable y el comando del arnés es exactamente `pnpm exec stryker run`, sin `--mutate {{target}}`.** | Mantener la opción CLI vacía; duplicar los globs de Stryker en `harness.config.json`; cambiar el motor genérico del arnés. | `mutation.targets` está vacío de forma intencionada para pedir una única mutación global. El motor entonces ejecuta el comando tal cual; añadir `--mutate` sin argumento hace fallar Stryker antes de medir nada. StrykerJS documenta además que una opción CLI sustituye, no complementa, el valor del fichero de configuración: conservar el `mutate` completo en `stryker.config.json` evita dos fuentes que puedan divergir. |
+| 57 | **`stryker.config.json` carga explícitamente `@stryker-mutator/vitest-runner` y no contiene opciones desconocidas ni patrones de exclusión que no casen.** | Confiar en el descubrimiento automático `@stryker-mutator/*`; reinstalar o actualizar paquetes sin evidencia; silenciar los avisos. | Con pnpm, el `import.meta.url` real del core se resuelve en su almacén virtual y el glob por defecto no ve el paquete hermano aunque esté instalado. Una entrada explícita de `plugins` usa la resolución normal de módulos, que sí encuentra el runner. La documentación oficial permite declarar plugins explícitos y exige instalar el runner por separado. Eliminar la clave de pseudo-comentario y el patrón de cero coincidencias corrige sus avisos sin relajar umbrales ni cambiar la lista inclusiva de producción. |
+
 ## Arquitectura
 
 ```
@@ -771,6 +774,128 @@ aprobado para los enlaces.
    para @s7/@s8) — no toca ni un escenario de `pie_de_pagina.feature`,
    `galeria.feature`, `campanas_portada.feature`, `pagina_campanas.feature`,
    `pagina_blog.feature`, `pagina_tienda.feature` ni `seo_estructura.feature`.
+
+### Integridad del cierre — nueva feature: `integridad_puerta_mutacion`
+
+> **Hallazgo reproducible el 26/08/2026 durante una certificación independiente.**
+> `bin/harness verify` completó entorno, Oxlint, TypeScript y 1047 tests de
+> Vitest, pero no llegó a medir mutantes: con `mutation.targets: []`, el motor
+> ejecutó literalmente `pnpm exec stryker run --mutate` y Stryker rechazó el
+> argumento obligatorio ausente. Por tanto, el cierre anterior no puede
+> declararse completamente certificado mientras esta puerta no ejecute una
+> medición real nueva.
+
+**Propósito original** — Restaurar una puerta de mutación global ejecutable y
+determinista, sin duplicar ni sustituir desde la línea de comandos la superficie
+mutable ya declarada en `stryker.config.json`.
+
+**Comportamiento y contrato**
+
+- `harness.config.json` conserva `mutation.targets: []`: en este proyecto
+  significa una única corrida global de Stryker, no una lista de ficheros que
+  el arnés deba inyectar como argumentos CLI.
+- El comando `commands.mutate` es exactamente `pnpm exec stryker run`. No
+  contiene `--mutate` ni el token `{{target}}`, por lo que Stryker lee los
+  globs inclusivos y exclusiones de `stryker.config.json` sin que la CLI los
+  reemplace.
+- `bin/harness mutate` y `bin/harness verify` deben lanzar Stryker sin error
+  de argumentos y producir un informe real sobre la superficie declarada. El
+  informe es válido solo con `# timeout: 0` y el umbral `break: 100` superado.
+- La comprobación de regresión vive junto al arnés y afirma la configuración
+  de este proyecto con literales, de forma que una futura reintroducción de
+  `--mutate` vacío falla antes del cierre.
+
+**Límites y casos límite**
+
+1. No se cambia el motor genérico del arnés: la semántica de `{{target}}`
+   sigue disponible para adaptadores cuyos comandos la consumen. Esta feature
+   corrige únicamente la configuración inconsistente de este proyecto.
+2. La mutación selectiva mediante `bin/harness mutate <ruta>` no forma parte
+   del contrato de este adaptador global: usar una opción CLI de Stryker para
+   ella reemplazaría su lista de `mutate` configurada. Si se necesitara en el
+   futuro, requerirá una feature propia que defina una interfaz explícita, no
+   un argumento aceptado y silenciosamente ignorado.
+3. No se altera `stryker.config.json` ni su lista de mutación: ya es la fuente
+   única que ha certificado las 23 features anteriores y contiene las
+   exclusiones de pruebas necesarias.
+
+**Criterios de aceptación medibles**
+
+1. Una prueba de configuración falla si `commands.mutate` deja de ser
+   exactamente `pnpm exec stryker run`, o si contiene `--mutate` o
+   `{{target}}`.
+2. `bin/harness mutate` termina con código 0 y el informe de Stryker muestra
+   `# timeout: 0` y 100 % de puntuación sobre los mutantes no equivalentes.
+3. `bin/harness verify` termina con código 0: después de entorno, lint,
+   typecheck y Vitest, alcanza y supera la puerta de mutación real sin el
+   error de argumento ausente.
+4. La red de regresión del motor y la puerta E2E existente siguen verdes; no
+   se modifica código de producción, tests de producto ni la superficie
+   mutable de Stryker.
+
+**Enmienda propuesta tras la ejecución real de @s1 (pendiente de nueva puerta
+humana)**
+
+La primera ejecución que ya no llevaba `--mutate` vacío alcanzó la preparación
+de Stryker e instrumentó 43 ficheros, pero abortó antes de la medición con
+`Cannot find TestRunner plugin "vitest"`. Los tres paquetes instalados son
+compatibles y reales (`@stryker-mutator/core` 10.0.0,
+`@stryker-mutator/vitest-runner` 10.0.0 y Vitest 4.1.10); la causa se aisló
+leyendo el cargador de plugins de Stryker: bajo el almacén virtual de pnpm, el
+glob por defecto `@stryker-mutator/*` deriva desde la ubicación real del core y
+no encuentra el paquete hermano. La carga explícita por nombre sí resuelve desde
+el proyecto, que es justamente la configuración admitida por StrykerJS.
+
+Además, la misma preparación informó dos avisos que impiden el requisito de
+cero warnings: `_comment_concurrency` no es una opción del esquema y
+`!src/**/*.d.ts` no casa ningún archivo. La enmienda cambia solo
+`stryker.config.json` para:
+
+1. añadir `"plugins": ["@stryker-mutator/vitest-runner"]`;
+2. eliminar `_comment_concurrency`, preservando su justificación en esta
+   especificación y en la bitácora; y
+3. retirar únicamente la exclusión inerte de `.d.ts`.
+
+No altera los dos patrones inclusivos, las dos exclusiones de tests efectivas,
+el umbral 100 %, `concurrency: 1`, los timeouts, paquetes bloqueados ni código
+de la aplicación. La regresión literal se amplía para exigir esos invariantes y
+una ejecución seca de Stryker debe llegar al runner sin avisos ni errores antes
+de lanzar la medición completa.
+
+**Redefinición final de alcance — autorizada por el humano el 26/08/2026.**
+
+La medición global que se inició tras corregir la línea de órdenes demostró una
+deuda preexistente del producto: 35 supervivientes, 4 timeouts y 8 mutantes sin
+cobertura (97,95 %). Se deshizo íntegramente el intento de recuperación masiva
+en `src/` y en los tests de producto. Esa deuda no se declara resuelta, no se
+excluye y no se usa como evidencia de esta entrega.
+
+La feature se redefine como **corrección de configuración del arnés**, sin
+código mutable de producto añadido o modificado. Sustituye los criterios
+originales de mutación global por estos criterios de cierre:
+
+1. `commands.mutate` es literalmente `pnpm exec stryker run`; no contiene
+   `--mutate` ni `{{target}}`, y la lista mutable continúa exclusivamente en
+   `stryker.config.json`.
+2. Stryker declara explícitamente el runner de Vitest, conserva los patrones,
+   umbrales y límites aprobados, y elimina `_comment_concurrency` y la
+   exclusión inerte de `.d.ts`.
+3. La prueba literal de configuración se ejecuta mediante `pnpm run
+   test:config` en el workflow `Harness CI`, inmediatamente después de
+   `bin/harness init`. No se modifica el comando de tests del arnés, cuyo
+   literal ya está protegido por una feature terminada de navegador real.
+4. `pnpm exec stryker run --dryRunOnly` termina con salida 0, alcanza el runner
+   Vitest y no reproduce los avisos ni el error de carga que originaron el
+   hallazgo.
+5. La red del motor, E2E y el build siguen verdes; el diff no contiene cambios
+   en `src/` ni pruebas de producto.
+
+No se ejecuta `bin/harness mutate` ni `bin/harness verify` para certificar esta
+feature redefinida: ambos medirían toda la deuda histórica de producto, una
+superficie que esta corrección no toca. La ejecución seca es la validación de
+mutación apropiada para esta configuración. El informe global FAIL se mantiene
+en `progress/mutation_integridad_puerta_mutacion.md` como evidencia separada y
+pendiente de una feature futura propia.
 
 ## Riesgos abiertos
 
