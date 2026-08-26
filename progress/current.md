@@ -4,6 +4,21 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **26/08/2026, 02:33 — Colofón de la sesión: despliegue real verificado en
+  navegador real, no solo en simulación local.** Tras el push del commit
+  `30de7c3`, los dos workflows de GitHub Actions (`Harness CI` y `Deploy a
+  GitHub Pages`, este último nunca antes ejecutado) terminaron con
+  **éxito** (`gh run list`). Verificado con Chrome real (no `WebFetch`, que
+  no ejecuta JavaScript y por tanto reporta un 404 "crudo" engañoso en
+  cualquier ruta interna — es el comportamiento ESPERADO de la técnica
+  `rafgraph/spa-github-pages`, que depende de que el navegador ejecute el
+  script de `404.html`): `https://cenit-digital.github.io/GalapavetClinicaVeterinaria/`
+  carga la portada real; un deep-link directo a
+  `.../GalapavetClinicaVeterinaria/campanas` (sin pasar por `/`) atraviesa
+  el 404→redirección y monta la página de Campañas completa, con estilos,
+  navegación, las 3 tarjetas de campaña y pie de página — cero errores en
+  consola del navegador. El sitio está publicado y funciona de verdad.
+
 - **26/08/2026 — `despliegue_github_pages` (id 23): DONE.** 24/24 escenarios
   (`@s1`-`@s24`). Nace el 25/08 cuando, al resolver el PENDIENTE 7 de
   `identidad_visual` (`og:image` absoluto), el humano fijó GitHub Pages como
