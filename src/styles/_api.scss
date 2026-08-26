@@ -32,8 +32,8 @@ $escala-tipografica: (
   1: 20px,
   2: 25px,
   3: 31.25px,
-  4: 39.06px,
-  5: 48.83px,
+  4: clamp(28px, 4.2vw, 46px),
+  5: clamp(33px, 6.4vw, 68px),
 );
 
 @function paso-tipografico($paso) {
@@ -130,7 +130,7 @@ $altura-control-grande: $area-tactil-minima + espaciado(32); // 24 + 32 = 56px
 // ese ancho de viewport el sistema ya deja de crecer, así que el contenido
 // tampoco necesita seguir ensanchando. Un único valor, compartido por las 6
 // rutas vía este mismo mixin (@s45: "un único ancho máximo de contenedor").
-$ancho-maximo-contenedor: 1024px;
+$ancho-maximo-contenedor: 1220px;
 
 @mixin contenedor {
   // "width: 100%" explícito — no "auto" — es necesario porque el elemento

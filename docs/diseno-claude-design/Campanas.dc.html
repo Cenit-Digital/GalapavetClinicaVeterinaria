@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campañas de salud — Veterinaria La Sierra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#F8FAFC; --bg-2:#EDF2F9; --card:#FFFFFF; --surface:#FBFDFF;
+  --border:rgba(15,32,60,.13); --ink:#0B1B33; --text:#3C4C66; --muted:#5E6E88;
+  --primary:#1E40AF; --on-primary:#FFFFFF;
+  --accent:#10B981; --accent-ink:#047857; --accent-soft:#E7F8F1;
+  --urg:#DC2626;
+  --shadow:0 18px 45px rgba(15,32,60,.10); --shadow-sm:0 6px 18px rgba(15,32,60,.07);
+}
+:root[data-tema='calida']{--bg:#FFFBF2;--bg-2:#FEF3C7;--card:#FFFDF8;--surface:#FFFDF6;--border:rgba(120,53,15,.16);--ink:#3B2A12;--text:#5C4626;--muted:#8A6C45;--primary:#B45309;--on-primary:#FFFFFF;--accent:#4D7C0F;--accent-ink:#3F6212;--accent-soft:#F1F7E3;--urg:#C2410C;--shadow:0 18px 45px rgba(120,53,15,.12);--shadow-sm:0 6px 18px rgba(120,53,15,.08)}
+:root[data-tema='tech']{--bg:#0F172A;--bg-2:#152242;--card:#16233F;--surface:#111C34;--border:rgba(148,197,255,.18);--ink:#F1F5F9;--text:#C6D2E2;--muted:#94A3B8;--primary:#06B6D4;--on-primary:#04212B;--accent:#22D3EE;--accent-ink:#67E8F9;--accent-soft:rgba(6,182,212,.14);--urg:#F87171;--shadow:0 22px 55px rgba(0,0,0,.45);--shadow-sm:0 8px 22px rgba(0,0,0,.35)}
+:root[data-tema='eco']{--bg:#FFFFFF;--bg-2:#EFFDF7;--card:#FFFFFF;--surface:#F7FEFB;--border:rgba(4,120,87,.16);--ink:#06301F;--text:#35544A;--muted:#557368;--primary:#047857;--on-primary:#FFFFFF;--accent:#0EA97B;--accent-ink:#065F46;--accent-soft:#D6FBEA;--urg:#DC2626;--shadow:0 18px 45px rgba(4,120,87,.12);--shadow-sm:0 6px 18px rgba(4,120,87,.08)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%}
+p{text-wrap:pretty}
+a{color:var(--primary);text-decoration:none;transition:color .3s ease}
+a:hover{color:var(--accent-ink)}
+input,select,textarea,button{font:inherit}
+@keyframes vlsPulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<div style="background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden">
+
+  <header style="position:sticky;top:0;z-index:60;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)">
+    <div style="max-width:1220px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:16px">
+      <a href="./Veterinaria%20La%20Sierra.dc.html" style="display:flex;align-items:center;gap:11px;color:var(--ink);flex-shrink:0">
+        <span style="position:relative;width:38px;height:38px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="position:absolute;width:17px;height:4.5px;border-radius:3px;background:var(--on-primary)"></span>
+          <span style="position:absolute;width:4.5px;height:17px;border-radius:3px;background:var(--on-primary)"></span>
+        </span>
+        <span style="display:flex;flex-direction:column;line-height:1.05">
+          <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em">Veterinaria La Sierra</span>
+          <span style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600">Campañas de salud</span>
+        </span>
+      </a>
+      <nav style="{{ estiloNav }}" aria-label="Navegación principal">
+        <sc-for list="{{ navPrincipal }}" as="item" hint-placeholder-count="6">
+          <a href="{{ item.href }}" style="padding:9px 11px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;transition:background .3s ease" style-hover="background:var(--accent-soft);color:var(--accent-ink)">{{ item.texto }}</a>
+        </sc-for>
+        <a href="tel:+34640221190" style="display:inline-flex;align-items:center;gap:7px;margin-left:6px;padding:9px 15px;border-radius:999px;background:var(--urg);color:#fff;font-size:13.5px;font-weight:700;white-space:nowrap" style-hover="filter:brightness(1.08);color:#fff">
+          <span style="width:7px;height:7px;border-radius:50%;background:#fff;animation:vlsPulso 1.6s ease-in-out infinite"></span>Urgencias
+        </a>
+        <a href="./Tienda.dc.html" style="margin-left:4px;padding:8px 15px;border-radius:999px;border:1.5px solid var(--border);color:var(--ink);font-size:13.5px;font-weight:600;white-space:nowrap" style-hover="border-color:var(--primary);color:var(--ink)">Tienda</a>
+      </nav>
+      <a href="./Veterinaria%20La%20Sierra.dc.html#reservar" style="{{ estiloCtaMovil }}">Reservar</a>
+    </div>
+  </header>
+
+  <!-- ── LISTADO ── -->
+  <sc-if value="{{ enListado }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <section style="padding:clamp(48px,7vw,84px) clamp(18px,5vw,28px) clamp(32px,4vw,48px);background:var(--bg-2)">
+        <div style="max-width:1220px;margin:0 auto">
+          <nav style="font-size:13px;color:var(--muted);margin-bottom:18px" aria-label="Ruta"><a href="./Veterinaria%20La%20Sierra.dc.html" style="color:var(--muted)">Inicio</a> · <span style="color:var(--ink);font-weight:600">Campañas</span></nav>
+          <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Campañas</p>
+          <h1 style="font-family:'Outfit',sans-serif;font-size:clamp(30px,5vw,54px);line-height:1.06;letter-spacing:-.02em;font-weight:600;color:var(--ink);margin:0;max-width:18ch">Prevenir cuesta menos que curar</h1>
+          <p style="font-size:17.5px;line-height:1.7;color:var(--muted);max-width:60ch;margin:18px 0 0">Cuatro campañas abiertas ahora mismo, con precio cerrado, plazas limitadas y todo incluido: sin sorpresas en la factura.</p>
+        </div>
+      </section>
+
+      <section style="padding:clamp(36px,5vw,56px) clamp(18px,5vw,28px) clamp(64px,9vw,100px)">
+        <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:24px">
+          <sc-for list="{{ campanas }}" as="c" hint-placeholder-count="4">
+            <article style="display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:22px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .3s ease,box-shadow .3s ease" style-hover="transform:translateY(-4px);box-shadow:var(--shadow)">
+              <div style="position:relative;aspect-ratio:16/9;background:var(--bg-2);overflow:hidden">
+                <img src="{{ c.img }}" alt="{{ c.alt }}" loading="lazy" style="display:block;width:100%;height:100%;object-fit:cover" />
+                <span style="{{ c.estiloBadge }}">{{ c.estado }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;flex:1;padding:24px">
+                <span style="font-size:12px;color:var(--muted)">{{ c.vigencia }}</span>
+                <h2 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:var(--ink);margin:8px 0 0;line-height:1.15">{{ c.titulo }}</h2>
+                <p style="font-size:15px;line-height:1.65;color:var(--muted);margin:10px 0 18px">{{ c.resumen }}</p>
+                <div style="display:flex;align-items:baseline;gap:10px;margin-top:auto;padding-top:16px;border-top:1px solid var(--border)">
+                  <span style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:600;color:var(--primary);line-height:1">{{ c.precio }}</span>
+                  <span style="font-size:13px;color:var(--muted);text-decoration:line-through">{{ c.antes }}</span>
+                </div>
+                <button type="button" onClick="{{ c.abrir }}" style="margin-top:16px;min-height:48px;padding:14px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:14.5px;cursor:pointer;transition:filter .3s ease" style-hover="filter:brightness(1.1)">Ver la ficha de la campaña</button>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+
+  <!-- ── FICHA ── -->
+  <sc-if value="{{ enFicha }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <section style="position:relative;min-height:clamp(320px,42vh,440px);display:flex;align-items:flex-end;background-color:#0B1B33;background-image:{{ fondoFicha }};background-size:cover;background-position:center 45%">
+        <div style="max-width:1220px;width:100%;margin:0 auto;padding:clamp(40px,6vw,64px) clamp(18px,5vw,28px)">
+          <button type="button" onClick="{{ volver }}" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);backdrop-filter:blur(6px);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:20px">← Todas las campañas</button>
+          <span style="display:inline-block;padding:6px 13px;border-radius:999px;background:#fff;color:var(--urg);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase">{{ ficha.estado }} · {{ ficha.vigencia }}</span>
+          <h1 style="font-family:'Outfit',sans-serif;font-size:clamp(30px,5.4vw,56px);line-height:1.05;letter-spacing:-.02em;font-weight:600;color:#fff;margin:16px 0 0;max-width:18ch;text-shadow:0 2px 22px rgba(0,0,0,.4)">{{ ficha.titulo }}</h1>
+        </div>
+      </section>
+
+      <section style="padding:clamp(40px,6vw,72px) clamp(18px,5vw,28px) clamp(64px,9vw,100px)">
+        <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:{{ columnasFicha }};gap:clamp(28px,4vw,48px);align-items:start">
+          <div>
+            <p style="font-size:clamp(17px,2.2vw,20px);line-height:1.65;color:var(--ink);margin:0 0 26px;font-weight:500">{{ ficha.entradilla }}</p>
+            <p style="font-size:16px;line-height:1.8;color:var(--text);margin:0 0 34px">{{ ficha.cuerpo }}</p>
+
+            <h2 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:var(--ink);margin:0 0 16px">Qué incluye</h2>
+            <ul style="list-style:none;margin:0 0 34px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px">
+              <sc-for list="{{ ficha.incluye }}" as="i" hint-placeholder-count="4">
+                <li style="display:flex;align-items:flex-start;gap:11px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:14.5px;line-height:1.55;color:var(--text)">
+                  <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px">✓</span>{{ i }}
+                </li>
+              </sc-for>
+            </ul>
+
+            <h2 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:var(--ink);margin:0 0 16px">Cómo funciona</h2>
+            <ol style="list-style:none;margin:0 0 34px;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:paso">
+              <sc-for list="{{ ficha.pasos }}" as="p" hint-placeholder-count="3">
+                <li style="display:flex;align-items:flex-start;gap:14px">
+                  <span style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--on-primary);font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center">{{ p.n }}</span>
+                  <div>
+                    <div style="font-weight:700;color:var(--ink);font-size:15.5px">{{ p.titulo }}</div>
+                    <div style="font-size:14.5px;line-height:1.65;color:var(--muted);margin-top:3px">{{ p.texto }}</div>
+                  </div>
+                </li>
+              </sc-for>
+            </ol>
+
+            <h2 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:var(--ink);margin:0 0 14px">Para quién es</h2>
+            <p style="font-size:16px;line-height:1.8;color:var(--text);margin:0 0 24px">{{ ficha.paraQuien }}</p>
+            <p style="font-size:12.5px;line-height:1.7;color:var(--muted);margin:0;padding:16px 18px;background:var(--bg-2);border-radius:14px">{{ ficha.letraPequena }}</p>
+          </div>
+
+          <aside style="{{ estiloAside }}">
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:22px;padding:26px;box-shadow:var(--shadow)">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:12px">Precio de campaña</div>
+              <div style="display:flex;align-items:baseline;gap:12px">
+                <span style="font-family:'Outfit',sans-serif;font-size:46px;font-weight:600;color:var(--ink);line-height:1">{{ ficha.precio }}</span>
+                <span style="font-size:15px;color:var(--muted);text-decoration:line-through">{{ ficha.antes }}</span>
+              </div>
+              <div style="display:inline-block;margin-top:12px;padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:700">{{ ficha.ahorro }}</div>
+              <dl style="display:grid;grid-template-columns:auto 1fr;gap:10px 14px;margin:22px 0;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:14px">
+                <dt style="color:var(--muted)">Vigencia</dt><dd style="margin:0;color:var(--ink);font-weight:600">{{ ficha.vigencia }}</dd>
+                <dt style="color:var(--muted)">Duración</dt><dd style="margin:0;color:var(--ink);font-weight:600">{{ ficha.duracion }}</dd>
+                <dt style="color:var(--muted)">Plazas</dt><dd style="margin:0;color:var(--ink);font-weight:600">{{ ficha.plazas }}</dd>
+              </dl>
+              <a href="./Veterinaria%20La%20Sierra.dc.html#reservar" style="display:flex;align-items:center;justify-content:center;min-height:52px;padding:15px;border-radius:999px;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15.5px" style-hover="filter:brightness(1.1);color:var(--on-primary)">Reservar esta campaña</a>
+              <a href="tel:+34918442160" style="display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:10px;padding:13px;border-radius:999px;border:1.5px solid var(--border);color:var(--ink);font-weight:600;font-size:14.5px" style-hover="border-color:var(--primary);color:var(--ink)">Llamar al 918 44 21 60</a>
+              <p style="font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0;line-height:1.6">Sin pago por adelantado. Confirmamos la hora por WhatsApp.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section style="padding:0 clamp(18px,5vw,28px) clamp(64px,9vw,100px)">
+        <div style="max-width:1220px;margin:0 auto">
+          <h2 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:var(--ink);margin:0 0 20px">Otras campañas abiertas</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px">
+            <sc-for list="{{ otras }}" as="o" hint-placeholder-count="3">
+              <button type="button" onClick="{{ o.abrir }}" style="display:flex;gap:14px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;cursor:pointer;transition:border-color .3s ease" style-hover="border-color:var(--primary)">
+                <img src="{{ o.img }}" alt="{{ o.alt }}" loading="lazy" style="width:74px;height:66px;flex-shrink:0;border-radius:11px;object-fit:cover" />
+                <span style="min-width:0">
+                  <span style="display:block;font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:var(--ink);line-height:1.2">{{ o.titulo }}</span>
+                  <span style="display:block;font-size:13px;color:var(--muted);margin-top:4px">{{ o.precio }} · {{ o.vigencia }}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+
+  <footer style="background:var(--card);border-top:1px solid var(--border);padding:clamp(40px,6vw,60px) clamp(18px,5vw,28px) 26px">
+    <div style="max-width:1220px;margin:0 auto;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center;justify-content:space-between">
+      <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;color:var(--ink)">Veterinaria La Sierra</span>
+      <span style="display:flex;flex-wrap:wrap;gap:18px;font-size:14px">
+        <a href="./Veterinaria%20La%20Sierra.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Inicio</a>
+        <a href="./Blog.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Blog</a>
+        <a href="./Tienda.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Tienda</a>
+        <a href="./Veterinaria%20La%20Sierra.dc.html#contacto" style="color:var(--muted)" style-hover="color:var(--primary)">Contacto</a>
+      </span>
+      <span style="font-size:12.5px;color:var(--muted)">© 2026 · Ctra. de la Sierra 42, Miraflores de la Sierra</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280}}">
+const PX = (id, w) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
+
+const CAMPANAS = [
+  { id: 'vacunacion', titulo: 'Vacunación anual 2026', estado: 'Activa', vigencia: 'Hasta el 30 de septiembre',
+    precio: '49 €', antes: '78 €', ahorro: 'Ahorras 29 € sobre tarifa', duracion: '30 min · una sola visita', plazas: '40 plazas al mes',
+    img: 6235233, alt: 'Veterinaria vacunando a un perro',
+    resumen: 'Revisión completa, vacuna polivalente y cartilla al día en una sola visita de media hora.',
+    entradilla: 'La vacunación anual es la revisión más importante del año: es el momento en el que detectamos la mitad de los problemas que aún no dan síntomas.',
+    cuerpo: 'No vacunamos por costumbre. Antes de administrar nada revisamos al animal, repasamos su historial y decidimos contigo qué necesita realmente según su edad, su especie y dónde vive. Un gato de interior en el pueblo y un perro que sube al monte cada fin de semana no llevan el mismo calendario, y tratarlos igual es hacerlo mal por partida doble: de más en uno y de menos en el otro.',
+    incluye: ['Exploración física completa de 30 minutos', 'Vacuna polivalente (o la que corresponda a su protocolo)', 'Control de peso y valoración de condición corporal', 'Revisión de boca, oídos, piel y articulaciones', 'Cartilla física y digital actualizada', 'Recordatorio automático para el año que viene'],
+    pasos: [
+      { n: '1', titulo: 'Reservas tu hueco', texto: 'Por WhatsApp, por teléfono o desde el asistente de la web. Te damos hora en menos de 2 horas.' },
+      { n: '2', titulo: 'Revisión antes de la dosis', texto: 'Si el animal no está en condiciones, aplazamos la vacuna sin coste y sin perder la plaza de campaña.' },
+      { n: '3', titulo: 'Sales con el plan del año', texto: 'Cartilla actualizada, calendario de desparasitación y fecha orientativa para la próxima revisión.' },
+    ],
+    paraQuien: 'Perros y gatos de más de 16 semanas con la pauta inicial completada. Si tu cachorro todavía está con las primeras dosis, la campaña no aplica: la pauta de cachorro tiene su propio precio cerrado, más económico, que te detallamos por teléfono.',
+    letraPequena: 'Precio por animal, IVA incluido. No acumulable a otros descuentos ni al plan de salud anual. No incluye vacuna de rabia en gatos de exterior ni serologías. Plazas limitadas por mes; si se agotan, guardamos la tarifa hasta la siguiente tanda.' },
+
+  { id: 'dental', titulo: 'Salud dental', estado: 'Activa', vigencia: 'Todo octubre',
+    precio: '−25 %', antes: 'sobre tarifa', ahorro: 'Radiografía dental incluida', duracion: 'Media jornada en clínica', plazas: '12 intervenciones/semana',
+    img: 220938, alt: 'Perro enseñando los dientes',
+    resumen: 'Limpieza con ultrasonidos bajo anestesia, con radiografía dental y pulido incluidos.',
+    entradilla: 'Ocho de cada diez perros mayores de tres años tienen enfermedad periodontal. Casi ninguno lo aparenta hasta que ya duele.',
+    cuerpo: 'El sarro que ves es la punta del problema: lo que compromete el diente está debajo de la encía, y sin radiografía no se ve. Durante octubre hacemos la limpieza completa con radiografía intraoral incluida, para poder decidir qué piezas se salvan y cuáles hay que extraer con criterio y no a ojo.',
+    incluye: ['Analítica preanestésica y valoración del riesgo', 'Anestesia inhalatoria con monitorización continua', 'Limpieza con ultrasonidos y curetaje subgingival', 'Radiografía dental intraoral completa', 'Pulido y sellado final', 'Informe con fotos del antes y el después'],
+    pasos: [
+      { n: '1', titulo: 'Valoración previa gratuita', texto: 'Miramos la boca en consulta y te damos un presupuesto cerrado antes de reservar quirófano.' },
+      { n: '2', titulo: 'El día de la limpieza', texto: 'Ingreso por la mañana, alta por la tarde. Te llamamos en cuanto despierta.' },
+      { n: '3', titulo: 'Higiene en casa', texto: 'Salís con pauta de cepillado y revisión de control a las tres semanas incluida.' },
+    ],
+    paraQuien: 'Perros y gatos con sarro visible, mal aliento persistente o encías enrojecidas. En animales mayores de 8 años pedimos analítica y valoración cardíaca previas, que van incluidas en el precio de campaña.',
+    letraPequena: 'El descuento se aplica sobre la tarifa vigente de limpieza dental. Las extracciones se presupuestan aparte según número y complejidad, siempre con precio cerrado antes de intervenir. No acumulable a otras promociones.' },
+
+  { id: 'senior', titulo: 'Chequeo senior', estado: 'Plazas limitadas', vigencia: 'Todo el año',
+    precio: '75 €', antes: '132 €', ahorro: 'Ahorras 57 € sobre tarifa', duracion: '90 min · resultados el mismo día', plazas: '15 plazas al mes',
+    img: 733416, alt: 'Perro senior de mirada tranquila',
+    resumen: 'Analítica completa, ecografía abdominal y tensión arterial para animales de más de 8 años.',
+    entradilla: 'A partir de los ocho años, un año de tu perro son cinco o seis de los tuyos. Un chequeo anual deja de ser opcional.',
+    cuerpo: 'El chequeo senior busca lo que todavía no da la cara: insuficiencia renal en fase temprana, problemas de tiroides, hipertensión, masas abdominales. Casi todo lo que encontramos en esta revisión se maneja mucho mejor cuando aparece en una analítica que cuando aparece en una urgencia.',
+    incluye: ['Hemograma y bioquímica completa (18 parámetros)', 'Análisis de orina con ratio proteína/creatinina', 'Ecografía abdominal completa', 'Medición de tensión arterial', 'Valoración cardíaca y auscultación', 'Informe comparado con analíticas anteriores'],
+    pasos: [
+      { n: '1', titulo: 'Ayuno de 8 horas', texto: 'Agua sí, comida no. Te lo recordamos por WhatsApp la víspera.' },
+      { n: '2', titulo: 'Mañana de pruebas', texto: 'Todo en la misma visita, sin ingreso. Unos 90 minutos en total.' },
+      { n: '3', titulo: 'Resultados y plan', texto: 'Los comentamos el mismo día, con el informe en PDF y el plan para los próximos 12 meses.' },
+    ],
+    paraQuien: 'Perros a partir de 8 años (7 en razas gigantes) y gatos a partir de 10. También lo recomendamos en animales de cualquier edad con tratamiento crónico o antes de una anestesia programada.',
+    letraPequena: 'Precio por animal, IVA incluido. Las pruebas adicionales que se deriven del resultado (radiografía, ecocardiografía, cultivos) se presupuestan aparte. Plazas limitadas por mes para poder dedicar 90 minutos reales a cada paciente.' },
+
+  { id: 'antiparasitaria', titulo: 'Escudo antiparasitario', estado: 'Empieza en marzo', vigencia: 'De marzo a noviembre',
+    precio: '119 €', antes: '164 €', ahorro: '9 meses de cobertura continua', duracion: 'Pauta anual · 3 visitas', plazas: 'Sin límite',
+    img: 1490908, alt: 'Perro blanco en el campo',
+    resumen: 'Cobertura continua frente a garrapatas, flebotomos y filaria durante toda la temporada de riesgo.',
+    entradilla: 'En la sierra la temporada de garrapatas y mosquito de la leishmania es larga. Media dosis a destiempo no protege de nada.',
+    cuerpo: 'La leishmaniosis y la filariosis no se tratan bien: se previenen. Esta campaña cubre los nueve meses de riesgo real en la zona con producto continuo, sin huecos entre dosis, y añade el test anual para confirmar que la protección está funcionando.',
+    incluye: ['Antiparasitario externo continuo de marzo a noviembre', 'Prevención mensual de filaria', 'Desparasitación interna trimestral', 'Test rápido anual de leishmania y filaria', 'Collar o pipeta según preferencia y tolerancia', 'Aviso por WhatsApp antes de cada dosis'],
+    pasos: [
+      { n: '1', titulo: 'Test de partida en marzo', texto: 'Confirmamos que el animal está negativo antes de empezar la pauta.' },
+      { n: '2', titulo: 'Producto y recordatorios', texto: 'Te llevas la pauta completa y te avisamos por WhatsApp cada vez que toca.' },
+      { n: '3', titulo: 'Revisión de cierre', texto: 'En noviembre repetimos test y valoramos si conviene mantener cobertura invernal.' },
+    ],
+    paraQuien: 'Perros que pasean por el campo, viven en zona rural o viajan al sur en verano. En gatos de exterior existe una versión reducida de la campaña; pregúntanos en consulta.',
+    letraPequena: 'Precio para perros de hasta 25 kg; a partir de ahí se ajusta según peso, siempre con precio cerrado antes de empezar. Incluye producto para los nueve meses. No cubre tratamiento de una infección ya establecida.' },
+];
+
+class Component extends DCLogic {
+  state = { activa: null, ancho: 1280 };
+
+  componentDidMount() {
+    let guardado = null;
+    try { guardado = localStorage.getItem('vls-tema'); } catch (e) { guardado = null; }
+    document.documentElement.setAttribute('data-tema', guardado || 'clinica');
+    this.medir();
+    this._onResize = () => this.medir();
+    window.addEventListener('resize', this._onResize);
+  }
+
+  componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
+
+  medir() { this.setState({ ancho: window.innerWidth }); }
+
+  abrir(id) {
+    this.setState({ activa: id });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const esMovil = s.ancho < 1080;
+    const ancha = s.ancho >= 940;
+    const ficha = CAMPANAS.find((c) => c.id === s.activa) || null;
+
+    return {
+      estiloNav: { display: esMovil ? 'none' : 'flex', alignItems: 'center', gap: '2px' },
+      estiloCtaMovil: { display: esMovil ? 'inline-flex' : 'none', alignItems: 'center', justifyContent: 'center',
+        minHeight: '44px', padding: '11px 20px', borderRadius: '999px', background: 'var(--primary)',
+        color: 'var(--on-primary)', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap' },
+      navPrincipal: [
+        { href: './Veterinaria%20La%20Sierra.dc.html#reservar', texto: 'Reservar' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#servicios', texto: 'Servicios' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#equipo', texto: 'Equipo' },
+        { href: './Blog.dc.html', texto: 'Blog' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#contacto', texto: 'Contacto' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#faq', texto: 'FAQ' },
+      ],
+
+      enListado: !ficha,
+      enFicha: !!ficha,
+      ficha: ficha || {},
+      columnasFicha: ancha ? '1.6fr 1fr' : '1fr',
+      estiloAside: ancha ? { position: 'sticky', top: '104px' } : {},
+      fondoFicha: ficha
+        ? `linear-gradient(180deg,rgba(6,16,32,.35) 0%,rgba(6,16,32,.82) 100%),url('${PX(ficha.img, 1600)}')`
+        : 'none',
+      volver: () => { this.setState({ activa: null }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+
+      campanas: CAMPANAS.map((c) => Object.assign({}, c, {
+        img: PX(c.img, 900),
+        abrir: () => this.abrir(c.id),
+        estiloBadge: { position: 'absolute', left: '16px', top: '16px', padding: '6px 13px', borderRadius: '999px',
+          background: c.estado === 'Activa' ? 'var(--accent-ink)' : 'var(--card)',
+          color: c.estado === 'Activa' ? '#fff' : 'var(--ink)',
+          fontSize: '10.5px', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' },
+      })),
+
+      otras: CAMPANAS.filter((c) => !ficha || c.id !== ficha.id).map((c) => ({
+        titulo: c.titulo, precio: c.precio, vigencia: c.vigencia, alt: c.alt,
+        img: PX(c.img, 300), abrir: () => this.abrir(c.id),
+      })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

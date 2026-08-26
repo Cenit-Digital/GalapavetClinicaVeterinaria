@@ -242,7 +242,7 @@ export function PaginaBlog({ catalogo: catalogoDemo = ARTICULOS_DEMO }: PaginaBl
   const [searchParams, setSearchParams] = useSearchParams()
 
   return (
-    <main className={styles.pagina} data-contenedor-principal>
+    <main id="contenido-principal" className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina
         metadatos={identificador === undefined ? METADATOS_BLOG : METADATOS_ARTICULO_BLOG}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

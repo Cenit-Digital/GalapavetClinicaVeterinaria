@@ -11,11 +11,13 @@
 export interface BloqueServicio {
   readonly titulo: string
   readonly puntos: readonly string[]
+  readonly imagen?: string
 }
 
 export const SERVICIOS: readonly BloqueServicio[] = [
   {
     titulo: 'Cirugía y anestesia',
+    imagen: '/img/servicios/cirugia-y-anestesia.webp',
     puntos: [
       'Cirugía de tejidos blandos',
       'Esterilizaciones',
@@ -28,14 +30,17 @@ export const SERVICIOS: readonly BloqueServicio[] = [
   },
   {
     titulo: 'Diagnóstico de imagen',
+    imagen: '/img/servicios/diagnostico-de-imagen.webp',
     puntos: ['Servicios de radiología y ecografía propios', 'Ecografía', 'Eco-cardiografía', 'Endoscopia'],
   },
   {
     titulo: 'Medicina general',
+    imagen: '/img/servicios/medicina-general.webp',
     puntos: ['Preventiva', 'Vacunaciones', 'Desparasitaciones', 'Chequeo', 'Identificación con microchip'],
   },
   {
     titulo: 'Análisis',
+    imagen: '/img/servicios/analisis.webp',
     puntos: [
       'Laboratorio de análisis clínicos propio',
       'Perfiles generales',
@@ -47,6 +52,7 @@ export const SERVICIOS: readonly BloqueServicio[] = [
   },
   {
     titulo: 'Especialidades',
+    imagen: '/img/servicios/especialidades.webp',
     puntos: ['Odontología', 'Oftalmología', 'Traumatología', 'Endoscopia'],
   },
 ] as const satisfies readonly BloqueServicio[]

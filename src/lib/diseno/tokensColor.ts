@@ -28,8 +28,11 @@ export type RolDeColor =
   | 'primario'
   | 'primario-fuerte'
   | 'sobre-primario'
+  | 'acento'
   | 'acento-tinta'
   | 'acento-suave'
+  | 'urgencia'
+  | 'urgencia-suave'
   | 'borde-control'
   | 'borde'
   | 'foco'
@@ -51,8 +54,11 @@ const ROLES_DE_COLOR: readonly RolDeColor[] = [
   'primario',
   'primario-fuerte',
   'sobre-primario',
+  'acento',
   'acento-tinta',
   'acento-suave',
+  'urgencia',
+  'urgencia-suave',
   'borde-control',
   'borde',
   'foco',

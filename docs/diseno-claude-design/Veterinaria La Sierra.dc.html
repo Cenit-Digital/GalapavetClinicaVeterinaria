@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veterinaria La Sierra — Clínica veterinaria en Miraflores de la Sierra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet" />
+<style>
+/* Tokens de paleta. 4 propuestas; se conmutan con [data-tema] en el elemento raíz. */
+:root{
+  --bg:#F8FAFC; --bg-2:#EDF2F9; --card:#FFFFFF; --surface:#FBFDFF;
+  --border:rgba(15,32,60,.13); --ink:#0B1B33; --text:#3C4C66; --muted:#5E6E88;
+  --primary:#1E40AF; --primary-strong:#1B3796; --on-primary:#FFFFFF;
+  --accent:#10B981; --accent-ink:#047857; --accent-soft:#E7F8F1;
+  --urg:#DC2626; --urg-soft:#FEE9E9;
+  --shadow:0 18px 45px rgba(15,32,60,.10); --shadow-sm:0 6px 18px rgba(15,32,60,.07);
+}
+:root[data-tema='calida']{
+  --bg:#FFFBF2; --bg-2:#FEF3C7; --card:#FFFDF8; --surface:#FFFDF6;
+  --border:rgba(120,53,15,.16); --ink:#3B2A12; --text:#5C4626; --muted:#8A6C45;
+  --primary:#B45309; --primary-strong:#92400E; --on-primary:#FFFFFF;
+  --accent:#4D7C0F; --accent-ink:#3F6212; --accent-soft:#F1F7E3;
+  --urg:#C2410C; --urg-soft:#FDEBE0;
+  --shadow:0 18px 45px rgba(120,53,15,.12); --shadow-sm:0 6px 18px rgba(120,53,15,.08);
+}
+:root[data-tema='tech']{
+  --bg:#0F172A; --bg-2:#152242; --card:#16233F; --surface:#111C34;
+  --border:rgba(148,197,255,.18); --ink:#F1F5F9; --text:#C6D2E2; --muted:#94A3B8;
+  --primary:#06B6D4; --primary-strong:#0891B2; --on-primary:#04212B;
+  --accent:#22D3EE; --accent-ink:#67E8F9; --accent-soft:rgba(6,182,212,.14);
+  --urg:#F87171; --urg-soft:rgba(248,113,113,.16);
+  --shadow:0 22px 55px rgba(0,0,0,.45); --shadow-sm:0 8px 22px rgba(0,0,0,.35);
+}
+:root[data-tema='eco']{
+  --bg:#FFFFFF; --bg-2:#EFFDF7; --card:#FFFFFF; --surface:#F7FEFB;
+  --border:rgba(4,120,87,.16); --ink:#06301F; --text:#35544A; --muted:#557368;
+  --primary:#047857; --primary-strong:#036049; --on-primary:#FFFFFF;
+  --accent:#0EA97B; --accent-ink:#065F46; --accent-soft:#D6FBEA;
+  --urg:#DC2626; --urg-soft:#FDE9E9;
+  --shadow:0 18px 45px rgba(4,120,87,.12); --shadow-sm:0 6px 18px rgba(4,120,87,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%}
+p{text-wrap:pretty}
+a{color:var(--primary);text-decoration:none;transition:color .3s ease}
+a:hover{color:var(--accent-ink)}
+input,select,textarea,button{font:inherit}
+summary::-webkit-details-marker{display:none}
+@keyframes vlsPulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<div style="background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden">
+
+  <sc-if value="{{ barraUrgencias }}" hint-placeholder-val="{{ true }}">
+    <div style="background:var(--urg);color:#fff;font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;padding:9px 18px;text-align:center">
+      <span style="display:inline-flex;align-items:center;gap:8px;font-weight:700">
+        <span style="width:8px;height:8px;border-radius:50%;background:#fff;animation:vlsPulso 1.6s ease-in-out infinite"></span>
+        Urgencias 24 h
+      </span>
+      <span style="opacity:.9">Atención inmediata todos los días del año ·</span>
+      <a href="tel:+34640221190" style="color:#fff;text-decoration:underline;font-weight:700">{{ telUrgencias }}</a>
+    </div>
+  </sc-if>
+
+  <header style="position:sticky;top:0;z-index:60;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)">
+    <div style="max-width:1220px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:16px">
+      <a href="#inicio" style="display:flex;align-items:center;gap:11px;color:var(--ink);flex-shrink:0">
+        <span style="position:relative;width:38px;height:38px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="position:absolute;width:17px;height:4.5px;border-radius:3px;background:var(--on-primary)"></span>
+          <span style="position:absolute;width:4.5px;height:17px;border-radius:3px;background:var(--on-primary)"></span>
+        </span>
+        <span style="display:flex;flex-direction:column;line-height:1.05">
+          <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em">Veterinaria La Sierra</span>
+          <span style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600">Clínica y hospital</span>
+        </span>
+      </a>
+
+      <nav style="{{ estiloNav }}" aria-label="Navegación principal">
+        <sc-for list="{{ navPrincipal }}" as="item" hint-placeholder-count="7">
+          <a href="{{ item.href }}" style="padding:9px 11px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;transition:background .3s ease,color .3s ease" style-hover="background:var(--accent-soft);color:var(--accent-ink)">{{ item.texto }}</a>
+        </sc-for>
+        <a href="#contacto" style="display:inline-flex;align-items:center;gap:7px;margin-left:6px;padding:9px 15px;border-radius:999px;background:var(--urg);color:#fff;font-size:13.5px;font-weight:700;white-space:nowrap;transition:filter .3s ease" style-hover="filter:brightness(1.08);color:#fff">
+          <span style="width:7px;height:7px;border-radius:50%;background:#fff;animation:vlsPulso 1.6s ease-in-out infinite"></span>Urgencias
+        </a>
+        <a href="./Tienda.dc.html" style="margin-left:4px;padding:8px 15px;border-radius:999px;border:1.5px solid var(--border);color:var(--ink);font-size:13.5px;font-weight:600;white-space:nowrap;transition:border-color .3s ease" style-hover="border-color:var(--primary);color:var(--ink)">Tienda</a>
+      </nav>
+
+      <button type="button" onClick="{{ alternarMenu }}" aria-label="Abrir menú" aria-expanded="{{ menuAbierto }}" style="{{ estiloBotonMenu }}">
+        <span style="width:19px;height:2px;border-radius:2px;background:var(--ink);display:block"></span>
+        <span style="width:19px;height:2px;border-radius:2px;background:var(--ink);display:block"></span>
+        <span style="width:19px;height:2px;border-radius:2px;background:var(--ink);display:block"></span>
+      </button>
+    </div>
+
+    <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top:1px solid var(--border);background:var(--bg);padding:14px clamp(16px,4vw,28px) 22px;display:flex;flex-direction:column;gap:4px;max-height:70vh;overflow-y:auto">
+        <sc-for list="{{ navPrincipal }}" as="item" hint-placeholder-count="7">
+          <a href="{{ item.href }}" onClick="{{ cerrarMenu }}" style="padding:13px 12px;border-radius:12px;font-size:16px;font-weight:500;color:var(--ink);min-height:46px;display:flex;align-items:center" style-hover="background:var(--accent-soft)">{{ item.texto }}</a>
+        </sc-for>
+        <a href="./Tienda.dc.html" onClick="{{ cerrarMenu }}" style="padding:13px 12px;border-radius:12px;font-size:16px;font-weight:500;color:var(--ink);min-height:46px;display:flex;align-items:center" style-hover="background:var(--accent-soft)">Tienda</a>
+        <a href="tel:+34640221190" style="margin-top:8px;padding:14px;border-radius:999px;background:var(--urg);color:#fff;font-weight:700;text-align:center;min-height:48px;display:flex;align-items:center;justify-content:center">Urgencias 24 h · {{ telUrgencias }}</a>
+      </div>
+    </sc-if>
+  </header>
+
+  <section id="inicio" data-screen-label="Hero" style="position:relative;min-height:clamp(540px,84vh,780px);display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:#0B1B33;background-image:linear-gradient(180deg,rgba(6,16,32,.62) 0%,rgba(6,16,32,.46) 42%,rgba(6,16,32,.78) 100%),url('https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1800');background-size:cover;background-position:center 42%">
+    <div style="position:relative;z-index:2;max-width:900px;margin:0 auto;padding:clamp(84px,13vw,140px) clamp(18px,6vw,32px) clamp(60px,9vw,92px);text-align:center;display:flex;flex-direction:column;align-items:center">
+      <span style="display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);color:#fff;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">
+        <span style="width:7px;height:7px;border-radius:50%;background:#4ADE80"></span>Miraflores de la Sierra · Madrid
+      </span>
+      <h1 style="font-family:'Outfit',sans-serif;font-weight:600;font-size:clamp(33px,6.4vw,68px);line-height:1.05;letter-spacing:-.02em;color:#fff;margin:22px 0 0;text-shadow:0 2px 24px rgba(0,0,0,.35);max-width:16ch">Cuidamos la salud y la felicidad de tu mascota</h1>
+      <p style="font-size:clamp(16px,2.2vw,19.5px);line-height:1.65;color:rgba(255,255,255,.9);max-width:58ch;margin:20px 0 0;text-shadow:0 1px 12px rgba(0,0,0,.35)">Medicina preventiva, cirugía y urgencias 24 h con un equipo que trata a cada animal como si fuera suyo. Sin prisas, sin sustos y con todo explicado en tu idioma.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px">
+        <a href="#reservar" style="display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:15px 30px;border-radius:999px;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15.5px;box-shadow:0 12px 30px rgba(0,0,0,.28);transition:transform .3s ease,filter .3s ease" style-hover="filter:brightness(1.1);transform:translateY(-2px);color:var(--on-primary)">Reservar cita</a>
+        <a href="tel:+34640221190" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;padding:15px 26px;border-radius:999px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.55);backdrop-filter:blur(6px);color:#fff;font-weight:600;font-size:15.5px;transition:background .3s ease" style-hover="background:rgba(255,255,255,.24);color:#fff">
+          <span style="width:8px;height:8px;border-radius:50%;background:#F87171;animation:vlsPulso 1.6s ease-in-out infinite"></span>Urgencias 24 h
+        </a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:18px 26px;width:100%;max-width:720px;margin-top:clamp(38px,6vw,58px);padding-top:26px;border-top:1px solid rgba(255,255,255,.24)">
+        <sc-for list="{{ cifras }}" as="c" hint-placeholder-count="4">
+          <div style="text-align:center">
+            <div style="font-family:'Outfit',sans-serif;font-size:clamp(24px,3.4vw,32px);font-weight:600;color:#fff;line-height:1">{{ c.valor }}</div>
+            <div style="font-size:12.5px;color:rgba(255,255,255,.78);margin-top:6px;letter-spacing:.02em">{{ c.etiqueta }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="servicios" data-screen-label="Servicios" style="padding:clamp(64px,9vw,104px) clamp(18px,5vw,28px);background:var(--bg)">
+    <div style="max-width:1220px;margin:0 auto">
+      <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Lo que hacemos</p>
+      <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0;max-width:20ch">Servicios veterinarios <em style="font-style:normal;color:var(--primary)">de principio a fin</em></h2>
+      <p style="font-size:17px;line-height:1.7;color:var(--muted);max-width:62ch;margin:16px 0 0">Doce especialidades bajo el mismo techo, con historia clínica compartida. Pulsa el <strong style="color:var(--accent-ink)">+</strong> de cada tarjeta para ver qué incluye exactamente.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(310px,100%),1fr));gap:22px;margin-top:clamp(36px,5vw,54px)">
+        <sc-for list="{{ servicios }}" as="s" hint-placeholder-count="6">
+          <article style="display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .3s ease,box-shadow .3s ease" style-hover="transform:translateY(-4px);box-shadow:var(--shadow)">
+            <div style="position:relative;aspect-ratio:16/10;background:var(--bg-2);overflow:hidden">
+              <img src="{{ s.img }}" alt="{{ s.alt }}" loading="lazy" width="800" height="500" style="display:block;width:100%;height:100%;object-fit:cover" />
+              <span style="position:absolute;left:14px;top:14px;padding:6px 12px;border-radius:999px;background:var(--card);color:var(--accent-ink);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">{{ s.cat }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;padding:22px 22px 20px">
+              <h3 style="font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;line-height:1.15;color:var(--ink);margin:0">{{ s.titulo }}</h3>
+              <p style="font-size:14.5px;line-height:1.65;color:var(--muted);margin:9px 0 0">{{ s.desc }}</p>
+
+              <div style="{{ s.estiloPanel }}">
+                <div style="padding-top:16px;margin-top:16px;border-top:1px solid var(--border)">
+                  <p style="font-size:14px;line-height:1.7;color:var(--text);margin:0 0 12px">{{ s.detalle }}</p>
+                  <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+                    <sc-for list="{{ s.incluye }}" as="linea" hint-placeholder-count="3">
+                      <li style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:var(--text)">
+                        <span style="flex-shrink:0;width:17px;height:17px;margin-top:1px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">✓</span>{{ linea }}
+                      </li>
+                    </sc-for>
+                  </ul>
+                </div>
+              </div>
+
+              <button type="button" onClick="{{ s.alternar }}" aria-expanded="{{ s.abierto }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin-top:auto;padding:14px 4px 0;background:none;border:none;border-top:1px solid var(--border);cursor:pointer;color:var(--accent-ink);font-size:13.5px;font-weight:700;text-align:left;min-height:48px">
+                {{ s.rotuloBoton }}
+                <span style="{{ s.estiloMas }}">+</span>
+              </button>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="campanas" data-screen-label="Campañas" style="padding:clamp(56px,8vw,90px) clamp(18px,5vw,28px);background:var(--bg-2)">
+    <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:clamp(24px,4vw,44px);align-items:center">
+      <div>
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Campañas</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(26px,3.6vw,40px);line-height:1.1;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Prevención a precio de campaña</h2>
+        <p style="font-size:16.5px;line-height:1.7;color:var(--muted);max-width:52ch;margin:14px 0 26px">Cada trimestre abrimos una campaña de salud con precio cerrado y plazas limitadas. Ahora mismo: vacunación anual, revisión dental y chequeo senior.</p>
+        <a href="./Campanas.dc.html" style="display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:14px 26px;border-radius:999px;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15px;transition:filter .3s ease,transform .3s ease" style-hover="filter:brightness(1.1);transform:translateY(-2px);color:var(--on-primary)">Ver campañas activas →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:14px">
+        <sc-for list="{{ campanas }}" as="c" hint-placeholder-count="3">
+          <a href="./Campanas.dc.html" style="display:block;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .3s ease" style-hover="transform:translateY(-3px)">
+            <div style="aspect-ratio:16/9;background:var(--bg-2);overflow:hidden"><img src="{{ c.img }}" alt="{{ c.alt }}" loading="lazy" style="display:block;width:100%;height:100%;object-fit:cover" /></div>
+            <div style="padding:14px 16px 16px">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">{{ c.estado }}</span>
+                <span style="font-size:12px;color:var(--muted)">{{ c.vigencia }}</span>
+              </div>
+              <h3 style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;color:var(--ink);margin:10px 0 4px">{{ c.titulo }}</h3>
+              <p style="font-size:13.5px;color:var(--muted);margin:0"><strong style="color:var(--primary);font-size:16px">{{ c.precio }}</strong> {{ c.nota }}</p>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="equipo" data-screen-label="Equipo" style="padding:clamp(64px,9vw,104px) clamp(18px,5vw,28px);background:var(--bg)">
+    <div style="max-width:1220px;margin:0 auto">
+      <div style="text-align:center;max-width:640px;margin:0 auto">
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Equipo</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Nuestro equipo</h2>
+        <p style="font-size:17px;line-height:1.7;color:var(--muted);margin:16px 0 0">Seis profesionales colegiados que verás siempre por aquí: nada de caras nuevas en cada visita. Pulsa el + para conocerlos.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:26px;margin-top:clamp(36px,5vw,52px);align-items:start">
+        <sc-for list="{{ equipo }}" as="p" hint-placeholder-count="6">
+          <article style="display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .3s ease" style-hover="box-shadow:var(--shadow)">
+            <div style="aspect-ratio:4/3;background:var(--accent-soft);overflow:hidden">
+              <img src="{{ p.img }}" alt="{{ p.alt }}" loading="lazy" width="800" height="600" style="display:block;width:100%;height:100%;object-fit:cover" />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;padding:20px 20px 22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div style="min-width:0">
+                  <h3 style="font-family:'Outfit',sans-serif;font-size:20px;font-weight:600;color:var(--ink);margin:0;line-height:1.2">{{ p.nombre }}</h3>
+                  <span style="display:block;font-size:13px;color:var(--muted);margin-top:3px">{{ p.rol }}</span>
+                </div>
+                <button type="button" onClick="{{ p.alternar }}" aria-expanded="{{ p.abierto }}" aria-label="{{ p.aria }}" style="{{ p.estiloMas }}">+</button>
+              </div>
+
+              <div style="{{ p.estiloPanel }}">
+                <div style="padding:14px 0 2px;border-top:1px solid var(--border)">
+                  <p style="font-size:14px;line-height:1.7;color:var(--text);margin:0 0 12px">{{ p.bio }}</p>
+                  <dl style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:13px">
+                    <dt style="color:var(--muted)">Colegiada/o</dt><dd style="margin:0;color:var(--text);font-weight:600">{{ p.colegiado }}</dd>
+                    <dt style="color:var(--muted)">Idiomas</dt><dd style="margin:0;color:var(--text);font-weight:600">{{ p.idiomas }}</dd>
+                  </dl>
+                </div>
+              </div>
+
+              <ul style="display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0;list-style:none">
+                <sc-for list="{{ p.tags }}" as="t" hint-placeholder-count="3">
+                  <li style="background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:600;padding:5px 11px;border-radius:30px">{{ t }}</li>
+                </sc-for>
+              </ul>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="reservar" data-screen-label="Reservar" style="padding:clamp(64px,9vw,104px) clamp(18px,5vw,28px);background:var(--bg-2)">
+    <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:clamp(28px,4vw,52px);align-items:center">
+      <div>
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Reserva rápida</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Pide cita en menos de un minuto</h2>
+        <p style="font-size:17px;line-height:1.7;color:var(--muted);max-width:52ch;margin:16px 0 0">Cuéntanos qué necesita tu mascota y te devolvemos la hora exacta confirmada por WhatsApp. Sin registros y sin esperas al teléfono.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px">
+          <a href="https://wa.me/34640221190" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:14px 26px;border-radius:999px;background:var(--accent-ink);color:#fff;font-weight:700;font-size:15px;transition:filter .3s ease" style-hover="filter:brightness(1.1);color:#fff">WhatsApp</a>
+          <a href="tel:+34918442160" style="display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:13px 25px;border-radius:999px;border:1.5px solid var(--border);color:var(--ink);font-weight:600;font-size:15px;transition:border-color .3s ease" style-hover="border-color:var(--primary);color:var(--ink)">Llamar a la clínica</a>
+        </div>
+        <ul style="list-style:none;margin:28px 0 0;padding:0;display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ ventajasReserva }}" as="v" hint-placeholder-count="3">
+            <li style="display:flex;align-items:flex-start;gap:10px;font-size:14.5px;color:var(--text)">
+              <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px">✓</span>{{ v }}
+            </li>
+          </sc-for>
+        </ul>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:22px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:470px">
+        <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);background:var(--surface)">
+          <span style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;letter-spacing:.04em">LS</span>
+          <div>
+            <div style="font-weight:700;font-size:14.5px;color:var(--ink)">Veterinaria La Sierra</div>
+            <div style="font-size:12px;color:var(--accent-ink);display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>en línea</div>
+          </div>
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px;padding:18px;overflow-y:auto;max-height:330px;background:var(--bg)">
+          <sc-for list="{{ mensajes }}" as="m" hint-placeholder-count="2">
+            <div style="{{ m.estilo }}">{{ m.texto }}</div>
+          </sc-for>
+        </div>
+
+        <div style="padding:14px 18px 18px;border-top:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:10px">
+          <sc-if value="{{ hayOpciones }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ opciones }}" as="o" hint-placeholder-count="3">
+                <button type="button" onClick="{{ o.elegir }}" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;min-height:44px;transition:border-color .3s ease,background .3s ease" style-hover="border-color:var(--primary);background:var(--accent-soft)">{{ o.texto }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hayInput }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:8px">
+              <input value="{{ borrador }}" onChange="{{ escribir }}" onKeyDown="{{ teclaEnvio }}" placeholder="{{ marcador }}" aria-label="Tu respuesta" style="flex:1;min-width:0;min-height:46px;padding:12px 15px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--ink);font-size:14.5px;outline:none" />
+              <button type="button" onClick="{{ enviarTexto }}" aria-label="Enviar" style="width:46px;height:46px;flex-shrink:0;border-radius:50%;border:none;background:var(--primary);color:var(--on-primary);font-size:18px;cursor:pointer">→</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ chatHecho }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <a href="{{ hrefWhatsapp }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:48px;padding:14px;border-radius:999px;background:var(--accent-ink);color:#fff;font-weight:700;font-size:14.5px" style-hover="filter:brightness(1.1);color:#fff">Enviar la solicitud por WhatsApp</a>
+              <button type="button" onClick="{{ reiniciarChat }}" style="background:none;border:none;color:var(--primary);font-size:13.5px;font-weight:600;text-decoration:underline;cursor:pointer;min-height:40px">Pedir otra cita</button>
+            </div>
+          </sc-if>
+
+          <p style="margin:0;font-size:11.5px;color:var(--muted);line-height:1.5">Demostración: la solicitud no se envía a ningún servidor hasta que pulsas WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" data-screen-label="Galería" style="padding:clamp(64px,9vw,104px) 0;background:var(--bg);overflow:hidden">
+    <div style="max-width:1220px;margin:0 auto;padding:0 clamp(18px,5vw,28px);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px">
+      <div>
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Galería</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Galería · Nuestros peludos</h2>
+        <p style="font-size:16.5px;line-height:1.7;color:var(--muted);max-width:56ch;margin:14px 0 0">Pacientes reales que han pasado por consulta. Publicadas siempre con permiso de sus familias.</p>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="button" onClick="{{ galeriaAtras }}" aria-label="Foto anterior" style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;transition:border-color .3s ease" style-hover="border-color:var(--primary)">←</button>
+        <button type="button" onClick="{{ galeriaAdelante }}" aria-label="Foto siguiente" style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;transition:border-color .3s ease" style-hover="border-color:var(--primary)">→</button>
+      </div>
+    </div>
+
+    <div ref="{{ pistaGaleria }}" style="display:flex;gap:18px;margin-top:clamp(28px,4vw,42px);padding:6px clamp(18px,5vw,28px) 22px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+      <sc-for list="{{ galeria }}" as="g" hint-placeholder-count="5">
+        <figure style="flex:0 0 clamp(240px,32vw,360px);margin:0;scroll-snap-align:start;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)">
+          <div style="aspect-ratio:4/3;background:var(--bg-2);overflow:hidden">
+            <img src="{{ g.img }}" alt="{{ g.alt }}" loading="lazy" style="display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s ease" style-hover="transform:scale(1.05)" />
+          </div>
+          <figcaption style="padding:14px 16px 16px">
+            <span style="display:block;font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:var(--ink)">{{ g.nombre }}</span>
+            <span style="display:block;font-size:13px;color:var(--muted);margin-top:3px">{{ g.pie }}</span>
+          </figcaption>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="contacto" data-screen-label="Contacto" style="padding:clamp(64px,9vw,104px) clamp(18px,5vw,28px);background:var(--bg-2)">
+    <div style="max-width:1220px;margin:0 auto">
+      <div style="max-width:640px">
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">Contacto</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Estamos a un paseo de casa</h2>
+        <p style="font-size:17px;line-height:1.7;color:var(--muted);margin:16px 0 0">Escríbenos y te contestamos el mismo día. Para urgencias, llama directamente: siempre hay alguien de guardia.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:clamp(24px,3vw,34px);margin-top:clamp(32px,4.5vw,48px);align-items:start">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:22px;padding:clamp(22px,3vw,32px);box-shadow:var(--shadow-sm)">
+          <sc-if value="{{ contactoEnviado }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:26px 6px">
+              <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">✓</div>
+              <h3 style="font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--ink);margin:0 0 8px">Mensaje recibido</h3>
+              <p style="font-size:14.5px;color:var(--muted);margin:0 0 18px;line-height:1.6">Te responderemos hoy mismo en horario de clínica. Si es una urgencia, llama al {{ telUrgencias }}.</p>
+              <button type="button" onClick="{{ reiniciarContacto }}" style="background:none;border:none;color:var(--primary);font-weight:600;font-size:14px;text-decoration:underline;cursor:pointer;min-height:44px">Enviar otro mensaje</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ contactoPendiente }}" hint-placeholder-val="{{ true }}">
+            <form onSubmit="{{ enviarContacto }}" style="display:flex;flex-direction:column;gap:16px">
+              <h3 style="font-family:'Outfit',sans-serif;font-size:20px;font-weight:600;color:var(--ink);margin:0">Escríbenos</h3>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:14px">
+                <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)">Tu nombre
+                  <input required="required" name="nombre" placeholder="Ana Martín" style="min-height:46px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:400;outline:none" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)">Teléfono
+                  <input required="required" name="telefono" type="tel" placeholder="600 000 000" style="min-height:46px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:400;outline:none" />
+                </label>
+              </div>
+              <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)">Email
+                <input required="required" name="email" type="email" placeholder="ana@correo.es" style="min-height:46px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:400;outline:none" />
+              </label>
+              <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)">Motivo
+                <select name="motivo" style="min-height:46px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:400;outline:none">
+                  <option>Pedir cita</option>
+                  <option>Consulta sobre un tratamiento</option>
+                  <option>Campañas y precios</option>
+                  <option>Historial y documentación</option>
+                  <option>Otro</option>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)">Cuéntanos
+                <textarea name="mensaje" rows="4" placeholder="Nombre y edad de tu mascota, y qué le pasa." style="padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:400;outline:none;resize:vertical;min-height:110px"></textarea>
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--muted);line-height:1.5;font-weight:400">
+                <input required="required" type="checkbox" style="margin-top:3px;width:18px;height:18px;flex-shrink:0;accent-color:var(--primary)" />
+                He leído y acepto la política de privacidad y el tratamiento de mis datos para responder a esta consulta.
+              </label>
+              <button type="submit" style="min-height:50px;padding:15px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15px;cursor:pointer;transition:filter .3s ease" style-hover="filter:brightness(1.1)">Enviar mensaje</button>
+            </form>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="background:var(--urg);color:#fff;border-radius:20px;padding:22px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px">
+            <div>
+              <div style="display:flex;align-items:center;gap:9px;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.92"><span style="width:8px;height:8px;border-radius:50%;background:#fff;animation:vlsPulso 1.6s ease-in-out infinite"></span>Urgencias 24 h</div>
+              <div style="font-family:'Outfit',sans-serif;font-size:26px;font-weight:600;margin-top:6px">{{ telUrgencias }}</div>
+            </div>
+            <a href="tel:+34640221190" style="min-height:46px;padding:13px 22px;border-radius:999px;background:#fff;color:var(--urg);font-weight:700;font-size:14.5px;display:inline-flex;align-items:center" style-hover="color:var(--urg);filter:brightness(.95)">Llamar ahora</a>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)">
+            <iframe title="Mapa de Veterinaria La Sierra" src="https://www.openstreetmap.org/export/embed.html?bbox=-3.7838%2C40.8055%2C-3.7528%2C40.8195&amp;layer=mapnik&amp;marker=40.8125%2C-3.7683" loading="lazy" style="display:block;width:100%;height:240px;border:0"></iframe>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:18px;padding:20px 22px 22px">
+              <sc-for list="{{ datosContacto }}" as="d" hint-placeholder-count="4">
+                <div>
+                  <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:6px">{{ d.rotulo }}</div>
+                  <div style="font-size:14.5px;line-height:1.6;color:var(--ink);font-weight:500">{{ d.linea1 }}</div>
+                  <div style="font-size:13.5px;line-height:1.6;color:var(--muted)">{{ d.linea2 }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" data-screen-label="FAQ" style="padding:clamp(64px,9vw,104px) clamp(18px,5vw,28px);background:var(--bg)">
+    <div style="max-width:860px;margin:0 auto">
+      <div style="text-align:center">
+        <p style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:0 0 13px">FAQ</p>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:clamp(28px,4.2vw,46px);line-height:1.08;letter-spacing:-.015em;font-weight:600;color:var(--ink);margin:0">Preguntas frecuentes</h2>
+      </div>
+      <div style="margin-top:clamp(28px,4vw,40px);border-top:1px solid var(--border)">
+        <sc-for list="{{ faq }}" as="f" hint-placeholder-count="5">
+          <details name="faq" style="border-bottom:1px solid var(--border)">
+            <summary style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 4px;cursor:pointer;color:var(--ink);font-family:'Outfit',sans-serif;font-size:clamp(16px,2.1vw,19px);font-weight:500;list-style:none;min-height:48px">
+              {{ f.pregunta }}
+              <span style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center">+</span>
+            </summary>
+            <p style="margin:0;padding:0 4px 24px;color:var(--text);line-height:1.75;font-size:15.5px;max-width:70ch">{{ f.respuesta }}</p>
+          </details>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background:var(--card);border-top:1px solid var(--border);padding:clamp(48px,7vw,72px) clamp(18px,5vw,28px) 28px">
+    <div style="max-width:1220px;margin:0 auto;display:flex;flex-wrap:wrap;gap:32px">
+      <div style="flex:1 1 260px;min-width:0">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+          <span style="position:relative;width:36px;height:36px;border-radius:11px;background:var(--primary);display:flex;align-items:center;justify-content:center">
+            <span style="position:absolute;width:16px;height:4px;border-radius:3px;background:var(--on-primary)"></span>
+            <span style="position:absolute;width:4px;height:16px;border-radius:3px;background:var(--on-primary)"></span>
+          </span>
+          <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;color:var(--ink)">Veterinaria La Sierra</span>
+        </div>
+        <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0;max-width:34ch">Clínica veterinaria en Miraflores de la Sierra. Medicina preventiva, cirugía y urgencias 24 h desde 2013.</p>
+      </div>
+      <sc-for list="{{ columnasPie }}" as="col" hint-placeholder-count="3">
+        <div style="flex:1 1 170px;min-width:0">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-bottom:14px">{{ col.titulo }}</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ col.enlaces }}" as="e" hint-placeholder-count="4">
+              <li><a href="{{ e.href }}" style="font-size:14px;color:var(--muted)" style-hover="color:var(--primary)">{{ e.texto }}</a></li>
+            </sc-for>
+          </ul>
+        </div>
+      </sc-for>
+    </div>
+    <div style="max-width:1220px;margin:36px auto 0;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--muted)">
+      <span>© 2026 Veterinaria La Sierra · Centro veterinario registrado nº 28/0791</span>
+      <span style="display:flex;flex-wrap:wrap;gap:16px">
+        <a href="#faq" style="color:var(--muted)" style-hover="color:var(--primary)">Aviso legal</a>
+        <a href="#faq" style="color:var(--muted)" style-hover="color:var(--primary)">Privacidad</a>
+        <a href="#faq" style="color:var(--muted)" style-hover="color:var(--primary)">Cookies</a>
+      </span>
+    </div>
+  </footer>
+
+  <sc-if value="{{ mostrarSelector }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;right:clamp(14px,3vw,26px);bottom:clamp(14px,3vw,26px);z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+      <sc-if value="{{ selectorAbierto }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:14px;width:min(268px,calc(100vw - 32px))">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Paleta de color</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ paletas }}" as="p" hint-placeholder-count="4">
+              <button type="button" onClick="{{ p.elegir }}" style="{{ p.estilo }}">
+                <span style="display:flex;gap:4px;flex-shrink:0">
+                  <span style="{{ p.sw1 }}"></span><span style="{{ p.sw2 }}"></span><span style="{{ p.sw3 }}"></span>
+                </span>
+                <span style="display:flex;flex-direction:column;text-align:left;min-width:0">
+                  <span style="font-size:13.5px;font-weight:700;color:var(--ink)">{{ p.nombre }}</span>
+                  <span style="font-size:11.5px;color:var(--muted)">{{ p.nota }}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <button type="button" onClick="{{ alternarSelector }}" aria-label="Cambiar paleta de color" style="width:52px;height:52px;border-radius:50%;border:1px solid var(--border);background:var(--card);box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+        <span style="width:24px;height:24px;border-radius:50%;background:conic-gradient(var(--primary) 0 33%, var(--accent) 33% 66%, var(--urg) 66% 100%)"></span>
+      </button>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clinica&quot;,&quot;calida&quot;,&quot;tech&quot;,&quot;eco&quot;],&quot;default&quot;:&quot;clinica&quot;,&quot;tsType&quot;:&quot;'clinica'|'calida'|'tech'|'eco'&quot;,&quot;section&quot;:&quot;Apariencia&quot;},&quot;mostrarSelectorPaleta&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Apariencia&quot;},&quot;mostrarBarraUrgencias&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contenido&quot;},&quot;telefonoUrgencias&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;640 22 11 90&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Contenido&quot;}}">
+const PX = (id, w) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
+
+const SERVICIOS = [
+  { cat: 'Medicina', titulo: 'Consulta general', img: 6235241, alt: 'Veterinario auscultando a un perro',
+    desc: 'Revisión completa de 30 minutos, con tiempo para explicarte todo sin prisas.',
+    detalle: 'Exploración de cabeza a cola: peso, temperatura, mucosas, auscultación cardiorrespiratoria, palpación abdominal y estado de piel y articulaciones. Salimos siempre con un plan escrito.',
+    incluye: ['Historia clínica digital que compartimos contigo', 'Informe con recomendaciones al terminar', 'Segunda visita de seguimiento sin coste'] },
+  { cat: 'Prevención', titulo: 'Vacunación', img: 6235233, alt: 'Veterinaria vacunando a un perro en consulta',
+    desc: 'Calendario personalizado según edad, especie y estilo de vida del animal.',
+    detalle: 'Trabajamos con protocolo vacunal adaptado: no vacunamos de todo a todos. Antes de cada dosis hacemos revisión previa para confirmar que el animal está en condiciones.',
+    incluye: ['Recordatorios automáticos por WhatsApp', 'Cartilla física y digital actualizada', 'Revisión previa incluida en el precio'] },
+  { cat: 'Quirófano', titulo: 'Cirugía', img: 1350593, alt: 'Instrumental quirúrgico preparado en quirófano',
+    desc: 'Desde esterilizaciones a cirugía de tejidos blandos, con monitorización continua.',
+    detalle: 'Quirófano propio con anestesia inhalatoria, monitor multiparamétrico y un auxiliar dedicado en exclusiva a vigilar constantes. Analítica preanestésica obligatoria en todos los casos.',
+    incluye: ['Analítica preanestésica y ECG previos', 'Control del dolor durante y después', 'Llamada de seguimiento a las 24 h'] },
+  { cat: 'Diagnóstico', titulo: 'Diagnóstico por imagen', img: 6816861, alt: 'Veterinario explorando a un perro pequeño',
+    desc: 'Radiología digital y ecografía en el momento, sin derivaciones ni esperas.',
+    detalle: 'Resolvemos la mayoría de los casos en la misma visita. La imagen se interpreta al momento y, cuando hace falta, la enviamos a un especialista externo el mismo día.',
+    incluye: ['Radiología digital de alta resolución', 'Ecografía abdominal y cardíaca', 'Segunda lectura por especialista si procede'] },
+  { cat: 'Laboratorio', titulo: 'Análisis clínicos', img: 4269363, alt: 'Veterinaria trabajando en la clínica',
+    desc: 'Hemograma y bioquímica con resultados en 20 minutos, aquí mismo.',
+    detalle: 'Laboratorio interno para lo urgente y laboratorio de referencia para lo especializado. Te enviamos siempre el PDF con los valores comparados con la analítica anterior.',
+    incluye: ['Resultados en 20 minutos para urgencias', 'Comparativa con analíticas previas', 'Test rápidos de leishmania y filaria'] },
+  { cat: 'Especialidad', titulo: 'Dermatología', img: 6816858, alt: 'Veterinario revisando la piel de un perro',
+    desc: 'Alergias, otitis de repetición y problemas de piel que no terminan de irse.',
+    detalle: 'Abordamos la dermatología como un proceso, no como una crema: citología, tricograma, pruebas de alergia y dieta de eliminación cuando hace falta, con revisiones pautadas.',
+    incluye: ['Citología y raspado en consulta', 'Plan antialérgico a medida', 'Revisiones de control cada 3 semanas'] },
+  { cat: 'Especialidad', titulo: 'Odontología', img: 220938, alt: 'Perro con la boca abierta',
+    desc: 'Limpieza con ultrasonidos, extracciones y prevención del sarro en casa.',
+    detalle: 'La boca es el origen de muchos problemas que parecen de otra cosa. Hacemos limpieza bajo anestesia con radiografía dental para ver lo que hay debajo de la encía.',
+    incluye: ['Radiografía dental intraoral', 'Pulido y sellado tras la limpieza', 'Pauta de higiene diaria para casa'] },
+  { cat: 'Exóticos', titulo: 'Animales exóticos', img: 4498185, alt: 'Veterinaria atendiendo a una cobaya',
+    desc: 'Conejos, cobayas, hurones, aves y reptiles atendidos por quien sabe de ellos.',
+    detalle: 'Consulta específica con material adaptado y sala separada de perros y gatos para reducir el estrés. Manejo mínimo y siempre con la familia presente.',
+    incluye: ['Sala independiente sin perros ni gatos', 'Manejo de bajo estrés y sujeción mínima', 'Asesoría de alojamiento y dieta'] },
+  { cat: 'Bienestar', titulo: 'Peluquería canina', img: 4269356, alt: 'Material de peluquería y cuidado',
+    desc: 'Baño, corte de raza y deslanado, con secado tranquilo y sin jaulas de secado.',
+    detalle: 'Peluquería dentro de la clínica: si aparece un bulto, una otitis o una uña encarnada, lo ve un veterinario en el momento. Turnos individuales, nunca varios animales a la vez.',
+    incluye: ['Turno individual, sin esperas en jaula', 'Revisión veterinaria rápida incluida', 'Productos hipoalergénicos y sin perfume'] },
+  { cat: 'Bienestar', titulo: 'Nutrición y etología', img: 2253275, alt: 'Dos perros paseando juntos',
+    desc: 'Planes de peso y consulta de conducta para lo que no se arregla con pastillas.',
+    detalle: 'Obesidad, ansiedad por separación, miedos y agresividad. Trabajamos con objetivos medibles y revisiones mensuales, coordinados con tu educador si ya tienes uno.',
+    incluye: ['Plan de peso con pesajes mensuales gratis', 'Consulta de conducta de 60 minutos', 'Informe compartido con tu educador'] },
+  { cat: 'Urgencias', titulo: 'Urgencias 24 h', img: 5732461, alt: 'Estetoscopio sobre un perro blanco',
+    desc: 'Alguien de guardia los 365 días. Llama antes de venir y te esperamos preparados.',
+    detalle: 'Triaje telefónico para preparar el material antes de que llegues. Hospitalización con oxígeno, fluidoterapia y monitorización nocturna cuando el caso lo pide.',
+    incluye: ['Triaje por teléfono antes de salir de casa', 'Hospitalización con oxígeno y fluidos', 'Parte de evolución cada mañana'] },
+  { cat: 'Trámites', titulo: 'Microchip y viajes', img: 4587998, alt: 'Mano acariciando a un bulldog francés',
+    desc: 'Identificación, pasaporte europeo y todo el papeleo para viajar sin sustos.',
+    detalle: 'Nos encargamos del registro autonómico, el pasaporte y los certificados sanitarios. Te decimos con cuánta antelación empezar según el país de destino.',
+    incluye: ['Alta en el registro de la Comunidad', 'Pasaporte europeo el mismo día', 'Calendario de trámites por país'] },
+];
+
+const EQUIPO = [
+  { nombre: 'Dra. Elena Vargas', rol: 'Directora clínica · Medicina interna', img: 4269363, alt: 'Retrato de veterinaria en consulta',
+    bio: 'Fundó La Sierra en 2013 después de diez años en un hospital de referencia en Madrid. Le obsesiona explicar cada diagnóstico hasta que la familia lo entiende de verdad.',
+    colegiado: 'nº 28-7412', idiomas: 'Español · Inglés', tags: ['Medicina interna', 'Endocrinología', 'Geriatría'] },
+  { nombre: 'Dr. Marcos Nieto', rol: 'Cirujano jefe', img: 7469496, alt: 'Retrato de veterinario con bata',
+    bio: 'Especializado en cirugía de tejidos blandos y traumatología. Opera martes y jueves, y llama personalmente a las 24 horas para saber cómo ha pasado la noche el paciente.',
+    colegiado: 'nº 28-8130', idiomas: 'Español · Portugués', tags: ['Cirugía', 'Traumatología', 'Anestesia'] },
+  { nombre: 'Dra. Lucía Ferrer', rol: 'Dermatología y alergias', img: 6816858, alt: 'Veterinaria explorando a un perro',
+    bio: 'Llegó desde una clínica de referencia en Valencia con una idea fija: que ningún animal pase años rascándose sin diagnóstico. Lleva las dietas de eliminación de la casa.',
+    colegiado: 'nº 28-9055', idiomas: 'Español · Valenciano · Inglés', tags: ['Dermatología', 'Alergias', 'Otitis'] },
+  { nombre: 'Sergio Ibáñez', rol: 'Auxiliar técnico veterinario', img: 6234600, alt: 'Retrato de auxiliar veterinario',
+    bio: 'Es quien sujeta, tranquiliza y monitoriza. Formado en manejo de bajo estrés y en cuidados intensivos: si tu animal pasa la noche aquí, Sergio está pendiente de él.',
+    colegiado: 'ATV nº 4471', idiomas: 'Español · Inglés', tags: ['Hospitalización', 'Anestesia', 'Bajo estrés'] },
+  { nombre: 'Dra. Nadia Olmo', rol: 'Animales exóticos', img: 4498185, alt: 'Veterinaria atendiendo a una cobaya',
+    bio: 'Conejos, hurones, aves y reptiles. Pasa consulta los lunes y miércoles en la sala pequeña, sin perros cerca, y se lleva la mitad de los casos raros de la sierra.',
+    colegiado: 'nº 28-9612', idiomas: 'Español · Francés', tags: ['Exóticos', 'Aves', 'Reptiles'] },
+  { nombre: 'Paula Guzmán', rol: 'Peluquería y bienestar', img: 6235241, alt: 'Profesional cuidando a un perro',
+    bio: 'Quince años cortando pelo a perros que odian que les corten el pelo. Trabaja con turnos individuales y sin jaula de secado; los animales miedosos vienen antes solo a conocerla.',
+    colegiado: 'Certificación ANPP', idiomas: 'Español', tags: ['Peluquería', 'Deslanado', 'Manejo miedoso'] },
+];
+
+const GALERIA = [
+  { img: 1108099, nombre: 'Nala y Coco', pie: 'Primera vacunación · 9 semanas', alt: 'Dos cachorros golden retriever en la hierba' },
+  { img: 617278, nombre: 'Sombra', pie: 'Revisión anual · gato de 6 años', alt: 'Gato negro de ojos verdes' },
+  { img: 1938126, nombre: 'Bruno', pie: 'Alta tras cirugía de rodilla', alt: 'Border collie sonriendo' },
+  { img: 1741205, nombre: 'Turrón', pie: 'Control de peso · −1,8 kg', alt: 'Gato naranja con pañuelo' },
+  { img: 733416, nombre: 'Rocco', pie: 'Chequeo senior · 11 años', alt: 'Perro gris de mirada tranquila' },
+  { img: 2607544, nombre: 'Lola', pie: 'Peluquería y revisión de piel', alt: 'Perro blanco con gafas de sol' },
+  { img: 58997, nombre: 'Kiwi', pie: 'Microchip y pasaporte', alt: 'Corgi paseando' },
+  { img: 209037, nombre: 'Duna', pie: 'Limpieza dental', alt: 'Gato naranja descansando' },
+  { img: 356378, nombre: 'Nieve', pie: 'Desparasitación trimestral', alt: 'Perro blanco pequeño' },
+];
+
+const FAQ = [
+  { pregunta: '¿Cada cuánto tengo que vacunar a mi perro o gato?', respuesta: 'Depende de la edad y del estilo de vida. Los cachorros siguen una pauta inicial de tres dosis entre las 6 y las 16 semanas; los adultos, revisión anual con las vacunas que realmente necesiten. Un gato que no sale de casa no requiere el mismo calendario que uno que pasea por el monte, y lo ajustamos caso por caso.' },
+  { pregunta: '¿Cuándo debo desparasitar y con qué frecuencia?', respuesta: 'Interna cada tres meses como norma general, y mensual en cachorros o animales que cazan. La externa depende de la estación y de la zona: en la sierra recomendamos cobertura continua de marzo a noviembre por el riesgo de leishmania y garrapatas. Te dejamos el calendario impreso y te avisamos por WhatsApp.' },
+  { pregunta: '¿Qué pasa en la primera visita?', respuesta: 'Dedicamos 30 minutos: exploración completa, revisión del historial que traigas, resolución de dudas y un plan de salud escrito para el año. Si tu animal es miedoso, dínoslo al reservar y te damos la primera cita del día, cuando la sala está vacía y tranquila.' },
+  { pregunta: '¿Cómo funcionan las urgencias 24 h?', respuesta: 'Llama siempre antes de venir al 640 22 11 90. Hacemos triaje por teléfono para saber si puedes esperar a la mañana o hay que salir ya, y mientras conduces preparamos el material. Fuera del horario de clínica hay recargo de urgencia, que te indicamos por teléfono antes de que salgas de casa.' },
+  { pregunta: '¿Tenéis planes de salud o financiación?', respuesta: 'Sí. El plan anual reparte en doce cuotas las vacunas, desparasitaciones, dos revisiones y la analítica anual, con descuento en peluquería y en la tienda. Para intervenciones a partir de 400 € ofrecemos pago aplazado sin intereses en tres meses.' },
+  { pregunta: '¿Atendéis conejos, hurones o aves?', respuesta: 'Sí, con la Dra. Olmo los lunes y miércoles, en una sala separada para que no coincidan con perros y gatos. Tráelos en su transportín habitual y, si es posible, con una muestra reciente de heces y una foto de su alojamiento.' },
+];
+
+const PALETAS = [
+  { id: 'clinica', nombre: 'Confianza clínica', nota: 'Azul cobalto · verde menta', c: ['#1E40AF', '#10B981', '#F8FAFC'] },
+  { id: 'calida', nombre: 'Orgánica y cálida', nota: 'Terracota · oliva · crema', c: ['#D97706', '#4D7C0F', '#FEF3C7'] },
+  { id: 'tech', nombre: 'Alta gama', nota: 'Azul marino · cian neón', c: ['#0F172A', '#06B6D4', '#64748B'] },
+  { id: 'eco', nombre: 'Relax & eco', nota: 'Esmeralda · menta clara', c: ['#047857', '#A7F3D0', '#FFFFFF'] },
+];
+
+const FLUJO = [
+  { clave: 'servicio', bot: 'Hola, soy el asistente de Veterinaria La Sierra. ¿Qué necesita tu mascota?', opciones: ['Consulta general', 'Vacunación', 'Peluquería', 'Es una urgencia'] },
+  { clave: 'especie', bot: 'Entendido. ¿Con qué animal vienes?', opciones: ['Perro', 'Gato', 'Exótico'] },
+  { clave: 'dia', bot: 'Perfecto. ¿Qué día te viene mejor?', opciones: ['Entre semana', 'Este fin de semana', 'Lo antes posible'] },
+  { clave: 'franja', bot: '¿Y en qué franja horaria?', opciones: ['Por la mañana', 'Por la tarde', 'Me da igual'] },
+  { clave: 'nombre', bot: 'Ya casi está. ¿Cómo os llamáis tu mascota y tú?', marcador: 'Ej. Nala y Ana Martín' },
+];
+
+class Component extends DCLogic {
+  state = {
+    menuAbierto: false, selectorAbierto: false, tema: 'clinica',
+    serviciosAbiertos: {}, equipoAbierto: {},
+    paso: 0, mensajes: [{ bot: true, texto: FLUJO[0].bot }], respuestas: {}, borrador: '', chatHecho: false,
+    contactoEnviado: false, ancho: 1280,
+  };
+
+  componentDidMount() {
+    let guardado = null;
+    try { guardado = localStorage.getItem('vls-tema'); } catch (e) { guardado = null; }
+    this.aplicarTema(guardado || this.props.tema || 'clinica');
+    this.medir();
+    this._onResize = () => this.medir();
+    window.addEventListener('resize', this._onResize);
+  }
+
+  componentWillUnmount() {
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+  }
+
+  medir() { this.setState({ ancho: window.innerWidth }); }
+
+  aplicarTema(id) {
+    document.documentElement.setAttribute('data-tema', id);
+    try { localStorage.setItem('vls-tema', id); } catch (e) { /* navegación privada */ }
+    this.setState({ tema: id });
+  }
+
+  alternarClave(campo, clave) {
+    this.setState((s) => ({ [campo]: Object.assign({}, s[campo], { [clave]: !s[campo][clave] }) }));
+  }
+
+  panel(abierto) {
+    return { overflow: 'hidden', maxHeight: abierto ? '620px' : '0px', opacity: abierto ? 1 : 0,
+      transition: 'max-height .3s ease, opacity .3s ease' };
+  }
+
+  avanzar(valor) {
+    const s = this.state;
+    const actual = FLUJO[s.paso];
+    const respuestas = Object.assign({}, s.respuestas, { [actual.clave]: valor });
+    const siguiente = s.paso + 1;
+    const conUsuario = s.mensajes.concat([{ bot: false, texto: valor }]);
+    if (siguiente < FLUJO.length) {
+      this.setState({ mensajes: conUsuario.concat([{ bot: true, texto: FLUJO[siguiente].bot }]), paso: siguiente, respuestas, borrador: '' });
+    } else {
+      const resumen = `Gracias, ${respuestas.nombre}. Anotado: ${respuestas.servicio} · ${respuestas.especie} · ${respuestas.dia} · ${respuestas.franja}. Te confirmamos la hora exacta por WhatsApp en menos de 2 horas.`;
+      this.setState({ mensajes: conUsuario.concat([{ bot: true, texto: resumen }]), respuestas, chatHecho: true, borrador: '' });
+    }
+  }
+
+  enviarTexto() {
+    const valor = this.state.borrador.trim();
+    if (valor === '') return;
+    this.avanzar(valor);
+  }
+
+  desplazarGaleria(direccion) {
+    const pista = this.pista;
+    if (!pista) return;
+    const tarjeta = pista.firstElementChild;
+    const paso = tarjeta ? tarjeta.getBoundingClientRect().width + 18 : 300;
+    pista.scrollBy({ left: paso * direccion, behavior: 'smooth' });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const esMovil = s.ancho < 1120;
+    const actual = FLUJO[s.paso];
+    const mensajeWa = encodeURIComponent(
+      `Hola, quiero pedir cita en Veterinaria La Sierra. ${s.respuestas.servicio || ''} · ${s.respuestas.especie || ''} · ${s.respuestas.dia || ''} · ${s.respuestas.franja || ''}. Soy ${s.respuestas.nombre || ''}.`
+    );
+
+    return {
+      telUrgencias: this.props.telefonoUrgencias ?? '640 22 11 90',
+      barraUrgencias: this.props.mostrarBarraUrgencias ?? true,
+      mostrarSelector: this.props.mostrarSelectorPaleta ?? true,
+
+      estiloNav: { display: esMovil ? 'none' : 'flex', alignItems: 'center', gap: '2px' },
+      estiloBotonMenu: { display: esMovil ? 'flex' : 'none', width: '46px', height: '46px', alignItems: 'center',
+        justifyContent: 'center', flexDirection: 'column', gap: '5px', borderRadius: '12px',
+        border: '1px solid var(--border)', background: 'var(--card)', cursor: 'pointer' },
+      menuAbierto: s.menuAbierto,
+      alternarMenu: () => this.setState({ menuAbierto: !s.menuAbierto }),
+      cerrarMenu: () => this.setState({ menuAbierto: false }),
+      navPrincipal: [
+        { href: '#reservar', texto: 'Reservar' },
+        { href: '#servicios', texto: 'Servicios' },
+        { href: './Campanas.dc.html', texto: 'Campañas' },
+        { href: '#equipo', texto: 'Equipo' },
+        { href: './Blog.dc.html', texto: 'Blog' },
+        { href: '#contacto', texto: 'Contacto' },
+        { href: '#faq', texto: 'FAQ' },
+      ],
+
+      cifras: [
+        { valor: '+12 años', etiqueta: 'cuidando la sierra' },
+        { valor: '8.400', etiqueta: 'mascotas en ficha' },
+        { valor: '24 h', etiqueta: 'urgencias los 365 días' },
+        { valor: '4,9 ★', etiqueta: '327 reseñas en Google' },
+      ],
+
+      servicios: SERVICIOS.map((x, i) => {
+        const abierto = !!s.serviciosAbiertos[i];
+        return Object.assign({}, x, {
+          img: PX(x.img, 800), abierto,
+          rotuloBoton: abierto ? 'Ocultar detalle' : 'Ver qué incluye',
+          alternar: () => this.alternarClave('serviciosAbiertos', i),
+          estiloPanel: this.panel(abierto),
+          estiloMas: { flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent-soft)',
+            color: 'var(--accent-ink)', fontSize: '19px', lineHeight: 1, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', transition: 'transform .3s ease', transform: abierto ? 'rotate(45deg)' : 'rotate(0deg)' },
+        });
+      }),
+
+      campanas: [
+        { titulo: 'Vacunación anual 2026', estado: 'Activa', vigencia: 'Hasta el 30 de septiembre', precio: '49 €', nota: 'con revisión incluida', img: PX(6235233, 600), alt: 'Vacunación de un perro' },
+        { titulo: 'Salud dental', estado: 'Activa', vigencia: 'Todo octubre', precio: '−25 %', nota: 'en limpieza con ultrasonidos', img: PX(220938, 600), alt: 'Perro enseñando los dientes' },
+        { titulo: 'Chequeo senior', estado: 'Plazas limitadas', vigencia: 'Mayores de 8 años', precio: '75 €', nota: 'analítica + ecografía', img: PX(733416, 600), alt: 'Perro senior tranquilo' },
+      ],
+
+      equipo: EQUIPO.map((x, i) => {
+        const abierto = !!s.equipoAbierto[i];
+        return Object.assign({}, x, {
+          img: PX(x.img, 800), abierto,
+          aria: abierto ? `Ocultar la biografía de ${x.nombre}` : `Ver la biografía de ${x.nombre}`,
+          alternar: () => this.alternarClave('equipoAbierto', i),
+          estiloPanel: this.panel(abierto),
+          estiloMas: { flexShrink: 0, width: '44px', height: '44px', borderRadius: '50%', border: '1px solid var(--border)',
+            background: abierto ? 'var(--primary)' : 'var(--accent-soft)', color: abierto ? 'var(--on-primary)' : 'var(--accent-ink)',
+            fontSize: '22px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            transition: 'transform .3s ease, background .3s ease, color .3s ease', transform: abierto ? 'rotate(45deg)' : 'rotate(0deg)' },
+        });
+      }),
+
+      ventajasReserva: [
+        'Confirmamos la hora exacta en menos de 2 horas',
+        'Recordatorio por WhatsApp la víspera de la cita',
+        'Cambios y cancelaciones sin coste hasta 6 h antes',
+      ],
+      mensajes: s.mensajes.map((m) => ({
+        texto: m.texto,
+        estilo: { maxWidth: '84%', padding: '11px 15px', fontSize: '14.5px', lineHeight: 1.55,
+          alignSelf: m.bot ? 'flex-start' : 'flex-end',
+          background: m.bot ? 'var(--card)' : 'var(--primary)',
+          color: m.bot ? 'var(--ink)' : 'var(--on-primary)',
+          border: m.bot ? '1px solid var(--border)' : '1px solid transparent',
+          borderRadius: m.bot ? '16px 16px 16px 5px' : '16px 16px 5px 16px' },
+      })),
+      hayOpciones: !s.chatHecho && !!actual && !!actual.opciones,
+      opciones: (!s.chatHecho && actual && actual.opciones ? actual.opciones : []).map((o) => ({ texto: o, elegir: () => this.avanzar(o) })),
+      hayInput: !s.chatHecho && !!actual && !actual.opciones,
+      marcador: (actual && actual.marcador) || 'Escribe aquí…',
+      borrador: s.borrador,
+      escribir: (e) => this.setState({ borrador: e.target.value }),
+      teclaEnvio: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.enviarTexto(); } },
+      enviarTexto: () => this.enviarTexto(),
+      chatHecho: s.chatHecho,
+      hrefWhatsapp: `https://wa.me/34640221190?text=${mensajeWa}`,
+      reiniciarChat: () => this.setState({ paso: 0, mensajes: [{ bot: true, texto: FLUJO[0].bot }], respuestas: {}, borrador: '', chatHecho: false }),
+
+      galeria: GALERIA.map((g) => Object.assign({}, g, { img: PX(g.img, 700) })),
+      pistaGaleria: (el) => { this.pista = el; },
+      galeriaAtras: () => this.desplazarGaleria(-1),
+      galeriaAdelante: () => this.desplazarGaleria(1),
+
+      contactoEnviado: s.contactoEnviado,
+      contactoPendiente: !s.contactoEnviado,
+      enviarContacto: (e) => { e.preventDefault(); this.setState({ contactoEnviado: true }); },
+      reiniciarContacto: () => this.setState({ contactoEnviado: false }),
+      datosContacto: [
+        { rotulo: 'Dirección', linea1: 'Ctra. de la Sierra, 42', linea2: '28792 Miraflores de la Sierra, Madrid' },
+        { rotulo: 'Teléfonos', linea1: '918 44 21 60 · clínica', linea2: '640 22 11 90 · urgencias 24 h' },
+        { rotulo: 'Horario', linea1: 'L–V 9:00–14:00 y 16:30–20:30', linea2: 'Sábados 10:00–14:00 · domingos urgencias' },
+        { rotulo: 'Email', linea1: 'hola@veterinarialasierra.es', linea2: 'Respondemos el mismo día' },
+      ],
+
+      faq: FAQ,
+
+      columnasPie: [
+        { titulo: 'Clínica', enlaces: [
+          { href: '#servicios', texto: 'Servicios' }, { href: '#equipo', texto: 'Equipo' },
+          { href: '#reservar', texto: 'Reservar cita' }, { href: '#galeria', texto: 'Galería' }] },
+        { titulo: 'Contenido', enlaces: [
+          { href: './Blog.dc.html', texto: 'Blog' }, { href: './Campanas.dc.html', texto: 'Campañas' },
+          { href: './Tienda.dc.html', texto: 'Tienda' }, { href: '#faq', texto: 'Preguntas frecuentes' }] },
+        { titulo: 'Contacto', enlaces: [
+          { href: 'tel:+34918442160', texto: '918 44 21 60' }, { href: 'tel:+34640221190', texto: 'Urgencias 24 h' },
+          { href: 'mailto:hola@veterinarialasierra.es', texto: 'hola@veterinarialasierra.es' },
+          { href: '#contacto', texto: 'Cómo llegar' }] },
+      ],
+
+      selectorAbierto: s.selectorAbierto,
+      alternarSelector: () => this.setState({ selectorAbierto: !s.selectorAbierto }),
+      paletas: PALETAS.map((p) => {
+        const activa = s.tema === p.id;
+        const sw = (c) => ({ width: '14px', height: '14px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,.12)' });
+        return { nombre: p.nombre, nota: p.nota,
+          elegir: () => this.aplicarTema(p.id),
+          sw1: sw(p.c[0]), sw2: sw(p.c[1]), sw3: sw(p.c[2]),
+          estilo: { display: 'flex', alignItems: 'center', gap: '11px', width: '100%', padding: '10px 12px',
+            borderRadius: '12px', cursor: 'pointer', minHeight: '48px', textAlign: 'left',
+            background: activa ? 'var(--accent-soft)' : 'transparent',
+            border: activa ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+            transition: 'background .3s ease, border-color .3s ease' } };
+      }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

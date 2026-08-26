@@ -43,9 +43,11 @@ export function SelectorPaleta({ catalogo = VARIANTES_PALETA }: SelectorPaletaPr
                 guardarVarianteElegida(window.localStorage, variante.id)
               }}
             >
-              {variante.muestras.map((color) => (
-                <span key={color} aria-hidden="true" className={styles.muestra} style={{ backgroundColor: color }} />
-              ))}
+              <span aria-hidden="true" className={styles.muestras} data-muestra-variante={variante.id}>
+                <span className={styles.muestra} />
+                <span className={styles.muestra} />
+                <span className={styles.muestra} />
+              </span>
               {variante.nombre}
             </button>
           ))}

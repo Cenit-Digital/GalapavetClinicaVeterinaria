@@ -31,8 +31,8 @@
       // siempre a "marca"; nunca escribe basura en el atributo (@s9/@s10).
       ;(function aplicarVarianteAntesDelPintado() {
         var CLAVE_ALMACENAMIENTO_VARIANTE = 'galapavet-variante'
-        var IDS_DEL_CATALOGO = ['marca', 'lima', 'verde', 'noche']
-        var VARIANTE_POR_DEFECTO = 'marca'
+        var IDS_DEL_CATALOGO = ['clinica', 'calida', 'tech', 'eco', 'marca']
+        var VARIANTE_POR_DEFECTO = IDS_DEL_CATALOGO[0]
         var variante = VARIANTE_POR_DEFECTO
         try {
           var guardada = window.localStorage.getItem(CLAVE_ALMACENAMIENTO_VARIANTE)

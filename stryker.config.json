@@ -22,7 +22,6 @@
     "break": 100
   },
 
-  "_comment_concurrency": "concurrency 1 a propósito. Patrón validado de la organización: un mutante que hace Timeout CUENTA COMO MUERTO en el score, así que una corrida con la CPU saturada infla la puntuación y esconde supervivientes reales. Antes de leer el score se lee la columna '# timeout': si no es 0, el informe no vale.",
   "concurrency": 1,
   "timeoutMS": 60000,
   "disableTypeChecks": "src/**/*.{ts,tsx}",

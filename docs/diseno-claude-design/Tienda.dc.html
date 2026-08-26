@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tienda — Veterinaria La Sierra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#F8FAFC; --bg-2:#EDF2F9; --card:#FFFFFF; --surface:#FBFDFF;
+  --border:rgba(15,32,60,.13); --ink:#0B1B33; --text:#3C4C66; --muted:#5E6E88;
+  --primary:#1E40AF; --on-primary:#FFFFFF;
+  --accent:#10B981; --accent-ink:#047857; --accent-soft:#E7F8F1;
+  --urg:#DC2626;
+  --shadow:0 18px 45px rgba(15,32,60,.10); --shadow-sm:0 6px 18px rgba(15,32,60,.07);
+}
+:root[data-tema='calida']{--bg:#FFFBF2;--bg-2:#FEF3C7;--card:#FFFDF8;--surface:#FFFDF6;--border:rgba(120,53,15,.16);--ink:#3B2A12;--text:#5C4626;--muted:#8A6C45;--primary:#B45309;--on-primary:#FFFFFF;--accent:#4D7C0F;--accent-ink:#3F6212;--accent-soft:#F1F7E3;--urg:#C2410C;--shadow:0 18px 45px rgba(120,53,15,.12);--shadow-sm:0 6px 18px rgba(120,53,15,.08)}
+:root[data-tema='tech']{--bg:#0F172A;--bg-2:#152242;--card:#16233F;--surface:#111C34;--border:rgba(148,197,255,.18);--ink:#F1F5F9;--text:#C6D2E2;--muted:#94A3B8;--primary:#06B6D4;--on-primary:#04212B;--accent:#22D3EE;--accent-ink:#67E8F9;--accent-soft:rgba(6,182,212,.14);--urg:#F87171;--shadow:0 22px 55px rgba(0,0,0,.45);--shadow-sm:0 8px 22px rgba(0,0,0,.35)}
+:root[data-tema='eco']{--bg:#FFFFFF;--bg-2:#EFFDF7;--card:#FFFFFF;--surface:#F7FEFB;--border:rgba(4,120,87,.16);--ink:#06301F;--text:#35544A;--muted:#557368;--primary:#047857;--on-primary:#FFFFFF;--accent:#0EA97B;--accent-ink:#065F46;--accent-soft:#D6FBEA;--urg:#DC2626;--shadow:0 18px 45px rgba(4,120,87,.12);--shadow-sm:0 6px 18px rgba(4,120,87,.08)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%}
+p{text-wrap:pretty}
+a{color:var(--primary);text-decoration:none;transition:color .3s ease}
+a:hover{color:var(--accent-ink)}
+input,select,textarea,button{font:inherit}
+@keyframes vlsPulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<div style="background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden">
+
+  <header style="position:sticky;top:0;z-index:60;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)">
+    <div style="max-width:1220px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <a href="./Veterinaria%20La%20Sierra.dc.html" style="display:flex;align-items:center;gap:11px;color:var(--ink);flex-shrink:0">
+        <span style="position:relative;width:38px;height:38px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="position:absolute;width:17px;height:4.5px;border-radius:3px;background:var(--on-primary)"></span>
+          <span style="position:absolute;width:4.5px;height:17px;border-radius:3px;background:var(--on-primary)"></span>
+        </span>
+        <span style="display:flex;flex-direction:column;line-height:1.05">
+          <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em">Veterinaria La Sierra</span>
+          <span style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600">Tienda de la clínica</span>
+        </span>
+      </a>
+      <nav style="{{ estiloNav }}" aria-label="Navegación principal">
+        <sc-for list="{{ navPrincipal }}" as="item" hint-placeholder-count="5">
+          <a href="{{ item.href }}" style="padding:9px 11px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;transition:background .3s ease" style-hover="background:var(--accent-soft);color:var(--accent-ink)">{{ item.texto }}</a>
+        </sc-for>
+      </nav>
+      <button type="button" onClick="{{ alternarCarrito }}" aria-label="Ver la cesta" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:11px 18px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;transition:border-color .3s ease" style-hover="border-color:var(--primary)">
+        Cesta
+        <span style="{{ estiloContador }}">{{ unidades }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section style="padding:clamp(44px,6vw,76px) clamp(18px,5vw,28px) clamp(24px,3vw,36px)">
+    <div style="max-width:1220px;margin:0 auto">
+      <nav style="font-size:13px;color:var(--muted);margin-bottom:18px" aria-label="Ruta"><a href="./Veterinaria%20La%20Sierra.dc.html" style="color:var(--muted)">Inicio</a> · <span style="color:var(--ink);font-weight:600">Tienda</span></nav>
+      <h1 style="font-family:'Outfit',sans-serif;font-size:clamp(30px,5vw,54px);line-height:1.06;letter-spacing:-.02em;font-weight:600;color:var(--ink);margin:0;max-width:19ch">Solo vendemos lo que recetamos</h1>
+      <p style="font-size:17.5px;line-height:1.7;color:var(--muted);max-width:60ch;margin:18px 0 0">Catálogo corto y elegido por el equipo clínico. Reservas online y recoges en la clínica; si vives en el municipio, te lo acercamos sin coste.</p>
+    </div>
+  </section>
+
+  <section style="padding:0 clamp(18px,5vw,28px) clamp(20px,3vw,30px)">
+    <div style="max-width:1220px;margin:0 auto;display:flex;flex-wrap:wrap;gap:9px">
+      <sc-for list="{{ categorias }}" as="c" hint-placeholder-count="5">
+        <button type="button" onClick="{{ c.elegir }}" style="{{ c.estilo }}">{{ c.nombre }}</button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="padding:0 clamp(18px,5vw,28px) clamp(56px,8vw,90px)">
+    <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:22px">
+      <sc-for list="{{ productos }}" as="p" hint-placeholder-count="6">
+        <article style="display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .3s ease,box-shadow .3s ease" style-hover="transform:translateY(-4px);box-shadow:var(--shadow)">
+          <div style="position:relative;aspect-ratio:4/3;background:var(--bg-2);overflow:hidden">
+            <img src="{{ p.img }}" alt="{{ p.alt }}" loading="lazy" style="display:block;width:100%;height:100%;object-fit:cover" />
+            <sc-if value="{{ p.tieneEtiqueta }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;right:14px;top:14px;padding:5px 12px;border-radius:999px;background:var(--accent-ink);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">{{ p.etiqueta }}</span>
+            </sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;flex:1;padding:18px 20px 20px">
+            <span style="font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)">{{ p.categoria }}</span>
+            <h2 style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:600;line-height:1.2;color:var(--ink);margin:8px 0 0">{{ p.nombre }}</h2>
+            <p style="font-size:13.5px;line-height:1.6;color:var(--muted);margin:7px 0 16px">{{ p.desc }}</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;border-top:1px solid var(--border)">
+              <span style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:600;color:var(--ink)">{{ p.precio }}</span>
+              <button type="button" onClick="{{ p.anadir }}" style="{{ p.estiloBoton }}">{{ p.rotulo }}</button>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="padding:0 clamp(18px,5vw,28px) clamp(64px,9vw,100px)">
+    <div style="max-width:1220px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:18px">
+      <sc-for list="{{ garantias }}" as="g" hint-placeholder-count="3">
+        <div style="background:var(--bg-2);border-radius:18px;padding:22px 24px">
+          <div style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;color:var(--ink)">{{ g.titulo }}</div>
+          <div style="font-size:14px;line-height:1.65;color:var(--muted);margin-top:7px">{{ g.texto }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <sc-if value="{{ carritoAbierto }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:80;display:flex;justify-content:flex-end">
+      <button type="button" onClick="{{ cerrarCarrito }}" aria-label="Cerrar la cesta" style="position:absolute;inset:0;border:none;background:rgba(6,16,32,.45);cursor:pointer"></button>
+      <aside style="position:relative;width:min(420px,100%);height:100%;background:var(--card);border-left:1px solid var(--border);box-shadow:var(--shadow);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--border)">
+          <span style="font-family:'Outfit',sans-serif;font-size:19px;font-weight:600;color:var(--ink)">Tu cesta</span>
+          <button type="button" onClick="{{ cerrarCarrito }}" aria-label="Cerrar" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:16px;cursor:pointer">✕</button>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px">
+          <sc-if value="{{ cestaVacia }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size:14.5px;line-height:1.7;color:var(--muted);margin:12px 0 0">Todavía no has añadido nada. Elige productos del catálogo y aquí verás el resumen para recoger en la clínica.</p>
+          </sc-if>
+          <sc-for list="{{ lineas }}" as="l" hint-placeholder-count="0">
+            <div style="display:flex;gap:13px;align-items:center">
+              <img src="{{ l.img }}" alt="{{ l.alt }}" style="width:62px;height:62px;border-radius:12px;object-fit:cover;flex-shrink:0" />
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3">{{ l.nombre }}</div>
+                <div style="font-size:13px;color:var(--muted);margin-top:3px">{{ l.precio }} · {{ l.subtotal }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
+                <button type="button" onClick="{{ l.quitar }}" aria-label="Quitar una unidad" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer">−</button>
+                <span style="min-width:18px;text-align:center;font-weight:700;color:var(--ink);font-size:14px">{{ l.unidades }}</span>
+                <button type="button" onClick="{{ l.sumar }}" aria-label="Añadir una unidad" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer">+</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="padding:18px 22px 22px;border-top:1px solid var(--border);background:var(--surface)">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+            <span style="font-size:14px;color:var(--muted)">Total estimado</span>
+            <span style="font-family:'Outfit',sans-serif;font-size:26px;font-weight:600;color:var(--ink)">{{ total }}</span>
+          </div>
+          <a href="./Veterinaria%20La%20Sierra.dc.html#contacto" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:15px;border-radius:999px;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15px" style-hover="filter:brightness(1.1);color:var(--on-primary)">Reservar y recoger en clínica</a>
+          <p style="font-size:12px;color:var(--muted);text-align:center;margin:12px 0 0;line-height:1.6">Demostración: no se procesa ningún pago. Te confirmamos disponibilidad por teléfono.</p>
+        </div>
+      </aside>
+    </div>
+  </sc-if>
+
+  <footer style="background:var(--card);border-top:1px solid var(--border);padding:clamp(40px,6vw,60px) clamp(18px,5vw,28px) 26px">
+    <div style="max-width:1220px;margin:0 auto;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center;justify-content:space-between">
+      <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:17px;color:var(--ink)">Veterinaria La Sierra</span>
+      <span style="display:flex;flex-wrap:wrap;gap:18px;font-size:14px">
+        <a href="./Veterinaria%20La%20Sierra.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Inicio</a>
+        <a href="./Blog.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Blog</a>
+        <a href="./Campanas.dc.html" style="color:var(--muted)" style-hover="color:var(--primary)">Campañas</a>
+        <a href="./Veterinaria%20La%20Sierra.dc.html#contacto" style="color:var(--muted)" style-hover="color:var(--primary)">Contacto</a>
+      </span>
+      <span style="font-size:12.5px;color:var(--muted)">© 2026 · Ctra. de la Sierra 42, Miraflores de la Sierra</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280}}">
+const PX = (id, w) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
+const EUR = (n) => `${n.toFixed(2).replace('.', ',')} €`;
+
+const PRODUCTOS = [
+  { id: 'pienso-adulto', categoria: 'Alimentación', nombre: 'Pienso adulto cordero y arroz 12 kg', precio: 62.9, etiqueta: 'Más vendido',
+    desc: 'Fórmula de digestión sensible que recomendamos tras la mayoría de los cambios de dieta.', img: 1490908, alt: 'Perro blanco en el campo' },
+  { id: 'humedo-gato', categoria: 'Alimentación', nombre: 'Comida húmeda gato · pack 12', precio: 21.5, etiqueta: '',
+    desc: 'La forma más sencilla de subir la ingesta de agua en gatos de riñón delicado.', img: 209037, alt: 'Gato naranja descansando' },
+  { id: 'renal', categoria: 'Dietas veterinarias', nombre: 'Dieta renal perro 8 kg', precio: 74.0, etiqueta: 'Con receta',
+    desc: 'Solo bajo prescripción. Te la reservamos con la pauta y el seguimiento del caso.', img: 733416, alt: 'Perro senior tranquilo' },
+  { id: 'articular', categoria: 'Dietas veterinarias', nombre: 'Suplemento articular · 90 comprimidos', precio: 38.9, etiqueta: '',
+    desc: 'Condroprotector con dosis real. Tres meses de tratamiento para un perro de 25 kg.', img: 1938126, alt: 'Border collie corriendo' },
+  { id: 'pipetas', categoria: 'Antiparasitarios', nombre: 'Pipetas antiparasitarias · 3 meses', precio: 34.5, etiqueta: 'Campaña',
+    desc: 'La cobertura que usamos de marzo a noviembre en la sierra. Ajustamos dosis por peso.', img: 2253275, alt: 'Dos perros paseando' },
+  { id: 'collar', categoria: 'Antiparasitarios', nombre: 'Collar repelente 8 meses', precio: 29.9, etiqueta: '',
+    desc: 'Alternativa a la pipeta para perros que se bañan a menudo o viven en el exterior.', img: 58997, alt: 'Corgi paseando' },
+  { id: 'cepillo', categoria: 'Higiene', nombre: 'Kit dental · cepillo y pasta enzimática', precio: 14.9, etiqueta: '',
+    desc: 'El cepillado diario retrasa la siguiente limpieza dental una media de dos años.', img: 220938, alt: 'Perro enseñando los dientes' },
+  { id: 'champu', categoria: 'Higiene', nombre: 'Champú dermatológico sin perfume', precio: 18.4, etiqueta: '',
+    desc: 'Para pieles atópicas. El mismo que usamos en la peluquería de la clínica.', img: 2607544, alt: 'Perro blanco recién aseado' },
+  { id: 'transportin', categoria: 'Accesorios', nombre: 'Transportín homologado talla M', precio: 44.0, etiqueta: '',
+    desc: 'Apertura superior, que es la que evita el forcejeo con los gatos que se esconden.', img: 617278, alt: 'Gato negro de ojos verdes' },
+  { id: 'arnes', categoria: 'Accesorios', nombre: 'Arnés antitirones acolchado', precio: 27.5, etiqueta: '',
+    desc: 'Reparte la tensión en el pecho y no en la tráquea. Tallas de la XS a la XL.', img: 356378, alt: 'Perro blanco pequeño paseando' },
+  { id: 'juguete', categoria: 'Accesorios', nombre: 'Juguete dispensador de premios', precio: 12.9, etiqueta: '',
+    desc: 'Enriquecimiento para perros que se quedan solos. Lo recetamos en casos de ansiedad.', img: 1108099, alt: 'Cachorros jugando en la hierba' },
+  { id: 'feromonas', categoria: 'Higiene', nombre: 'Difusor de feromonas felinas', precio: 32.0, etiqueta: '',
+    desc: 'Útil en mudanzas, obras y convivencias tensas entre gatos de la misma casa.', img: 1741205, alt: 'Gato naranja con pañuelo' },
+];
+
+const GARANTIAS = [
+  { titulo: 'Elegido por el equipo clínico', texto: 'No hay marcas por acuerdo comercial: si no lo recomendamos en consulta, no está en la estantería.' },
+  { titulo: 'Recogida en clínica en 24 h', texto: 'Reservas online y te avisamos por WhatsApp en cuanto está preparado. Envío gratuito dentro del municipio.' },
+  { titulo: 'Dietas con seguimiento', texto: 'Las dietas veterinarias se dispensan con receta y revisión de control incluida a las cuatro semanas.' },
+];
+
+class Component extends DCLogic {
+  state = { categoria: 'Todo', cesta: {}, carritoAbierto: false, ancho: 1280 };
+
+  componentDidMount() {
+    let guardado = null;
+    try { guardado = localStorage.getItem('vls-tema'); } catch (e) { guardado = null; }
+    document.documentElement.setAttribute('data-tema', guardado || 'clinica');
+    this.medir();
+    this._onResize = () => this.medir();
+    window.addEventListener('resize', this._onResize);
+  }
+
+  componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
+
+  medir() { this.setState({ ancho: window.innerWidth }); }
+
+  sumar(id, delta) {
+    this.setState((s) => {
+      const n = Math.max(0, (s.cesta[id] || 0) + delta);
+      const cesta = Object.assign({}, s.cesta);
+      if (n === 0) { delete cesta[id]; } else { cesta[id] = n; }
+      return { cesta };
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const esMovil = s.ancho < 1080;
+    const cats = ['Todo'].concat(PRODUCTOS.map((p) => p.categoria).filter((c, i, a) => a.indexOf(c) === i));
+    const visibles = PRODUCTOS.filter((p) => s.categoria === 'Todo' || p.categoria === s.categoria);
+    const ids = Object.keys(s.cesta);
+    const unidades = ids.reduce((t, id) => t + s.cesta[id], 0);
+    const total = ids.reduce((t, id) => {
+      const p = PRODUCTOS.find((x) => x.id === id);
+      return t + (p ? p.precio * s.cesta[id] : 0);
+    }, 0);
+
+    return {
+      estiloNav: { display: esMovil ? 'none' : 'flex', alignItems: 'center', gap: '2px' },
+      navPrincipal: [
+        { href: './Veterinaria%20La%20Sierra.dc.html#servicios', texto: 'Servicios' },
+        { href: './Campanas.dc.html', texto: 'Campañas' },
+        { href: './Blog.dc.html', texto: 'Blog' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#contacto', texto: 'Contacto' },
+        { href: './Veterinaria%20La%20Sierra.dc.html#reservar', texto: 'Reservar' },
+      ],
+
+      unidades: unidades,
+      estiloContador: { minWidth: '24px', height: '24px', padding: '0 7px', borderRadius: '999px',
+        background: unidades > 0 ? 'var(--primary)' : 'var(--bg-2)',
+        color: unidades > 0 ? 'var(--on-primary)' : 'var(--muted)',
+        fontSize: '12.5px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+      alternarCarrito: () => this.setState({ carritoAbierto: !s.carritoAbierto }),
+      cerrarCarrito: () => this.setState({ carritoAbierto: false }),
+      carritoAbierto: s.carritoAbierto,
+      cestaVacia: ids.length === 0,
+
+      categorias: cats.map((c) => {
+        const activa = s.categoria === c;
+        return { nombre: c, elegir: () => this.setState({ categoria: c }),
+          estilo: { padding: '10px 18px', borderRadius: '999px', minHeight: '44px', cursor: 'pointer',
+            fontSize: '13.5px', fontWeight: 600,
+            background: activa ? 'var(--primary)' : 'var(--card)',
+            color: activa ? 'var(--on-primary)' : 'var(--text)',
+            border: activa ? '1px solid var(--primary)' : '1px solid var(--border)',
+            transition: 'background .3s ease, color .3s ease, border-color .3s ease' } };
+      }),
+
+      productos: visibles.map((p) => {
+        const n = s.cesta[p.id] || 0;
+        return { nombre: p.nombre, categoria: p.categoria, desc: p.desc, alt: p.alt,
+          img: PX(p.img, 700), precio: EUR(p.precio),
+          etiqueta: p.etiqueta, tieneEtiqueta: !!p.etiqueta,
+          rotulo: n > 0 ? `En la cesta · ${n}` : 'Añadir',
+          anadir: () => this.sumar(p.id, 1),
+          estiloBoton: { minHeight: '44px', padding: '11px 18px', borderRadius: '999px', cursor: 'pointer',
+            fontSize: '13.5px', fontWeight: 700, whiteSpace: 'nowrap',
+            border: n > 0 ? '1px solid var(--accent-ink)' : '1px solid var(--primary)',
+            background: n > 0 ? 'var(--accent-soft)' : 'var(--primary)',
+            color: n > 0 ? 'var(--accent-ink)' : 'var(--on-primary)',
+            transition: 'background .3s ease, color .3s ease' } };
+      }),
+
+      lineas: ids.map((id) => {
+        const p = PRODUCTOS.find((x) => x.id === id);
+        return { nombre: p.nombre, alt: p.alt, img: PX(p.img, 200), precio: EUR(p.precio),
+          unidades: s.cesta[id], subtotal: EUR(p.precio * s.cesta[id]),
+          sumar: () => this.sumar(id, 1), quitar: () => this.sumar(id, -1) };
+      }),
+      total: EUR(total),
+      garantias: GARANTIAS,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

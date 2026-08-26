@@ -1,29 +1,19 @@
-import { coloresDeMarca } from '../lib/tokens'
+import { VARIANTES_REDISENO } from '../lib/diseno/contratoRedisenho'
 
 /**
- * Catálogo de las 4 variantes de la marca real de Galapavet. Fuente:
- * Decisión 8 de `project-spec.md` y cabecera de
- * `features/selector_paleta.feature`. Los tokens exactos de la variante
- * "noche" (fondo, superficies) están PENDIENTES de `tokens_marca`: este
- * catálogo no inventa ningún hexadecimal no verificado, y reutiliza los tres
- * colores de marca ya verificados como muestras decorativas para las cuatro
- * variantes (`aria-hidden`, @s4).
+ * Catálogo de las cinco variantes del rediseño. Sus colores no viven aquí:
+ * cada muestra decorativa hereda los tokens de su bloque de `_tokens.scss`,
+ * por lo que el selector no duplica ni inventa hexadecimal alguno.
  */
 export interface VariantePaleta {
   readonly id: string
   readonly nombre: string
-  readonly muestras: readonly [string, string, string]
 }
 
-const MUESTRAS_DE_MARCA: readonly [string, string, string] = [
-  coloresDeMarca.morado,
-  coloresDeMarca.lima,
-  coloresDeMarca.verdeProfundo,
-]
-
 export const VARIANTES_PALETA: readonly VariantePaleta[] = [
-  { id: 'marca', nombre: 'Marca Galapavet', muestras: MUESTRAS_DE_MARCA },
-  { id: 'lima', nombre: 'Lima de superficie', muestras: MUESTRAS_DE_MARCA },
-  { id: 'verde', nombre: 'Verde profundo', muestras: MUESTRAS_DE_MARCA },
-  { id: 'noche', nombre: 'Marca en oscuro', muestras: MUESTRAS_DE_MARCA },
+  { id: VARIANTES_REDISENO[0], nombre: 'Clínica' },
+  { id: VARIANTES_REDISENO[1], nombre: 'Cálida' },
+  { id: VARIANTES_REDISENO[2], nombre: 'Tech' },
+  { id: VARIANTES_REDISENO[3], nombre: 'Eco' },
+  { id: VARIANTES_REDISENO[4], nombre: 'Marca Galapavet' },
 ] as const satisfies readonly VariantePaleta[]

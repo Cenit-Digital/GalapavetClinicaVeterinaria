@@ -22,10 +22,11 @@ function nombresRealesConRepresentacionVisual(): readonly string[] {
   return [...componentes, ...paginas].filter((nombre) => !MODULOS_SIN_REPRESENTACION_VISUAL.includes(nombre))
 }
 
-describe('@s21 el inventario de módulos con maquetación propia coincide con la lista escrita a mano de 17 nombres', () => {
-  it('12 componentes + 5 páginas, sin MetadatosPagina', () => {
+describe('@s21 el inventario de módulos con maquetación propia coincide con la lista escrita a mano de 18 nombres', () => {
+  it('13 componentes + 5 páginas, sin MetadatosPagina', () => {
     // Literal escrito a mano — NO se obtiene del inventario que se comprueba (patrón doble-de-test-anclado-al-literal).
     const nombresAMano = [
+      'BarraUrgencias',
       'Cabecera',
       'CampanasPortada',
       'Equipo',
@@ -86,7 +87,7 @@ describe('un módulo del inventario sin su fichero de estilos co-localizado se s
 })
 
 describe('@s22 cada nombre del inventario tiene su propio fichero de estilos co-localizado junto a su componente', () => {
-  it('los 17 módulos reales tienen su Módulo.module.scss, y se comprobaron los 17', () => {
+  it('los 18 módulos reales tienen su Módulo.module.scss, y se comprobaron los 18', () => {
     const rutasReales = [
       ...Object.keys(import.meta.glob('../../components/*.module.scss')),
       ...Object.keys(import.meta.glob('../../pages/*.module.scss')),
@@ -94,7 +95,7 @@ describe('@s22 cada nombre del inventario tiene su propio fichero de estilos co-
 
     const informe = comprobarCoLocalizacion(INVENTARIO_MODULOS_CON_ESTILOS, rutasReales)
 
-    expect(informe.modulosComprobados).toBe(17)
+    expect(informe.modulosComprobados).toBe(18)
     expect(informe.pasa).toBe(true)
     expect(informe.faltantes).toHaveLength(0)
   })
@@ -109,7 +110,7 @@ describe('identidad_visual @s51 un componente compartido nuevo entra en el inven
     expect(informe.pasa).toBe(true)
     expect(informe.ausentesDelInventario).toEqual([])
     expect(informe.modulosEnInventario).toBe(informe.componentesVisualesReales)
-    expect(informe.modulosEnInventario).toBe(17)
+    expect(informe.modulosEnInventario).toBe(18)
   })
 
   it('"MetadatosPagina" sigue fuera del inventario, por no tener representación visual propia', () => {
@@ -128,7 +129,7 @@ describe('identidad_visual @s51 un componente compartido nuevo entra en el inven
 })
 
 describe('@s24 ningún fichero de estilos del inventario declara un color literal fuera de los tokens', () => {
-  it('los 17 ficheros reales pasan la puerta de literales de color ya construida por tokens_marca.feature', () => {
+  it('los 18 ficheros reales pasan la puerta de literales de color ya construida por tokens_marca.feature', () => {
     // Reutiliza `ejecutarPuertaDeLiteralesColor` tal cual (ya `done`, ya probada al 100 % por
     // tokens_marca.feature @s18-@s22): solo se le aplica el inventario REAL de esta feature.
     const ficherosReales = {
@@ -139,7 +140,7 @@ describe('@s24 ningún fichero de estilos del inventario declara un color litera
     const ficheros = Object.entries(ficherosReales).map(([ruta, contenido]) => ({ ruta, contenido }))
     const informe = ejecutarPuertaDeLiteralesColor(ficheros)
 
-    expect(informe.ficherosInspeccionados).toBe(17)
+    expect(informe.ficherosInspeccionados).toBe(18)
     expect(informe.señalados).toHaveLength(0)
     expect(informe.pasa).toBe(true)
   })

@@ -29,6 +29,23 @@
       padding: 0;
       color: var(--color-texto-suave);
     }
+
+    .eyebrow {
+      @include eyebrow;
+      margin: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(4);
+    }
+
+    > p:not(.eyebrow) {
+      max-width: 42ch;
+      margin: 0 0 espaciado(8);
+      color: var(--color-texto-suave);
+    }
   }
 
   fieldset {
@@ -46,6 +63,37 @@
 
     &:hover {
       box-shadow: var(--sombra-reposo);
+    }
+  }
+
+  .cabeceraChat {
+    display: flex;
+    align-items: center;
+    gap: espaciado(12);
+    padding-block-end: espaciado(12);
+    border-block-end: $ancho-borde-fino solid var(--color-borde);
+
+    > span {
+      display: grid;
+      width: espaciado(32);
+      height: espaciado(32);
+      place-items: center;
+      border-radius: $radio-circulo;
+      background-color: var(--color-acento-suave);
+      color: var(--color-acento-tinta);
+      font-family: var(--fuente-titulares);
+      font-weight: 700;
+    }
+
+    strong,
+    p {
+      display: block;
+      margin: 0;
+    }
+
+    p {
+      color: var(--color-texto-suave);
+      font-size: paso-tipografico(-1);
     }
   }
 
@@ -76,6 +124,7 @@
     border-radius: $radio-medio;
     background-color: var(--color-superficie-elevada);
     color: inherit;
+    min-height: $altura-control-media;
   }
 
   // Botón por defecto: la acción primaria de cada paso ("Enviar respuesta",

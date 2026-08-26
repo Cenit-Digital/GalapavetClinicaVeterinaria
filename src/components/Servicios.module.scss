@@ -19,12 +19,21 @@
 
 .tarjeta {
   @include tarjeta;
-  padding: espaciado(24);
+
+  img {
+    @include hueco-de-imagen(8, 5);
+  }
+
+  > span {
+    @include pildora-etiqueta;
+    align-self: flex-start;
+    margin: espaciado(16) espaciado(20) 0;
+  }
 
   h3 {
     font-family: var(--fuente-titulares);
     font-size: paso-tipografico(2);
-    margin-block-end: espaciado(12);
+    margin: espaciado(8) espaciado(20) espaciado(12);
   }
 
   button {
@@ -38,10 +47,11 @@
     color: var(--color-acento-tinta);
     font-weight: 600;
     cursor: pointer;
+    margin: 0 espaciado(20) espaciado(20);
   }
 
   ul {
-    margin-block: espaciado(12) 0;
+    margin: 0 espaciado(20) espaciado(20);
     padding-inline-start: espaciado(20);
     color: var(--color-texto-suave);
 

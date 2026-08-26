@@ -306,7 +306,7 @@ export function PaginaTienda({ catalogo: catalogoDemo = PRODUCTOS_DEMO }: Pagina
   }
 
   return (
-    <main className={styles.pagina} data-contenedor-principal>
+    <main id="contenido-principal" className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina metadatos={METADATOS_TIENDA} datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO} />
       <h1>Tienda</h1>
       <p id={idAviso}>{AVISO_DEMOSTRACION}</p>

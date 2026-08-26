@@ -120,6 +120,9 @@ export function ReservaChat(): React.JSX.Element {
   return (
     <section className={styles.reservaChat} data-contenedor-principal>
       <div>
+        <p className={styles.eyebrow}>Reserva de cita</p>
+        <h2>Cuéntanos qué necesita tu mascota</h2>
+        <p>Te guiamos paso a paso para preparar tu solicitud con los datos que necesita la clínica.</p>
         <EnlaceLlamada etiqueta="Llamar a la clínica" telefono={datosNegocio.telefonoClinica} />
         <EnlaceLlamada etiqueta="Llamar al móvil" telefono={datosNegocio.telefonoMovil} />
         <ul>
@@ -129,6 +132,13 @@ export function ReservaChat(): React.JSX.Element {
         </ul>
       </div>
       <fieldset aria-label="Asistente de reserva de Galapavet">
+        <div className={styles.cabeceraChat}>
+          <span aria-hidden="true">G</span>
+          <div>
+            <strong>Asistente de reserva</strong>
+            <p>Galapavet</p>
+          </div>
+        </div>
         <div role="log" aria-live="polite">
           {historial.map((mensaje) => (
             <p key={mensaje.id}>{mensaje.texto}</p>

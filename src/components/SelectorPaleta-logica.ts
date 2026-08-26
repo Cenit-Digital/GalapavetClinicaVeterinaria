@@ -1,4 +1,5 @@
 import type { VariantePaleta } from '../data/variantesPaleta'
+import { VARIANTE_PREDETERMINADA } from '../lib/diseno/contratoRedisenho'
 
 /**
  * Lógica de decisión de `SelectorPaleta`, mordible por mutación
@@ -13,7 +14,7 @@ import type { VariantePaleta } from '../data/variantesPaleta'
  */
 
 export const CLAVE_ALMACENAMIENTO_VARIANTE = 'galapavet-variante'
-export const VARIANTE_POR_DEFECTO = 'marca'
+export const VARIANTE_POR_DEFECTO = VARIANTE_PREDETERMINADA
 
 export interface AlmacenamientoDeLectura {
   getItem(clave: string): string | null

@@ -51,7 +51,14 @@
   }
 
   [aria-label='Urgencias fuera de horario'] a {
-    color: var(--color-acento-tinta);
+    color: var(--color-tinta);
     font-weight: 700;
+  }
+
+  [aria-label='Urgencias fuera de horario'] {
+    @include tarjeta;
+    padding: espaciado(20);
+    background-color: var(--color-urgencia-suave);
+    border-inline-start: espaciado(4) solid var(--color-urgencia);
   }
 }

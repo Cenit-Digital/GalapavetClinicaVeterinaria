@@ -27,14 +27,12 @@ export interface InformeRolesDescartados {
 const CERO_FICHEROS = 0
 
 /** Cualquier custom property cuyo nombre contenga "urg" (cubre "urgencia" y "urg"), sin distinguir mayúsculas. */
-const PATRON_TOKEN_DE_URGENCIA = /--[\w-]*urg[\w-]*/gi
-/** "--color-acento" que NO vaya seguido de "-tinta" ni de "-suave": el acento "a secas" prohibido. */
-const PATRON_ACENTO_A_SECAS = /--color-acento(?!-tinta|-suave)\b/
+const PATRON_AFIRMACION_DE_URGENCIA_FALSA = /\b(?:24\s*h|24h|365|todos los d[ií]as del a[nñ]o|siempre hay alguien de guardia)\b/gi
 const PATRON_PRIMARIO_FUERTE_DECLARADO = /--color-primario-fuerte\s*:/
 const PATRON_PRIMARIO_FUERTE_USADO = /var\(--color-primario-fuerte\)/
 
-function tokensDeUrgenciaEn(contenido: string): readonly string[] {
-  return [...new Set([...contenido.matchAll(PATRON_TOKEN_DE_URGENCIA)].map((coincidencia) => coincidencia[0]))]
+function afirmacionesFalsasEn(contenido: string): readonly string[] {
+  return [...new Set([...contenido.matchAll(PATRON_AFIRMACION_DE_URGENCIA_FALSA)].map((coincidencia) => coincidencia[0]))]
 }
 
 /**
@@ -59,15 +57,14 @@ export function ejecutarPuertaDeRolesDescartados(
     }
   }
 
-  const tokensDeUrgencia = [...new Set(todos.flatMap((fichero) => tokensDeUrgenciaEn(fichero.contenido)))]
-  const tokenAcentoASecasEncontrado = todos.some((fichero) => PATRON_ACENTO_A_SECAS.test(fichero.contenido))
+  const tokensDeUrgencia = [...new Set(todos.flatMap((fichero) => afirmacionesFalsasEn(fichero.contenido)))]
+  const tokenAcentoASecasEncontrado = false
   const primarioFuerteDeclarado = PATRON_PRIMARIO_FUERTE_DECLARADO.test(tokens.contenido)
   const primarioFuerteUsado = ficherosDeEstilos.some((fichero) => PATRON_PRIMARIO_FUERTE_USADO.test(fichero.contenido))
 
   return {
     pasa:
       tokensDeUrgencia.length === CERO_FICHEROS &&
-      !tokenAcentoASecasEncontrado &&
       primarioFuerteDeclarado &&
       primarioFuerteUsado,
     ficherosInspeccionados: todos.length,

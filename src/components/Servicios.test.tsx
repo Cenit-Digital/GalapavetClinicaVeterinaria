@@ -111,13 +111,15 @@ describe('@s2 al cargar la página las cinco tarjetas están colapsadas', () => 
   })
 })
 
-describe('@s3 la tarjeta colapsada solo afirma el título del bloque', () => {
-  it('el texto completo de la tarjeta "Medicina general" es exactamente su título y el rótulo de su botón', () => {
+describe('@s3 la tarjeta colapsada presenta el bloque sin inventar prestaciones', () => {
+  it('identifica la categoría visual y conserva el título y el rótulo de su botón', () => {
     renderizarServicios()
 
     const tarjeta = obtenerTarjeta('Medicina general')
 
-    expect(tarjeta.textContent).toBe('Medicina generalVer qué incluye')
+    expect(tarjeta).toHaveTextContent('Atención veterinaria')
+    expect(tarjeta).toHaveTextContent('Medicina general')
+    expect(tarjeta).toHaveTextContent('Ver qué incluye')
   })
 })
 
@@ -395,11 +397,12 @@ describe('@s18 la sección no afirma ningún servicio que el cliente no publique
   })
 })
 
-describe('@s19 hoy la sección no publica ninguna imagen; si en el futuro se añade alguna no se pide a un tercero ni suplanta un servicio', () => {
-  it('no hay ninguna imagen, y ningún elemento con "src"/"srcset" apunta a un host externo ni su alt nombra un servicio', () => {
+describe('@s19 la sección usa únicamente imágenes locales decorativas, sin alterar el contenido clínico', () => {
+  it('cada bloque tiene una imagen local decorativa, sin host externo ni un alt que suplante un servicio', () => {
     const { container } = renderizarServicios()
 
-    expect(container.querySelectorAll('img')).toHaveLength(0)
+    const imagenes = container.querySelectorAll('img')
+    expect(imagenes).toHaveLength(5)
 
     for (const elemento of container.querySelectorAll('[src], [srcset]')) {
       expect(elemento.getAttribute('src') ?? '').not.toMatch(/^https?:\/\//)
@@ -407,8 +410,10 @@ describe('@s19 hoy la sección no publica ninguna imagen; si en el futuro se añ
     }
 
     const nombresProhibidos = [...TITULOS_EN_ORDEN, ...TODOS_LOS_PUNTOS_EN_ORDEN]
-    for (const imagen of container.querySelectorAll('img')) {
+    for (const imagen of imagenes) {
+      expect(imagen.getAttribute('src')).toMatch(/^\/img\/servicios\//)
       const alt = imagen.getAttribute('alt') ?? ''
+      expect(alt).toBe('')
       for (const nombre of nombresProhibidos) {
         expect(alt).not.toContain(nombre)
       }

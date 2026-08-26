@@ -1,175 +1,147 @@
-// ============================================================================
-// TOKENS DE MARCA — Galapavet
-// ============================================================================
-// Fuente de verdad de los 17 tokens del sistema de color (15 roles de color +
-// 2 de sombra, @s1 de `features/identidad_visual.feature`), como custom
-// properties CSS conmutadas por `[data-variante]` sobre el elemento raíz
-// (mismo atributo que `index.html:30`/`SelectorPaleta-logica.ts` ya aplican
-// antes del primer pintado — este fichero CONSUME ese mecanismo, no lo
-// reimplementa).
-//
-// Cada rol se deriva por mezcla en sRGB (`src/lib/diseno/mezclaDeColor.ts`,
-// canal a canal, redondeo estándar) de uno de los tres hexadecimales ya
-// verificados de `src/lib/tokens.ts` (nunca del prototipo heredado) con
-// blanco o negro puro, y cada ratio se re-verificó con la fórmula real de
-// `src/lib/contraste.ts` antes de fijarse. Derivaciones y ratios completos:
-// `progress/plan_adaptacion_scss.md` §3, tabla de la variante `marca` también
-// en `project-spec.md` → sección `identidad_visual`.
-//
-// SOLO custom properties CSS (paso 3 de `plan_adaptacion_scss.md` §5, "la
-// escisión `_tokens.scss` / `_api.scss`"): las funciones y los mixins de Sass
-// que antes vivían aquí se mudaron a `_api.scss`, que emite CERO CSS. Motivo
-// medido: `additionalData` (`vite.config.ts`) inyectaba antes este fichero en
-// cada una de las 17 compilaciones independientes de los `.module.scss` — la
-// garantía de "una sola vez" de `@use` de Sass es POR COMPILACIÓN, no entre
-// compilaciones — y con 17 roles el coste intermedio deja de ser anecdótico.
-// Con la API separada, solo este fichero se `@use`a, y una sola vez, desde
-// `global.scss`. Medido antes/después en `progress/tdd_identidad_visual.md`.
-//
-// IMPORTANTE: este propio fichero NUNCA se importa directamente desde un
-// `.tsx` (solo se consume vía `@use 'tokens';` desde `global.scss`). El texto
-// crudo solo se lee en tests vía `import.meta.glob` con `?raw` (que nunca
-// compila), nunca con `?inline` ni una importación normal.
+// Fuente de verdad de los veinte tokens visuales del rediseño.
+// Los cuatro primeros temas reproducen el lenguaje del prototipo versionado;
+// `marca` preserva los quince valores de Galapavet ya aprobados y completa los
+// tres roles semánticos necesarios para la interfaz.
 
-// ----------------------------------------------------------------------------
-// A. Colores de las 4 variantes de paleta
-// ----------------------------------------------------------------------------
-
-// Red de seguridad SIN JavaScript. Si `data-variante` no llega a aplicarse (JS
-// deshabilitado, el <script> anti-FOUC de `index.html` no se ejecuta), ningún
-// bloque `:root[data-variante=…]` matchea y todo `var(--color-*)` quedaría sin
-// valor: con la capa base ya consumiendo estos tokens (`global.scss`, familia 6
-// del reset), el `body` se quedaría sin fondo ni color. Declara los mismos
-// valores que "marca". NO es una quinta variante: `PATRON_SELECTOR_VARIANTE`
-// (`src/lib/diseno/tokensColor.ts:17`) solo matchea `:root[data-variante=…]`,
-// así que este bloque queda fuera del inventario de @s1 y no cuenta para los
-// 68 pares (variante, token) de @s2 (paso 2 de `plan_adaptacion_scss.md` §5).
-// Solo lleva los tres roles que ya existían antes de esta feature: es una red
-// de seguridad de EMERGENCIA (sin variante, sin JS), no una quinta variante
-// completa — los 14 tokens nuevos solo tienen sentido conmutados por paleta.
 :root {
-  --color-fondo: #FFFFFF;
-  --color-texto: #77286B;
-  --color-foco: #77286B;
-}
-
-// --- marca (fondo blanco) ----------------------------------------------------
-// Rector: morado #77286B. Acento: verde profundo #48704B. Ratios en
-// `progress/plan_adaptacion_scss.md` §3.3 y `project-spec.md` → identidad_visual.
-:root[data-variante='marca'] {
-  --color-fondo: #FFFFFF;
-  --color-fondo-alterno: #F4EEF3; // blanco + 8% morado — texto encima 7.99
-  --color-superficie: #FFFFFF; // = fondo — se distingue por borde + sombra
-  --color-superficie-elevada: #FAF6F9; // blanco + 4% morado — texto encima 8.53
-  --color-tinta: #531C4B; // morado + 30% negro — sobre fondo 12.84
-  --color-texto: #77286B;
-  --color-texto-suave: #925389; // morado + 20% blanco — sobre fondo 5.50
-  --color-primario: #77286B;
-  --color-primario-fuerte: #6B2460; // morado + 10% negro — sobre-primario encima 10.26 (@s8: mejora el reposo)
-  --color-sobre-primario: #FFFFFF;
-  --color-acento-tinta: #48704B; // verde profundo de marca
-  --color-acento-suave: #F6F8E3; // blanco + 12% lima — acento-tinta encima 5.27
-  --color-borde-control: #A06997; // blanco + 70% morado — sobre fondo 4.23 (SC 1.4.11)
-  --color-borde: #DDC9DA; // blanco + 25% morado — 1.56, decorativo, EXENTO
-  --color-foco: #77286B;
-  // Sombra teñida con --color-tinta (#531C4B = rgb(83, 28, 75)), nunca gris ni el
-  // azul marino del prototipo (Decisión 8). Geometría y opacidad: §3.8 del plan.
-  --sombra-reposo: 0 6px 18px rgba(83, 28, 75, 0.07);
-  --sombra-elevada: 0 18px 45px rgba(83, 28, 75, 0.1);
-}
-
-// --- lima (fondo blanco + 10% lima) -----------------------------------------
-// Mismo rector y acento que "marca": los roles derivados del morado y del
-// verde son los MISMOS hexadecimales (no dependen del fondo); solo cambian
-// los que sí derivan del propio fondo de esta variante.
-:root[data-variante='lima'] {
-  // Fondo: blanco + 10% lima de marca (#B4C718), dentro del rango 8-15% de la Decisión 24.
-  --color-fondo: #F8F9E8;
-  --color-fondo-alterno: #F0F4D1; // blanco + 20% lima
+  --color-fondo: #F8FAFC;
+  --color-fondo-alterno: #EDF2F9;
   --color-superficie: #FFFFFF;
-  --color-superficie-elevada: #F8F9E8; // = fondo
-  --color-tinta: #531C4B; // morado + 30% negro (igual que "marca")
-  --color-texto: #77286B;
-  --color-texto-suave: #925389; // morado + 20% blanco (igual que "marca")
-  --color-primario: #77286B;
-  --color-primario-fuerte: #6B2460; // morado + 10% negro (igual que "marca")
+  --color-superficie-elevada: #FBFDFF;
+  --color-borde: #D8E0EA;
+  --color-borde-control: #5E6E88;
+  --color-tinta: #0B1B33;
+  --color-texto: #3C4C66;
+  --color-texto-suave: #5E6E88;
+  --color-primario: #1E40AF;
+  --color-primario-fuerte: #1B3796;
   --color-sobre-primario: #FFFFFF;
+  --color-acento: #10B981;
+  --color-acento-tinta: #047857;
+  --color-acento-suave: #E7F8F1;
+  --color-urgencia: #DC2626;
+  --color-urgencia-suave: #FEE9E9;
+  --color-foco: #1E40AF;
+  --sombra-reposo: 0 6px 18px rgba(15, 32, 60, 0.07);
+  --sombra-elevada: 0 18px 45px rgba(15, 32, 60, 0.1);
+}
+
+:root[data-variante='clinica'],
+[data-muestra-variante='clinica'] {
+  --color-fondo: #F8FAFC;
+  --color-fondo-alterno: #EDF2F9;
+  --color-superficie: #FFFFFF;
+  --color-superficie-elevada: #FBFDFF;
+  --color-borde: #D8E0EA;
+  --color-borde-control: #5E6E88;
+  --color-tinta: #0B1B33;
+  --color-texto: #3C4C66;
+  --color-texto-suave: #5E6E88;
+  --color-primario: #1E40AF;
+  --color-primario-fuerte: #1B3796;
+  --color-sobre-primario: #FFFFFF;
+  --color-acento: #10B981;
+  --color-acento-tinta: #047857;
+  --color-acento-suave: #E7F8F1;
+  --color-urgencia: #DC2626;
+  --color-urgencia-suave: #FEE9E9;
+  --color-foco: #1E40AF;
+  --sombra-reposo: 0 6px 18px rgba(15, 32, 60, 0.07);
+  --sombra-elevada: 0 18px 45px rgba(15, 32, 60, 0.1);
+}
+
+:root[data-variante='calida'],
+[data-muestra-variante='calida'] {
+  --color-fondo: #FFFBF2;
+  --color-fondo-alterno: #FEF3C7;
+  --color-superficie: #FFFDF8;
+  --color-superficie-elevada: #FFFDF6;
+  --color-borde: #E8D7BA;
+  --color-borde-control: #8A6C45;
+  --color-tinta: #3B2A12;
+  --color-texto: #5C4626;
+  --color-texto-suave: #84663E;
+  --color-primario: #B45309;
+  --color-primario-fuerte: #92400E;
+  --color-sobre-primario: #FFFFFF;
+  --color-acento: #4D7C0F;
+  --color-acento-tinta: #3F6212;
+  --color-acento-suave: #F1F7E3;
+  --color-urgencia: #C2410C;
+  --color-urgencia-suave: #FDEBE0;
+  --color-foco: #92400E;
+  --sombra-reposo: 0 6px 18px rgba(120, 53, 15, 0.08);
+  --sombra-elevada: 0 18px 45px rgba(120, 53, 15, 0.12);
+}
+
+:root[data-variante='tech'],
+[data-muestra-variante='tech'] {
+  --color-fondo: #0F172A;
+  --color-fondo-alterno: #152242;
+  --color-superficie: #16233F;
+  --color-superficie-elevada: #111C34;
+  --color-borde: #405474;
+  --color-borde-control: #94C5FF;
+  --color-tinta: #F1F5F9;
+  --color-texto: #C6D2E2;
+  --color-texto-suave: #94A3B8;
+  --color-primario: #06B6D4;
+  --color-primario-fuerte: #0891B2;
+  --color-sobre-primario: #04212B;
+  --color-acento: #22D3EE;
+  --color-acento-tinta: #67E8F9;
+  --color-acento-suave: #12394A;
+  --color-urgencia: #F87171;
+  --color-urgencia-suave: #542A37;
+  --color-foco: #67E8F9;
+  --sombra-reposo: 0 8px 22px rgba(0, 0, 0, 0.35);
+  --sombra-elevada: 0 22px 55px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-variante='eco'],
+[data-muestra-variante='eco'] {
+  --color-fondo: #FFFFFF;
+  --color-fondo-alterno: #EFFDF7;
+  --color-superficie: #FFFFFF;
+  --color-superficie-elevada: #F7FEFB;
+  --color-borde: #C6E4D7;
+  --color-borde-control: #557368;
+  --color-tinta: #06301F;
+  --color-texto: #35544A;
+  --color-texto-suave: #557368;
+  --color-primario: #047857;
+  --color-primario-fuerte: #036049;
+  --color-sobre-primario: #FFFFFF;
+  --color-acento: #0EA97B;
+  --color-acento-tinta: #065F46;
+  --color-acento-suave: #D6FBEA;
+  --color-urgencia: #DC2626;
+  --color-urgencia-suave: #FDE9E9;
+  --color-foco: #036049;
+  --sombra-reposo: 0 6px 18px rgba(4, 120, 87, 0.08);
+  --sombra-elevada: 0 18px 45px rgba(4, 120, 87, 0.12);
+}
+
+:root[data-variante='marca'],
+[data-muestra-variante='marca'] {
+  --color-fondo: #FFFFFF;
+  --color-fondo-alterno: #F4EEF3;
+  --color-superficie: #FFFFFF;
+  --color-superficie-elevada: #FAF6F9;
+  --color-borde: #DDC9DA;
+  --color-borde-control: #A06997;
+  --color-tinta: #531C4B;
+  --color-texto: #77286B;
+  --color-texto-suave: #925389;
+  --color-primario: #77286B;
+  --color-primario-fuerte: #6B2460;
+  --color-sobre-primario: #FFFFFF;
+  --color-acento: #B4C718;
   --color-acento-tinta: #48704B;
-  --color-acento-suave: #EFF3CC; // blanco + 22% lima — distinguible del fondo, ya pálido
-  --color-borde-control: #A06997; // blanco + 70% morado (igual que "marca")
-  --color-borde: #DDC9DA; // blanco + 25% morado (igual que "marca")
+  --color-acento-suave: #F6F8E3;
+  --color-urgencia: #DC2626;
+  --color-urgencia-suave: #FDE9E9;
   --color-foco: #77286B;
   --sombra-reposo: 0 6px 18px rgba(83, 28, 75, 0.07);
   --sombra-elevada: 0 18px 45px rgba(83, 28, 75, 0.1);
-}
-
-// --- verde (fondo blanco + 8% verde) ----------------------------------------
-// Rector y acento se INTERCAMBIAN respecto de "marca": aquí el verde profundo
-// lleva el texto y el morado es el acento. `--color-texto-suave` vale
-// DELIBERADAMENTE lo mismo que `--color-texto` (`plan_adaptacion_scss.md`
-// §3.5): la ventana de contraste disponible entre el mínimo de SC 1.4.3 (4.5)
-// y el propio ratio del cuerpo (5.12) es de solo un 6%, imperceptible al ojo;
-// bajar el color fingiría un peldaño que no existe. La jerarquía secundaria
-// la llevan la escala tipográfica y el peso, no el color — el mismo
-// movimiento que "noche" hace con `--color-tinta` = `--color-texto`.
-:root[data-variante='verde'] {
-  // Fondo: blanco + 8% verde profundo de marca (#48704B), dentro del rango 6-10% de la Decisión 24.
-  --color-fondo: #F0F4F1;
-  --color-fondo-alterno: #E9EEE9; // blanco + 12% verde — cuerpo encima 4.84 (margen sobre el mínimo 4.5)
-  --color-superficie: #FFFFFF;
-  --color-superficie-elevada: #F0F4F1; // = fondo
-  --color-tinta: #324E35; // verde + 30% negro — sobre fondo 8.31
-  --color-texto: #48704B;
-  --color-texto-suave: #48704B; // = --color-texto, decisión razonada arriba
-  --color-primario: #48704B;
-  --color-primario-fuerte: #416544; // verde + 10% negro — sobre-primario encima 6.63 (mejora el reposo 5.68)
-  --color-sobre-primario: #FFFFFF;
-  --color-acento-tinta: #77286B; // morado de marca (acento en esta variante)
-  --color-acento-suave: #F4EEF3; // blanco + 8% morado
-  --color-borde-control: #5A7E5D; // verde + 10% blanco — sobre fondo 4.13 (SC 1.4.11)
-  --color-borde: #D7E0D7; // blanco + 22% verde — decorativo, EXENTO
-  --color-foco: #77286B;
-  // Tinta de esta variante: #324E35 = rgb(50, 78, 53).
-  --sombra-reposo: 0 6px 18px rgba(50, 78, 53, 0.07);
-  --sombra-elevada: 0 18px 45px rgba(50, 78, 53, 0.1);
-}
-
-// --- noche (fondo negro puro) — la variante donde los roles cambian de verdad
-// El morado (#77286B) no alcanza 3:1 contra negro puro (2.30, @s8 del
-// contrato): no puede ser texto, ni borde de control, ni relleno de un botón
-// aquí. Los CUATRO cambios de rol, razonados en `plan_adaptacion_scss.md`
-// §3.6: (1) `--color-sobre-primario` es NEGRO, no blanco — blanco sobre el
-// primario aclarado da 2.95, suspenso; (2) `--color-primario` NO es el lima,
-// porque `--color-foco` YA es el lima aquí (@s8 de sistema_de_diseno_visual)
-// y un anillo lima alrededor de un botón lima da 1.00 — el anillo
-// desaparecería en el control más importante de la página; (3)
-// `--color-tinta` = `--color-texto` = blanco: no hay dos peldaños de blanco,
-// la jerarquía la lleva la escala tipográfica; (4) `--color-primario-fuerte`
-// se ACLARA (mezcla con blanco, no con negro), porque aquí el polo opuesto a
-// `--color-sobre-primario` (negro) es el blanco — la regla es invariante por
-// "polo opuesto", no por "10% de negro" a secas.
-:root[data-variante='noche'] {
-  --color-fondo: #000000;
-  --color-fondo-alterno: #180815; // negro + 20% morado
-  --color-superficie: #240C20; // negro + 30% morado
-  --color-superficie-elevada: #30102B; // negro + 40% morado — en oscuro el campo SUBE, no baja
-  --color-tinta: #FFFFFF;
-  --color-texto: #FFFFFF;
-  --color-texto-suave: #C29EBC; // morado + 55% blanco — sobre fondo 8.91
-  --color-primario: #B489AE; // morado + 45% blanco — sobre fondo 7.13
-  --color-primario-fuerte: #BC95B6; // primario + 10% BLANCO (aclara) — sobre-primario encima 8.11 (mejora el reposo 7.13)
-  --color-sobre-primario: #000000; // negro, no blanco: blanco sobre el primario da 2.95, suspenso
-  --color-acento-tinta: #B4C718; // lima de marca — 11.12 sobre negro
-  --color-acento-suave: #1B1E04; // negro + 15% lima
-  --color-borde-control: #A7739F; // morado + 35% blanco — sobre fondo 5.60 (SC 1.4.11)
-  --color-borde: #471840; // negro + 60% morado — decorativo, EXENTO
-  // El morado (#77286B) no alcanza 3:1 contra negro puro (2.30, @s8): en "noche" el foco usa el lima de marca.
-  --color-foco: #B4C718;
-  // Excepción declarada: --color-tinta es BLANCO aquí, y una sombra blanca
-  // sobre negro no es una sombra, es un halo (mide una oclusión de luz, y no
-  // puede ser más clara que la superficie que la recibe). Se tiñe con negro
-  // puro — que es también el propio --color-fondo — y la profundidad la
-  // lleva la opacidad reforzada (0.35/0.45 en vez de 0.07/0.10).
-  --sombra-reposo: 0 6px 18px rgba(0, 0, 0, 0.35);
-  --sombra-elevada: 0 18px 45px rgba(0, 0, 0, 0.45);
 }

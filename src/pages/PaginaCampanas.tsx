@@ -251,7 +251,7 @@ export function PaginaCampanas({ catalogo: catalogoDemo = CAMPANAS_DEMO }: Pagin
   const vista = resolverVista(catalogo, searchParams.get('campana'))
 
   return (
-    <main className={styles.pagina} data-contenedor-principal>
+    <main id="contenido-principal" className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina
         metadatos={vista.tipo === 'ficha' ? METADATOS_FICHA_CAMPANA : METADATOS_CAMPANAS}
         datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO}

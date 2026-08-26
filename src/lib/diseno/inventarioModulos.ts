@@ -1,6 +1,6 @@
 /**
  * Inventario de los módulos que deben tener su propio fichero de estilos
- * co-localizado (`<Nombre>.module.scss` junto a `<Nombre>.tsx`): los 12
+ * co-localizado (`<Nombre>.module.scss` junto a `<Nombre>.tsx`): los 13
  * componentes visuales de `src/components` y las 5 páginas de `src/pages`.
  * `MetadatosPagina` queda fuera a propósito: no tiene representación visual
  * (`return null`), solo escribe en `<head>`.
@@ -14,6 +14,7 @@ export interface ModuloConEstilos {
 }
 
 const COMPONENTES: readonly string[] = [
+  'BarraUrgencias',
   'Cabecera',
   'CampanasPortada',
   'Equipo',

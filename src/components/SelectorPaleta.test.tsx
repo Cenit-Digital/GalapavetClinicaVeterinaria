@@ -21,8 +21,8 @@ describe('@s1 el selector se ofrece cerrado al cargar la página', () => {
   })
 })
 
-describe('@s2 abrir el panel lista exactamente las cuatro variantes de marca', () => {
-  it('el botón pasa a aria-expanded "true" y el grupo lista los 4 nombres esperados', async () => {
+describe('@s2 abrir el panel lista exactamente las cinco variantes del sistema', () => {
+  it('el botón pasa a aria-expanded "true" y el grupo lista los 5 nombres esperados', async () => {
     const usuario = userEvent.setup()
     renderizarSelectorPaleta()
 
@@ -33,10 +33,10 @@ describe('@s2 abrir el panel lista exactamente las cuatro variantes de marca', (
 
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
     const botonesDeVariante = within(grupo).getAllByRole('button')
-    expect(botonesDeVariante).toHaveLength(4)
+    expect(botonesDeVariante).toHaveLength(5)
 
     const nombres = botonesDeVariante.map((elemento) => elemento.textContent ?? '')
-    for (const esperado of ['Marca Galapavet', 'Lima de superficie', 'Verde profundo', 'Marca en oscuro']) {
+    for (const esperado of ['Clínica', 'Cálida', 'Tech', 'Eco', 'Marca Galapavet']) {
       expect(nombres.filter((nombre) => nombre.includes(esperado))).toHaveLength(1)
     }
   })
@@ -67,34 +67,34 @@ describe('@s4 las muestras de color no ensucian el nombre accesible de la varian
 
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
     const botonesDeVariante = within(grupo).getAllByRole('button')
-    expect(botonesDeVariante).toHaveLength(4)
+    expect(botonesDeVariante).toHaveLength(5)
 
-    for (const nombre of ['Marca Galapavet', 'Lima de superficie', 'Verde profundo', 'Marca en oscuro']) {
+    for (const nombre of ['Clínica', 'Cálida', 'Tech', 'Eco', 'Marca Galapavet']) {
       const boton = within(grupo).getByRole('button', { name: new RegExp('^' + nombre) })
-      const muestras = boton.querySelectorAll('[aria-hidden="true"]')
-      expect(muestras).toHaveLength(3)
+      const muestras = boton.querySelector('[data-muestra-variante]')
+      expect(muestras?.children).toHaveLength(3)
     }
 
-    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(12)
+    expect(container.querySelectorAll('[data-muestra-variante]')).toHaveLength(5)
   })
 })
 
-describe('@s5 sin preferencia guardada la variante activa es la de marca', () => {
-  it('data-variante vale "marca", el botón "Marca Galapavet" está presionado y los otros 3 no', async () => {
+describe('@s5 sin preferencia guardada la variante activa es clínica', () => {
+  it('data-variante vale "clinica", el botón "Clínica" está presionado y los otros 4 no', async () => {
     const usuario = userEvent.setup()
     renderizarSelectorPaleta()
     await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
 
-    expect(document.documentElement).toHaveAttribute('data-variante', 'marca')
+    expect(document.documentElement).toHaveAttribute('data-variante', 'clinica')
 
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
-    const botonMarca = within(grupo).getByRole('button', { name: /^Marca Galapavet/ })
+    const botonMarca = within(grupo).getByRole('button', { name: /^Clínica/ })
     expect(botonMarca).toHaveAttribute('aria-pressed', 'true')
 
     const otros = within(grupo)
       .getAllByRole('button')
       .filter((elemento) => elemento !== botonMarca)
-    expect(otros).toHaveLength(3)
+    expect(otros).toHaveLength(4)
     for (const boton of otros) {
       expect(boton).toHaveAttribute('aria-pressed', 'false')
     }
@@ -102,48 +102,48 @@ describe('@s5 sin preferencia guardada la variante activa es la de marca', () =>
 })
 
 describe('@s6 elegir una variante la aplica de inmediato y traslada la marca de activa', () => {
-  it('data-variante pasa a "noche", el botón "Marca en oscuro" queda presionado y es el único', async () => {
+  it('data-variante pasa a "tech", el botón "Tech" queda presionado y es el único', async () => {
     const usuario = userEvent.setup()
     renderizarSelectorPaleta()
     await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
 
-    await usuario.click(within(grupo).getByRole('button', { name: /^Marca en oscuro/ }))
+    await usuario.click(within(grupo).getByRole('button', { name: /^Tech/ }))
 
-    expect(document.documentElement).toHaveAttribute('data-variante', 'noche')
+    expect(document.documentElement).toHaveAttribute('data-variante', 'tech')
     const presionados = within(grupo)
       .getAllByRole('button')
       .filter((elemento) => elemento.getAttribute('aria-pressed') === 'true')
     expect(presionados).toHaveLength(1)
-    expect(presionados[0]).toHaveAccessibleName(/^Marca en oscuro/)
+    expect(presionados[0]).toHaveAccessibleName(/^Tech/)
   })
 })
 
 describe('@s7 elegir una variante la guarda en el almacenamiento del navegador', () => {
-  it('el almacenamiento local contiene solo la clave "galapavet-variante" con el texto exacto "noche"', async () => {
+  it('el almacenamiento local contiene solo la clave "galapavet-variante" con el texto exacto "tech"', async () => {
     const usuario = userEvent.setup()
     renderizarSelectorPaleta()
     await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
 
-    await usuario.click(within(grupo).getByRole('button', { name: /^Marca en oscuro/ }))
+    await usuario.click(within(grupo).getByRole('button', { name: /^Tech/ }))
 
-    expect(window.localStorage.getItem('galapavet-variante')).toBe('noche')
+    expect(window.localStorage.getItem('galapavet-variante')).toBe('tech')
     expect(Object.keys(window.localStorage)).toEqual(['galapavet-variante'])
   })
 })
 
 describe('@s8 la variante elegida se recuerda en la siguiente visita', () => {
-  it('con "verde" ya guardado, data-variante vale "verde" y "Verde profundo" queda presionado al abrir', async () => {
-    window.localStorage.setItem('galapavet-variante', 'verde')
+  it('con "eco" ya guardado, data-variante vale "eco" y "Eco" queda presionado al abrir', async () => {
+    window.localStorage.setItem('galapavet-variante', 'eco')
     const usuario = userEvent.setup()
     renderizarSelectorPaleta()
 
-    expect(document.documentElement).toHaveAttribute('data-variante', 'verde')
+    expect(document.documentElement).toHaveAttribute('data-variante', 'eco')
 
     await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
-    expect(within(grupo).getByRole('button', { name: /^Verde profundo/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(grupo).getByRole('button', { name: /^Eco/ })).toHaveAttribute('aria-pressed', 'true')
   })
 })
 
@@ -157,20 +157,20 @@ describe('@s15 el almacenamiento que lanza al escribir no rompe el cambio de var
     await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
     const grupo = screen.getByRole('group', { name: 'Paleta de color' })
 
-    await usuario.click(within(grupo).getByRole('button', { name: /^Marca en oscuro/ }))
+    await usuario.click(within(grupo).getByRole('button', { name: /^Tech/ }))
 
-    expect(document.documentElement).toHaveAttribute('data-variante', 'noche')
-    expect(within(grupo).getByRole('button', { name: /^Marca en oscuro/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(document.documentElement).toHaveAttribute('data-variante', 'tech')
+    expect(within(grupo).getByRole('button', { name: /^Tech/ })).toHaveAttribute('aria-pressed', 'true')
 
     espiaEscritura.mockRestore()
   })
 })
 
 describe('@s16 sin variantes en el catálogo el selector no se renderiza', () => {
-  it('no existe el botón "Cambiar paleta de color" y data-variante vale "marca"', () => {
+  it('no existe el botón "Cambiar paleta de color" y data-variante vale "clinica"', () => {
     renderizarSelectorPaleta({ catalogo: [] })
 
     expect(screen.queryByRole('button', { name: 'Cambiar paleta de color' })).not.toBeInTheDocument()
-    expect(document.documentElement).toHaveAttribute('data-variante', 'marca')
+    expect(document.documentElement).toHaveAttribute('data-variante', 'clinica')
   })
 })

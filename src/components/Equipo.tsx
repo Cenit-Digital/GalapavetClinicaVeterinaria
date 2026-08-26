@@ -12,6 +12,15 @@ interface TarjetaProfesionalProps {
   profesional: Profesional
 }
 
+function inicialesDe(nombre: string): string {
+  return nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((parte) => parte[0])
+    .join('')
+    .slice(0, 2)
+}
+
 /** Cada tarjeta guarda su propio abierto/cerrado, independiente del resto (@s8). */
 function TarjetaProfesional({ profesional }: TarjetaProfesionalProps): React.JSX.Element {
   const [abierto, setAbierto] = useState(false)
@@ -19,6 +28,9 @@ function TarjetaProfesional({ profesional }: TarjetaProfesionalProps): React.JSX
 
   return (
     <article className={styles.tarjeta}>
+      <span aria-hidden="true" className={styles.avatar}>
+        {inicialesDe(profesional.nombre)}
+      </span>
       <h3>{profesional.nombre}</h3>
       <p>{profesional.rol}</p>
       {conFormacion && (

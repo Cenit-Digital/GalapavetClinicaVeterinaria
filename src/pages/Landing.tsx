@@ -46,7 +46,7 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
       })
 
   return (
-    <>
+    <main id="contenido-principal">
       <MetadatosPagina metadatos={METADATOS_INICIO} datosEstructurados={datosEstructurados} />
       <div id="inicio" className={styles.seccion}>
         <Hero />
@@ -71,6 +71,6 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
       <div id="faq" className={styles.seccionAlterna}>
         <Faq />
       </div>
-    </>
+    </main>
   )
 }

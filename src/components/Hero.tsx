@@ -1,6 +1,11 @@
 import React from 'react'
 import { datosNegocio } from '../lib/site'
 import { enlaceLlamada } from '../lib/telefono'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
+import { EQUIPO } from '../data/equipo'
+import { GALERIA } from '../data/galeria'
+import { SERVICIOS } from '../data/servicios'
+import { construirCifrasBienvenida } from './Hero-logica'
 import styles from './Hero.module.scss'
 
 /** Misma forma que las entradas de `datosNegocio.horario` (`src/lib/site.ts`). */
@@ -35,25 +40,45 @@ export function Hero({
   telefono = datosNegocio.telefonoClinica.textoVisible,
   horario = datosNegocio.horario,
 }: HeroProps = {}): React.JSX.Element {
+  const cifras = construirCifrasBienvenida(SERVICIOS, EQUIPO, GALERIA, horario ?? [])
+
   return (
     <section className={styles.hero} data-contenedor-principal>
-      <p>{UBICACION}</p>
-      <h1>{TITULAR}</h1>
-      <p>{TEXTO_DESCRIPTIVO}</p>
-      <div>
-        <a href="#reservar">Reservar cita</a>
-        {telefono !== null && <a href={enlaceLlamada(telefono)}>{`Llamar ${telefono}`}</a>}
-      </div>
-      {horario !== null && (
-        <dl>
-          {horario.map((tramo) => (
-            <div key={tramo.dias}>
-              <dt>{tramo.dias}</dt>
-              <dd>{tramo.horas}</dd>
-            </div>
+      <img
+        src={hrefDeDestino('/img/hero/clinica.webp')}
+        alt="Perro con su familia al aire libre"
+        width={1600}
+        height={900}
+        loading="lazy"
+        decoding="async"
+      />
+      <div className={styles.contenido}>
+        <p>{UBICACION}</p>
+        <h1>{TITULAR}</h1>
+        <p>{TEXTO_DESCRIPTIVO}</p>
+        <div>
+          <a href="#reservar">Reservar cita</a>
+          {telefono !== null && <a href={enlaceLlamada(telefono)}>{`Llamar ${telefono}`}</a>}
+        </div>
+        {horario !== null && (
+          <dl>
+            {horario.map((tramo) => (
+              <div key={tramo.dias}>
+                <dt>{tramo.dias}</dt>
+                <dd>{tramo.horas}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        <ul className={styles.cifras} aria-label="Resumen de Galapavet">
+          {cifras.map((cifra) => (
+            <li key={cifra.etiqueta}>
+              <strong>{cifra.valor}</strong>
+              <span>{cifra.etiqueta}</span>
+            </li>
           ))}
-        </dl>
-      )}
+        </ul>
+      </div>
     </section>
   )
 }

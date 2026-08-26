@@ -36,18 +36,18 @@ function extraerScripts(html: string): readonly ScriptEncontrado[] {
 }
 
 describe('@s9 la variante guardada se resuelve antes del primer pintado', () => {
-  it('con "noche" guardado bajo la clave del selector, resuelve exactamente "noche" y ese valor es el que se escribiría en data-variante', () => {
-    window.localStorage.setItem(CLAVE_ALMACENAMIENTO_VARIANTE, 'noche')
+  it('con "tech" guardado bajo la clave del selector, resuelve exactamente "tech" y ese valor es el que se escribiría en data-variante', () => {
+    window.localStorage.setItem(CLAVE_ALMACENAMIENTO_VARIANTE, 'tech')
 
     const resuelto = resolverVarianteInicial(
       window.localStorage.getItem(CLAVE_ALMACENAMIENTO_VARIANTE),
       VARIANTES_PALETA,
     )
 
-    expect(resuelto).toBe('noche')
+    expect(resuelto).toBe('tech')
 
     document.documentElement.setAttribute('data-variante', resuelto)
-    expect(document.documentElement.getAttribute('data-variante')).toBe('noche')
+    expect(document.documentElement.getAttribute('data-variante')).toBe('tech')
   })
 })
 
@@ -69,33 +69,33 @@ describe('@s10 el script de arranque precede al paquete de la aplicación', () =
 })
 
 describe('@s11 un identificador desconocido cae a la variante por defecto', () => {
-  it('con "tech" guardado, resuelve exactamente "marca" y nunca "tech"', () => {
-    const resuelto = resolverVarianteInicial('tech', VARIANTES_PALETA)
+  it('con un identificador corrupto guardado, resuelve exactamente "clinica"', () => {
+    const resuelto = resolverVarianteInicial('no-existe', VARIANTES_PALETA)
 
-    expect(resuelto).toBe('marca')
-    expect(resuelto).not.toBe('tech')
+    expect(resuelto).toBe('clinica')
+    expect(resuelto).not.toBe('no-existe')
   })
 })
 
 describe('@s12 una preferencia vacía cae a la variante por defecto', () => {
-  it('con cadena vacía guardada, resuelve exactamente "marca"', () => {
+  it('con cadena vacía guardada, resuelve exactamente "clinica"', () => {
     const resuelto = resolverVarianteInicial('', VARIANTES_PALETA)
 
-    expect(resuelto).toBe('marca')
+    expect(resuelto).toBe('clinica')
   })
 })
 
 describe('@s13 un valor corrupto no llega nunca al atributo del documento', () => {
-  it('con texto corrupto guardado, resuelve exactamente "marca", uno de los 4 identificadores del catálogo', () => {
+  it('con texto corrupto guardado, resuelve exactamente "clinica", uno de los 5 identificadores del catálogo', () => {
     const resuelto = resolverVarianteInicial('{"tema":"noche', VARIANTES_PALETA)
 
-    expect(resuelto).toBe('marca')
-    expect(['marca', 'lima', 'verde', 'noche']).toContain(resuelto)
+    expect(resuelto).toBe('clinica')
+    expect(['clinica', 'calida', 'tech', 'eco', 'marca']).toContain(resuelto)
   })
 })
 
 describe('@s14 el almacenamiento que lanza al leer no impide cargar la página', () => {
-  it('leerVarianteAlmacenada no propaga la excepción y resolverVarianteInicial resuelve "marca"', () => {
+  it('leerVarianteAlmacenada no propaga la excepción y resolverVarianteInicial resuelve "clinica"', () => {
     let lanzado: unknown
     let bruto: string | null = 'valor no alcanzado'
     try {
@@ -106,6 +106,6 @@ describe('@s14 el almacenamiento que lanza al leer no impide cargar la página',
 
     expect(lanzado).toBeUndefined()
     expect(bruto).toBeNull()
-    expect(resolverVarianteInicial(bruto, VARIANTES_PALETA)).toBe('marca')
+    expect(resolverVarianteInicial(bruto, VARIANTES_PALETA)).toBe('clinica')
   })
 })

@@ -47,6 +47,9 @@
   // `scroll-padding-top` de la sección D (@s14). Escribirlo dos veces sería
   // permitir que los dos diverjan.
   --altura-cabecera: #{espaciado(64)};
+  --altura-barra-urgencias: #{espaciado(32)};
+  --ritmo-seccion: clamp(72px, 7.2vw, 104px);
+  --ritmo-seccion-compacto: clamp(56px, 6.2vw, 90px);
 }
 
 // ----------------------------------------------------------------------------
@@ -145,7 +148,7 @@ html {
   display: flex;
   flex-direction: column;
   min-height: 100svh;
-  padding-block-start: var(--altura-cabecera);
+  padding-block-start: calc(var(--altura-cabecera) + var(--altura-barra-urgencias));
 }
 
 // 9. `balance` reparte las líneas de un titular corto; `pretty` evita la línea
@@ -169,6 +172,14 @@ h5,
 h6 {
   text-wrap: balance;
   overflow-wrap: break-word;
+  font-family: var(--fuente-titulares);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+}
+
+h1 {
+  letter-spacing: -0.02em;
 }
 
 p,
@@ -183,15 +194,34 @@ li {
 // Anillo de foco GLOBAL, uno solo, desde el token de color de la variante
 // activa, con `:focus-visible` (no `:focus`) para que un simple clic de ratón
 // no lo dispare. El `outline-offset` NO es decorativo: `--color-foco` da 1.00
-// de ratio contra `--color-primario` en "marca"/"lima" (son el mismo morado):
-// el anillo es literalmente invisible pegado al borde del botón. Con el hueco
-// de `$grosor-foco` alrededor, los vecinos pasan a ser el fondo de página y el
-// hueco mismo, donde el ratio vuelve a ser ≥ 3 en las 4 variantes (paso 5 de
-// `plan_adaptacion_scss.md` §5; preparación textual de @s38/@s39, que la
-// automatiza como e2e Playwright en un paso posterior).
+// de ratio contra el primario de una variante si queda pegado a su borde. Con
+// el hueco de `$grosor-foco` alrededor, los vecinos pasan a ser el fondo de
+// página, donde el ratio del anillo vuelve a ser >= 3 en las cinco variantes.
 :focus-visible {
   outline: $grosor-foco solid var(--color-foco);
   outline-offset: $grosor-foco;
+}
+
+.salto-contenido {
+  position: fixed;
+  z-index: 100;
+  // No se superpone a la barra roja: el foco global de este enlace debe
+  // contrastar con su superficie adyacente igual que el resto de controles.
+  inset-block-start: calc(var(--altura-barra-urgencias) + #{espaciado(8)});
+  inset-inline-start: espaciado(8);
+  padding: espaciado(8) espaciado(12);
+  border-radius: $radio-medio;
+  background-color: var(--color-fondo);
+  color: var(--color-tinta);
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: translateY(0);
+  }
+
+  &:focus {
+    transform: translateY(0);
+  }
 }
 
 // ----------------------------------------------------------------------------

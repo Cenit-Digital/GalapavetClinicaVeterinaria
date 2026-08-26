@@ -33,16 +33,18 @@
     background-color: var(--color-superficie-elevada);
     color: inherit;
     font-size: paso-tipografico(0);
+    min-height: $altura-control-media;
   }
 
   textarea {
     padding-block: espaciado(8);
-    min-height: espaciado(96);
+    min-height: calc(#{$altura-control-media} + #{espaciado(64)});
   }
 
   input[type='checkbox'] {
     width: auto;
     min-width: $area-tactil-minima;
+    min-height: $area-tactil-minima;
   }
 
   a {

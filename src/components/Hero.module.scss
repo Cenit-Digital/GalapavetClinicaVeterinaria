@@ -1,90 +1,149 @@
-// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`
-// ("seccion"/"seccionAlterna"): este fichero solo maqueta el CONTENIDO, ya
-// dentro del contenedor que ese wrapper aplica a su hijo directo (@s44/@s45).
 .hero {
-  padding-block: espaciado(64);
-  text-align: center;
+  position: relative;
+  display: grid;
+  aspect-ratio: 16 / 9;
+  min-height: 560px;
+  overflow: hidden;
+  color: var(--color-sobre-primario);
+  isolation: isolate;
+
+  &::after {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    background: linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--color-tinta) 92%, transparent) 0%,
+      color-mix(in srgb, var(--color-tinta) 72%, transparent) 48%,
+      color-mix(in srgb, var(--color-tinta) 22%, transparent) 100%
+    );
+  }
+
+  > img {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-fondo-alterno);
+    object-fit: cover;
+  }
+}
+
+.contenido {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: center;
+  width: min(100% - #{espaciado(48)}, 900px);
+  margin-inline: auto;
+  padding-block: clamp(80px, 9vw, 144px);
 
-  // La ubicación, en eyebrow: precede al titular igual que el "descriptor" de
-  // la cabecera (`estudio_diseno_referencia.md` §4.6), sin repetir su color.
   > p:first-child {
     @include eyebrow;
+    border-color: currentColor;
+    color: var(--color-acento);
   }
 
   h1 {
+    max-width: 820px;
+    margin-block: espaciado(16);
+    color: inherit;
     font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
-    line-height: 1.1;
-    margin-block: espaciado(8) espaciado(16);
-    // PX fijo, nunca "ch": la unidad "ch" mide el glifo "0" de la fuente
-    // ACTIVA, así que un ancho en "ch" recalcula sus puntos de salto de
-    // línea al intercambiar Outfit por su respaldo — justo lo que las seis
-    // métricas ajustadas de Capsize (@s18) existen para evitar (@s23).
-    max-width: 640px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
   }
 
-  // El párrafo descriptivo, el único que no es el eyebrow ni la lista de horario.
   > p:nth-of-type(2) {
-    max-width: 640px;
-    color: var(--color-texto-suave);
-    font-size: paso-tipografico(1);
-    margin-block-end: espaciado(24);
+    max-width: 700px;
+    color: inherit;
+    font-size: clamp(16px, 2.2vw, 19.5px);
+    line-height: 1.65;
   }
 
   > div {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: espaciado(16);
-    margin-block-end: espaciado(32);
+    gap: espaciado(12);
+    margin-block: espaciado(32);
 
-    // "Reservar cita": la acción primaria de toda la landing (el ejemplo que
-    // @s8 usa para exigir el token propio de hover). El "@include" ya deja el
-    // hover correcto en el CSS compilado, pero @s11 exige que
-    // "--color-primario-fuerte" se USE en el TEXTO REAL de al menos un
-    // fichero de estilos del inventario — un "@include" no deja ese token
-    // visible ahí, vive en "_api.scss", fuera del inventario de los 17
-    // módulos (`inventarioModulos.ts`). Se repite aquí en texto literal,
-    // idéntica al valor que el mixin ya aplica (sin cambio de comportamiento).
     a:first-child {
       @include boton-primario;
-
-      &:hover {
-        background-color: var(--color-primario-fuerte);
-      }
+      min-height: $altura-control-grande;
+      background-color: var(--color-primario);
     }
 
     a:not(:first-child) {
       @include boton-fantasma;
+      min-height: $altura-control-grande;
+      border-color: color-mix(in srgb, var(--color-sobre-primario) 75%, transparent);
+      color: inherit;
     }
   }
 
   dl {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
-    gap: espaciado(16);
-    padding-block-start: espaciado(24);
-    border-block-start: $ancho-borde-fino solid var(--color-borde);
+    grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
     width: 100%;
-    max-width: 640px;
+    max-width: 700px;
+    gap: espaciado(12);
+    padding-block-start: espaciado(24);
+    border-block-start: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 45%, transparent);
 
     div {
       display: flex;
       flex-direction: column;
     }
 
-    dt {
+    strong {
       font-weight: 700;
-      color: var(--color-tinta);
     }
 
-    dd {
+    span {
       margin: 0;
-      color: var(--color-texto-suave);
+      color: color-mix(in srgb, var(--color-sobre-primario) 84%, transparent);
       font-size: paso-tipografico(-1);
     }
+  }
+
+  .cifras {
+    display: grid;
+    list-style: none;
+    margin: 0;
+    padding-inline-start: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 820px;
+    border-block-start: none;
+    padding-block-start: espaciado(8);
+
+    li {
+      display: flex;
+      flex-direction: column;
+    }
+
+    strong {
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(2);
+      line-height: 1;
+    }
+
+    span {
+      font-size: paso-tipografico(-2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .contenido {
+    width: min(100% - #{espaciado(32)}, 900px);
+  }
+
+  .contenido .cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

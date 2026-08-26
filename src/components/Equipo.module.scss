@@ -26,6 +26,20 @@
     margin-block-end: espaciado(4);
   }
 
+  .avatar {
+    display: grid;
+    place-items: center;
+    width: $altura-control-grande;
+    aspect-ratio: 1;
+    margin: espaciado(20) espaciado(20) 0;
+    border-radius: $radio-circulo;
+    background-color: var(--color-acento-suave);
+    color: var(--color-acento-tinta);
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(1);
+    font-weight: 700;
+  }
+
   > p:first-of-type {
     color: var(--color-acento-tinta);
     font-weight: 600;

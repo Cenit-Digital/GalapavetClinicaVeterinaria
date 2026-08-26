@@ -38,12 +38,13 @@ test.describe('@s24 el cuerpo del documento deja de arrastrar el margen por defe
   })
 })
 
-test.describe('@s25 en las 4 variantes el documento pinta de verdad el fondo y el texto de la variante activa (ejecuta @s12 de sistema_de_diseno_visual.feature)', () => {
+test.describe('@s25 en las 5 variantes el documento pinta de verdad el fondo y el texto de la variante activa', () => {
   const VARIANTES: readonly { id: string; nombreAccesible: string }[] = [
+    { id: 'clinica', nombreAccesible: 'Clínica' },
+    { id: 'calida', nombreAccesible: 'Cálida' },
+    { id: 'tech', nombreAccesible: 'Tech' },
+    { id: 'eco', nombreAccesible: 'Eco' },
     { id: 'marca', nombreAccesible: 'Marca Galapavet' },
-    { id: 'lima', nombreAccesible: 'Lima de superficie' },
-    { id: 'verde', nombreAccesible: 'Verde profundo' },
-    { id: 'noche', nombreAccesible: 'Marca en oscuro' },
   ]
 
   test(`las ${VARIANTES.length} variantes: fondo y texto computados del body equivalen a los tokens declarados`, async ({
@@ -59,7 +60,7 @@ test.describe('@s25 en las 4 variantes el documento pinta de verdad el fondo y e
         leerTokenDeVariante(textoDeTokens(), variante.id, 'texto'),
       ]
 
-      await page.getByRole('button', { name: variante.nombreAccesible }).click()
+      await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()
       // El "body" de "global.scss" transiciona "background-color" Y "color"
       // a la vez, 150ms dentro de "no-preference" (Decisión 31): se espera a
       // que AMBOS lleguen a su valor final computado (no a un
@@ -91,7 +92,7 @@ test.describe('@s25 en las 4 variantes el documento pinta de verdad el fondo y e
       variantesVerificadas += 1
     }
 
-    expect(variantesVerificadas).toBe(4)
+    expect(variantesVerificadas).toBe(5)
   })
 })
 

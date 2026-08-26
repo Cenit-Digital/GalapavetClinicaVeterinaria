@@ -6,8 +6,10 @@
 
   > button {
     @include foco-visible;
-    @include boton-primario;
+    @include boton-fantasma;
     min-height: $altura-control-media;
+    background-color: var(--color-superficie-elevada);
+    box-shadow: var(--sombra-reposo);
   }
 }
 
@@ -53,4 +55,21 @@
   width: espaciado(12);
   height: espaciado(12);
   border-radius: $radio-circulo;
+}
+
+.muestras {
+  display: inline-flex;
+  gap: 2px;
+
+  .muestra:nth-child(1) {
+    background-color: var(--color-primario);
+  }
+
+  .muestra:nth-child(2) {
+    background-color: var(--color-acento);
+  }
+
+  .muestra:nth-child(3) {
+    background-color: var(--color-urgencia);
+  }
 }

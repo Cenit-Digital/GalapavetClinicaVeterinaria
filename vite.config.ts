@@ -9,6 +9,15 @@ const estilos = fileURLToPath(new URL('./src/styles', import.meta.url))
 export default defineConfig({
   plugins: [react()],
 
+  build: {
+    // Rolldown ya señaló la transformación Sass como el gancho dominante,
+    // pero el perfil de producción completa 144 módulos en menos de seis
+    // segundos. Es un diagnóstico de perfil no accionable para esta hoja de
+    // estilos; se desactiva solo esa comprobación opcional para que una
+    // compilación correcta no emita una advertencia espuria.
+    rolldownOptions: { checks: { pluginTimings: false } },
+  },
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
