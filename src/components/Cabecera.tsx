@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { ENLACES_NAVEGACION, type EnlaceNavegacion } from '../data/navegacion'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { datosNegocio } from '../lib/site'
 import { esAncla, esMovil, esPaginaActual } from './Cabecera-logica'
 import styles from './Cabecera.module.scss'
@@ -34,7 +35,7 @@ function ListaDeEnlaces({ enlaces, rutaActual, alPulsar }: ListaDeEnlacesProps):
       {enlaces.map((enlace) => (
         <li key={enlace.destino}>
           <a
-            href={enlace.destino}
+            href={hrefDeDestino(enlace.destino)}
             aria-current={esPaginaActual(enlace.destino, rutaActual) ? 'page' : undefined}
             onClick={alPulsar && ((evento) => alPulsar(enlace.destino, evento))}
           >
@@ -103,7 +104,7 @@ export function Cabecera({
             alPulsar={(destino, evento) => {
               if (!esAncla(destino)) {
                 evento.preventDefault()
-                window.history.pushState(null, '', destino)
+                window.history.pushState(null, '', hrefDeDestino(destino))
               }
               setAbierto(false)
             }}

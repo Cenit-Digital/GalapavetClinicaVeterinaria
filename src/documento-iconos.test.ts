@@ -6,6 +6,13 @@
  * el documento declara los iconos raster reales y que el vectorial, que
  * todavía no existe, queda comentado en vez de apuntar a un fichero 404).
  * Mismo patrón que `src/documento.test.ts`: import "?raw" de Vite.
+ *
+ * ACTUALIZADO (25/08/2026, `despliegue_github_pages.feature` @s12, Decisión
+ * 50): los tres "href" pasan de ruta absoluta literal ("/favicon.ico") a la
+ * variable de sustitución de Vite ("%BASE_URL%favicon.ico") para resolver
+ * bajo el subpath de GitHub Pages — cambio de texto fuente exigido por el
+ * contrato, no una regresión. Verificado en rojo antes de este ajuste (los 3
+ * asserts fallaban con el "href" real ya cambiado a "%BASE_URL%...").
  */
 import { describe, expect, it } from 'vitest'
 import htmlIndice from '../index.html?raw'
@@ -23,21 +30,21 @@ describe('(paso 8 del plan) el documento declara los iconos raster reales y deja
     expect(htmlIndice).toContain('/favicon.svg')
   })
 
-  it('declara un icono que apunta a "/favicon.ico"', () => {
-    expect(textoActivo()).toMatch(/<link\s+[^>]*href="\/favicon\.ico"[^>]*>/)
+  it('declara un icono que apunta a "%BASE_URL%favicon.ico"', () => {
+    expect(textoActivo()).toMatch(/<link\s+[^>]*href="%BASE_URL%favicon\.ico"[^>]*>/)
   })
 
-  it('declara un icono PNG de 32x32 que apunta a "/favicon-32.png"', () => {
-    const etiqueta = textoActivo().match(/<link\s+[^>]*href="\/favicon-32\.png"[^>]*>/)?.[0]
+  it('declara un icono PNG de 32x32 que apunta a "%BASE_URL%favicon-32.png"', () => {
+    const etiqueta = textoActivo().match(/<link\s+[^>]*href="%BASE_URL%favicon-32\.png"[^>]*>/)?.[0]
 
     expect(etiqueta).toBeDefined()
     expect(etiqueta).toContain('type="image/png"')
   })
 
-  it('declara el icono de iOS "apple-touch-icon" que apunta a "/apple-touch-icon.png"', () => {
+  it('declara el icono de iOS "apple-touch-icon" que apunta a "%BASE_URL%apple-touch-icon.png"', () => {
     const etiqueta = textoActivo().match(/<link\s+[^>]*rel="apple-touch-icon"[^>]*>/)?.[0]
 
     expect(etiqueta).toBeDefined()
-    expect(etiqueta).toContain('href="/apple-touch-icon.png"')
+    expect(etiqueta).toContain('href="%BASE_URL%apple-touch-icon.png"')
   })
 })

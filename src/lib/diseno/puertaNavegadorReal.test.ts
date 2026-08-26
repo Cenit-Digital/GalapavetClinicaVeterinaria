@@ -65,7 +65,13 @@ describe('identidad_visual @s48 — la puerta de navegador real es propia y sepa
 
   it('el "webServer" construye y sirve "dist/" con "vite preview" en el puerto 4173, nunca el servidor de desarrollo', () => {
     const texto = textoDePlaywrightConfig()
-    expect(texto).toMatch(/command:\s*'pnpm run build && pnpm exec vite preview --port 4173 --strictPort'/)
+    // ACTUALIZADO (`despliegue_github_pages.feature` @s13-@s17, Decisión 47/51):
+    // "vite preview" pasa a llevar el mismo "--base" que ya lleva "pnpm run
+    // build", para servir "dist/" bajo el subpath real — mismo servidor,
+    // mismo puerto, sigue sin ser el servidor de desarrollo.
+    expect(texto).toMatch(
+      /command:\s*'pnpm run build && pnpm exec vite preview --base=\/GalapavetClinicaVeterinaria\/ --port 4173 --strictPort'/,
+    )
     expect(texto).not.toMatch(/\bvite\s+dev\b/)
     expect(texto).not.toContain("command: 'vite'")
   })

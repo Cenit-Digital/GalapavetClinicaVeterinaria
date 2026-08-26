@@ -1,0 +1,59 @@
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Solo un despliegue a la vez; si llega uno nuevo mientras otro está en curso,
+# no se cancela el que ya está sirviendo (cancel-in-progress: false) para no
+# dejar Pages a medio publicar.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  NO_COLOR: "1"
+
+jobs:
+  build:
+    name: Build (vite build, con la puerta anti-terceros)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+      - name: Verificación completa del arnés (lint + typecheck + tests)
+        run: node .harness/harness.mjs init
+      - name: Build de producción
+        run: pnpm run build
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+      - name: Subir artefacto de dist/
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publicar en Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

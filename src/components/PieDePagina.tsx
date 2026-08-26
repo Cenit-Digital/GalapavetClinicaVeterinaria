@@ -1,6 +1,7 @@
 import React from 'react'
 import { PAGINAS_LEGALES, type PaginaLegal } from '../data/paginasLegales'
 import { ENLACES_CLINICA, ENLACES_CONTENIDO, type EnlacePieDePagina } from '../data/pieDePaginaEnlaces'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { datosNegocio } from '../lib/site'
 import { construirEnlacesContacto, construirEnlacesLegales, textoCopyright } from './PieDePagina-logica'
 import styles from './PieDePagina.module.scss'
@@ -14,6 +15,17 @@ const SRC_LOGO = '/img/logo-galapavet.webp'
 interface ColumnaEnlacesProps {
   titulo: string
   enlaces: readonly EnlacePieDePagina[]
+}
+
+/**
+ * Resuelve el "href" de ruta de cada enlace bajo la base de despliegue
+ * vigente (Decisión 48). Solo se aplica a columnas de destino interno de
+ * tipo ruta o ancla ("Clínica", "Contenido"): la columna "Contacto" mezcla
+ * "tel:" ya resueltos con un ancla, y esos "tel:" no son un destino de tipo
+ * ruta — no pasan por aquí (@s7).
+ */
+function resolverDestinos(enlaces: readonly EnlacePieDePagina[]): readonly EnlacePieDePagina[] {
+  return enlaces.map((enlace) => ({ ...enlace, destino: hrefDeDestino(enlace.destino) }))
 }
 
 /** Una columna del pie: encabezado seguido de su lista de enlaces (@s2). */
@@ -65,12 +77,12 @@ export function PieDePagina({
       <div className={styles.interior} data-contenedor-principal>
         <div className={styles.marca}>
           {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
-          <img src={SRC_LOGO} alt="" width={201} height={201} loading="lazy" decoding="async" />
+          <img src={hrefDeDestino(SRC_LOGO)} alt="" width={201} height={201} loading="lazy" decoding="async" />
           <p>{datosNegocio.identidad.nombreComercial}</p>
           <p>{datosNegocio.identidad.descriptorConLocalidad}</p>
         </div>
-        <ColumnaEnlaces titulo="Clínica" enlaces={ENLACES_CLINICA} />
-        <ColumnaEnlaces titulo="Contenido" enlaces={ENLACES_CONTENIDO} />
+        <ColumnaEnlaces titulo="Clínica" enlaces={resolverDestinos(ENLACES_CLINICA)} />
+        <ColumnaEnlaces titulo="Contenido" enlaces={resolverDestinos(ENLACES_CONTENIDO)} />
         <ColumnaEnlaces titulo="Contacto" enlaces={enlacesContacto} />
         <div className={styles.barraInferior}>
           <p>{copyright}</p>

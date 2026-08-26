@@ -2,6 +2,7 @@
 // arnés). NAVEGADOR REAL con Playwright, sumando los bytes de las
 // respuestas de tipo hoja de estilo de la portada.
 import { expect, test } from 'playwright/test'
+import { SUBPATH_DE_PRODUCCION } from './rutas'
 
 // ESCRITO A MANO — no se recalcula del "dist/" que comprueba (PENDIENTE 2 del
 // contrato, @s49). Medido sobre el primer "dist/" verde tras el paso 10 del
@@ -19,7 +20,7 @@ const TECHO_BYTES_CSS = 8000
 
 test.describe('@s49 el peso del CSS servido no supera el techo declarado', () => {
   test('la portada: suma de bytes de hoja de estilo <= techo, techo > 0 y escrito a mano', async ({ page }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.waitForLoadState('networkidle')
 
     const bytesTotales = await page.evaluate(() => {

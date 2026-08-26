@@ -122,6 +122,18 @@ implementarse.
 | 41 | **La feature 22 no reabre ni un solo escenario de la 21 ni de la 19: construye la maquetación real que hace que los 8 escenarios de navegador real de la 21 (@s12, @s27, @s28, @s29, @s30, @s31, @s32, @s34) y los 4 de la 19 (@s2, @s17, @s18, @s19) puedan pasar de verdad, y los automatiza.** El orden de cierre es: 21 `done` con sus puertas unitarias → 22 construye maquetación y capa base → los 12 escenarios de navegador real se ejecutan como e2e de Playwright → 19 sale de `blocked`. | Cerrar la 19 marcando esos 4 escenarios como «pendiente, no bloqueante», con el precedente de `galeria` @s9/@s10. Copiar los 12 escenarios dentro del `.feature` de la 22. | El precedente de `galeria` aplica a una cláusula aislada (scroll físico) que no depende de que exista ningún otro fichero; aquí la dependencia es estructural: los 12 escenarios no fallaban por estar mal escritos, fallaban porque **no había maquetación que auditar**. Y copiarlos sería duplicar un contrato ya aprobado por la puerta humana, que es la vía conocida a que las dos copias diverjan (misma razón que la Decisión 20 da para las rutas). La 22 los **ejecuta**; la 21 y la 19 los **poseen**. |
 | 42 | **Parque de navegadores objetivo: los modernos, con degradado elegante declarado rol a rol.** Se autorizan `color-mix(in srgb, …)`, `backdrop-filter` y `text-wrap: pretty`, pero **cada uno con su respaldo escrito**, no confiando en que el navegador lo soporte: la cabecera fija declara PRIMERO un fondo sólido opaco y solo después el translúcido con desenfoque dentro de un `@supports (backdrop-filter: blur(1px))`, de forma que un navegador sin soporte vea una cabecera opaca y legible en vez de una franja transparente con el texto de la página cruzándola. Lo mismo para `color-mix()` (valor literal antes, mezcla después) y `text-wrap: pretty` (que degrada solo a un salto de línea menos afortunado y no necesita `@supports`). **Ningún escenario del contrato depende de estas tres propiedades**, así que su ausencia nunca pone un test en rojo: solo cambia el acabado. | Usar las tres a pelo, sin respaldo, asumiendo navegador moderno. Renunciar a las tres y quedarse en CSS de soporte universal. | Sin respaldo, `backdrop-filter` no degrada a «menos bonito»: degrada a **ilegible**, porque el fondo translúcido se declara igualmente y el contenido de la página pasa por debajo del texto de la cabecera. Es un fallo de accesibilidad, no de estética, y además invisible para quien desarrolla en un navegador moderno. Renunciar a las tres tampoco procede: el humano pidió explícitamente el nivel de acabado del prototipo, y el coste de un `@supports` es tres líneas. Decisión tomada por el humano el 23/08/2026, cerrando el PENDIENTE 6 del contrato (PREGUNTA ABIERTA 2), que quedaba NO VERIFICADO por no existir analítica de la web actual del cliente. |
 | 43 | **La puerta humana sobre `features/identidad_visual.feature` queda SUPERADA el 23/08/2026: los 51 escenarios están aprobados y la feature 22 pasa a `in_progress`.** El `gherkin_author` se detuvo por su cuenta en esta puerta y no lanzó al `tdd_craftsman`, como manda `CLAUDE.md`. La aprobación se dio tras presentar el reparto de herramientas (12 de módulo puro, 11 de lectura `?raw`, 28 en navegador real), los siete escenarios que hoy fallarían en rojo, y los 12 pendientes con su destinatario. | Implementar sin puerta, amparándose en la autorización general de trabajo autónomo que el humano ya había dado. | La autorización general cubre el CÓMO, no el QUÉ: el contrato es lo único que el humano puede revisar barato antes de que exista código, y una vez aprobado el `tdd_craftsman` implementa contra él sin volver a preguntar. Saltárselo habría convertido una autorización de método en un cheque en blanco sobre el alcance. |
+| 44 | **Hosting fijado: GitHub Pages, sirviendo el repositorio `Cenit-Digital/GalapavetClinicaVeterinaria` como sitio de proyecto en `https://cenit-digital.github.io/GalapavetClinicaVeterinaria/`** (owner y nombre verificados con `gh api`; Pages activado y la URL respondiendo, comprobado en vivo por `craftsman_lead`). Resuelve el bloqueo real que impedía cerrar el PENDIENTE 7 de `identidad_visual` (`og:image` absoluto) y motiva la feature nueva `despliegue_github_pages`. | Ningún otro proveedor se debatió: ante la pregunta directa de `craftsman_lead` por el dominio final de publicación, el humano respondió «GitHub Pages» sin abrir comparación con Netlify/Vercel/Cloudflare Pages. | El repositorio ya vive en GitHub; Pages lo publica sin añadir cuenta, proveedor ni coste nuevo, coherente con que el proyecto entero es «sitio 100 % estático, sin backend, sin claves» (Invariante 3, Decisión 9). Decisión tomada por el humano el 25/08/2026. |
+| 45 | **El repositorio pasa de privado a público**, único camino viable porque GitHub Pages sobre repositorio privado exige un plan de pago que esta cuenta no tiene. Antes de aplicarlo, `craftsman_lead` verificó que no hay ningún secreto: 0 coincidencias de patrones `.env`/credenciales en `git log --all` sobre el historial completo, y 0 coincidencias de patrones de clave típicos (AWS, tokens de GitHub, claves privadas PEM) en el árbol de trabajo. | Mantener el repositorio privado y pagar el plan que lo permite (GitHub Pro/Team) — descartado: esta cuenta no dispone de ese plan y el proyecto es un piloto sin presupuesto de infraestructura. Publicar solo un `dist/` compilado en un repositorio-espejo público, dejando el código fuente privado — no se evaluó: el humano autorizó directamente hacer público el repositorio existente. | Es el único camino sin gasto ni repositorio nuevo, y coherente con el propio diseño del proyecto: «nada se envía a ningún servidor» es un invariante ya repetido en varias features `done`, y un sitio sin backend ni claves no tiene, por diseño, nada que un repositorio público exponga que no vaya a exponerse igual el día de la publicación. Verificado, no supuesto: cero secretos en todo el historial. Decisión tomada por el humano el 25/08/2026. |
+| 46 | **Despliegue automático**: `.github/workflows/deploy-pages.yml` (ya creado por `craftsman_lead`, fuera de `src/` y fuera del alcance de `despliegue_github_pages`) construye (`node .harness/harness.mjs init` + `pnpm run build`) y publica a Pages en cada `push` a `main`. | Publicar a mano (`gh-pages` CLI o subida manual de `dist/`) en cada versión — descartado: exige un paso humano que se olvida, y el proyecto ya tiene disciplina de arnés automatizado (`bin/harness`) que un flujo de CI reutiliza sin esfuerzo adicional. | El humano aprobó explícitamente «despliegue automático (build + publish a Pages en cada push a main)». Ejecutar las puertas del arnés (`init`) antes del `build` evita publicar un sitio que no pasa sus propias puertas de calidad. Decisión tomada por el humano el 25/08/2026. |
+| 47 | **Nace `despliegue_github_pages`: el `base` de Vite se fija SOLO en el script `build` de `package.json`, vía el flag de CLI `vite build --base=/GalapavetClinicaVeterinaria/`, nunca como clave `base` dentro de `vite.config.ts`.** `import.meta.env.BASE_URL` —ya expuesto por Vite en cualquier build— es la fuente única que consumen tanto `BrowserRouter` (`basename={import.meta.env.BASE_URL}`, Decisión 48) como el resto de referencias internas: el literal `/GalapavetClinicaVeterinaria/` se escribe una sola vez, en el script de `build`. | Declarar `base: '/GalapavetClinicaVeterinaria/'` como clave fija en `vite.config.ts` — descartada porque Vitest lee el mismo fichero de configuración, así que `import.meta.env.BASE_URL` pasaría a valer `/GalapavetClinicaVeterinaria/` también dentro de la suite de tests, obligando a reescribir cada aserción de `href` ya `done` (`Cabecera.test.tsx:79`, `PieDePagina.test.tsx:84`, `CampanasPortada.test.tsx:156,171`). Condicionar `base` dentro de `vite.config.ts` según `command`/`mode` — descartada por ser más configuración a mantener para el mismo resultado que ya ofrece el flag de CLI documentado por el propio Vite. | Vite documenta el flag `--base` de `vite build` precisamente para desplegar bajo un subpath (<https://vite.dev/guide/build.html#public-base-path>, <https://vite.dev/guide/cli.html>), y su efecto es local a esa invocación: no toca `vite.config.ts`, así que `pnpm run dev` y `vitest run` (que no pasan por el flag de `vite build`) siguen viendo `import.meta.env.BASE_URL === '/'`, igual que hoy. El flujo de CI ya existente invoca `pnpm run build` sin argumentos (Decisión 46), así que este cambio no le exige ninguna modificación. |
+| 48 | **Los enlaces internos que hoy son `<a href="...">` con un destino de tipo ruta literal** (`Cabecera` —de escritorio y del panel móvil—, `PieDePagina` —columnas y enlaces legales—, `CampanasPortada`, `PaginaNoEncontrada`) **pasan su destino por una función pura nueva, parametrizada por la base** (`hrefDeDestino(destino, base)`, reutilizando `esAncla` de `Cabecera-logica.ts` para no tocar los destinos de tipo ancla). El componente sigue renderizando un `<a>` normal — no migra a `<Link>` de react-router — y sigue siendo, como hoy, una navegación de página completa. | Migrar los 6 puntos a `<Link>`/`<NavLink>` de react-router, que resuelve el `basename` automáticamente — descartada para esta feature: cambiaría la navegación de «recarga completa» a «transición de cliente», un cambio de patrón de interacción que ningún `.feature` ya aprobado (`cabecera_y_navegacion`, `pie_de_pagina`, `campanas_portada`) pidió (mismo límite que la Decisión 25 traza para `identidad_visual`: «ningún componente cambia de patrón»). Leer `import.meta.env.BASE_URL` directamente dentro de cada componente — descartada: dispersaría la misma lectura en 4 sitios en vez de un módulo puro, y una variable global de módulo es más difícil de testear con los dos casos (base `/` y base `/GalapavetClinicaVeterinaria/`) que una función parametrizada. | Parametrizar por `base` en vez de leer `import.meta.env.BASE_URL` dentro de la función la hace testable con literales explícitos, sin simular el entorno de build — mismo patrón que el proyecto ya usa para valores que dependen del entorno real (`ancho` en `Cabecera`, Decisión 22: se mide una vez en el punto de integración y se pasa como valor). Y como la base efectiva en Vitest sigue siendo `/` (Decisión 47), `hrefDeDestino('/campanas', '/')` sigue devolviendo `'/campanas'`: ninguno de los tests ya `done` que hoy afirman `toHaveAttribute('href', '/campanas')` necesita reescribirse. |
+| 49 | **La técnica de SPA en GitHub Pages es la de `rafgraph/spa-github-pages`** (<https://github.com/rafgraph/spa-github-pages>), **la implementación de referencia pública citada que resuelve exactamente este problema**: `public/404.html` (se copia verbatim a `dist/404.html`; no es una entrada de Vite, no toca `vite.config.ts`, mismo tratamiento que el resto de `public/`, Decisión 34) contiene un script que, ante cualquier ruta que GitHub Pages no encuentra, codifica el `pathname`/`search`/`hash` originales en la query string y redirige a la raíz; `index.html` añade un segundo script, ANTES de cargar el módulo de la aplicación, que decodifica esa query string con `history.replaceState` y deja la URL real en la barra de direcciones antes de que `BrowserRouter` monte — mismo patrón ya establecido en este documento para scripts inline que no pueden importar código: «espejado por un gemelo puro testeable» (Decisión 8, patrón `logica-pre-pintado-inline-se-espeja-en-gemelo-puro-testeable`), verificado leyendo el texto real de ambos ficheros (`?raw`, mismo patrón que `documento.test.ts`) contra un módulo puro que replica la misma codificación/decodificación. | Inventar un mecanismo de redirección propio — descartada explícitamente por el encargo («no la inventes desde cero»): el problema de servir una SPA con `BrowserRouter` bajo GitHub Pages es público y ya tiene una solución de referencia ampliamente citada, y reinventarla es el mismo antipatrón que este proyecto ya evita en otros sitios (la fórmula de contraste WCAG o la escala tipográfica de Utopia, Decisión 24, se toman de una fuente pública, no se inventan). Publicar con `HashRouter` en vez de `BrowserRouter` para esquivar el problema de raíz — ya descartada por la Decisión 19 y sigue siéndolo: convertiría las anclas ya contratadas (`#servicios`, `#equipo`…) en rutas del enrutador, rompiendo dos contratos `done`. | Es la técnica que GitHub Pages soporta de forma nativa y documentada — sirve `404.html` para cualquier ruta que no encuentra (<https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-custom-404-page-for-your-github-pages-site>) — y no depende de ninguna reescritura de servidor que GitHub Pages no ofrece. El número de segmentos de ruta a conservar (`pathSegmentsToKeep`) es un literal fijo en `public/404.html` — **1**, por ser un sitio de proyecto con un único segmento de subpath — y es el único punto de todo el mecanismo que no necesita conocer el NOMBRE del repositorio, solo su profundidad: `public/` se copia verbatim (sin `%BASE_URL%`, Decisión 50) y aun así no introduce una segunda copia del literal `GalapavetClinicaVeterinaria` que pueda divergir de la Decisión 47. |
+| 50 | **Las referencias a ficheros de `public/` escritas dentro de `index.html`** (los `<link rel="icon">`/`apple-touch-icon`, los dos `<link rel="preload" as="font">`) **pasan de ruta literal (`/favicon.ico`) a la variable de sustitución de Vite `%BASE_URL%`** (`%BASE_URL%favicon.ico`), que Vite reemplaza por el `base` efectivo en tiempo de compilación de `index.html`. | Asumir que fijar `base` (Decisión 47) ya reescribe estas rutas automáticamente — descartada: la documentación de Vite distingue explícitamente la reescritura automática de los assets que Vite procesa/versiona (el bundle de JS, el CSS generado) de las rutas absolutas que apuntan a ficheros de `public/`, que se copian verbatim; para esas pide `%BASE_URL%` a mano (<https://vite.dev/guide/assets.html#the-public-directory>). Mover estos ficheros fuera de `public/` para que Vite sí los procese — descartada: perderían el tratamiento «verbatim, sin hash» que exige que `public/fuentes/*.woff2` y los iconos sean referenciables por nombre fijo desde `@font-face`/`<link>` (Decisiones 32, 36). | Es el mecanismo que la propia documentación de Vite señala para este caso exacto, y evita duplicar el literal del subpath una tercera vez (ya vive en el script de build, Decisión 47): `%BASE_URL%` se resuelve automáticamente al mismo valor sin que nadie escriba `/GalapavetClinicaVeterinaria/` dentro de `index.html`. Sin este cambio, favicon y preloads de fuente devolverían 404 en producción aunque el resto del sitio ya funcionara. |
+| 51 | **La verificación local del subpath usa `vite build --base=/GalapavetClinicaVeterinaria/ && vite preview --base=/GalapavetClinicaVeterinaria/` sobre el `dist/` real** (mismo criterio que la Decisión 37 de `identidad_visual`: medir el `dist/` de producción, nunca el servidor de desarrollo) **para el criterio de que cada asset resuelve bajo el prefijo correcto; la lógica de codificación/decodificación de ruta de la Decisión 49 se verifica con tests puros sobre su gemelo testeable más la lectura literal (`?raw`) de `public/404.html`/`index.html`, no simulando el HTTP exacto de GitHub Pages.** | Confiar en que `vite preview` reproduce fielmente el 404 de GitHub Pages (sirve `404.html` con estado 404 ante cualquier ruta no encontrada) y montar sobre esa asunción el escenario completo de «refrescar una ruta interna no da 404» — descartada: no está verificado que el servidor interno de `vite preview` (`sirv`) replique ese comportamiento exacto, y este proyecto no da por buena una asunción de terceros sin medirla (mismo criterio que motivó la Decisión 11). | Separar «¿el asset resuelve bajo el prefijo correcto?» (medible sirviendo ficheros ya construidos, sin ambigüedad) de «¿la lógica de redirección es correcta?» (medible con tests puros, sin depender de cuán fiel es un servidor local a GitHub Pages) evita que la puerta de esta feature dependa de una pieza de infraestructura de terceros no verificada. Si al implementar se comprueba que `vite preview` sí replica el 404 de Pages con fidelidad suficiente, `tdd_craftsman` puede sumar un tercer nivel de verificación (e2e Playwright de extremo a extremo) como refuerzo, no como sustituto de los tests puros — dejando constancia medida de esa fidelidad, no dada por hecha. |
+| 52 | **Nace la enmienda «resolución de rutas de imagen bajo el subpath» sobre `despliegue_github_pages` (feature 23, `in_progress`), no una feature nueva independiente**: generaliza el MISMO mecanismo que la Decisión 48 ya aprobó para `<a href>` (`hrefDeDestino(destino, base)`) a las 24 rutas de imagen + `og:image` que `tdd_craftsman` encontró en 404 al verificar el `dist/` real bajo el subpath real (Decisión 51), repartidas en 6 ficheros de 6 features ya `done` (`pie_de_pagina`, `galeria`, `campanas_portada`/`pagina_campanas`, `pagina_blog`, `pagina_tienda`, `seo_estructura`). | Abrir una feature nueva e independiente para las imágenes — descartada: es el mismo mecanismo de resolución de base, este mismo `.feature` ya declara la infraestructura de verificación en navegador real que hace falta (Decisión 51), y separarlo en dos documentos duplicaría el contexto sin separar ningún riesgo real. Dejar el hallazgo como «riesgo abierto» sin fecha, igual que otros pendientes de material gráfico del proyecto — descartada: viola el propio criterio de aceptación ya aprobado de esta feature («ni un solo test existente roto por el cambio»); hoy hay 4 tests heredados en rojo por esta causa exacta, más `@s13` propio de esta misma feature. | El hallazgo lo detectó `tdd_craftsman` DENTRO del ciclo TDD de esta feature, verificando exactamente la cláusula que la Decisión 51 exige (navegador real sobre `dist/` con `--base` real) — no es un descubrimiento ajeno a su alcance, es la puerta de esta misma feature haciendo su trabajo. Motivación adicional confirmada por `craftsman_lead`: el mismo 404 deja «colgadas» al menos tres animaciones de «hueco de imagen cargando» en la ruta de campañas, rompiendo un test heredado de movimiento (`tests/e2e/movimiento.spec.ts`) — evidencia de que el defecto ya tiene efecto visible más allá de la consola. |
+| 53 | **Las 24 rutas de imagen y `og:image` reutilizan literalmente `hrefDeDestino(destino, base)` (Decisión 48), sin crear una función hermana.** No se renombra la función pese a que su nombre nombra «href»: se amplía su JSDoc para documentar el uso dual (resuelve cualquier referencia interna bajo la base de despliegue, sea el `href` de un enlace o el `src` de una imagen), sin tocar su firma ni su comportamiento. | (b) Crear una función hermana más simple, sin la lógica de `esAncla` (p. ej. `srcDeImagen(ruta, base)`), por claridad semántica para quien lea el código de imágenes — descartada. Renombrar `hrefDeDestino` a un nombre neutro (p. ej. `resolverRutaBajoBase`) que sirva a ambos casos sin ambigüedad — descartada. | Ninguna ruta de imagen es una ancla: `esAncla` devuelve `false` para las 24 rutas y para `RUTA_IMAGEN_OPEN_GRAPH`, así que `hrefDeDestino` y la hipotética función hermana calcularían exactamente lo mismo — una función hermana sería código duplicado sin ninguna rama de comportamiento distinta que la justifique, el mismo antipatrón que el Invariante 2 y la Decisión 20 ya prohíben para literales y rutas. Duplicarla también duplicaría su cobertura de mutación (hoy `hrefDeDestino` ya es mordible por Stryker con 16 tests, Decisión 48/@s4-@s6) sin ganar ninguna garantía nueva. Sobre el renombrado: `hrefDeDestino` ya se importa por su nombre exacto en 4 ficheros `done` (`Cabecera.tsx`, `PieDePagina.tsx`, `CampanasPortada.tsx`, `PaginaNoEncontrada.tsx`) y en su propia suite de 16 tests; renombrarla tocaría esos 4 ficheros y esa suite sin cambiar ni una línea de comportamiento — puro ruido de diff en código ya aprobado por la puerta humana. Ampliar el JSDoc resuelve la objeción de legibilidad sin ese coste. |
+| 54 | **La resolución de base se aplica en el punto de consumo — dentro del `.tsx` que renderiza la imagen (`PieDePagina.tsx`, `Galeria.tsx`, `CampanasPortada.tsx`/`PaginaCampanas.tsx`, `PaginaBlog.tsx`, `PaginaTienda.tsx`) —, nunca dentro de los ficheros de datos (`src/data/galeria.ts`, `src/data/campanas.ts`, `src/data/blog.ts`, `src/data/tienda.ts`), que siguen declarando la ruta cruda `/img/...` igual que hoy.** | Pre-resolver la ruta dentro del propio fichero de datos (p. ej. `src: hrefDeDestino('/img/galeria/nala-y-coco.webp')` ya en `galeria.ts`) — descartada. | Mismo patrón que ya adoptaron los 4 ficheros de enlace bajo la Decisión 48 (`resolverDestinos` de `PieDePagina.tsx` envuelve los datos crudos de `pieDePaginaEnlaces.ts` DENTRO del componente, no dentro del fichero de datos), y la misma razón que dio esa decisión: los ficheros de `src/data/*.ts` son catálogos estáticos tipados con `as const satisfies` (sección «Arquitectura», más abajo) sin ninguna dependencia del entorno de build; importar `hrefDeDestino` —que lee `import.meta.env.BASE_URL`— dentro de un módulo de datos le añadiría una dependencia del entorno que hoy no tiene. Resolver en el punto de renderizado es además coherente con que `import.meta.env.BASE_URL` sigue siendo `/` en Vitest (Decisión 47): ningún test ya `done` que afirme el literal crudo de un catálogo se rompe, porque el catálogo no cambia — solo cambia lo que el componente hace con él al pintar el `src` real. |
+| 55 | **Se resuelve la PREGUNTA ABIERTA 2 de `despliegue_github_pages`: `IMAGEN_OPEN_GRAPH` en `MetadatosPagina.tsx` pasa a componerse como `DOMINIO_SITIO + hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)`, no como `DOMINIO_SITIO + RUTA_IMAGEN_OPEN_GRAPH` (concatenación literal actual).** `DOMINIO_SITIO` (`https://cenit-digital.github.io`, solo esquema+host) no cambia: sigue siendo el origen puro. El subpath lo aporta `hrefDeDestino`, la misma función y el mismo mecanismo que ya resuelve el resto de rutas internas. | Escribir el subpath como un segundo literal dentro de `MetadatosPagina.tsx` (p. ej. `DOMINIO_SITIO + '/GalapavetClinicaVeterinaria' + RUTA_IMAGEN_OPEN_GRAPH`) — descartada: sería una tercera copia del literal del subpath (la Decisión 47 ya fijó que vive en un solo sitio, el script `build`), exactamente el riesgo de divergencia que la propia PREGUNTA ABIERTA 2 advertía. Hacer que `DOMINIO_SITIO` lea `import.meta.env.BASE_URL` directamente en vez de usar `hrefDeDestino` — descartada: duplicaría dentro de `MetadatosPagina.tsx` la misma lógica de «sin barra doble» que `hrefDeDestino` ya resuelve y ya tiene cubierta por mutación. | Cierra la PREGUNTA ABIERTA 2 exactamente como el propio hallazgo del `tdd_craftsman` la dejó anticipada: «es el MISMO mecanismo: `DOMINIO_SITIO` necesitaría convertirse en `DOMINIO_SITIO` + subpath, la misma resolución de base que el resto de las 27 imágenes» — sin inventar un segundo mecanismo para un caso que ya tiene uno aprobado. Verificado que no rompe ningún test `done`: en Vitest, `hrefDeDestino('/img/og/galapavet.png', '/')` sigue devolviendo exactamente `/img/og/galapavet.png` (Decisión 47: `BASE_URL` sigue siendo `/` en test), así que `IMAGEN_OPEN_GRAPH` calcula el mismo valor que hoy en toda la suite existente — el cambio solo se manifiesta bajo el `--base` real de producción, que es precisamente donde estaba el 404. |
 
 ## Arquitectura
 
@@ -521,6 +533,244 @@ trabajo del `tdd_craftsman`** y sale de la puerta de contraste, no de aquí.
    **416 MB** medidos en esta máquina; el shell headless será menor, pero la
    cifra exacta está **NO VERIFICADA** porque no se instaló para no alterar la
    máquina sin permiso. Solo afecta al coste, no al diseño.
+
+### Despliegue en GitHub Pages — nueva feature: `despliegue_github_pages`
+
+> **Por qué existe.** `identidad_visual` (22) y `sistema_de_diseno_visual` (21)
+> cerraron `done` el 25/08/2026. Al intentar resolver el PENDIENTE 7 de
+> `identidad_visual` (`og:image` debe ser una URL absoluta según OGP, hace
+> falta el dominio final), el humano fijó el hosting: GitHub Pages
+> (Decisiones 44-46). `craftsman_lead` detectó, antes de tocar nada, que el
+> proyecto no tiene configurado ni el `base` de Vite ni el `basename` de
+> `BrowserRouter` — sin ellos el sitio se rompe en producción bajo el subpath
+> `/GalapavetClinicaVeterinaria/`: los assets (`vite build` sin `base`) se
+> referencian desde la raíz del dominio y dan 404; las rutas internas de
+> `react-router` no coinciden con el subpath real; y GitHub Pages, al no
+> reescribir nada en el servidor, devuelve su propio 404 real ante cualquier
+> URL directa a una ruta interna o ante un simple refresco de página estando
+> en ella — el catch-all de React Router nunca llega a ejecutarse porque el
+> documento nunca se sirve. Un `tdd_craftsman` lanzado directamente por
+> `craftsman_lead` para resolverlo se negó, correctamente: no había ninguna
+> feature `in_progress` ni ningún `.feature` aprobado del que derivar tests,
+> e implementar sin eso viola la Ley 1 de TDD y salta la puerta humana sobre
+> el contrato. Esta feature formaliza ese contrato. No toca el PENDIENTE 7 en
+> sí (`og:image` absoluto): ese se resuelve en paralelo sobre `seo_estructura`,
+> feature 15, ya `done` — ver PREGUNTA ABIERTA 2, más abajo.
+
+**Propósito** — Que la web de Galapavet, publicada en
+`https://cenit-digital.github.io/GalapavetClinicaVeterinaria/`, funcione
+exactamente igual que en local: ningún asset en 404, ninguna ruta interna en
+404 al refrescar o al enlazar directamente, y ni un solo test existente roto
+por el cambio.
+
+**Comportamiento**
+
+1. `pnpm run build` invoca `vite build --base=/GalapavetClinicaVeterinaria/`
+   (Decisión 47): el literal del subpath vive en un solo sitio.
+2. `App.tsx` monta `<BrowserRouter basename={import.meta.env.BASE_URL}>` en
+   vez de `<BrowserRouter>` a secas.
+3. Los enlaces internos hoy literales (`Cabecera` de escritorio y de panel
+   móvil, `PieDePagina`, `CampanasPortada`, `PaginaNoEncontrada`) resuelven su
+   `href` de ruta a través de una función pura parametrizada por la base; las
+   anclas (`#servicios`, `#equipo`…) no cambian (Decisión 48).
+4. `public/404.html` nuevo, más un script de decodificación en `index.html`:
+   la técnica pública de `rafgraph/spa-github-pages` (Decisión 49).
+5. Las referencias a `public/` dentro de `index.html` (favicon,
+   `apple-touch-icon`, preloads de fuente) usan `%BASE_URL%` (Decisión 50).
+6. Verificación en dos niveles: `vite build`/`vite preview` con `--base` sobre
+   el `dist/` real para el prefijo de los assets, y tests puros + lectura
+   `?raw` de `public/404.html`/`index.html` para la lógica de redirección
+   (Decisión 51).
+
+**Contrato**
+
+- **Entradas:** el `pathname`/`search`/`hash` con el que un visitante llega
+  (directo, refrescado o enlazado desde fuera); el modo de build (`vite build
+  --base=...` en producción, sin flag en desarrollo o en test).
+- **Salidas:** `dist/index.html`, `dist/404.html` y `dist/assets/**`
+  referenciando o resolviendo siempre bajo `/GalapavetClinicaVeterinaria/`; en
+  el navegador, el mismo árbol DOM y las mismas anclas/rutas que hoy en local.
+- **Estados de error:** ninguno de negocio nuevo. Una ruta que de verdad no
+  existe (ni registrada por el router ni un fichero estático real) sigue
+  mostrando `PaginaNoEncontrada` tras el viaje `404.html` → `index.html` →
+  router — nunca un 404 crudo de GitHub Pages ni una pantalla en blanco.
+- **Mordible por Stryker:** la función pura de la Decisión 48 y el módulo
+  espejo de la Decisión 49, bajo `src/lib/**` o `*-logica.ts` (glob ya
+  vigente, `stryker.config.json`); el resto (config de build, `index.html`,
+  `public/404.html`) queda fuera, como el resto del proyecto.
+- **No es responsabilidad de esta feature:** la URL absoluta de `og:image`
+  (PENDIENTE 7 de `identidad_visual`, en curso en paralelo — PREGUNTA ABIERTA
+  2); el contenido de `.github/workflows/deploy-pages.yml` (ya creado, fuera
+  de `src/`).
+
+**Casos límite**
+
+1. Refrescar el navegador estando en `/GalapavetClinicaVeterinaria/campanas`
+   (o cualquier ruta interna registrada) no da el 404 real de GitHub Pages.
+2. Un deep-link externo a una ruta interna registrada (compartido por
+   WhatsApp, tecleado a mano) monta la página correcta desde la primera
+   carga, sin pasar visiblemente por `/`.
+3. Una ruta verdaderamente inexistente
+   (`/GalapavetClinicaVeterinaria/no-existe`) termina en `PaginaNoEncontrada`
+   (el catch-all `*` de `App.tsx`, ya `done`), no en el 404 crudo de GitHub
+   Pages.
+4. La concatenación base + ruta nunca produce una doble barra (`//`) —
+   verificado con un test sobre la función pura, no a ojo.
+5. Un destino de tipo ancla (`#servicios`) nunca pasa por el prefijo de base
+   — su `href` es idéntico al de hoy, en cualquier base.
+6. Query string y `#hash` de una URL profunda (p. ej. `/blog/:identificador`)
+   sobreviven íntegros al viaje `404.html` → `index.html` → router.
+7. La suite de Vitest (916 tests a la fecha de esta conversación) no requiere
+   ninguna modificación: `vite.config.ts` no declara `base`, así que
+   `import.meta.env.BASE_URL` en test sigue siendo `/` (Decisión 47).
+8. `pnpm run build` sigue pasando por `tools/puerta-terceros.ts` sin
+   excepciones nuevas: ni `public/404.html` ni el script de decodificación de
+   `index.html` añaden ninguna petición ni URL a un tercero.
+9. El favicon, el `apple-touch-icon` y los dos preloads de fuente resuelven
+   bajo el subpath tanto en `vite preview --base=...` como en Pages — no solo
+   el bundle de JS/CSS.
+
+**PREGUNTAS ABIERTAS**
+
+1. **Fidelidad de `vite preview` al 404 real de GitHub Pages.** NO VERIFICADO
+   que el servidor interno de `vite preview` (`sirv`) sirva `404.html` con el
+   mismo criterio que Pages ante una ruta no encontrada. La Decisión 51 ya
+   evita apoyar el contrato entero en esa asunción, pero si `tdd_craftsman` la
+   confirma (o la descarta) durante la implementación, debe dejarlo escrito
+   con la medición, no dado por hecho.
+2. ~~Coordinación con el PENDIENTE 7 de `identidad_visual` (`og:image`
+   absoluto).~~ **RESUELTA el 25/08/2026** — ver Decisión 55 y la sección
+   «Enmienda (25/08/2026): resolución de rutas de imagen bajo el subpath»,
+   justo debajo: `IMAGEN_OPEN_GRAPH` compone `DOMINIO_SITIO` (origen puro, sin
+   cambios) con `hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)` — el mismo mecanismo
+   de la Decisión 48, no una segunda copia del literal del subpath.
+
+#### Enmienda (25/08/2026): resolución de rutas de imagen bajo el subpath
+
+> **Por qué existe.** Al recorrer @s13-@s17 en TDD estricto, `tdd_craftsman`
+> verificó `despliegue_github_pages` en navegador real contra el `dist/` real
+> con el `--base=/GalapavetClinicaVeterinaria/` real — exactamente el nivel
+> que exige la Decisión 51 — y encontró que **24 rutas de imagen literales
+> `/img/...`** (más `og:image`), repartidas en **6 features ya `done`**,
+> nunca pasan por ningún mecanismo de resolución de base: solo los 4 ficheros
+> con `<a href>` (Decisión 48) y las 4 referencias de `public/` en
+> `index.html` (Decisión 50) quedaron cubiertos por los 17 escenarios
+> originales de este `.feature`. Bajo el subpath real, esas 24 rutas +
+> `og:image` dan 404 de mismo origen (confirmado con la consola real del
+> navegador: «Failed to load resource: the server responded with a status of
+> 404», no una suposición). Ver `progress/tdd_despliegue_github_pages.md`,
+> sección «HALLAZGO BLOQUEANTE», para la tabla exacta de ficheros y rutas.
+> Motivación adicional, no investigada más a fondo aquí (fuera de este
+> encargo): el mismo 404 deja al menos tres animaciones de «hueco de imagen
+> cargando» sin terminar en la ruta de campañas, rompiendo un test heredado
+> de movimiento (`tests/e2e/movimiento.spec.ts`).
+>
+> Es la misma ampliación de contrato que el hallazgo bloqueante de
+> `tdd_craftsman` dejó pedida, formalizada aquí antes de tocar código
+> (Decisión 52) — no resuelta a escondidas dentro de una implementación.
+
+**Propósito** — Que ninguna imagen ni la imagen de `og:image` de la web de
+Galapavet, publicada bajo `/GalapavetClinicaVeterinaria/`, dependa de vivir
+en la raíz del dominio: las mismas 24 rutas y `og:image` que hoy resuelven en
+local resuelven igual bajo el subpath real, con el mismo mecanismo ya
+aprobado para los enlaces.
+
+**Comportamiento**
+
+1. `hrefDeDestino(destino, base)` (Decisión 48), sin cambios de firma ni de
+   comportamiento, se reutiliza literalmente para resolver el `src` de toda
+   imagen servida desde `public/img/` cuyo literal hoy es una ruta absoluta
+   `/img/...` (Decisión 53).
+2. La resolución se aplica en el punto de renderizado — el `.tsx` que pinta
+   el `<img>` —, nunca dentro de los ficheros `src/data/*.ts`, que siguen
+   declarando la ruta cruda (Decisión 54):
+   - `src/components/PieDePagina.tsx` — `SRC_LOGO` (1 ruta).
+   - `src/components/Galeria.tsx`, consumiendo `src/data/galeria.ts` (6 rutas).
+   - `src/components/CampanasPortada.tsx` y `src/pages/PaginaCampanas.tsx`,
+     consumiendo `src/data/campanas.ts` (3 rutas) — `CampanasPortada.tsx` ya
+     llama a `hrefDeDestino` para el `href` del `<a>` de cada tarjeta; falta
+     aplicarlo también al `src` del `<img>` que esa misma tarjeta contiene.
+   - `src/pages/PaginaBlog.tsx`, consumiendo `src/data/blog.ts` (6 rutas).
+   - `src/pages/PaginaTienda.tsx`, consumiendo `src/data/tienda.ts` (8 rutas).
+3. `src/components/MetadatosPagina.tsx` compone `IMAGEN_OPEN_GRAPH` como
+   `DOMINIO_SITIO + hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)`, no como
+   concatenación literal de `DOMINIO_SITIO` con la ruta cruda (Decisión 55,
+   resuelve la PREGUNTA ABIERTA 2 original de esta misma feature, arriba).
+
+**Contrato**
+
+- **Entradas**: las mismas 24 rutas de imagen ya declaradas en los 5
+  ficheros de datos/componente de la tabla del hallazgo, más
+  `RUTA_IMAGEN_OPEN_GRAPH`; el modo de build (`--base=...` en producción, sin
+  flag en desarrollo/test), igual que el resto de la feature.
+- **Salidas**: cada `<img src>` y el `<meta property="og:image">` resuelven a
+  una URL cuyo prefijo coincide con la base de despliegue vigente — bajo el
+  subpath real en producción, sin cambios en local/test (`BASE_URL` sigue
+  siendo `/`).
+- **Estados de error**: ninguno nuevo. No es un dato de negocio ausente (el
+  Invariante 1 no aplica: la ruta de una imagen de demo no es una afirmación
+  sobre el negocio) ni un error del normalizador de datos — es puramente el
+  prefijo de una URL ya válida.
+- **Mordible por Stryker**: ninguna función nueva. `hrefDeDestino` ya está
+  cubierta por 16 tests bajo `src/lib/**` (Decisión 48); esta enmienda no
+  añade superficie mordible nueva, solo puntos de llamada adicionales en
+  `.tsx` (fuera del glob de mutación, igual que el resto de componentes).
+- **No es responsabilidad de esta enmienda**: sustituir las imágenes de
+  banco por material real de Galapavet (Riesgo abierto 5, sin cambios);
+  investigar o reparar la animación de movimiento colateral mencionada
+  arriba (queda anotada como motivación, no como alcance de esta enmienda).
+
+**Casos límite**
+
+1. Las 24 rutas de imagen y `og:image` responden con código 200 bajo
+   `http://localhost:4173/GalapavetClinicaVeterinaria/...` al servir el
+   `dist/` real con `vite preview --base=...` real — mismo nivel de
+   verificación que exige la Decisión 51, no una inspección de código ni una
+   simulación del HTTP de GitHub Pages.
+2. Ninguna de las 24 rutas ni `og:image` produce una doble barra (`//`) al
+   concatenar base + ruta — mismo comportamiento ya cubierto por los tests
+   de `hrefDeDestino` (Decisión 48/@s5), sin necesidad de un caso nuevo.
+3. En Vitest (`BASE_URL === '/'`), cada una de las 24 rutas y `og:image`
+   siguen resolviendo exactamente al mismo literal `/img/...` que afirman
+   los tests ya `done` de las 6 features — ningún test existente se
+   reescribe por esta causa.
+4. Ninguna de las 6 features ya `done` reabre un escenario de
+   **comportamiento**: mismos datos (`nombre`, `pie`, `titulo`…), mismo
+   `alt`/texto alternativo, misma cantidad de imágenes por sección — el
+   único cambio observable es CÓMO se calcula la cadena del `src`/`content`,
+   nunca el árbol accesible ni el contenido textual.
+5. `og:image` sigue siendo, tras la enmienda, una URL absoluta con esquema y
+   host
+   (`https://cenit-digital.github.io/GalapavetClinicaVeterinaria/img/og/galapavet.png`)
+   — sigue cumpliendo el tipo `URL` de OGP que motivó el PENDIENTE 7 original
+   de `identidad_visual`, ahora con el subpath incluido.
+
+**Criterios de aceptación medibles**
+
+1. Las 24 rutas de imagen + `og:image` (25 referencias) resuelven con código
+   de estado 200 bajo el subpath real, verificado en navegador real contra
+   el `dist/` construido con `--base=/GalapavetClinicaVeterinaria/` y
+   servido con `vite preview --base=...` — mismo nivel de verificación que
+   la Decisión 51, no una inspección de código.
+2. Los tests heredados que hoy fallan por esta causa exacta quedan en verde:
+   `tests/e2e/despliegue-subpath.spec.ts` @s13 (propio de esta feature),
+   `tests/e2e/imagenes.spec.ts` @s27 y @s29, `tests/e2e/red-limpia.spec.ts`
+   @s33 y @s34 — y ningún otro test de la puerta de 73
+   (`pnpm run test:e2e`) pasa a rojo por este cambio.
+3. `pnpm run test` (Vitest, 966 tests a la fecha de esta conversación) sigue
+   en 966/966 verde sin reescribir ninguna aserción de las 6 features ya
+   `done` — el cambio es invisible en test porque `BASE_URL` sigue siendo `/`
+   (Decisión 47).
+4. `bin/harness init` sigue en verde (lint, typecheck, Vitest) y
+   `pnpm run build` sigue terminando en código 0 con la puerta de terceros en
+   0 hallazgos (ninguna imagen pasa a apuntar a un dominio externo).
+5. Ninguna de las 6 features ya `done` reabre ningún escenario de su propio
+   `.feature` aprobado: el `gherkin_author`, al destilar esta enmienda,
+   añade escenarios NUEVOS numerados a continuación de @s17 en
+   `despliegue_github_pages.feature` (mismo patrón que la Decisión 48 usó
+   para @s7/@s8) — no toca ni un escenario de `pie_de_pagina.feature`,
+   `galeria.feature`, `campanas_portada.feature`, `pagina_campanas.feature`,
+   `pagina_blog.feature`, `pagina_tienda.feature` ni `seo_estructura.feature`.
 
 ## Riesgos abiertos
 

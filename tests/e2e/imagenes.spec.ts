@@ -1,7 +1,7 @@
 // @s27-@s31 de `features/identidad_visual.feature` (Bloque E: imágenes
 // locales y la carpeta `public/`). NAVEGADOR REAL con Playwright.
 import { expect, test, type Page } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 const CADENA_BANCO_DE_IMAGENES = 'unsplash'
 
@@ -55,22 +55,22 @@ test.describe('@s28 el icono del sitio responde y deja de dar 404', () => {
     request,
     baseURL,
   }) => {
-    const respuestaIco = await request.get('/favicon.ico')
+    const respuestaIco = await request.get(`${SUBPATH_DE_PRODUCCION}/favicon.ico`)
     expect(respuestaIco.status()).toBe(200)
 
-    const respuesta32 = await request.get('/favicon-32.png')
+    const respuesta32 = await request.get(`${SUBPATH_DE_PRODUCCION}/favicon-32.png`)
     expect(respuesta32.status()).toBe(200)
 
-    const respuestaApple = await request.get('/apple-touch-icon.png')
+    const respuestaApple = await request.get(`${SUBPATH_DE_PRODUCCION}/apple-touch-icon.png`)
     expect(respuestaApple.status()).toBe(200)
 
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     const dimensionesApple = await page.evaluate(async (url) => {
       const imagen = new Image()
       imagen.src = url
       await imagen.decode()
       return { width: imagen.naturalWidth, height: imagen.naturalHeight }
-    }, `${baseURL}/apple-touch-icon.png`)
+    }, `${baseURL}apple-touch-icon.png`)
     expect(dimensionesApple).toEqual({ width: 180, height: 180 })
 
     // Ninguna etiqueta de icono ACTIVA del documento apunta a un 404.
@@ -86,7 +86,7 @@ test.describe('@s28 el icono del sitio responde y deja de dar 404', () => {
     }
 
     // El icono vectorial aún no existe (PENDIENTE 8 del contrato): su <link> sigue comentado.
-    const html = await request.get('/').then((r) => r.text())
+    const html = await request.get(`${SUBPATH_DE_PRODUCCION}/`).then((r) => r.text())
     expect(html).toContain('<!-- <link rel="icon" type="image/svg+xml"')
     expect(html).not.toMatch(/<link rel="icon" type="image\/svg\+xml"[^>]*>(?!.*-->)/)
   })
@@ -98,7 +98,7 @@ test.describe('@s29 la imagen de compartición existe, tiene el tamaño que exig
     request,
     baseURL,
   }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     const contenidoOgImage = await page.locator('meta[property="og:image"]').getAttribute('content')
     if (contenidoOgImage === null) {
       throw new Error('no se encontró la etiqueta "og:image"')
@@ -111,17 +111,22 @@ test.describe('@s29 la imagen de compartición existe, tiene el tamaño que exig
     // Esta verificación sigue "pidiendo ese fichero" (el `When` de @s29)
     // pero contra el servidor LOCAL de `dist/` que arranca este mismo
     // fichero de configuración, tomando de la URL absoluta solo su ruta.
+    // Esa ruta YA incluye el subpath (enmienda 26/08/2026 de
+    // `despliegue_github_pages.feature`, Decisión 55): "baseURL" TAMBIÉN lo
+    // incluye (`playwright.config.ts`), así que componer la URL local con
+    // "baseURL" a secas duplicaría el subpath — se usa solo su origen.
     const rutaOgImage = new URL(contenidoOgImage).pathname
     const respuesta = await request.get(rutaOgImage)
     expect(respuesta.status()).toBe(200)
     expect(respuesta.headers()['content-type']).toBe('image/png')
 
+    const origenPropio = new URL(baseURL ?? 'http://localhost:4173').origin
     const dimensiones = await page.evaluate(async (url) => {
       const imagen = new Image()
       imagen.src = url
       await imagen.decode()
       return { width: imagen.naturalWidth, height: imagen.naturalHeight }
-    }, `${baseURL}${rutaOgImage}`)
+    }, `${origenPropio}${rutaOgImage}`)
     expect(dimensiones).toEqual({ width: 1200, height: 630 })
   })
 })
@@ -183,7 +188,7 @@ test.describe('@s31 una imagen que aún no ha cargado reserva su hueco en vez de
     page,
   }) => {
     await page.route('**/img/**', (ruta) => ruta.abort())
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     const colorEsperado = await page.evaluate(() => getComputedStyle(document.body).getPropertyValue('--color-fondo-alterno').trim())
 

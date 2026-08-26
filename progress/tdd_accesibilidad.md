@@ -520,3 +520,182 @@ Stryker sobre los 3 ficheros (`accesibilidad-analisis.ts`,
 `accesibilidad-areaTactil.ts`, `contraste.ts`) para confirmar 100% sobre
 mutantes no equivalentes (el único equivalente ya excluido,
 `contraste.ts:36`, no se tocó en esta ronda).
+
+## Refuerzo de cierre -- @s18/@s19 heredados (25/08/2026)
+
+Encargo puntual del `craftsman_lead` tras la "Revisión de cierre
+(25/08/2026...)" de `progress/judge_accesibilidad.md` (veredicto
+CHANGES_REQUESTED, 2 huecos reales en los tests de navegador real heredados
+de `identidad_visual`, ver `## Cambios requeridos` de esa ronda). Alcance
+estrictamente estos 2 ficheros de `tests/e2e/` -- ningún módulo de
+`src/lib/diseno/` ni `src/lib/accesibilidad-*` tocado (la puerta lógica de
+esta feature sigue 100 % mutada, sin reabrir).
+
+### Hueco 1 -- `tests/e2e/movimiento.spec.ts` (@s42, ejecuta @s19 de `accesibilidad.feature`)
+
+**Diagnóstico exacto del `judge`:** la 4ª cláusula del `Then` de `@s19`
+("el recuento de elementos comprobados es mayor que 0") no tenía ninguna
+aserción de recuento de ELEMENTOS; la única aserción de recuento del
+fichero (`RUTAS_DEL_INVENTARIO.toHaveLength(6)`, línea 80) cuenta RUTAS, no
+elementos -- el patrón `verde-por-vacuidad-en-puerta-de-verificacion` que la
+propia cabecera de `accesibilidad.feature` señala como riesgo central.
+
+**Fix:** dentro del `page.evaluate()` que ya construye `fueraDeEscala`
+(transiciones por encima de la escala reducida), se añade un segundo
+recuento `elementosConTransicionDeclarada` -- elementos cuyo
+`transitionDuration` computado es `> 0` en al menos uno de sus valores
+separados por coma, reutilizando la misma función `duracionesEnMs` ya
+existente (cero duplicación de la lógica de parseo "s → ms") -- y una
+aserción nueva `expect(elementosConTransicionDeclarada).toBeGreaterThan(0)`.
+
+**Por qué este recuento es significativo y no vacío por construcción:**
+`global.scss` declara, dentro de `@media (prefers-reduced-motion: reduce)`,
+una red de seguridad `*, *::before, *::after { transition-duration: 0.01ms }`
+SIN condicionarla a que el elemento tenga ya una transición propia -- es
+la ÚNICA regla del proyecto que fija `transition-duration` fuera de un
+`@media (prefers-reduced-motion: no-preference)` (verificado con
+`grep -rn transition src --include=*.scss`: las 4 declaraciones de
+componentes -- `Cabecera.module.scss`, `Faq.module.scss`, `_api.scss` ×2 --
+viven todas dentro de `no-preference`, opt-in). Por eso, bajo `reduce`, el
+contador captura efectivamente el total de elementos reales de cada ruta
+(98-258 según la ruta, medido por el propio `judge`), y por eso el
+sabotaje de abajo lo hace colapsar a 0 con precisión quirúrgica.
+
+**Sabotaje manual real (aplicado y revertido):**
+1. Se comentó la línea `transition-duration: 0.01ms;` dentro de ese bloque
+   `reduce` de `src/styles/global.scss` (única línea tocada, con
+   `/* SABOTAJE TEMPORAL DE VERIFICACION -- BORRAR */`).
+2. `pnpm run build && pnpm exec playwright test tests/e2e/movimiento.spec.ts --grep "@s42"`
+   → **rojo**, exactamente en la aserción nueva: `expected 0 to be greater than 0`
+   (línea 84). Las otras dos aserciones del mismo bloque
+   (`animacionesTrasInteractuar`, `transicionesFueraDeEscala`) siguieron en
+   verde -- confirma que, sin este contador, la regresión habría pasado
+   inadvertida.
+3. Revertido (`git diff --stat src/styles/global.scss` → sin diferencias
+   tras el revert); `pnpm run build` reprodujo el mismo hash de CSS
+   (`index-CDvoeGa7.css`) que antes del sabotaje; test verde de nuevo.
+
+### Hueco 2 -- `tests/e2e/accesibilidad.spec.ts:112-115` (@s38, ejecuta la 1ª mitad de @s18 de `accesibilidad.feature`)
+
+**Diagnóstico exacto del `judge`:** `fondoSinFoco` solo miraba
+`elemento.parentElement` y se rendía (dejaba sin comprobar el contraste) si
+ese único padre era transparente, en vez de trepar la cadena de ancestros
+como sí hace la función hermana `colorPintadoEnPunto` (para @s39). Medido
+en vivo por el `judge`: 96 de 120 controles muestreados (80 %) en las 6
+rutas nunca recibían esta comparación, aunque igual se contaban como
+"comprobados".
+
+**Decisión de diseño -- opción (a), no (b):** se investigó si @s39 (que sí
+trepa la cadena) podía aceptarse como sustituto de facto del 80 % sin
+cubrir. Se descartó: @s39 mide el contraste del anillo, YA enfocado, contra
+DOS superficies adyacentes en ese mismo estado (SC 1.4.11) -- nunca lee el
+estado SIN foco. El `Then` literal de @s18 ("...entre los mismos píxeles en
+estado con foco y sin foco...") exige explícitamente una comparación
+antes/después que @s39 no hace en ningún punto. Duplicar sin más habría
+sido redundante con @s39 solo si ambas midieran lo mismo; no es el caso, así
+que se implementó (a): `fondoSinFoco` trepa ahora la cadena de ancestros con
+el mismo criterio de transparencia que usa `colorPintadoEnPunto`
+(`fondo === 'transparent' || /rgba\([\d.]+, [\d.]+, [\d.]+, 0\)/.test(fondo)`),
+cayendo al fondo de `document.body` si ningún ancestro pinta. Se reutiliza
+también `esTransparente` de `./utilidades` (ya existente, antes no se usaba
+aquí) en vez de repetir el chequeo `startsWith('rgba(0, 0, 0, 0)')` a mano
+-- menos duplicación, mismo criterio que el resto del fichero.
+
+Como consecuencia directa, `controlesComprobados` se movió DENTRO del
+bloque `if (fondoEsOpaco)`: la 4ª cláusula del `Then` exige el recuento de
+controles a los que se comprobó el área **y** el contraste, no solo el
+área -- con la cadena resuelta correctamente, esto ahora es prácticamente
+el 100 % de los controles muestreados, no el 20 % previo.
+
+**Intento fallido documentado (para que no se repita):** el primer diseño
+reutilizó literalmente `colorPintadoEnPunto` + `puntoAdyacenteA`
+(`elementFromPoint` en un punto a 2 px del borde, antes de enfocar). Pasó
+17/17 en dos corridas consecutivas y falló de forma NO reproducible en una
+tercera (`"/tienda": ratio con foco vs sin foco insuficiente`, `Received: 1`,
+es decir outline == fondo, imposible salvo que el punto muestreado cayera
+sobre el propio control). Diagnóstico en vivo con un script Playwright
+temporal (creado y borrado en esta sesión, nunca comiteado) confirmó que
+`elementFromPoint` puede aterrizar de forma no determinista sobre el propio
+control cuando el punto cae en su geometría real bajo carga de CPU
+(reflow entre `boundingBox()` y el `evaluate()` que hace el hit-test, dos
+round-trips async separados) -- el mismo tipo de condición de carrera ya
+documentada en esta feature para lecturas de color a mitad de transición.
+Se descartó ese diseño por el más simple y robusto: trepar
+`parentElement` directamente (sin geometría, sin hit-testing, sin
+`viewport`/`boundingBox()`), que no depende de ningún timing de layout.
+Confirmado estable en 5 corridas completas de la suite tras el cambio
+(ver más abajo).
+
+**Sabotaje manual real (aplicado y revertido), con el defecto exacto que motivó la elección de diseño:**
+1. Primer intento de sabotaje -- `button[aria-label^='Añadir']:focus-visible { outline-color: #fefefe !important; }`
+   en `global.scss`: tanto la versión NUEVA como una versión temporal con la
+   lógica ANTIGUA (revertida a mano solo para esta comprobación,
+   `elemento.parentElement` sin trepar) detectaron el fallo por igual
+   (`ratio 1.0085` en `/tienda`). Investigado: el botón "Añadir" vive dentro
+   de un `<li>` con `@include tarjeta` (`PaginaTienda.module.scss:44-46`),
+   que SÍ pinta fondo -- ya estaba en el 20 % cubierto por la lógica
+   antigua. Descartado como ejemplo y revertido.
+2. Sabotaje real -- `nav[aria-label='Navegación principal'] a:focus-visible { outline-color: #fefefe !important; }`
+   en `global.scss` (los enlaces de navegación viven en `<a>` dentro de
+   `<li>` sin estilo propio dentro de `<ul>`, `Cabecera.tsx:33-46` +
+   `Cabecera.module.scss`, sin fondo hasta trepar a `.cabecera`):
+   - Con la lógica ANTIGUA (`elemento.parentElement`, restaurada solo para
+     esta comprobación): `pnpm exec playwright test ... --grep "@s38"` →
+     **verde**, 1/1 -- el defecto (anillo de foco casi blanco sobre blanco)
+     queda sin detectar, exactamente el hueco que describe el `judge`.
+   - Con la lógica NUEVA (trepando la cadena, restaurada): mismo comando →
+     **rojo**, `"/": ratio con foco vs sin foco insuficiente, Received: 1.0085`
+     -- detecta el mismo defecto que la versión antigua dejaba pasar.
+3. Revertido el sabotaje de `global.scss` (`git diff --stat` → sin
+   diferencias; `pnpm run build` reprodujo el mismo hash de CSS
+   `index-CDvoeGa7.css` que antes de tocar nada) y confirmado que
+   `tests/e2e/accesibilidad.spec.ts` quedó en su versión final (trepando la
+   cadena, sin ningún resto de la comprobación temporal).
+
+### Trazabilidad `@s → test` (esta ronda)
+
+- `@s19` de `accesibilidad.feature` (vía `@s42` de `identidad_visual`,
+  `tests/e2e/movimiento.spec.ts:9-90`): las 4 cláusulas del `Then` cubiertas
+  -- animación en curso (línea 17-21), transición de aparición (línea
+  67-68), desplazamiento no suavizado (`@s43`, línea 101-108), y ahora
+  recuento de elementos comprobados `> 0` (línea 82-85, nueva).
+- `@s18` de `accesibilidad.feature` (vía `@s38`/`@s39` de `identidad_visual`,
+  `tests/e2e/accesibilidad.spec.ts:97-269`): área (línea 149-151), contraste
+  antes/después de enfocar ahora sobre el 100 % de los controles muestreados
+  con fondo resuelto (línea 119-130 + 153-158, corregido), umbral 3 anclado
+  a mano (línea 21), recuento de controles con área **y** contraste
+  comprobados `> 0` (línea 166, semántica corregida).
+
+### Verificación final de esta ronda
+
+- `pnpm run typecheck` → limpio.
+- `pnpm run lint` (`oxlint --deny-warnings`) → limpio.
+- `pnpm run build` → verde, sin cambio de hash de CSS respecto al estado
+  previo a esta ronda (`index-CDvoeGa7.css`, confirmando que NINGÚN cambio
+  de producción sobrevivió: solo los 2 ficheros de test quedan modificados).
+- `pnpm exec playwright test tests/e2e/accesibilidad.spec.ts tests/e2e/movimiento.spec.ts --reporter=line`
+  → 17/17, repetido 6 veces en total durante esta sesión: 5/6 corridas
+  completamente verdes; 1/6 con un fallo en
+  `movimiento.spec.ts:20` (`animacionesEnCurso` por ruta, código YA
+  EXISTENTE sin tocar en esta ronda, fuera de mi alcance) -- inestabilidad
+  bajo contención de CPU con 2 workers en paralelo, ya documentada como
+  característica de esta máquina de desarrollo en los comentarios de
+  `playwright.config.ts` ("picos reales de CPU compartida",
+  `progress/tdd_identidad_visual.md`). No relacionada con ninguno de los 2
+  fixes de esta ronda (ambas aserciones nuevas se mantuvieron verdes en las
+  6 corridas).
+- `pnpm run test` (Vitest) → 916/916, repetido 3 veces.
+- `bash bin/harness init` → verde de punta a punta (lint limpio, typecheck
+  limpio, 916/916 tests). Nota operativa: 2 corridas intermedias de este
+  mismo comando fallaron de forma transitoria por una colisión de
+  escritura de OTRA sesión concurrente activa sobre este mismo repositorio
+  (`feature_list.json`, `src/components/MetadatosPagina.tsx`,
+  `features/seo_estructura.feature`, `.github/workflows/deploy-pages.yml`
+  -- trabajo ajeno a `accesibilidad`/`identidad_visual`, confirmado por
+  `git status --short` mostrando esos ficheros modificados sin que yo los
+  tocara); la corrida final, con el entorno estable, dio verde limpio.
+- `git diff --stat` final de esta ronda, limitado a mis ficheros:
+  `tests/e2e/accesibilidad.spec.ts` (+/- dentro del bloque `@s38`) y
+  `tests/e2e/movimiento.spec.ts` (+/- dentro del bloque `@s42`) -- cero
+  líneas tocadas en `src/lib/diseno/`, `src/lib/accesibilidad-*.ts`, ni en
+  ningún otro módulo de producción.

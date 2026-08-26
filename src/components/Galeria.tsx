@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { GALERIA, type EntradaGaleria } from '../data/galeria'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import {
   calcularSolicitudDeDesplazamiento,
   entradasValidas,
@@ -71,7 +72,7 @@ export function Galeria({ catalogo = GALERIA }: GaleriaProps = {}): React.JSX.El
       <div ref={pistaRef} role="group" aria-label="Fotografías de la galería" tabIndex={0} className={styles.pista}>
         {validas.map((entrada) => (
           <figure key={entrada.nombre}>
-            <img src={entrada.src} alt={entrada.nombre} width={800} height={600} loading="lazy" decoding="async" />
+            <img src={hrefDeDestino(entrada.src)} alt={entrada.nombre} width={800} height={600} loading="lazy" decoding="async" />
             <figcaption>{`${entrada.nombre} · ${entrada.pie}`}</figcaption>
           </figure>
         ))}

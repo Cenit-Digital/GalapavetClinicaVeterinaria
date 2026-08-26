@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { leerTokenDeVariante } from '../../src/lib/diseno/tokensColor'
 import { expect, test } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 import { colorComputadoAHex, esTransparente } from './utilidades'
 
 const RUTA_TOKENS = fileURLToPath(new URL('../../src/styles/_tokens.scss', import.meta.url))
@@ -49,7 +49,7 @@ test.describe('@s25 en las 4 variantes el documento pinta de verdad el fondo y e
   test(`las ${VARIANTES.length} variantes: fondo y texto computados del body equivalen a los tokens declarados`, async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
 
     let variantesVerificadas = 0
@@ -101,7 +101,7 @@ test.describe('@s26 la landing tiene ritmo: sus secciones no comparten todas el 
   test('8 secciones (7 anclas + campañas sin ancla), al menos 2 fondos distintos, ninguna transparente, sin 3 consecutivas iguales', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     const fondos: string[] = []
     for (const selector of SELECTORES_DE_SECCION) {

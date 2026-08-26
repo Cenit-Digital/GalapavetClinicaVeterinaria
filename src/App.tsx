@@ -76,7 +76,7 @@ export function App(): React.JSX.Element {
   const ancho = useAnchoDeVentana()
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AppInterior ancho={ancho} />
     </BrowserRouter>
   )

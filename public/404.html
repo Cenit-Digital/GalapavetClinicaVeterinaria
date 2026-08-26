@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es-ES">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Galapavet · Centro integral veterinario en Galapagar</title>
+    <script>
+      // Técnica de rafgraph/spa-github-pages (MIT License):
+      // https://github.com/rafgraph/spa-github-pages
+      // GitHub Pages sirve este fichero ante cualquier ruta que no existe
+      // como fichero real. Codifica pathname/search/hash en la query string
+      // y redirige a la raíz del sitio de proyecto: "index.html" decodifica
+      // esa query string antes de que monte la aplicación (Decisión 49).
+      // Espejo puro testeable: "src/lib/tecnicaSpaGithubPages.ts" (@s9/@s10).
+      //
+      // Sitio de PROYECTO, no de usuario/organización, con un único
+      // segmento de subpath (el nombre del repositorio): 1, no 0.
+      var pathSegmentsToKeep = 1
+
+      var l = window.location
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      )
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -2,7 +2,7 @@
 // cero terceros, cero 404, cero ruido en consola). NAVEGADOR REAL con
 // Playwright.
 import { expect, test } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 /** La única excepción declarada del proyecto: el mapa embebido de "InformacionContacto.tsx" (Invariante 3). */
 const DOMINIO_DEL_MAPA_EMBEBIDO = 'openstreetmap.org'
@@ -116,7 +116,7 @@ test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del 
     }
 
     // Interacciones reales sobre la portada: selector de paleta, un desplegable de servicios, un ítem del FAQ.
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
     await page.getByRole('button', { name: 'Lima de superficie' }).click()
 

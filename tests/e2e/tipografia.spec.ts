@@ -2,7 +2,7 @@
 // autoalojada en navegador real). NAVEGADOR REAL con Playwright, sobre
 // `dist/` servido por `vite preview` (playwright.config.ts → webServer).
 import { expect, test } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 const FAMILIA_TEXTO = 'DM Sans'
 const FAMILIA_TITULARES = 'Outfit'
@@ -35,7 +35,7 @@ test.describe('@s21 los controles de formulario del sitio real también usan la 
   test('cada campo de texto, área, desplegable y botón del formulario de contacto y del chat de reserva usa "DM Sans" u "Outfit"', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.evaluate(() => document.fonts.ready)
 
     const selectorDeControles = 'input, textarea, select, button'
@@ -70,7 +70,7 @@ test.describe('@s22 los dos ficheros de fuente se sirven en local, responden 200
       }
     })
 
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.evaluate(() => document.fonts.ready)
 
     expect(respuestasDeFuente).toHaveLength(2)
@@ -102,14 +102,14 @@ test.describe('@s23 si la fuente de marca no llega, el texto de respaldo ocupa e
     page,
     context,
   }) => {
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.evaluate(() => document.fonts.ready)
     const cajaH1ConFuente = await page.locator('h1').first().boundingBox()
     const cajaParrafoConFuente = await page.locator('p').first().boundingBox()
 
     await context.route('**/fuentes/**', (ruta) => ruta.abort())
     const paginaSinFuente = await context.newPage()
-    await paginaSinFuente.goto('/')
+    await paginaSinFuente.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     // "font-display: swap" pinta con el respaldo desde el primer pintado, sin esperar a que
     // decida cargar o no la fuente de marca: el texto ya es visible aquí.

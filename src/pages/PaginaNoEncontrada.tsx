@@ -1,4 +1,5 @@
 import React from 'react'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import styles from './PaginaNoEncontrada.module.scss'
 
 /**
@@ -10,7 +11,7 @@ export function PaginaNoEncontrada(): React.JSX.Element {
   return (
     <section className={styles.paginaNoEncontrada} data-contenedor-principal>
       <h1>Página no encontrada</h1>
-      <a href="/">Volver al inicio</a>
+      <a href={hrefDeDestino('/')}>Volver al inicio</a>
     </section>
   )
 }

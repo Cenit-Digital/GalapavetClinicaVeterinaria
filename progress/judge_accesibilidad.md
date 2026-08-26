@@ -470,3 +470,283 @@ ficheros**. Coincide con lo reportado por `tdd_craftsman`
 Ninguno. La feature está lista para que `mutation_tester` reintente la
 puerta de mutación sobre `src/lib/accesibilidad-analisis.ts`,
 `src/lib/accesibilidad-areaTactil.ts` y `src/lib/contraste.ts`.
+
+## Revision de cierre (25/08/2026, tras identidad_visual y sistema_de_diseno_visual)
+
+**Veredicto:** CHANGES_REQUESTED
+
+> No se reabre la Ronda 9 (puerta logica ya aprobada, mutacion 224/224 sobre
+> no equivalentes). Esta ronda audita EXCLUSIVAMENTE los 4 escenarios de
+> navegador real que quedaron blocked (@s2, @s17, @s18, @s19),
+> Then a Then, contra el test Playwright real que los ejecuta hoy dentro de
+> tests/e2e/accesibilidad.spec.ts y tests/e2e/movimiento.spec.ts de
+> identidad_visual, siguiendo el mismo metodo que destapo el hueco @s27
+> en el cierre de sistema_de_diseno_visual (comparacion literal contra el
+> codigo real, nunca contra escenariosHeredados.ts, que solo comprueba que
+> el identificador aparece como texto en algun .spec.ts).
+
+### Ejecucion en vivo (esta ronda, independiente)
+
+- `pnpm exec playwright test tests/e2e/accesibilidad.spec.ts tests/e2e/movimiento.spec.ts --reporter=line` -> **17/17 passed** (32.3 s).
+- `pnpm exec vitest run src/accesibilidad-foco.test.tsx src/accesibilidad-teclado.test.tsx src/lib/accesibilidad-movimiento.test.ts src/lib/accesibilidad-analisis.test.ts src/lib/accesibilidad-areaTactil.test.ts src/lib/contraste.test.ts` -> **68/68 passed** (6 ficheros).
+- `pnpm run test` completo -> **916/916 passed** (70 ficheros).
+- `bin\harness.ps1 init` -> verde de punta a punta (lint limpio, typecheck limpio, 916/916 tests).
+- Diagnostico ad hoc con Playwright contra `dist/` real servido con `vite preview --port 4173` (script temporal creado y borrado dentro de esta sesion, fuera de `src/` y `tests/`, nunca comiteado) para medir en vivo cuantos controles reales atraviesan cada rama de codigo citada abajo. `git status --short` confirmado limpio tras el diagnostico.
+
+### @s2 (arrastra @s7) - Then a Then
+
+1. "el recuento total de violaciones es exactamente 0" -> `tests/e2e/accesibilidad.spec.ts:48` `expect(informe.violacionesTotales).toBe(0)`. [x]
+2. "el recuento de paginas efectivamente analizadas es exactamente 6" -> `accesibilidad.spec.ts:46` `expect(informe.paginasAnalizadas).toBe(6)`. [x]
+3. "el veredicto se lee del informe del analisis y no del codigo de salida del proceso" -> `accesibilidad.spec.ts:49` `expect(informe.veredicto).toBe('aprobado')`, leido del objeto `informe` que devuelve `ejecutarPuertaDeAnalisisAutomatico` (`src/lib/accesibilidad-analisis.ts`); en ningun punto se lee un exit code de proceso. [x]
+   - La regla `target-size` (razon de ser de la Decision 11 para este escenario) si se activa de verdad: `ETIQUETAS_AXE_ACUMULATIVAS` incluye `'wcag22aa'` (`src/lib/diseno/analisisAutomaticoAxe.ts:21`), unica etiqueta que trae `target-size` (documentado en el propio modulo, lineas 10-13), y `accesibilidad.spec.ts:32` pasa `withTags([...ETIQUETAS_AXE_ACUMULATIVAS])` a un `AxeBuilder` real.
+
+**`@s2`: CUBIERTO integro.**
+
+### @s17 - Then a Then
+
+1. "el control enfocado no queda enteramente tapado por la cabecera fija" -> `accesibilidad.spec.ts:301` `expect(integramenteBajoLaCabecera, ...).toBe(false)`. [x]
+2. "al menos parte del control enfocado queda dentro del area visible" -> `accesibilidad.spec.ts:303-304` (`dentroDelViewport`). [x]
+3. "no existe ninguna barra superior adicional que pueda taparlo" -> cubierto en jsdom, `src/accesibilidad-foco.test.tsx:51-57` (`expect(screen.getAllByRole('banner')).toHaveLength(1)`), re-ejecutado hoy en vivo dentro de los 68/68 verdes de arriba - ningun cambio de identidad_visual/sistema_de_diseno_visual introdujo una segunda cabecera. [x]
+
+**`@s17`: CUBIERTO integro.**
+
+### @s18 - HALLAZGO REAL (cobertura parcial)
+
+1. Area del indicador de foco -> `accesibilidad.spec.ts:134-136` (`outlineWidth >= PERIMETRO_FOCO_MINIMO_PX`), ejecutado sin condicion para todos los controles muestreados. [x]
+2. Contraste "mismos pixeles en foco/sin foco" -> `accesibilidad.spec.ts:138-144`: el calculo de `fondoSinFoco` (linea 112-115) solo mira el `parentElement` inmediato y, si ese padre es transparente, el bloque entero `if (fondoEsOpaco)` (linea 139) se salta. Medido en vivo contra las 6 rutas reales (hasta 20 controles/ruta = 120 controles muestreados): 96/120 (80%) tienen fondo del padre inmediato transparente (`rgba(0, 0, 0, 0)`).
+   - El bloque hermano `@s39` resuelve el fondo real trepando la cadena de ancestros (`colorPintadoEnPunto`, lineas 163-179) pero mide un contraste distinto: el anillo de foco contra dos superficies adyacentes, ambas leidas despues de `.focus()`.
+3. Umbral 3 escrito a mano -> `accesibilidad.spec.ts:21` `const RATIO_MINIMO_ENTRE_ESTADOS = 3`. [x]
+4. Recuento mayor que 0 -> `accesibilidad.spec.ts:150` `expect(controlesComprobados).toBeGreaterThan(0)`, pero el contador incluye controles a los que solo se comprobo el area.
+
+**`@s18`: PARCIALMENTE CUBIERTO.**
+
+### @s19 - HALLAZGO REAL (cobertura parcial)
+
+1. "ningun elemento de la pagina tiene una animacion en curso" -> `tests/e2e/movimiento.spec.ts:17-20` y `46-49/67`. [x] - con una salvedad: en una carga estatica, `document.getAnimations()` casi siempre esta vacio por naturaleza (nada "corriendo" en el instante exacto de la consulta salvo que algo este en pleno vuelo). Medido en vivo con `reducedMotion: 'reduce'`: 5 de 6 rutas devuelven 0 animaciones incluso antes de comprobar nada (solo `/campanas?campana=vacunaciones` devuelve 3). El `toBe(0)` es correcto pero, por si solo, no distingue "0 porque el CSS respeta prefers-reduced-motion" de "0 porque no hay nada que auditar".
+2. "ninguna transicion de aparicion se ejecuta" -> `movimiento.spec.ts:46-65` (`transicionesFueraDeEscala`, techo 0,02 ms), ejecutado tras interacciones reales (desplegable de servicios, FAQ, galeria, selector de paleta). Interpretacion razonable del patron de "transicion de 0,01 ms" documentado en `global.scss`. [x]
+3. "ningun desplazamiento solicitado por la pagina es suavizado" -> `movimiento.spec.ts:84-96` (`@s43`, `scrollBehavior === 'auto'` con `reduce`). [x]
+4. "el recuento de elementos comprobados es mayor que 0" -> no existe ninguna asercion de este tipo en todo el fichero. La unica asercion de recuento es `expect(RUTAS_DEL_INVENTARIO).toHaveLength(6)` (linea 80), que cuenta RUTAS, no ELEMENTOS. En ningun punto se expone ni se afirma > 0 un recuento de elementos/animaciones efectivamente inspeccionados (p. ej. `document.querySelectorAll('*').length`, o el tamano del array que alimenta `fueraDeEscala` en la linea 56).
+   - Esto es exactamente el patron `verde-por-vacuidad-en-puerta-de-verificacion` que la propia cabecera de `accesibilidad.feature` (lineas 81-97) senala como el riesgo central de esta puerta, y la razon explicita por la que @s19 exige esa 4a clausula. Medido en vivo: hoy `elementosConTransicionDeclarada` es alto (98 a 258 segun la ruta), asi que el escenario no esta vacio EN LA PRACTICA - pero el test no lo garantiza ni lo declara. Una regresion futura que borrase todas las declaraciones `transition-duration` del SCSS dejaria este bloque en verde sin haber comprobado nada, precisamente el riesgo que el propio contrato de esta feature prohibe expresamente en su propia cabecera.
+
+**`@s19`: PARCIALMENTE CUBIERTO - falta la 4a clausula (guarda de recuento > 0), ausente sin excepcion.**
+
+### Resumen de cobertura Then-a-Then (los 4 escenarios de navegador real)
+
+- `@s2`: [x] cubierto integro - `tests/e2e/accesibilidad.spec.ts:24-51`
+- `@s17`: [x] cubierto integro - `tests/e2e/accesibilidad.spec.ts:253-312` + `src/accesibilidad-foco.test.tsx:51-57`
+- `@s18`: [~] cubierto parcial - 2a clausula (contraste antes/despues) sin verificar para ~80% de los controles reales muestreados (`tests/e2e/accesibilidad.spec.ts:97-152` + `199-251`)
+- `@s19`: [~] cubierto parcial - falta la 4a clausula (recuento de elementos > 0), `tests/e2e/movimiento.spec.ts:8-82`
+
+### Puerta logica (jsdom) - sigue intacta, sin regresion
+
+- `pnpm exec vitest run` sobre los 6 ficheros propios de accesibilidad -> 68/68 verdes (detalle arriba).
+- `pnpm run test` completo -> 70 ficheros, 916/916 verdes.
+- `git log --oneline` sobre `src/lib/accesibilidad-analisis.ts`, `src/lib/accesibilidad-areaTactil.ts`, `src/lib/accesibilidad-movimiento.ts`, `src/lib/contraste.ts`, `src/components/Cabecera.tsx`, `src/accesibilidad-foco.test.tsx`, `src/accesibilidad-teclado.test.tsx` -> el ultimo commit que toca estos ficheros es anterior a la sesion de hoy (`6ffd3b7`); ninguno de los 4 commits de identidad_visual/sistema_de_diseno_visual de hoy los modifica.
+
+### Mutacion - no hace falta remedir
+
+Ningun modulo puro atribuible a accesibilidad (`src/lib/accesibilidad-*.ts`, `src/lib/contraste.ts`) fue tocado hoy (confirmado por el `git log` de arriba), asi que el informe existente (`progress/mutation_accesibilidad.md`, 224/224 sobre no equivalentes) sigue vigente sobre el codigo actual. Los modulos nuevos de navegador real que si se tocaron hoy (`src/lib/diseno/analisisAutomaticoAxe.ts`, `src/lib/diseno/escenariosHeredados.ts`) pertenecen a identidad_visual, ya mutados en su propio cierre - no son atribuibles a esta feature y no reabren su puerta de mutacion.
+
+### bin/harness init (corrida propia, independiente, 25/08/2026)
+
+Verde de punta a punta: lint limpio, typecheck limpio, 916/916 tests, 70 ficheros.
+
+### Checkpoints (alcance de esta ronda de cierre)
+
+- C1: [x] `bin/harness init` verde, corrida propia
+- C3 (cobertura de escenarios): [ ] `@s18` y `@s19` con hueco real y documentado en su propio Then
+- C6 (sin regresion): [x] los 32 escenarios ya cubiertos en jsdom siguen verdes, sin perdida de cobertura
+- C7 (mutacion): [x] no aplica remedicion - informe previo sigue vigente sobre el codigo actual
+
+### Cambios requeridos
+
+1. `tests/e2e/movimiento.spec.ts` (bloque `@s42`, que ejecuta `@s19` de `accesibilidad.feature`): anadir un contador explicito de elementos efectivamente inspeccionados para la comprobacion de transiciones (p. ej. el tamano del array que hoy alimenta `fueraDeEscala`, linea 56-62) y una asercion `toBeGreaterThan(0)` sobre el, igual que hace cada bloque de `accesibilidad.spec.ts` (`medidos.length`, `controlesComprobados`, `paradasTotales`). Sin esto, el escenario puede "pasar" sin haber examinado nada si el CSS de transiciones desaparece - el riesgo que la propia feature declara como el motivo de ser de esta clausula.
+2. `tests/e2e/accesibilidad.spec.ts:112-115` (bloque `@s38`, 1a mitad de `@s18`): `fondoSinFoco` solo mira el padre inmediato y se rinde si es transparente, en vez de trepar la cadena de ancestros como ya hace `colorPintadoEnPunto` (lineas 163-179) para `@s39`. Esto deja al 80% de los controles muestreados (96/120 en la medicion en vivo de esta ronda) sin la comparacion "mismos pixeles en foco/sin foco" que pide literalmente la 2a clausula de `@s18`. Corregir reutilizando `colorPintadoEnPunto` (o equivalente) dentro de `@s38`, o bien, si se decide que el criterio adyacente de `@s39` es el sustituto intencional aceptado para ese 80%, dejarlo dicho explicitamente en `progress/tdd_accesibilidad.md` - no solo implicito en un comentario de codigo - con la misma disciplina de justificacion que ya usa el resto de esta feature.
+
+No se requiere ninguna accion sobre `@s2` ni `@s17`: quedan aprobados sin reservas en esta ronda de cierre.
+
+---
+
+## Refuerzo de cierre -- @s18/@s19 (25/08/2026)
+
+**Veredicto:** APPROVED
+
+> Ronda focalizada: verifica exclusivamente el refuerzo que tdd_craftsman
+> aplico en respuesta a los 2 huecos reales de esta misma bitacora
+> (seccion Revision de cierre 25/08/2026, Cambios requeridos
+> 1 y 2). No repite la revision completa de escenarios/diseno ya aprobada
+> en rondas anteriores. Alcance: tests/e2e/movimiento.spec.ts,
+> tests/e2e/accesibilidad.spec.ts, y progress/tdd_accesibilidad.md
+> (seccion Refuerzo de cierre @s18/@s19 heredados 25/08/2026).
+
+### Alcance (git diff --stat)
+
+Confirmado, limitado a los 2 ficheros esperados mas la bitacora y
+progress/current.md:
+
+```
+tests/e2e/accesibilidad.spec.ts | 30 +++++++++++++++++-----
+tests/e2e/movimiento.spec.ts    | 56 ++++++++++++++++++++++++++---------------
+```
+
+Cero lineas tocadas en src/lib/diseno/, src/lib/accesibilidad-*.ts,
+src/lib/contraste.ts ni ningun otro modulo de produccion -- la puerta
+logica de esta feature (ya 100% mutada) no se reabre. Hay trabajo
+concurrente de otra sesion sobre feature_list.json, project-spec.md,
+package.json y la nueva feature despliegue_github_pages (id 23,
+in_progress) -- ajeno por completo a accesibilidad, no evaluado ni
+tocado en esta ronda.
+
+### Hueco 1 -- tests/e2e/movimiento.spec.ts (@s42, ejecuta la 4a clausula de @s19)
+
+Sabotaje reproducido por mi, independiente del de tdd_craftsman: comente
+la unica linea transition-duration: 0.01ms; incondicional de
+src/styles/global.scss:243 (dentro de @media prefers-reduced-motion
+reduce), confirmado con grep que es la unica regla de transition-duration
+del repo fuera de un @media prefers-reduced-motion no-preference (las 4
+restantes -- Cabecera.module.scss:92, Faq.module.scss:36,
+_api.scss:181/235/265/308 -- viven todas dentro de no-preference, opt-in).
+
+- Tuve que matar un proceso vite preview obsoleto que seguia escuchando
+  en el puerto 4173 de una corrida anterior (reuseExistingServer de
+  playwright.config.ts lo habria reutilizado sin reconstruir, dando un
+  falso verde) antes de que el sabotaje se reflejara en el build.
+- Con el sabotaje y build fresco: playwright test movimiento.spec.ts --grep @s42
+  dio rojo, exactamente en la asercion nueva (linea 84):
+  expected 0 to be greater than 0. Las otras dos aserciones del mismo
+  bloque (animacionesTrasInteractuar, transicionesFueraDeEscala)
+  siguieron en verde.
+- Revertido (git checkout -- src/styles/global.scss), git diff --stat
+  vacio tras el revert.
+
+Confirma en vivo, con mis propias manos, exactamente lo que documenta
+progress/tdd_accesibilidad.md.
+
+### Hueco 2 -- tests/e2e/accesibilidad.spec.ts:112-130 (@s38, 1a mitad de @s18)
+
+Verificacion del texto literal de @s18 vs. @s39 (no acepto la afirmacion
+del tdd_craftsman sin comprobarla):
+
+- features/accesibilidad.feature:333 -- @s18: "el ratio de contraste
+  calculado entre los mismos pixeles en estado CON FOCO Y SIN FOCO es mayor
+  o igual que 3" -- comparacion explicita de dos estados temporales del
+  mismo control.
+- features/identidad_visual.feature:805-807 -- @s39: "el ratio del color
+  del anillo de foco contra el fondo del PROPIO COMPONENTE... contra el
+  fondo de LA SUPERFICIE QUE LO CONTIENE" -- ambos ratios se leen DESPUES
+  de .focus() (accesibilidad.spec.ts:232, un solo objetivo.focus() antes
+  de leer las dos superficies adyacentes); en ningun punto de @s39 se lee
+  un estado sin foco.
+
+Confirmado: @s39 mide algo genuinamente distinto (dos superficies
+adyacentes, ambas post-foco) de lo que @s18 exige literalmente
+(antes/despues). La decision de implementar la opcion (a) en vez de la (b)
+es correcta y no una interpretacion forzada.
+
+Sabotaje reproducido por mi, con AMBAS versiones de la logica, mismo CSS roto:
+
+Anadi una regla temporal al final de global.scss:
+nav[aria-label="Navegacion principal"] a:focus-visible con outline-color
+en #fefefe !important (los enlaces de nav viven en un a dentro de un li
+sin fondo propio hasta trepar a .cabecera -- Cabecera.tsx:33-46).
+
+- Con la logica ACTUAL (trepando ancestros, accesibilidad.spec.ts:119-130):
+  playwright test accesibilidad.spec.ts --grep @s38 dio rojo: ratio con
+  foco vs sin foco insuficiente, recibido 1.0085466189251153 (linea 156).
+  Coincide exactamente con el valor que documenta tdd_craftsman.
+- Sustitui temporalmente el bloque por la logica VIEJA (un solo
+  elemento.parentElement, sin trepar -- reconstruida a mano a partir del
+  diff, no adivinada) y repeti el mismo comando con el mismo CSS roto
+  todavia en pie: verde, 1/1 -- el defecto (anillo casi blanco sobre fondo
+  blanco) pasa inadvertido. Confirma en vivo el hueco exacto que yo mismo
+  senale en la ronda de cierre anterior.
+- Revertidos ambos ficheros. Incidente operativo propio, documentado por
+  transparencia: al revertir con git checkout -- tests/e2e/accesibilidad.spec.ts
+  borre por error el refuerzo completo del tdd_craftsman (no solo mi
+  sustitucion temporal), porque el fichero tenia cambios sin commitear.
+  Detectado de inmediato comparando contra el diff que ya habia capturado
+  antes de tocar nada; reconstruido con un script Python de reemplazo de
+  bloque exacto (los 3 hunks del diff original) y verificado con
+  git diff -- tests/e2e/accesibilidad.spec.ts BYTE A BYTE IDENTICO al
+  diff capturado al principio de esta ronda antes de cualquier sabotaje.
+  Sin este incidente el resultado habria sido el mismo; lo dejo constancia
+  para que quede trazado.
+
+### Falsos positivos de fondoSinFoco trepando ancestros (verificacion propia)
+
+Auditoria de todo el SCSS del repo en busca de patrones que pudieran hacer
+que la cadena de ancestros invente un fondo que no es el que realmente se
+pinta:
+
+- Ningun background-image ni gradiente en todo el proyecto (solo 4
+  declaraciones background: none y background-color con tokens solidos)
+  -- el escenario clasico de falso positivo (un ancestro transparente por
+  encima de una imagen de fondo mas lejana que el trepado ignoraria de
+  forma incorrecta) no existe hoy en este codigo.
+- Una sola ocurrencia de opacity: en todo el SCSS
+  (PaginaTienda.module.scss:178), aplicada al propio a[aria-disabled]
+  (con pointer-events: none), no a un contenedor ancestro -- no genera el
+  caso opacity en un ancestro que compone su propio fondo con lo que hay
+  detras, y climbing lo trata como opaco puro sin serlo.
+- El fallback final (document.body, global.scss:120, background-color:
+  var(--color-fondo), opaco) es solido -- la cadena siempre termina en un
+  color real, nunca en undefined.
+- La duplicacion del criterio de transparencia dentro del propio
+  page.evaluate() de fondoSinFoco, en vez de reutilizar esTransparente
+  importado, no es descuido: el closure de page.evaluate() se serializa y
+  ejecuta dentro del navegador, sin acceso al scope de Node -- es la misma
+  restriccion que ya obliga a colorPintadoEnPunto (lineas 186-188) a
+  duplicar el mismo criterio. Nota de calidad no bloqueante, ya presente
+  antes de esta ronda.
+
+No encontre ningun caso limite real en este repositorio donde la nueva
+logica invente un fondo falso. Limitacion teorica compartida y ya
+aceptada con colorPintadoEnPunto (solo lee backgroundColor, no compone
+imagenes ni gradientes): si una feature futura introduce background-image
+en un contenedor intermedio, ambas funciones -- no solo la nueva --
+dejarian de ser fieles. No es un riesgo nuevo introducido por este
+refuerzo.
+
+### Ejecucion en vivo (esta ronda, independiente, tras restaurar el estado correcto)
+
+- pnpm exec playwright test tests/e2e/accesibilidad.spec.ts tests/e2e/movimiento.spec.ts --reporter=line
+  -> 17/17 passed (2 corridas limpias).
+- pnpm run test -> primera corrida: 5 fallos transitorios (timeout en
+  src/main.test.tsx y otro fichero, entorno con contencion de recursos,
+  coherente con la sesion concurrente activa sobre este mismo
+  repositorio); segunda corrida inmediata: 916/916 passed, 70/70
+  ficheros, limpia.
+- bash bin/harness init -> verde de punta a punta: lint limpio, typecheck
+  limpio, 916/916 tests.
+- git diff --stat final, limitado a mis ficheros de interes: identico al
+  capturado al principio de la ronda -- ningun sabotaje ni incidente
+  operativo dejo resto.
+
+### Checkpoints (alcance de esta ronda)
+
+- C1: [x] bash bin/harness init verde, corrida propia independiente
+- C3 (cobertura Then a Then): [x] las 2 clausulas senaladas como hueco en
+  mi propia ronda de cierre anterior (@s18 2a clausula, @s19 4a clausula)
+  tienen ahora asercion real, verificada con sabotaje propio en ambos
+  sentidos (nueva logica detecta, vieja logica no)
+- C6 (sin regresion): [x] 17/17 e2e, 916/916 unit, sin perdida de cobertura
+  de ningun @s ya aprobado
+- C7 (mutacion): [x] no aplica remedicion -- ningun modulo de
+  src/lib/diseno/ ni src/lib/accesibilidad-*.ts/contraste.ts tocado en
+  esta ronda (confirmado por git diff --stat); el informe de mutacion
+  vigente (progress/mutation_accesibilidad.md, 224/224 s/no-equiv.) sigue
+  cubriendo el codigo actual sin cambios
+
+### Cambios requeridos
+
+Ninguno.
+
+### Cierre global de la feature
+
+Con este refuerzo, los 2 huecos reales que yo mismo senale en la
+Revision de cierre (25/08/2026...) quedan cerrados y verificados de forma
+independiente. LA FEATURE ACCESIBILIDAD (ID 19) QUEDA LISTA PARA DONE.
+No hace falta una tercera ronda de revision global: los 36/36 escenarios
+estan cubiertos (32 puros + 4 de navegador real, los 4 ahora integros
+Then a Then), la puerta logica sigue 100% mutada sobre no equivalentes
+sin haber sido tocada hoy, y bin/harness init esta verde.

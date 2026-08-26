@@ -4,6 +4,88 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+- **26/08/2026 — `despliegue_github_pages` (id 23): DONE.** 24/24 escenarios
+  (`@s1`-`@s24`). Nace el 25/08 cuando, al resolver el PENDIENTE 7 de
+  `identidad_visual` (`og:image` absoluto), el humano fijó GitHub Pages como
+  hosting y `craftsman_lead` detectó que el proyecto no tenía configurado ni
+  el `base` de Vite ni el `basename` de `BrowserRouter` — un `tdd_craftsman`
+  lanzado directamente para arreglarlo se negó, correctamente, por no haber
+  `.feature` aprobado. `gherkin_author` destiló 17 escenarios (`@s1`-`@s17`):
+  `--base` solo en el script `build` (nunca en `vite.config.ts`, así que
+  Vitest nunca lo ve), `BrowserRouter basename={import.meta.env.BASE_URL}`,
+  la función pura `hrefDeDestino(destino, base)` para los 4 puntos con
+  enlaces internos, la técnica pública `rafgraph/spa-github-pages`
+  (`public/404.html` + decodificación en `index.html`) verificada con un
+  gemelo puro, `%BASE_URL%` en `index.html`. Puerta humana superada, `tdd_craftsman`
+  los implementó — pero verificando en navegador real contra el `dist/` real
+  con el `--base` REAL (el nivel que el propio contrato exige) encontró un
+  **hallazgo bloqueante fuera de alcance**: 24 rutas de imagen + `og:image`,
+  repartidas en 6 features ya `done` (pie de página, galería, campañas,
+  blog, tienda, seo_estructura), nunca pasaban por `hrefDeDestino` y daban
+  404 bajo el subpath. Escalado sin arreglarlo por su cuenta (mismo patrón
+  disciplinado que el origen de la propia feature). `craftsman_lead`
+  formalizó una **enmienda** (Decisiones 52-55: reutilizar `hrefDeDestino`
+  literalmente sin función hermana, resolver en el `.tsx` nunca en
+  `src/data/*.ts`, coordinar `og:image` con el subpath), `gherkin_author`
+  destiló 7 escenarios más (`@s18`-`@s24`), puerta humana superada de nuevo,
+  `tdd_craftsman` la implementó: 75/75 verde en `pnpm run test:e2e` (dos
+  corridas consecutivas), descartó con evidencia doble (estática + sabotaje
+  empírico) que un test colateral de movimiento estuviera relacionado (era
+  contención de CPU), y corrigió de paso un hallazgo no planeado
+  (`imagenes.spec.ts` @s29 duplicaba el subpath) con una línea. `judge`
+  aprobó en dos rondas (enmienda + revisión completa de los 24 escenarios) y
+  señaló que faltaba `mutation_tester` sobre **toda** la feature (nunca
+  medida): `hrefDeDestino.ts`/`tecnicaSpaGithubPages.ts` dieron FAIL 91.30%
+  (4 supervivientes reales, huecos de cobertura no bugs) → refuerzo
+  quirúrgico (1 test + 1 aserción, producción byte-idéntica) → `judge`
+  aprobado con sabotaje propio → `mutation_tester` **PASS 100% (46/46, 0
+  timeouts)**. `craftsman_lead` reconcilió 2 discrepancias de recuento
+  (27→24 rutas, 28→25 referencias; @s12 4→5). `bin/harness init` verde de
+  punta a punta (1047/1047), repetido de forma independiente antes de
+  marcar `done`. Detalle ciclo a ciclo completo en
+  `progress/tdd_despliegue_github_pages.md`.
+
+- **26/08/2026 — `accesibilidad` (id 19): DONE.** Puerta lógica superada
+  hace tiempo (judge Ronda 9, mutation_tester 100%/224, sin cambios desde
+  entonces). Bloqueada desde el 22/08 por 4 escenarios de navegador real
+  (`@s2`/`@s7`, `@s17`, `@s18`, `@s19`) que esperaban a `identidad_visual`
+  (22, `done` el 25/08, que los automatiza como heredados). Reanudada con
+  una revisión de cierre rigurosa del `judge` que comparó cada `Then` real
+  contra el test Playwright heredado uno a uno (no aceptó la cita de
+  `escenariosHeredados.ts` como prueba de fidelidad) y encontró 2 huecos
+  reales: `@s19` sin contador de elementos efectivamente inspeccionados
+  (patrón verde-por-vacuidad) y `@s18` con `fondoSinFoco` rindiéndose en el
+  `parentElement` inmediato en vez de trepar la cadena de ancestros (80% de
+  los controles muestreados nunca recibían la comparación). `tdd_craftsman`
+  corrigió ambos con sabotaje real verificado, cero cambios en
+  `src/lib/diseno/`/`src/lib/accesibilidad-*` (no hizo falta remedir
+  mutación). Un test colateral (`@s42` movimiento, "3 animaciones en curso"
+  en campañas) parecía relacionado con el hallazgo bloqueante de imágenes
+  de `despliegue_github_pages`, pero la hipótesis quedó **descartada con
+  evidencia doble** — el fallo era contención de CPU en corridas con
+  múltiples workers, confirmado 3 veces de forma independiente
+  (`tdd_craftsman`, `judge`, `craftsman_lead`, siempre verde en aislamiento
+  con `--workers=1`). `bin/harness init` verde (1047/1047), repetido de
+  forma independiente antes de marcar `done`.
+
+- **26/08/2026 — Cierre de la sesión extendida del 25-26/08/2026: las 23
+  features del proyecto quedan `done`.** Orden de cierre: `identidad_visual`
+  (22) → `sistema_de_diseno_visual` (21) → enmienda `og:image` absoluto
+  sobre `seo_estructura` (15) → `despliegue_github_pages` (23, nueva
+  feature, 24 escenarios en 2 rondas) → `accesibilidad` (19). Ver las
+  entradas de cada una, arriba y más abajo en esta bitácora, para el detalle
+  completo. Pendientes explícitos que NO bloquean nada (documentados, no
+  inventados): el parque de navegadores objetivo sigue NO VERIFICADO
+  (afecta solo al acabado, ningún escenario depende de él); el
+  `favicon.svg` vectorial y las 24 fotos de banco siguen pendientes del
+  cliente (confirmado con el humano: se quedan como están, raster y
+  Pexels rotulado); `-webkit-font-smoothing` sin decidir (cosmético). El
+  repositorio pasó de privado a público (autorizado por el humano, único
+  camino viable para GitHub Pages en esta cuenta; verificado sin ningún
+  secreto en el historial antes del cambio) y GitHub Pages queda activado
+  con despliegue automático (`​.github/workflows/deploy-pages.yml`) en cada
+  push a `main`.
+
 - **25/08/2026 — `sistema_de_diseno_visual` (id 21): DONE.** Desbloqueada por
   `identidad_visual` (22, cerrada antes en esta misma sesión, ver entrada
   siguiente). Arrastraba desde el 23/08/2026 dos deudas: `mutation_tester`

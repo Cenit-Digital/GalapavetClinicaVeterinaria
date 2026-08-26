@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { MetadatosPagina } from '../components/MetadatosPagina'
 import { CATEGORIAS_TIENDA, PRODUCTOS_DEMO, type ProductoDemo } from '../data/tienda'
 import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { METADATOS_TIENDA } from '../lib/seo-logica'
 import {
   alcanzoTopeUnidades,
@@ -92,7 +93,7 @@ interface TarjetaProductoProps {
 function TarjetaProducto({ producto, cantidadEnCesta, onAnadir }: TarjetaProductoProps): React.JSX.Element {
   return (
     <li>
-      <img src={producto.imagen} alt="" width={800} height={600} loading="lazy" decoding="async" />
+      <img src={hrefDeDestino(producto.imagen)} alt="" width={800} height={600} loading="lazy" decoding="async" />
       <h2>{producto.nombre}</h2>
       <p>{producto.categoria}</p>
       <p>{etiquetaImporte(PREFIJO_IMPORTE, producto.importeCentimos)}</p>

@@ -12,8 +12,8 @@ import { expect, test, type Locator, type Page } from 'playwright/test'
 import { ejecutarPuertaDeAnalisisAutomatico, type ResultadoDeAnalisisAutomatico } from '../../src/lib/accesibilidad-analisis'
 import { calcularRatioContraste } from '../../src/lib/contraste'
 import { ETIQUETAS_AXE_ACUMULATIVAS } from '../../src/lib/diseno/analisisAutomaticoAxe'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
-import { colorComputadoAHex } from './utilidades'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
+import { colorComputadoAHex, esTransparente } from './utilidades'
 
 // UMBRALES ESCRITOS A MANO — no se recalculan de los valores que comprueban.
 const AREA_TACTIL_MINIMA_PX = 24
@@ -109,9 +109,24 @@ test.describe('@s38 el indicador de foco del sitio real tiene perímetro y contr
         // Estado SIN foco: los píxeles del hueco del anillo (fuera del borde
         // del control, dentro de "outline-offset") muestran el fondo de la
         // superficie que lo contiene — es lo que hay ahí ANTES de enfocar.
+        // Trepa la cadena de ancestros hasta el primer fondo NO transparente
+        // (mismo criterio de transparencia que usa "colorPintadoEnPunto" más
+        // abajo para @s39, aplicado aquí sobre "parentElement" en vez de
+        // "elementFromPoint": rendirse en el padre inmediato, como hacía
+        // antes, deja sin esta comprobación a cualquier control cuyo padre
+        // directo no pinte fondo — el caso habitual, medido en vivo: 96 de
+        // 120 controles muestreados en las 6 rutas).
         const fondoSinFoco = await objetivo.evaluate((elemento) => {
-          const contenedor = elemento.parentElement
-          return contenedor ? getComputedStyle(contenedor).backgroundColor : getComputedStyle(elemento).backgroundColor
+          let contenedor = elemento.parentElement
+          while (contenedor !== null) {
+            const fondo = getComputedStyle(contenedor).backgroundColor
+            const transparente = fondo === 'transparent' || /rgba\([\d.]+, [\d.]+, [\d.]+, 0\)/.test(fondo)
+            if (!transparente) {
+              return fondo
+            }
+            contenedor = contenedor.parentElement
+          }
+          return getComputedStyle(document.body).backgroundColor
         })
 
         await objetivo.focus()
@@ -135,15 +150,18 @@ test.describe('@s38 el indicador de foco del sitio real tiene perímetro y contr
           PERIMETRO_FOCO_MINIMO_PX,
         )
 
-        const fondoEsOpaco = !fondoSinFoco.startsWith('rgba(0, 0, 0, 0)') && fondoSinFoco !== 'transparent'
+        const fondoEsOpaco = !esTransparente(fondoSinFoco)
         if (fondoEsOpaco) {
           const ratio = calcularRatioContraste(colorComputadoAHex(info.outlineColor), colorComputadoAHex(fondoSinFoco))
           expect(ratio, `"${ruta}": ratio con foco vs sin foco insuficiente`).toBeGreaterThanOrEqual(
             RATIO_MINIMO_ENTRE_ESTADOS,
           )
+          // Solo cuenta como "comprobado" (4ª cláusula del "Then" de @s18 de
+          // accesibilidad.feature: "...se comprobó el área y el contraste")
+          // un control al que de verdad se le calculó el ratio, no uno al
+          // que solo se le midió el área.
+          controlesComprobados += 1
         }
-
-        controlesComprobados += 1
       }
     }
 
@@ -359,7 +377,7 @@ async function hijosVisiblesDe(cabecera: Locator): Promise<HijoDeCabeceraMedido[
 test.describe('El punto de corte de la navegación (1024/1023) coincide en JS y CSS en el navegador real (ejecuta @s27 de sistema_de_diseno_visual.feature)', () => {
   test('a 1024px la navegación horizontal es visible; a 1023px, el botón de menú', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 })
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeHidden()
 
@@ -370,7 +388,7 @@ test.describe('El punto de corte de la navegación (1024/1023) coincide en JS y 
 
   test('ningún elemento de la cabecera se desborda ni se superpone con otro, ni a 1024px ni a 1023px', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 })
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     for (const ancho of [1024, 1023]) {
       await page.setViewportSize({ width: ancho, height: 800 })

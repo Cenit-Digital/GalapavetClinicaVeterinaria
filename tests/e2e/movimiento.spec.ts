@@ -3,7 +3,7 @@
 // movimiento reducido activada. Ejecuta @s19 de accesibilidad.feature y
 // @s34 de sistema_de_diseno_visual.feature (por @s42).
 import { expect, test } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 test.describe('@s42 con la preferencia de menos movimiento activa no queda ninguna animación ni transición en curso', () => {
   test('las 6 rutas + interacción: 0 animaciones en curso, ninguna transición != 0.01ms, nada visible se oculta (ejecuta @s19 de accesibilidad.feature y @s34 de sistema_de_diseno_visual.feature)', async ({
@@ -22,7 +22,7 @@ test.describe('@s42 con la preferencia de menos movimiento activa no queda ningu
 
     // Interacciones reales sobre la portada: selector de paleta, un
     // desplegable de servicios, un ítem del FAQ y las flechas de la galería.
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
     await page.getByRole('button', { name: 'Marca en oscuro' }).click()
@@ -43,29 +43,45 @@ test.describe('@s42 con la preferencia de menos movimiento activa no queda ningu
     // `waitForTimeout` a ciegas, sino la condición real que nos interesa).
     await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
 
-    const [animacionesTrasInteractuar, transicionesFueraDeEscala] = await page.evaluate(() => {
-      const enCurso = document
-        .getAnimations()
-        .filter((animacion) => animacion.playState === 'running').length
+    const [animacionesTrasInteractuar, transicionesFueraDeEscala, elementosConTransicionDeclarada] =
+      await page.evaluate(() => {
+        const enCurso = document
+          .getAnimations()
+          .filter((animacion) => animacion.playState === 'running').length
 
-      // Ninguna transición corre con una duración efectiva distinta de
-      // "0.01ms": el navegador serializa "transitionDuration" en SEGUNDOS
-      // (medido: "1e-05s" para "0.01ms", nunca el literal "0.01ms"), así que
-      // se compara numéricamente, no por texto.
-      const TECHO_MS_REDUCIDO = 0.02 // 0.01ms + margen de precisión de coma flotante
-      const fueraDeEscala = Array.from(document.querySelectorAll<HTMLElement>('*')).filter((elemento) => {
-        const duracion = getComputedStyle(elemento).transitionDuration
-        return duracion
-          .split(',')
-          .map((valor) => Number.parseFloat(valor.trim()) * 1000) // "s" → ms
-          .some((milisegundos) => milisegundos > TECHO_MS_REDUCIDO)
-      }).length
+        // Ninguna transición corre con una duración efectiva distinta de
+        // "0.01ms": el navegador serializa "transitionDuration" en SEGUNDOS
+        // (medido: "1e-05s" para "0.01ms", nunca el literal "0.01ms"), así que
+        // se compara numéricamente, no por texto.
+        const TECHO_MS_REDUCIDO = 0.02 // 0.01ms + margen de precisión de coma flotante
+        const duracionesEnMs = (elemento: HTMLElement): number[] =>
+          getComputedStyle(elemento)
+            .transitionDuration.split(',')
+            .map((valor) => Number.parseFloat(valor.trim()) * 1000) // "s" → ms
 
-      return [enCurso, fueraDeEscala]
-    })
+        const elementos = Array.from(document.querySelectorAll<HTMLElement>('*'))
+        // Recuento de elementos EFECTIVAMENTE inspeccionados por esta
+        // comprobación (4ª cláusula del "Then" de @s19 de
+        // accesibilidad.feature): sin este contador, la puerta podría pasar
+        // "en verde" sin haber examinado ningún elemento real, precisamente
+        // el riesgo "verde-por-vacuidad-en-puerta-de-verificacion" que la
+        // cabecera de esa feature señala como su motivo de ser.
+        const conTransicionDeclarada = elementos.filter((elemento) =>
+          duracionesEnMs(elemento).some((milisegundos) => milisegundos > 0),
+        ).length
+        const fueraDeEscala = elementos.filter((elemento) =>
+          duracionesEnMs(elemento).some((milisegundos) => milisegundos > TECHO_MS_REDUCIDO),
+        ).length
+
+        return [enCurso, fueraDeEscala, conTransicionDeclarada]
+      })
 
     expect(animacionesTrasInteractuar, 'animaciones en curso tras interactuar').toBe(0)
     expect(transicionesFueraDeEscala, 'transiciones con duración fuera de la escala reducida').toBe(0)
+    expect(
+      elementosConTransicionDeclarada,
+      'elementos con transición efectivamente inspeccionados (@s19, 4ª cláusula del Then)',
+    ).toBeGreaterThan(0)
 
     // Nada de lo que se acaba de abrir queda oculto por haberse desactivado
     // el movimiento: los dos desplegables siguen expandidos Y su contenido
@@ -84,7 +100,7 @@ test.describe('@s42 con la preferencia de menos movimiento activa no queda ningu
 test.describe('@s43 con la preferencia de menos movimiento activa el desplazamiento hasta un ancla es instantáneo', () => {
   test('"scroll-behavior" computa "auto" con "reduce" y "smooth" sin preferencia declarada', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     const conReduce = await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)
     expect(conReduce).toBe('auto')
 

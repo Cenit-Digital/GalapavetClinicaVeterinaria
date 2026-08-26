@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'playwright/test'
-import { RUTAS_DEL_INVENTARIO } from './rutas'
+import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 const RUTA_API_SCSS = fileURLToPath(new URL('../../src/styles/_api.scss', import.meta.url))
 
@@ -62,7 +62,7 @@ test.describe('@s45 el contenido tiene un único ancho máximo de contenedor, el
 test.describe('@s46 en una página corta el pie cierra la ventana en vez de quedar flotando a media altura', () => {
   test('página no encontrada, ventana de 1000px de alto: el pie llega al borde inferior sin hueco', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 1000 })
-    await page.goto('/esto-no-existe')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/esto-no-existe`)
 
     const pie = page.locator('footer')
     const caja = await pie.boundingBox()
@@ -107,10 +107,10 @@ test.describe('@s47 los pies de las tarjetas de una misma fila quedan alineados 
   }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
 
-    await page.goto('/')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     const cajasServicios = await cajasDeFilaDeAccion(page, 'section[data-contenedor-principal] > article', 'button')
 
-    await page.goto('/tienda')
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/tienda`)
     const cajasTienda = await cajasDeFilaDeAccion(page, "section[aria-label='Catálogo'] li", 'button')
 
     const todasLasCajas = [...cajasServicios, ...cajasTienda]

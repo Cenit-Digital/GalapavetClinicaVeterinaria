@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import type { MetadatosPagina as DatosMetadatosPagina } from '../lib/seo-logica'
 
 /**
@@ -24,14 +25,11 @@ const TIPO_OPEN_GRAPH = 'website'
  * Page de organización es siempre el owner en minúsculas.
  *
  * Aquí solo se declara el ORIGEN (esquema + host), sin el subpath
- * "/GalapavetClinicaVeterinaria" que tendrá la Page de proyecto: ese subpath
- * es un problema de despliegue APARTE, todavía sin resolver
- * (`vite.config.ts` no declara "base" y `App.tsx` no tiene "basename" — el
- * resto de rutas absolutas del sitio, como esta misma imagen, se sigue
- * sirviendo hoy desde la raíz de `dist/`). Anteponer aquí un subpath que el
- * resto del sitio no tiene todavía rompería `tests/e2e/imagenes.spec.ts`
- * (@s29 de `identidad_visual.feature`, ya `done`), que pide el fichero
- * contra el `dist/` real servido en local.
+ * "/GalapavetClinicaVeterinaria" que tiene la Page de proyecto: ese subpath
+ * lo añade "hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)" al componer
+ * "IMAGEN_OPEN_GRAPH" (enmienda 26/08/2026, Decisión 55), el mismo mecanismo
+ * ya aprobado para el resto de rutas internas — no una segunda copia del
+ * literal del subpath escrita a mano aquí.
  */
 const DOMINIO_SITIO = 'https://cenit-digital.github.io'
 /**
@@ -41,7 +39,7 @@ const DOMINIO_SITIO = 'https://cenit-digital.github.io'
  * nunca una foto de banco (`progress/plan_imagenes.md` §4.3 «Open Graph»).
  */
 const RUTA_IMAGEN_OPEN_GRAPH = '/img/og/galapavet.png'
-const IMAGEN_OPEN_GRAPH = `${DOMINIO_SITIO}${RUTA_IMAGEN_OPEN_GRAPH}`
+const IMAGEN_OPEN_GRAPH = `${DOMINIO_SITIO}${hrefDeDestino(RUTA_IMAGEN_OPEN_GRAPH)}`
 
 const ID_SCRIPT_DATOS_ESTRUCTURADOS = 'datos-estructurados-pagina'
 

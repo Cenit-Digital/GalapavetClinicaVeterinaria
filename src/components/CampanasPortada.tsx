@@ -1,5 +1,6 @@
 import React from 'react'
 import { CAMPANAS_DEMO, type CampanaDemo } from '../data/campanas'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { construirModeloCampanas } from './CampanasPortada-logica'
 import styles from './CampanasPortada.module.scss'
 
@@ -44,9 +45,9 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
       <ul>
         {modelo.map((campana) => (
           <li key={campana.titulo}>
-            <a href="/campanas">
+            <a href={hrefDeDestino('/campanas')}>
               {campana.imagen !== undefined && (
-                <img src={campana.imagen} alt="" width={800} height={450} loading="lazy" decoding="async" />
+                <img src={hrefDeDestino(campana.imagen)} alt="" width={800} height={450} loading="lazy" decoding="async" />
               )}
               <span>Demostración</span>
               <h3>{campana.titulo}</h3>
@@ -54,7 +55,7 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
           </li>
         ))}
       </ul>
-      <a href="/campanas">Ver campañas</a>
+      <a href={hrefDeDestino('/campanas')}>Ver campañas</a>
     </section>
   )
 }

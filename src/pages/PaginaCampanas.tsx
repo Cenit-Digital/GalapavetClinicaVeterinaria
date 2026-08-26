@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { CAMPANAS_DEMO, type CampanaDemo } from '../data/campanas'
 import { MetadatosPagina } from '../components/MetadatosPagina'
 import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { METADATOS_CAMPANAS, METADATOS_FICHA_CAMPANA } from '../lib/seo-logica'
 import { datosNegocio } from '../lib/site'
 import {
@@ -41,7 +42,7 @@ function TarjetaCampana({ campana }: TarjetaCampanaProps): React.JSX.Element {
   return (
     <li>
       {campana.imagen !== undefined && (
-        <img src={campana.imagen} alt="" width={800} height={450} loading="lazy" decoding="async" />
+        <img src={hrefDeDestino(campana.imagen)} alt="" width={800} height={450} loading="lazy" decoding="async" />
       )}
       <span>Demostración</span>
       <p>Bloque de servicios: {campana.bloque}</p>

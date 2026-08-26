@@ -4,6 +4,7 @@ import { MetadatosPagina } from '../components/MetadatosPagina'
 import { ARTICULOS_DEMO, type ArticuloDemo, type BloqueDeCuerpo } from '../data/blog'
 import { DATOS_ESTRUCTURADOS_NEGOCIO } from '../lib/datosEstructuradosNegocio'
 import { decidirComportamientoDesplazamiento } from '../lib/desplazamiento'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { METADATOS_ARTICULO_BLOG, METADATOS_BLOG } from '../lib/seo-logica'
 import {
   articulosRelacionados,
@@ -170,7 +171,7 @@ function BloqueSigueLeyendo({ relacionados }: BloqueSigueLeyendoProps): React.JS
         {relacionados.map((articulo) => (
           <li key={articulo.identificador}>
             <Link to={`/blog/${articulo.identificador}`}>
-              <img src={articulo.imagen} alt="" width={1600} height={900} loading="lazy" decoding="async" />
+              <img src={hrefDeDestino(articulo.imagen)} alt="" width={1600} height={900} loading="lazy" decoding="async" />
               {articulo.titulo}
             </Link>
           </li>
@@ -213,7 +214,7 @@ function VistaArticulo({ catalogo, identificador, categoriaParam }: VistaArticul
       <article>
         <h1>{articulo.titulo}</h1>
         <img
-          src={articulo.imagen}
+          src={hrefDeDestino(articulo.imagen)}
           alt={articulo.textoAlternativoImagen}
           width={1600}
           height={900}
