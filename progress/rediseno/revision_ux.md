@@ -1,6 +1,6 @@
 # Auditoría UX — accesibilidad, responsive y rendimiento
 
-**Fecha:** 26/08/2026  
+**Fecha:** 26/08/2026
 **Alcance:** lectura estática del React/SCSS actualmente presente, contrastada con
 `features/rediseno_visual.feature` y el bundle versionado en
 `docs/diseno-claude-design/`. No se ha editado producción, tests ni
@@ -9,7 +9,7 @@
 ## Método y límites
 
 - **Hecho** significa que se puede comprobar directamente en los ficheros
-  citados.  
+  citados.
 - **Inferencia** significa una consecuencia técnica razonable que debe
   confirmarse en el navegador real antes de cerrar la feature.
 - La inicialización del arnés terminó con lint y typecheck correctos antes de
@@ -95,4 +95,3 @@ Las recomendaciones de foco, bypass de bloques, navegación por teclado,
 reflow, contraste, etiquetas y tamaños de objetivo se alinean con la
 [referencia rápida WCAG 2.2 de W3C](https://www.w3.org/WAI/WCAG22/quickref/),
 en particular SC 2.4.1, 2.4.7/2.4.11, 2.5.8, 3.3.1–3.3.3 y 4.1.3.
-

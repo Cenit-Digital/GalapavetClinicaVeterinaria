@@ -1,6 +1,6 @@
 # Auditoría independiente de referencia — `rediseno_visual`
 
-**Fecha:** 26/08/2026  
+**Fecha:** 26/08/2026
 **Alcance:** solo lectura de `docs/diseno-claude-design/`, `src/`, las fuentes de datos y `features/rediseno_visual.feature`. No se ha editado producción, tests ni el listado de features.
 
 ## Dictamen
