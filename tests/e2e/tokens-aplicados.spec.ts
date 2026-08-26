@@ -38,7 +38,11 @@ test.describe('@s24 el cuerpo del documento deja de arrastrar el margen por defe
   })
 })
 
-test.describe('@s25 en las 5 variantes el documento pinta de verdad el fondo y el texto de la variante activa', () => {
+// El rediseño llevó este escenario de 4 a 5 variantes; el escenario heredado
+// que se cita en el título sigue ejecutándose aquí, y solo aquí: este test
+// recorre una a una TODAS las variantes del selector en navegador real y
+// comprueba el color efectivamente computado, ahora sobre 5 en vez de 4.
+test.describe('@s25 en las 5 variantes el documento pinta de verdad el fondo y el texto de la variante activa (ejecuta @s12 de sistema_de_diseno_visual.feature)', () => {
   const VARIANTES: readonly { id: string; nombreAccesible: string }[] = [
     { id: 'clinica', nombreAccesible: 'Clínica' },
     { id: 'calida', nombreAccesible: 'Cálida' },

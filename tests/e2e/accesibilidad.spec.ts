@@ -291,6 +291,18 @@ test.describe('@s40 al tabular por la página entera ningún control enfocado qu
       let anterior: string | null = null
       for (let parada = 0; parada < MAXIMO_DE_PARADAS_POR_RUTA; parada += 1) {
         await page.keyboard.press('Tab')
+        // El rectángulo que hay que medir es el ASENTADO, que es el que
+        // percibe la persona usuaria. Con "reduce", el bloque de `global.scss`
+        // deja una duración efectiva de 0.01ms sobre TODAS las propiedades
+        // (la propiedad de transición efectiva es "all"), así que una
+        // transición sigue "corriendo" durante ese instante: medido justo tras
+        // "Tab", `matches(':focus-visible')` ya era `true` mientras el
+        // "transform" seguía en su valor ANTERIOR. Se espera a la condición
+        // real —que no quede ninguna animación en curso—, no a un
+        // `waitForTimeout` a ciegas: es la misma espera determinista que
+        // `tests/e2e/movimiento.spec.ts` ya usa y justifica para @s42. No
+        // debilita nada: las dos aserciones de abajo siguen exigiendo lo mismo.
+        await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
         const activo = page.locator(':focus')
         if ((await activo.count()) === 0) break
         const identidad = await activo.evaluate((el) => el.outerHTML.slice(0, 120))

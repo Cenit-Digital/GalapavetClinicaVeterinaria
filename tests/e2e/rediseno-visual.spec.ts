@@ -3,7 +3,22 @@
 import { expect, test } from 'playwright/test'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
-const VARIANTES = ['clinica', 'calida', 'tech', 'eco', 'marca'] as const
+/**
+ * Las cinco variantes con su rótulo accesible REAL, escrito a mano y CON SUS
+ * TILDES ("clinica" se rotula "Clínica", "calida" se rotula "Cálida"). El
+ * rótulo NO se deriva del id — derivarlo generaba "Clinica"/"Calida", que no
+ * casan con ningún botón — ni se importa de `src/data/variantesPaleta.ts`: si
+ * se leyera del mismo catálogo que pinta los botones, un renombrado
+ * silencioso seguiría en verde. Mismo doble anclado al literal que usa
+ * `tokens-aplicados.spec.ts` (@s25).
+ */
+const VARIANTES: readonly { id: string; nombreAccesible: string }[] = [
+  { id: 'clinica', nombreAccesible: 'Clínica' },
+  { id: 'calida', nombreAccesible: 'Cálida' },
+  { id: 'tech', nombreAccesible: 'Tech' },
+  { id: 'eco', nombreAccesible: 'Eco' },
+  { id: 'marca', nombreAccesible: 'Marca Galapavet' },
+]
 
 test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo sistema visual', () => {
   for (const { pagina, ruta } of RUTAS_DEL_INVENTARIO) {
@@ -57,9 +72,12 @@ test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo s
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
 
-    for (const variante of VARIANTES) {
-      await page.getByRole('button', { name: new RegExp(`^${variante === 'marca' ? 'Marca Galapavet' : variante[0].toUpperCase() + variante.slice(1)}$`) }).click()
-      await expect(page.locator('html')).toHaveAttribute('data-variante', variante)
+    for (const { id, nombreAccesible } of VARIANTES) {
+      // `exact: true` es obligatorio: sin él, "Eco" o "Clínica" casarían como
+      // subcadena con otros nombres accesibles de la portada (por ejemplo el
+      // ítem del FAQ "¿Qué horario tiene la clínica?").
+      await page.getByRole('button', { name: nombreAccesible, exact: true }).click()
+      await expect(page.locator('html')).toHaveAttribute('data-variante', id)
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
       expect(overflow).toBe(false)
     }

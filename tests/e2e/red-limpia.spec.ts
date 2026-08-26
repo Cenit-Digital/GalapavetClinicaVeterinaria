@@ -118,7 +118,11 @@ test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del 
     // Interacciones reales sobre la portada: selector de paleta, un desplegable de servicios, un ítem del FAQ.
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
-    await page.getByRole('button', { name: 'Lima de superficie' }).click()
+    // Se elige a propósito una variante DISTINTA de la predeterminada
+    // ("Clínica"): solo un cambio real de tokens ejercita el repintado que
+    // podría ensuciar la consola. Con `exact: true` porque el nombre accesible
+    // podría ser subcadena de otro de la portada.
+    await page.getByRole('button', { name: 'Marca Galapavet', exact: true }).click()
 
     const botonServicio = page.locator('section', { hasText: 'Servicios' }).getByRole('button').first()
     await botonServicio.click()

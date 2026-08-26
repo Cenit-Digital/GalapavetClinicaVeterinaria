@@ -31,6 +31,36 @@ function obtenerSeccionEquipo(): HTMLElement {
   return seccion
 }
 
+/** Localiza la tarjeta de un profesional a partir de su encabezado de nivel 3. */
+function obtenerTarjetaDe(nombre: string): HTMLElement {
+  const encabezado = screen.getByRole('heading', { level: 3, name: nombre })
+  const tarjeta = encabezado.closest('article')
+  if (tarjeta === null) {
+    throw new Error(`No se encontró el elemento <article> que envuelve el encabezado "${nombre}"`)
+  }
+  return tarjeta
+}
+
+/**
+ * Texto que la tarjeta expone a la capa de accesibilidad: su `textContent`
+ * menos todo subárbol marcado `aria-hidden="true"`.
+ *
+ * `textContent` a secas no sirve para contratar esto: `features/equipo.feature:118`
+ * exige que el TEXTO ACCESIBLE de la tarjeta de "Joaquín Herranz" se limite a
+ * su nombre y su rol, y el avatar de iniciales que impone el rediseño
+ * (`features/rediseno_visual.feature`, @s32) es decorativo y viaja con
+ * `aria-hidden="true"`: suma a `textContent` («JH…») pero no a lo que anuncia
+ * un lector de pantalla. Comparar `textContent` confundía «lo que hay en el
+ * DOM» con «lo que se anuncia», que es lo contratado.
+ */
+function textoAccesibleDe(elemento: HTMLElement): string {
+  const copia = elemento.cloneNode(true) as HTMLElement
+  for (const decorativo of copia.querySelectorAll('[aria-hidden="true"]')) {
+    decorativo.remove()
+  }
+  return copia.textContent ?? ''
+}
+
 describe('@s1 se muestran exactamente los dos profesionales publicados, con su nombre y su rol', () => {
   it('hay un h2 "Equipo", una región accesible "Equipo" y, dentro, exactamente 2 h3 con sus roles', () => {
     renderizarEquipo()
@@ -125,9 +155,23 @@ describe('@s7 un profesional sin formación publicada no ofrece botón de desple
     expect(botones).toHaveLength(1)
     expect(botones[0]).toHaveAccessibleName('Ver la formación de Marcos Pérez')
 
-    const tarjetaJoaquin = screen.getByRole('heading', { level: 3, name: 'Joaquín Herranz' }).closest('article')
-    expect(tarjetaJoaquin).not.toBeNull()
-    expect(tarjetaJoaquin?.textContent).toBe('Joaquín HerranzAuxiliar')
+    // Igualdad exacta, no `toContain`: si mañana la tarjeta colase un número de
+    // colegiado, un idioma o cualquier relleno anunciable, esta línea cae (@s2).
+    expect(textoAccesibleDe(obtenerTarjetaDe('Joaquín Herranz'))).toBe('Joaquín HerranzAuxiliar')
+  })
+
+  // Muerde el vínculo con @s32 de `features/rediseno_visual.feature`: el avatar
+  // de iniciales es obligatorio y decorativo. Sin esta prueba, borrarlo o
+  // quitarle el `aria-hidden` dejaría verde la aserción de arriba por motivos
+  // equivocados (no habría nada que descontar, o se descontaría texto real).
+  it('la tarjeta de Joaquín trae el avatar de iniciales con texto propio y oculto a la accesibilidad', () => {
+    renderizarEquipo()
+
+    const avatar = obtenerTarjetaDe('Joaquín Herranz').querySelector('[aria-hidden="true"]')
+
+    expect(avatar).not.toBeNull()
+    expect(avatar).toHaveAttribute('aria-hidden', 'true')
+    expect(avatar?.textContent).toBe('JH')
   })
 })
 

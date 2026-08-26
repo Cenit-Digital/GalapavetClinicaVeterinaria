@@ -202,25 +202,59 @@ li {
   outline-offset: $grosor-foco;
 }
 
+// Enlace de salto al contenido (`App.tsx`): el PRIMER tabulable del documento,
+// invisible hasta que recibe el foco. Vive en la hoja global, y no en un
+// módulo, porque no pertenece a ningún componente: es una parada de teclado
+// del documento entero.
+//
+// POR QUÉ ATERRIZA POR DEBAJO DE LA CABECERA. Medido en navegador real
+// (Chromium, viewport 1280x720, `reducedMotion: 'reduce'`, `dist/` servido con
+// `vite preview`): anclado a `--altura-barra-urgencias + espaciado(8)`, el
+// rectángulo del enlace ENFOCADO era `y = 40 … 80` y el de la cabecera fija
+// `y = 32 … 96`; es decir, el control enfocado caía ÍNTEGRAMENTE dentro de la
+// cabecera. Que se pinte por encima (z-index 100 frente al 10 de la cabecera)
+// no arregla nada: SC 2.4.11 Focus Not Obscured (Minimum), nivel AA, habla de
+// SOLAPE y no de orden de pintado, y su documento de entendimiento nombra
+// literalmente este caso — «sticky headers»
+// (https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum).
+//
+// El desplazamiento del estado enfocado sale de las MISMAS dos variables que
+// dimensionan la franja fija del documento — nunca de un número repetido a
+// mano, la misma disciplina que el `scroll-padding-top` de la sección D
+// (técnica C43 del W3C) y que el `padding-block-start` de `#root`:
+// 32px de barra + 64px de cabecera + 8px de hueco = 104px, justo por debajo de
+// los 96px en los que la cabecera termina. Medido tras el cambio: enlace
+// `y = 104 … 144`, cabecera `y = 32 … 96` — ya no hay solape, y sigue sin
+// tocar la barra de aviso superior.
 .salto-contenido {
+  --desplazamiento-al-enfocar: calc(var(--altura-barra-urgencias) + var(--altura-cabecera) + #{espaciado(8)});
+
   position: fixed;
   z-index: 100;
-  // No se superpone a la barra roja: el foco global de este enlace debe
-  // contrastar con su superficie adyacente igual que el resto de controles.
-  inset-block-start: calc(var(--altura-barra-urgencias) + #{espaciado(8)});
+  // Anclado al borde superior del área visible y escondido con
+  // `translateY(-100%)`: así el estado oculto es EXACTAMENTE su propia altura
+  // por encima del área visible, mida lo que mida el enlace. Anclarlo ya
+  // desplazado obligaría a que el porcentaje de la ocultación y el anclaje
+  // cuadrasen entre sí a mano, que es justo lo que rompió al mover el enlace.
+  inset-block-start: 0;
   inset-inline-start: espaciado(8);
   padding: espaciado(8) espaciado(12);
   border-radius: $radio-medio;
   background-color: var(--color-fondo);
   color: var(--color-tinta);
-  transform: translateY(-200%);
+  transform: translateY(-100%);
 
+  // Los dos estados se cubren, no solo el "visible": `:focus-visible` es un
+  // subconjunto de `:focus`, y este enlace debe aparecer ante CUALQUIER foco
+  // (también el que se da por programa, p. ej. al restaurar el foco tras una
+  // navegación de cliente). El desplazamiento se lee de la variable de arriba
+  // en los dos sitios, para no escribir dos veces el mismo cálculo.
   &:focus-visible {
-    transform: translateY(0);
+    transform: translateY(var(--desplazamiento-al-enfocar));
   }
 
   &:focus {
-    transform: translateY(0);
+    transform: translateY(var(--desplazamiento-al-enfocar));
   }
 }
 
