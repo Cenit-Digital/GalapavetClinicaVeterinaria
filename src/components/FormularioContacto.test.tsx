@@ -10,6 +10,40 @@ function renderizarFormularioContacto(): ReturnType<typeof render> {
   return render(elemento)
 }
 
+// El texto real de `FormularioContacto.module.scss`, leído con `?raw` — el
+// mismo patrón que ya usa `InformacionContacto.test.tsx` (@s36) y
+// `ReservaChat.test.tsx` (@s25) para blindar reglas CSS sin depender de
+// navegador real.
+const TEXTO_FORMULARIO_CONTACTO_SCSS = Object.values(
+  import.meta.glob('./FormularioContacto.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>,
+)[0] as string
+
+/**
+ * El cuerpo (sin las llaves que lo delimitan) del bloque cuya cabecera
+ * literal es `encabezadoDelBloque` (p. ej. `".grupoConsentimiento {"`),
+ * casando llaves anidadas. Falla con un mensaje que nombra la cabecera
+ * buscada si no la encuentra, en vez de devolver un fragmento a medias.
+ */
+function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezadoDelBloque)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezadoDelBloque}" en el texto`)
+  }
+  const indiceDeAperturaLlave = indiceDeCabecera + encabezadoDelBloque.length - 1
+  let profundidad = 1
+  let indice = indiceDeAperturaLlave + 1
+  while (profundidad > 0) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
+}
+
 /** Rellena los 3 cuadros de texto obligatorios y marca la casilla del aviso legal. */
 async function completarCamposObligatorios(
   usuario: ReturnType<typeof userEvent.setup>,
@@ -257,6 +291,44 @@ describe('@s13 "Enviar otro mensaje" devuelve un formulario limpio', () => {
     expect(screen.getByRole('textbox', { name: 'Cuéntanos' })).toHaveValue('')
     expect(screen.getByRole('checkbox')).not.toBeChecked()
     expect(screen.queryByRole('heading', { name: 'Formulario completado' })).not.toBeInTheDocument()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// @s25 de `features/rediseno_visual.feature:428-434`: "Los controles de
+// formulario alcanzan la altura del diseño"/"la casilla de consentimiento
+// queda alineada con la primera línea de su etiqueta". La medida real en
+// píxeles exige navegador real (Playwright, fuera del ámbito de este
+// fichero); aquí se blinda la ESTRUCTURA que la produce: la casilla y su
+// `<label>` deben compartir la misma fila (mismo contenedor directo, propio,
+// no el `<form>` entero), condición necesaria para que ambas puedan
+// alinearse por su centro vertical.
+// ---------------------------------------------------------------------------
+describe('@s25 la casilla de consentimiento y su etiqueta viven en la misma fila', () => {
+  it('la casilla y su `<label>` comparten un contenedor propio, distinto del `<form>`', () => {
+    renderizarFormularioContacto()
+
+    const formulario = screen.getByRole('form', { name: 'Escríbenos' })
+    const casilla = within(formulario).getByRole('checkbox')
+    const etiqueta = within(formulario).getByText('He leído y acepto el aviso legal', { exact: false })
+
+    expect(casilla.parentElement).toBe(etiqueta.parentElement)
+    expect(casilla.parentElement).not.toBe(formulario)
+  })
+
+  it('el contenedor de esa fila centra sus dos hijos en el eje transversal, por CSS ("grupoConsentimiento")', () => {
+    const cuerpo = cuerpoDelBloque(TEXTO_FORMULARIO_CONTACTO_SCSS, '.grupoConsentimiento {')
+
+    expect(cuerpo).toContain('display: flex;')
+    expect(cuerpo).toContain('align-items: center;')
+  })
+
+  it('el enlace "Aviso legal", ahora inline en el texto de la etiqueta, sigue alcanzando el área táctil mínima de 24px (no colapsa al tamaño de su texto)', () => {
+    const cuerpoGrupo = cuerpoDelBloque(TEXTO_FORMULARIO_CONTACTO_SCSS, '.grupoConsentimiento {')
+    const cuerpoEnlace = cuerpoDelBloque(cuerpoGrupo, 'a {')
+
+    expect(cuerpoEnlace).toContain('@include area-tactil-minima')
+    expect(cuerpoEnlace).toContain('display: inline-block;')
   })
 })
 

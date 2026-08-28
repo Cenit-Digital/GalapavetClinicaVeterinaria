@@ -452,3 +452,90 @@ describe('@s20 cada mensaje del historial dice quién lo dice, sin depender del 
     expect(mensajes.filter((mensaje) => mensaje.startsWith('Tú:'))).toHaveLength(1)
   })
 })
+
+// ---------------------------------------------------------------------------
+// @s34 de `features/rediseno_visual.feature:542-549`: "La reserva por chat se
+// presenta en dos columnas, con la cabecera de conversación del diseño". Este
+// fichero solo puede verificar la ANATOMÍA (presencia real de cada pieza en
+// el DOM, con doble anclaje de literales a mano); la disposición en dos
+// columnas a partir del punto de corte y las medidas geométricas reales
+// (esquina redondeada, sombra, circularidad del avatar en píxeles) exigen
+// navegador real (Playwright) y quedan fuera del ámbito cerrado de este lote
+// (ningún fichero de `tests/e2e/` está en la lista de ficheros tocables) —
+// documentado en el informe del lote, `progress/rediseno/tdd_reserva-chat-anatomia.md`.
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// @s25 de `features/rediseno_visual.feature:428-434`: "Los controles de
+// formulario alcanzan la altura del diseño". La medida real en píxeles del
+// alto renderizado exige navegador real (Playwright, fuera del ámbito de
+// este fichero); aquí se blinda la REGLA fuente que produce esa altura,
+// leyendo el texto real del `.module.scss` con `?raw` — el mismo patrón que
+// ya usa `InformacionContacto.test.tsx` (@s36) y el resto de
+// `src/lib/diseno/*.test.ts`.
+// ---------------------------------------------------------------------------
+const TEXTO_RESERVA_CHAT_SCSS = Object.values(
+  import.meta.glob('./ReservaChat.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>,
+)[0] as string
+
+/**
+ * El cuerpo (sin las llaves que lo delimitan) del bloque cuya cabecera
+ * literal es `encabezadoDelBloque` (p. ej. `"[aria-label='Respuestas rápidas'] button {"`),
+ * casando llaves anidadas. Falla con un mensaje que nombra la cabecera
+ * buscada si no la encuentra, en vez de devolver un fragmento a medias.
+ */
+function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezadoDelBloque)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezadoDelBloque}" en el texto`)
+  }
+  const indiceDeAperturaLlave = indiceDeCabecera + encabezadoDelBloque.length - 1
+  let profundidad = 1
+  let indice = indiceDeAperturaLlave + 1
+  while (profundidad > 0) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
+}
+
+describe('@s25 los botones de "Respuestas rápidas" alcanzan la altura mínima de control (44px)', () => {
+  it('el bloque `[aria-label="Respuestas rápidas"] button` fija min-height al mismo token de altura que ya usa `input` en este fichero', () => {
+    const cuerpo = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, "[aria-label='Respuestas rápidas'] button {")
+
+    expect(cuerpo).toContain('min-height: $altura-control-media;')
+  })
+})
+
+describe('@s34 el panel de conversación abre con una cabecera identificable, con avatar y nombre real', () => {
+  it('la cabecera del chat es un grupo localizable que contiene el avatar decorativo y el nombre comercial real "Galapavet"', () => {
+    renderizarReservaChat()
+
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    const cabecera = within(widget).getByRole('group', { name: 'Cabecera del chat' })
+
+    // Doble anclaje: el literal "Galapavet" se escribe aquí a mano (no se
+    // importa `datosNegocio.identidad.nombreComercial` de producción), y se
+    // confronta contra el texto REAL que la cabecera renderiza.
+    expect(within(cabecera).getByText('Galapavet')).toBeInTheDocument()
+    expect(within(cabecera).getByText('G', { selector: '[aria-hidden="true"]' })).toBeInTheDocument()
+  })
+
+  it('la cabecera lleva un indicador de disponibilidad, sin repetir la promesa "en línea" que @s17 prohíbe', () => {
+    renderizarReservaChat()
+
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    const cabecera = within(widget).getByRole('group', { name: 'Cabecera del chat' })
+
+    // Doble anclaje: el literal "Disponible" se escribe aquí a mano y se
+    // confronta contra el texto REAL de la cabecera. No es "en línea": esa
+    // palabra la prohíbe @s17 (más abajo, línea ~390) porque el asistente es
+    // un guion que corre en el propio navegador, no una persona conectada.
+    expect(within(cabecera).getByText('Disponible')).toBeInTheDocument()
+    expect(cabecera).not.toHaveTextContent('en línea')
+  })
+})

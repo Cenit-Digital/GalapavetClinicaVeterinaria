@@ -25,14 +25,75 @@ export const VARIANTES_REDISENO = ['clinica', 'calida', 'tech', 'eco', 'marca'] 
 
 export const VARIANTE_PREDETERMINADA = VARIANTES_REDISENO[0]
 
-export function buscarAfirmacionesClinicasProhibidas(
-  textos: readonly string[],
-  afirmacionesProhibidas: readonly string[],
-): readonly string[] {
-  if (afirmacionesProhibidas.length === 0) {
-    return ['La lista de afirmaciones prohibidas no puede estar vacía.']
+/** Un fichero del corpus que la puerta de declaración única inspecciona (@s10). */
+export interface FuenteDeProyecto {
+  readonly ruta: string
+  readonly texto: string
+}
+
+export interface InformeDeDeclaracionUnica {
+  readonly ficherosInspeccionados: number
+  readonly ficherosQueDeclaran: readonly string[]
+  readonly pasa: boolean
+  readonly motivo?: string
+}
+
+const SIN_ELEMENTOS = 0
+const UNA_SOLA_DECLARACION = 1
+
+/** Las tres comillas con las que JavaScript, TypeScript y HTML escriben una cadena. */
+const COMILLAS_DE_CADENA = ["'", '"', '`'] as const
+
+/**
+ * Si `texto` escribe `identificador` como literal de cadena ENTERO. Se compara
+ * con las comillas incluidas a propósito: `'/img/hero/clinica.webp'` contiene
+ * la palabra pero no declara el identificador, y confundirlos convertiría la
+ * puerta en ruido (`src/components/Hero.tsx:48`).
+ */
+function declaraElIdentificadorComoLiteral(texto: string, identificador: string): boolean {
+  return COMILLAS_DE_CADENA.some((comilla) => texto.includes(`${comilla}${identificador}${comilla}`))
+}
+
+/**
+ * Qué ficheros del corpus declaran `identificador` como literal de cadena
+ * (@s10: «el identificador aparece declarado una sola vez en todo el
+ * proyecto»). Aprueba solo si lo declara EXACTAMENTE uno: cero significaría
+ * que la fuente única ha desaparecido, y dos o más, que alguien ha vuelto a
+ * copiarla.
+ *
+ * Falla cerrada ante un corpus vacío o un identificador vacío, en vez de dar
+ * "cero hallazgos" por bueno (patrón
+ * `verde-por-vacuidad-en-puerta-de-verificacion`).
+ */
+export function buscarDeclaracionesLiteralesDelIdentificador(
+  fuentes: readonly FuenteDeProyecto[],
+  identificador: string,
+): InformeDeDeclaracionUnica {
+  if (fuentes.length === SIN_ELEMENTOS) {
+    return {
+      ficherosInspeccionados: SIN_ELEMENTOS,
+      ficherosQueDeclaran: [],
+      pasa: false,
+      motivo: 'el corpus de ficheros está vacío: no se inspeccionó ninguno',
+    }
   }
 
-  const textoCompleto = textos.join('\n').toLocaleLowerCase()
-  return afirmacionesProhibidas.filter((afirmacion) => textoCompleto.includes(afirmacion.toLocaleLowerCase()))
+  if (identificador.length === SIN_ELEMENTOS) {
+    return {
+      ficherosInspeccionados: fuentes.length,
+      ficherosQueDeclaran: [],
+      pasa: false,
+      motivo: 'el identificador que se busca está vacío',
+    }
+  }
+
+  const ficherosQueDeclaran = fuentes
+    .filter(({ texto }) => declaraElIdentificadorComoLiteral(texto, identificador))
+    .map(({ ruta }) => ruta)
+
+  return {
+    ficherosInspeccionados: fuentes.length,
+    ficherosQueDeclaran,
+    pasa: ficherosQueDeclaran.length === UNA_SOLA_DECLARACION,
+  }
 }

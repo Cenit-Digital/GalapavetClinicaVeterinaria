@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Cabecera } from './Cabecera'
 import { PUNTO_DE_CORTE_NAVEGACION_PX } from './Cabecera-logica'
 
@@ -234,5 +234,192 @@ describe('@s15 sin destinos de navegación no se renderiza ninguna navegación v
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Abrir menú' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Galapavet/ })).toHaveAttribute('href', '#inicio')
+  })
+})
+
+describe('@s28 el acceso a la Tienda lleva un estilo de borde sin relleno, distinto del resto del catálogo', () => {
+  it('en la navegación de escritorio, solo el enlace de Tienda lleva el atributo que activa el estilo de borde sin relleno', () => {
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    const enlaces = within(nav).getAllByRole('link')
+    const enlaceTienda = within(nav).getByRole('link', { name: 'Tienda' })
+
+    expect(enlaceTienda).toHaveAttribute('data-enlace-tienda')
+    expect(enlaces.filter((enlace) => enlace.hasAttribute('data-enlace-tienda'))).toHaveLength(1)
+  })
+
+  it('en el panel móvil, el enlace de Tienda también lleva el mismo atributo', async () => {
+    const usuario = userEvent.setup()
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX - 1 })
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    expect(screen.getByRole('link', { name: 'Tienda' })).toHaveAttribute('data-enlace-tienda')
+  })
+})
+
+// ----------------------------------------------------------------------------
+// Texto REAL de los estilos propios de esta cabecera (`?raw`), mismo patrón que
+// `InformacionContacto.test.tsx` (`cuerpoDelBloque`): la puerta lee el fichero
+// de verdad, nunca un símbolo de producción, así que un sabotaje del
+// `.module.scss` se ve reflejado sin tocar este test.
+const TEXTO_CABECERA_SCSS = Object.values(
+  import.meta.glob('./Cabecera.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>,
+)[0] as string
+
+/**
+ * El cuerpo (sin las llaves que lo delimitan) del bloque cuya cabecera literal
+ * es `encabezadoDelBloque` (p. ej. `".navPrincipal {"`), casando llaves
+ * anidadas. Falla con un mensaje que nombra la cabecera buscada si no la
+ * encuentra, en vez de devolver un fragmento a medias.
+ */
+function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezadoDelBloque)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezadoDelBloque}" en el texto`)
+  }
+  const indiceDeAperturaLlave = indiceDeCabecera + encabezadoDelBloque.length - 1
+  let profundidad = 1
+  let indice = indiceDeAperturaLlave + 1
+  while (profundidad > 0) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
+}
+
+describe('@s28 el estilo de borde sin relleno del acceso a la Tienda vive de verdad en la hoja de estilos, con el mixin compartido', () => {
+  it('lee de verdad el fichero de estilos propio: el corpus no está vacío', () => {
+    expect(TEXTO_CABECERA_SCSS.length).toBeGreaterThan(0)
+  })
+
+  it('en la navegación de escritorio, el selector del enlace de Tienda incluye el mixin "boton-fantasma"', () => {
+    const cuerpoNav = cuerpoDelBloque(TEXTO_CABECERA_SCSS, '.navPrincipal {')
+    const cuerpoEnlaceTienda = cuerpoDelBloque(cuerpoNav, 'a[data-enlace-tienda] {')
+
+    expect(cuerpoEnlaceTienda).toContain('@include boton-fantasma')
+  })
+
+  it('en el panel móvil, el selector del enlace de Tienda incluye el mismo mixin "boton-fantasma"', () => {
+    const cuerpoPanel = cuerpoDelBloque(TEXTO_CABECERA_SCSS, '.panelMovil {')
+    const cuerpoEnlaceTienda = cuerpoDelBloque(cuerpoPanel, 'a[data-enlace-tienda] {')
+
+    expect(cuerpoEnlaceTienda).toContain('@include boton-fantasma')
+  })
+})
+
+// ----------------------------------------------------------------------------
+// Salto a una sección desde un ancla de la navegación de escritorio (@s28):
+// el sitio de destino se mide en el momento del clic, nunca un número escrito
+// a mano. jsdom no hace layout real, así que cada rect se sustituye a mano
+// (mismo patrón que `Galeria.test.tsx`, `fijarAnchoDePrimeraTarjeta`).
+
+/** Elementos insertados directamente en `document.body` (no vía `render`, que `cleanup()` de `src/test/setup.ts` no toca) para simular una sección real de la portada. Se retiran tras cada test. */
+let elementosDeDestino: HTMLElement[] = []
+
+function crearElementoDeDestino(id: string): HTMLElement {
+  const elemento = document.createElement('div')
+  elemento.id = id
+  document.body.appendChild(elemento)
+  elementosDeDestino.push(elemento)
+  return elemento
+}
+
+afterEach(() => {
+  elementosDeDestino.forEach((elemento) => elemento.remove())
+  elementosDeDestino = []
+})
+
+/** Rect medido a mano para un elemento, sustituyendo lo que jsdom nunca calcula. */
+function fijarRectMedido(elemento: Element, valores: Partial<DOMRect>): void {
+  vi.spyOn(elemento, 'getBoundingClientRect').mockReturnValue({
+    width: 0,
+    height: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => '',
+    ...valores,
+  } as DOMRect)
+}
+
+/** Mismo patrón que `PaginaCampanas.test.tsx` (`fijarPreferenciaDeMovimiento`): ancla la consulta a un literal escrito a mano, nunca a la constante de producción. */
+function fijarPreferenciaDeMovimiento(prefiereMenos: boolean): void {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(
+      (consulta: string) => ({ matches: prefiereMenos && consulta === '(prefers-reduced-motion: reduce)' }) as MediaQueryList,
+    ),
+  )
+}
+
+describe('@s28 el salto a una sección desde la navegación de escritorio se calcula desde la altura real de la cabecera más la barra de urgencias, no desde un número escrito a mano', () => {
+  it('llama a window.scrollTo con el scroll ya acumulado más la distancia real al elemento menos la altura real de la cabecera (que arranca justo debajo de la barra de urgencias, así que su "bottom" ya incluye las dos)', async () => {
+    const usuario = userEvent.setup()
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+    const seccionServicios = crearElementoDeDestino('servicios')
+
+    fijarRectMedido(screen.getByRole('banner'), { bottom: 96 })
+    fijarRectMedido(seccionServicios, { top: 500 })
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(200)
+
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    await usuario.click(within(nav).getByRole('link', { name: 'Servicios' }))
+
+    // 200 (ya desplazado) + 500 (distancia real al elemento) - 96 (altura
+    // real de la cabecera, franja fija completa) = 604. Literal calculado a
+    // mano (mismo patrón que `Cabecera-logica.test.ts`), nunca delegado en la
+    // propia fórmula de producción.
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 604, behavior: 'smooth' })
+  })
+
+  it('también deja el hash de la URL en el destino pulsado, sin que ese cambio de por sí desplace nada (usa "pushState", no "location.hash")', async () => {
+    const usuario = userEvent.setup()
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+    const seccionServicios = crearElementoDeDestino('servicios')
+    fijarRectMedido(screen.getByRole('banner'), { bottom: 96 })
+    fijarRectMedido(seccionServicios, { top: 500 })
+
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    await usuario.click(within(nav).getByRole('link', { name: 'Servicios' }))
+
+    expect(window.location.hash).toBe('#servicios')
+    expect(window.location.pathname).toBe('/')
+  })
+
+  it('con la preferencia de menos movimiento activa, pide el desplazamiento sin suavizado ("auto")', async () => {
+    fijarPreferenciaDeMovimiento(true)
+    const usuario = userEvent.setup()
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+    const seccionFaq = crearElementoDeDestino('faq')
+
+    fijarRectMedido(screen.getByRole('banner'), { bottom: 96 })
+    fijarRectMedido(seccionFaq, { top: 500 })
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(200)
+
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    await usuario.click(within(nav).getByRole('link', { name: 'FAQ' }))
+
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 604, behavior: 'auto' })
+  })
+
+  it('si la sección de destino no existe todavía en el documento, no llama a window.scrollTo y deja la navegación nativa del ancla seguir su curso', async () => {
+    const usuario = userEvent.setup()
+    renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    await usuario.click(within(nav).getByRole('link', { name: 'Contacto' }))
+
+    expect(window.scrollTo).not.toHaveBeenCalled()
+    expect(window.location.hash).toBe('#contacto')
   })
 })

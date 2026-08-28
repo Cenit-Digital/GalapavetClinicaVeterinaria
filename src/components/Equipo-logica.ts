@@ -19,6 +19,24 @@ export function tieneFormacion(formacion: string | undefined): boolean {
   return formacion !== undefined
 }
 
+/** Cuántas palabras del nombre aportan inicial al avatar: nombre + primer apellido (@s32). */
+const PALABRAS_QUE_APORTAN_INICIAL = 2
+
+/**
+ * Iniciales del avatar decorativo de una tarjeta (@s32): la primera letra de
+ * las dos primeras palabras del nombre real (nombre + primer apellido), no
+ * solo de la primera. Un nombre de una sola palabra devuelve esa única
+ * inicial, sin reventar.
+ */
+export function inicialesDe(nombre: string): string {
+  return nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, PALABRAS_QUE_APORTAN_INICIAL)
+    .map((palabra) => palabra[0])
+    .join('')
+}
+
 /** Descarta los profesionales sin nombre publicado (@s9): un nombre vacío no es un profesional real. */
 export function profesionalesValidos(listado: readonly Profesional[]): Profesional[] {
   return listado.filter((profesional) => profesional.nombre.length > 0)

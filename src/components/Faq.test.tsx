@@ -309,3 +309,65 @@ describe('@s13 el teléfono de urgencias de la respuesta procede de la fuente ú
     expect(region.textContent).not.toContain('91 851 13 93')
   })
 })
+
+describe('@s33 (rediseno_visual) la sección abre con su cintillo en versalitas, delante del titular', () => {
+  it('hay un párrafo con el texto "FAQ" (el rótulo del prototipo, docs/diseno-claude-design/Veterinaria La Sierra.dc.html:427) inmediatamente antes del h2, y no es un encabezado', () => {
+    renderizarFaq()
+
+    const seccion = obtenerSeccionFaq()
+    const encabezado = within(seccion).getByRole('heading', { level: 2, name: 'Preguntas frecuentes' })
+    const cintillo = within(seccion).getByText('FAQ')
+
+    // Es un párrafo, no un encabezado: @s33 exige que el rótulo "no rompa la
+    // jerarquía de niveles" (no debe existir un h-algo adicional con ese texto).
+    expect(cintillo.tagName).toBe('P')
+    expect(within(seccion).queryByRole('heading', { name: 'FAQ' })).not.toBeInTheDocument()
+
+    // "Por delante del titular": el cintillo precede al <h2> en el orden del documento.
+    const posicionRelativa = cintillo.compareDocumentPosition(encabezado)
+    expect(Boolean(posicionRelativa & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true)
+  })
+})
+
+/** El texto REAL de la hoja de estilos de `Faq`, leído en crudo por Vite (nunca el símbolo `styles` importado: ese es un proxy en jsdom, `vite.config.ts:61-79`). */
+const TEXTO_REAL_DE_FAQ_SCSS = (
+  import.meta.glob('./Faq.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<
+    string,
+    string
+  >
+)['./Faq.module.scss'] as string
+
+/**
+ * Ancho máximo general del contenedor compartido por las 6 rutas
+ * (`src/styles/_api.scss:133`, `$ancho-maximo-contenedor: 1220px;`). Literal
+ * escrito a mano, no importado: `_tokens-api.scss` no exporta esta variable
+ * SCSS a JS/TS, y el doble de test se compara contra el literal, nunca contra
+ * el símbolo de producción.
+ */
+const ANCHO_MAXIMO_CONTENEDOR_GENERAL_PX = 1220
+
+/**
+ * Ancho máximo de la sección de bienvenida (Hero), leído SOLO por lectura de
+ * `src/components/Hero.module.scss:39` (`width: min(100% - #{espaciado(48)},
+ * 900px)`), sin editar ese fichero: @s18 pide que Faq declare "su propio
+ * ancho máximo, distinto del general y distinto entre sí" (Hero lo cierra
+ * OTRO artesano en paralelo).
+ */
+const ANCHO_MAXIMO_HERO_PX = 900
+
+describe('@s18 (rediseno_visual) la sección de preguntas frecuentes declara su propio ancho máximo, distinto del general y del de la sección de bienvenida', () => {
+  it('el texto real de Faq.module.scss fija max-width en un valor propio, menor que el general y distinto del de Hero', () => {
+    // Solo las declaraciones DIRECTAS de ".faq" (hasta la primera llave
+    // anidada): así "max-width: 70ch" de la sub-región de respuesta (más
+    // abajo en el fichero) nunca se confunde con el ancho de la sección.
+    const bloquePropioDeFaq = TEXTO_REAL_DE_FAQ_SCSS.match(/\.faq\s*\{([^{]*)/)?.[1] ?? ''
+    const declaracion = bloquePropioDeFaq.match(/max-width:\s*(\d+)px/)
+
+    expect(declaracion, `bloque propio de ".faq" leído: ${JSON.stringify(bloquePropioDeFaq)}`).not.toBeNull()
+    const anchoDeclarado = Number(declaracion?.[1])
+
+    expect(anchoDeclarado).toBe(860)
+    expect(anchoDeclarado).toBeLessThan(ANCHO_MAXIMO_CONTENEDOR_GENERAL_PX)
+    expect(anchoDeclarado).not.toBe(ANCHO_MAXIMO_HERO_PX)
+  })
+})

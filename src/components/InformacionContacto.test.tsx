@@ -300,3 +300,132 @@ describe('@s16 un teléfono que no valida hace fallar al panel en vez de pintar 
     expect(document.querySelector('a[href^="tel:+34"]')).toBeNull()
   })
 })
+
+// ---------------------------------------------------------------------------
+// @s36 de `features/rediseno_visual.feature` (bloque D, "ANATOMÍA DE LOS
+// MÓDULOS DE LA PORTADA"): "la sección de contacto lleva el formulario, la
+// tarjeta de urgencias y el mapa con los cuatro bloques de datos". El bloque
+// D no lleva anotación de "Herramienta" (a diferencia del bloque C, que sí
+// dice "navegador real"): `vite.config.ts:76-79` deja escrito que las puertas
+// de los bloques A/D/E/H leen el TEXTO REAL de los `.module.scss` con
+// `?raw` — el mismo patrón que ya usa el resto de `src/lib/diseno/*.test.ts`.
+// Así se verifica aquí lo que no es DOM (la maquetación de las dos tarjetas),
+// sin Playwright (fuera del ámbito de este lote, ver el informe).
+// ---------------------------------------------------------------------------
+const TEXTO_INFORMACION_CONTACTO_SCSS = Object.values(
+  import.meta.glob('./InformacionContacto.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>,
+)[0] as string
+
+/**
+ * El cuerpo (sin las llaves que lo delimitan) del bloque cuya cabecera
+ * literal es `encabezadoDelBloque` (p. ej. `"[data-tarjeta-de='datos'] {"`),
+ * casando llaves anidadas. Falla con un mensaje que nombra la cabecera
+ * buscada si no la encuentra, en vez de devolver un fragmento a medias.
+ */
+function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezadoDelBloque)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezadoDelBloque}" en el texto`)
+  }
+  const indiceDeAperturaLlave = indiceDeCabecera + encabezadoDelBloque.length - 1
+  let profundidad = 1
+  let indice = indiceDeAperturaLlave + 1
+  while (profundidad > 0) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
+}
+
+describe('@s36 la sección de contacto reparte su contenido en la tarjeta de datos (con el mapa) y la tarjeta de urgencias', () => {
+  it('los tres bloques que el cliente sí publica muestran su rótulo real y visible, en un <legend> (no solo en el aria-label)', () => {
+    renderizarInformacionContacto()
+
+    const region = screen.getByRole('region', { name: 'Información de contacto' })
+    const casos = [
+      [within(region).getByRole('group', { name: 'Dirección' }), 'Dirección'],
+      [within(region).getByRole('group', { name: 'Teléfonos' }), 'Teléfonos'],
+      [within(region).getByRole('group', { name: 'Horario' }), 'Horario'],
+    ] as const
+
+    for (const [grupo, textoRotuloEscritoAMano] of casos) {
+      const rotulo = within(grupo).getByText(textoRotuloEscritoAMano)
+      expect(rotulo.tagName).toBe('LEGEND')
+      expect(rotulo.getAttribute('aria-hidden')).not.toBe('true')
+    }
+  })
+
+  it('la tarjeta de urgencias muestra el rótulo real derivado de la fuente única, no un literal retipeado', () => {
+    renderizarInformacionContacto()
+
+    const grupo = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
+    // Literal escrito a mano —el mismo que ya usa @s5 de
+    // `informacion_contacto.feature` para el "aria-label"—, nunca contra el
+    // símbolo importado de producción: doble anclaje.
+    const rotulo = within(grupo).getByText('Urgencias fuera de horario')
+    expect(rotulo.tagName).toBe('LEGEND')
+  })
+
+  it('el orden de lectura del DOM sigue siendo el que ya fijó "informacion_contacto.feature" @s1: los tres bloques de datos antes que urgencias', () => {
+    renderizarInformacionContacto()
+
+    const region = screen.getByRole('region', { name: 'Información de contacto' })
+    const grupos = within(region).getAllByRole('group')
+    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual([
+      'Dirección',
+      'Teléfonos',
+      'Horario',
+      'Urgencias fuera de horario',
+    ])
+  })
+
+  it('sigue sin aparecer ningún bloque de correo (ya cubierto por @s7 de "informacion_contacto.feature"; se repite por trazabilidad de @s36)', () => {
+    renderizarInformacionContacto()
+
+    const region = screen.getByRole('region', { name: 'Información de contacto' })
+    expect(within(region).queryByRole('group', { name: 'Email' })).not.toBeInTheDocument()
+    expect(within(region).queryByRole('group', { name: 'Correo' })).not.toBeInTheDocument()
+    expect(region.textContent ?? '').not.toMatch(/[\w.+-]+@[\w-]+\.[\w.-]+/)
+  })
+
+  it('cada rótulo de los tres bloques de datos usa el mixin "eyebrow" (versalitas + color de acento tinta)', () => {
+    const cuerpoTarjetaDatos = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='datos'] {")
+    const cuerpoLegendDeDatos = cuerpoDelBloque(cuerpoTarjetaDatos, 'legend {')
+
+    expect(cuerpoLegendDeDatos).toContain('@include eyebrow')
+  })
+
+  it('la tarjeta de urgencias lleva el color de urgencia como fondo suave y como acento de borde', () => {
+    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
+
+    expect(cuerpoTarjetaUrgencia).toContain('background-color: var(--color-urgencia-suave)')
+    expect(cuerpoTarjetaUrgencia).toMatch(/border-inline-start:.*var\(--color-urgencia\)/)
+  })
+
+  it('el teléfono de la tarjeta de urgencias se maqueta como un botón real ("boton-fantasma"), no como un enlace pelado', () => {
+    const cuerpoEnlaceDeUrgencia = cuerpoDelBloque(
+      TEXTO_INFORMACION_CONTACTO_SCSS,
+      "[data-tarjeta-de='urgencia'] a {",
+    )
+
+    expect(cuerpoEnlaceDeUrgencia).toContain('@include boton-fantasma')
+  })
+
+  it('la tarjeta de urgencias sube visualmente por encima de la de datos con "order", sin reordenar el DOM ya aprobado', () => {
+    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
+
+    expect(cuerpoTarjetaUrgencia).toMatch(/order:\s*-1\s*;/)
+  })
+
+  it('"#contacto" (el wrapper real de Landing.tsx con el formulario y esta sección) se convierte en una rejilla de dos columnas', () => {
+    const cuerpoContacto = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '#contacto {')
+
+    expect(cuerpoContacto).toContain('display: grid')
+    expect(cuerpoContacto).toMatch(/grid-template-columns:\s*repeat\(auto-fit/)
+  })
+})

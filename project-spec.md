@@ -137,6 +137,10 @@ implementarse.
 
 | 56 | **La puerta de mutación del cierre usa `stryker.config.json` como única fuente de la superficie mutable y el comando del arnés es exactamente `pnpm exec stryker run`, sin `--mutate {{target}}`.** | Mantener la opción CLI vacía; duplicar los globs de Stryker en `harness.config.json`; cambiar el motor genérico del arnés. | `mutation.targets` está vacío de forma intencionada para pedir una única mutación global. El motor entonces ejecuta el comando tal cual; añadir `--mutate` sin argumento hace fallar Stryker antes de medir nada. StrykerJS documenta además que una opción CLI sustituye, no complementa, el valor del fichero de configuración: conservar el `mutate` completo en `stryker.config.json` evita dos fuentes que puedan divergir. |
 | 57 | **`stryker.config.json` carga explícitamente `@stryker-mutator/vitest-runner` y no contiene opciones desconocidas ni patrones de exclusión que no casen.** | Confiar en el descubrimiento automático `@stryker-mutator/*`; reinstalar o actualizar paquetes sin evidencia; silenciar los avisos. | Con pnpm, el `import.meta.url` real del core se resuelve en su almacén virtual y el glob por defecto no ve el paquete hermano aunque esté instalado. Una entrada explícita de `plugins` usa la resolución normal de módulos, que sí encuentra el runner. La documentación oficial permite declarar plugins explícitos y exige instalar el runner por separado. Eliminar la clave de pseudo-comentario y el patrón de cero coincidencias corrige sus avisos sin relajar umbrales ni cambiar la lista inclusiva de producción. |
+| 58 | **El `--color-borde` de las cuatro variantes importadas se DERIVA, no se declara a ojo: es el `rgba()` del prototipo compuesto sobre el rol de fondo de su propia variante con `mezclar()` de `src/lib/diseno/mezclaDeColor.ts`, con UNA sola regla para las cuatro escrita por extenso en `src/styles/_tokens.scss`.** En consecuencia, `--border` deja de ser una excepción de @s3, y las desviaciones que quedan se escriben por LISTA —`tech --color-acento-suave`, `tech --color-urgencia-suave` y `calida --color-texto-suave`, cada una con su motivo—, nunca por recuento; y la comparación de un rol translúcido exige el valor COMPUESTO, no un hexadecimal cualquiera. | Mantener la redacción original («salvo en las tres desviaciones declaradas de @s6 y @s7») — descartada: la medición da SIETE parejas que no pueden coincidir carácter a carácter, no tres, porque el prototipo declara `--border` con alfa en los cuatro temas (VLS:20, :28, :36, :44) y `--accent-soft` y `--urg-soft` con alfa en `tech` (VLS:38-39). Apartar las cuatro parejas de `--border` sin comparar nada, que es como la primera implementación reconcilió el número — descartada: se midió que daba por VERDE `--color-borde: #FF0000` y `--color-borde: #000000`. Cerrar el recuento en «las dos» o «las tres» — descartada: un recuento no obliga a enmendar el contrato cuando la lista cambia; una lista literal sí. | El `--color-borde` de `clinica` valía `#D8E0EA`, que no es la composición del `rgba(15,32,60,.13)` del prototipo ni sobre `--color-fondo` (`mezclar('#F8FAFC', '#0F203C', 0.13)` = `#DADEE3`) ni sobre `--color-superficie` (`#E0E2E6`): un número sin derivación trazable que ningún test del repositorio fijaba, exactamente el agujero que este contrato existe para cerrar. Derivar lo convierte en verificable y uniforme: los cuatro bordes salen de la misma regla, y si el prototipo cambiara uno, el test lo diría. Los otros tres roles no se derivan porque el prototipo solo escribe con alfa los dos de `tech` —en `clinica`, `calida` y `eco` da `--accent-soft` y `--urg-soft` opacos y el sistema los copia carácter a carácter—, así que no hay regla uniforme que aplicar; y `calida --color-texto-suave` es la corrección de contraste que @s6 ya exige (el `#8A6C45` del prototipo da 4.37 sobre el fondo alterno de su variante, por debajo del 4.5). Decisión tomada por el humano el 26/08/2026. |
+| 59 | **El cintillo de la sección de bienvenida queda exceptuado de la regla de acento tinta de @s33 y usa `--color-sobre-primario`.** La regla se reformula como medible: acento tinta en toda sección cuyo fondo sea un rol de color del sistema; la de bienvenida, que va sobre la fotografía a sangre con velo de @s29, usa la misma tinta que ya declara para el resto de su texto. El escenario afirma los dos recuentos —secciones con fondo de token mayor que 0, secciones sobre fotografía exactamente 1—, de modo que la excepción no puede crecer sin enmendar el contrato. | Mantener el acento tinta también en el hero — descartada por medición: sobre la parada del 92 % del velo, `--color-acento-tinta` da 3.21 · 2.04 · 1.10 · 1.97 · 2.40 en `clinica`, `calida`, `tech`, `eco` y `marca` con la fotografía más oscura, y 2.53 · 1.52 · 1.33 · 1.48 · 1.81 con la más clara: suspende el mínimo de 4.5 de texto normal en las CINCO. Oscurecer el velo hasta que el acento tinta cumpla — descartada: el velo es el que @s29 fija, y su contraste ya está aprobado para el titular, el párrafo y los botones. Dejar la excepción como nota al pie, sin criterio comprobable — descartada: una nota no es un `Then` y no impide que la excepción se extienda a otras secciones. | `--color-sobre-primario` sobre ese mismo velo da 17.60 · 14.43 · 12.73 · 15.15 · 13.63 con la fotografía más oscura y 13.86 · 10.76 · 15.37 · 11.39 · 10.28 con la más clara: aprueba en las cinco variantes por los dos extremos, y es además la tinta que el titular y el párrafo de esa sección ya heredan. La contradicción entre @s33 y @s29 era real y la destapó la implementación al medirla (`progress/rediseno/fix_uso_del_acento.md`, anotada en `src/components/Hero.module.scss:44-55`); resolverla en el contrato es lo que evita que se resuelva a escondidas dentro del código. Decisión tomada por el humano el 26/08/2026. |
+| 60 | **La cláusula 3 de @s8 pasa a describir el mecanismo real de `--color-borde-control`: `clinica`, `calida` y `eco` importan el `--muted` del tema de su propia variante en el prototipo, `tech` importa el `rgb()` de su `--border` translúcido (`rgba(148,197,255,.18)`), y solo `marca` —que no tiene tema propio en el prototipo— deriva por mezcla del primario con el fondo, `mezclar('#FFFFFF', '#77286B', 0.7)` = `#A06997`, con la regla escrita por extenso en `src/styles/_tokens.scss`.** El resto de la cláusula —las cinco variantes declaran el rol y su ratio alcanza 3, y el prototipo no modela este rol— no cambia. | Rederivar los cuatro valores de `clinica`, `calida`, `tech` y `eco` como `mezclar(fondo, primario, p)` para que la cláusula original quedara literalmente cierta — descartada: ninguna proporción de 0 % a 100 % produce esos cuatro hexadecimales (medido con la función real), así que "hacerlo cierto" exigiría cambiar el aspecto visual de los cuatro bordes de control ya aprobados sin ninguna ganancia medible de contraste (los cinco ya aprueban el mínimo de 3). Dejar la cláusula como estaba, sin enmendarla — descartada: es una afirmación medible y falsa hoy sobre el mecanismo de derivación, exactamente el tipo de agujero que este contrato existe para cerrar. | Medido recorriendo `mezclar(fondo, primario, p)` de 0 % a 100 % con la función real `src/lib/diseno/mezclaDeColor.ts`: `clinica` (`#5E6E88`), `calida` (`#8A6C45`) y `eco` (`#557368`) son el `--muted` del tema de su variante en el prototipo; `tech` (`#94C5FF`) es el `rgb()` de su `--border` translúcido (`rgba(148,197,255,.18)`); solo `marca` (`#A06997`) es mezcla genuina. `_tokens.scss` no contenía ninguna regla escrita de derivación para este rol. La parte medible de @s8 —existencia en las cinco y ratio ≥ 3 (clinica 4.94 · calida 4.72 · tech 9.94 · eco 5.20 · marca 4.23), y que el prototipo no modela el rol (inventario de 18 roles)— ya estaba cubierta y no cambia; solo la afirmación sobre el mecanismo era falsa. Decisión tomada por el humano el 28/08/2026. |
+
 
 ## Arquitectura
 
@@ -774,6 +778,64 @@ aprobado para los enlaces.
    para @s7/@s8) — no toca ni un escenario de `pie_de_pagina.feature`,
    `galeria.feature`, `campanas_portada.feature`, `pagina_campanas.feature`,
    `pagina_blog.feature`, `pagina_tienda.feature` ni `seo_estructura.feature`.
+
+### Rediseño visual — nueva feature: `rediseno_visual` (feature 24)
+
+> **Contrato aprobado por el humano el 26/08/2026.** Los cincuenta y dos
+> escenarios viven en `features/rediseno_visual.feature`, cuya cabecera
+> documenta el diagnóstico medido, la causa raíz y las cinco fuentes de las que
+> sale cada número. El material de partida —medición en navegador real, matriz
+> de deltas y análisis por bloque— está en `progress/rediseno/`. Esta sección
+> **no repite** el contrato: registra las enmiendas que la implementación ha
+> obligado a hacerle, cada una con su decisión.
+
+#### Enmiendas del contrato (26/08/2026 y 28/08/2026)
+
+Tres discrepancias entre el contrato aprobado y lo que la implementación
+midió. Ninguna se resolvió dentro del código: las tres se llevaron al humano,
+que las resolvió, y se escribieron en `features/rediseno_visual.feature`
+antes de seguir. El antes y el después literal de cada cláusula está en
+`progress/rediseno/enmiendas_contrato.md`.
+
+1. **@s3 — el borde se deriva (Decisión 58).** La cláusula decía «el valor
+   coincide carácter a carácter, salvo en las tres desviaciones declaradas de
+   @s6 y @s7», y las parejas que no pueden coincidir literalmente son SIETE: el
+   prototipo declara `--border` con alfa en los cuatro temas
+   (`rgba(15,32,60,.13)`, `rgba(120,53,15,.16)`, `rgba(148,197,255,.18)` y
+   `rgba(4,120,87,.16)`; VLS:20, :28, :36, :44), `--accent-soft` y `--urg-soft`
+   con alfa en `tech` (`rgba(6,182,212,.14)` y `rgba(248,113,113,.16)`;
+   VLS:38-39), y el `--muted` de `calida` es `#8A6C45`, el suspenso de contraste
+   que @s6 ya corrige. Los cuatro `--color-borde` pasan de ser desviaciones a
+   ser **derivaciones verificables** con una sola regla de composición; las que
+   quedan se nombran una a una; y la comparación de un rol translúcido exige el
+   valor compuesto, porque se midió que la implementación anterior daba por
+   verde `--color-borde: #FF0000` y `#000000`.
+
+2. **@s33 — el hero queda exceptuado (Decisión 59).** La cláusula decía «ese
+   rótulo usa el color de acento tinta de la variante activa», y el cintillo de
+   la sección de bienvenida va encima del velo fotográfico al que @s29 le exige
+   4.5 de contraste de texto normal: `--color-acento-tinta` suspende en las
+   cinco variantes. La regla pasa a exigir acento tinta en toda sección con
+   fondo de token, y declara la excepción del hero —que usa
+   `--color-sobre-primario`— con los ratios medidos como motivo y con los dos
+   recuentos afirmados, para que la excepción sea medible y no pueda crecer.
+
+3. **@s8 — el borde de control se importa, salvo en marca (Decisión 60).** La
+   cláusula decía que `--color-borde-control` «se deriva por mezcla del
+   primario con el fondo de cada variante, con la regla escrita en el propio
+   fichero», y se midió recorriendo `mezclar(fondo, primario, p)` de 0 % a
+   100 % con la función real que ninguna proporción produce el valor de
+   `clinica` (`#5E6E88`), `calida` (`#8A6C45`), `tech` (`#94C5FF`) ni `eco`
+   (`#557368`) —los tres primeros son el `--muted` del tema del prototipo y
+   `tech` es el `rgb()` de su `--border` translúcido (`rgba(148,197,255,.18)`)—
+   y que `_tokens.scss` no contenía ninguna regla escrita de derivación. Solo
+   `marca` es mezcla genuina (`mezclar('#FFFFFF', '#77286B', 0.7)` =
+   `#A06997`). La parte medible de @s8 —el rol existe en las cinco y su ratio
+   alcanza 3, y el prototipo no modela el rol— ya estaba cubierta y no cambia.
+   Se enmienda el contrato en vez de rederivar: ningún hexadecimal ya aprobado
+   se toca, y la cláusula pasa a decir que las cuatro variantes importadas
+   declaran el valor propio de su tema del prototipo y que solo `marca`
+   deriva por mezcla.
 
 ### Integridad del cierre — nueva feature: `integridad_puerta_mutacion`
 

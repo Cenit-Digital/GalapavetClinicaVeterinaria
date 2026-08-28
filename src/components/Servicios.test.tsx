@@ -112,12 +112,15 @@ describe('@s2 al cargar la página las cinco tarjetas están colapsadas', () => 
 })
 
 describe('@s3 la tarjeta colapsada presenta el bloque sin inventar prestaciones', () => {
-  it('identifica la categoría visual y conserva el título y el rótulo de su botón', () => {
+  it('identifica la categoría visual (derivada del propio título, @s31) y conserva el título y el rótulo de su botón', () => {
     renderizarServicios()
 
     const tarjeta = obtenerTarjeta('Medicina general')
 
-    expect(tarjeta).toHaveTextContent('Atención veterinaria')
+    // Literal escrito a mano: primera palabra significativa de "Medicina
+    // general", el título real del bloque -- nunca un literal fijo ajeno al
+    // título como el defecto original ("Atención veterinaria" en las 5 tarjetas).
+    expect(tarjeta).toHaveTextContent('Medicina')
     expect(tarjeta).toHaveTextContent('Medicina general')
     expect(tarjeta).toHaveTextContent('Ver qué incluye')
   })
@@ -397,6 +400,38 @@ describe('@s18 la sección no afirma ningún servicio que el cliente no publique
   })
 })
 
+describe('@s31 sobre la imagen hay una píldora de categoría derivada del propio título del bloque', () => {
+  it('la píldora de cada una de las 5 tarjetas es la primera palabra de SU título, nunca un literal fijo compartido', () => {
+    renderizarServicios()
+
+    // Literales escritos a mano (doble anclaje): la primera palabra
+    // significativa de cada uno de los 5 títulos reales publicados.
+    const categoriaEsperadaPorTitulo: Record<string, string> = {
+      'Cirugía y anestesia': 'Cirugía',
+      'Diagnóstico de imagen': 'Diagnóstico',
+      'Medicina general': 'Medicina',
+      Análisis: 'Análisis',
+      Especialidades: 'Especialidades',
+    }
+
+    for (const titulo of TITULOS_EN_ORDEN) {
+      const tarjeta = obtenerTarjeta(titulo)
+      const pildora = tarjeta.querySelector('span')
+      if (pildora === null) {
+        throw new Error(`No se encontró el elemento <span> de píldora de categoría de la tarjeta "${titulo}"`)
+      }
+      expect(pildora.textContent).toBe(categoriaEsperadaPorTitulo[titulo])
+    }
+
+    // Si la píldora fuera un literal fijo compartido (el defecto original,
+    // "Atención veterinaria" en las 5 tarjetas), este contraste también lo
+    // detectaría aunque el mapa de arriba se equivocara.
+    const pildoraCirugia = obtenerTarjeta('Cirugía y anestesia').querySelector('span')?.textContent
+    const pildoraAnalisis = obtenerTarjeta('Análisis').querySelector('span')?.textContent
+    expect(pildoraCirugia).not.toBe(pildoraAnalisis)
+  })
+})
+
 describe('@s19 la sección usa únicamente imágenes locales decorativas, sin alterar el contenido clínico', () => {
   it('cada bloque tiene una imagen local decorativa, sin host externo ni un alt que suplante un servicio', () => {
     const { container } = renderizarServicios()
@@ -418,5 +453,67 @@ describe('@s19 la sección usa únicamente imágenes locales decorativas, sin al
         expect(alt).not.toContain(nombre)
       }
     }
+  })
+})
+
+/**
+ * `features/rediseno_visual.feature` @s33 (bloque D), añadido tras el
+ * segundo rechazo del `judge` (`progress/judge_rediseno_visual.md`,
+ * hallazgo 1 de la segunda revisión): "Servicios sigue sin cintillo, sin
+ * ningún test que lo exija". Mismo patrón que `Equipo.test.tsx`/
+ * `CampanasPortada.test.tsx`, adaptado porque aquí el rótulo del cintillo
+ * ("Servicios") coincide con el texto del propio `<h2>` — así que, a
+ * diferencia de esos dos ficheros, no se puede localizar el cintillo con
+ * `getByText` (ambiguo: matchearía los dos). Se localiza por estructura:
+ * primer hijo de la sección, con etiqueta `<p>`.
+ */
+
+/** El texto REAL de la hoja de estilos de `Servicios`, leído en crudo por Vite (nunca el símbolo `styles` importado: ese es un proxy en jsdom, `vite.config.ts:61-79`). */
+const TEXTO_REAL_DE_SERVICIOS_SCSS = (
+  import.meta.glob('./Servicios.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<
+    string,
+    string
+  >
+)['./Servicios.module.scss'] as string
+
+describe('@s33 la sección de servicios abre con su cintillo en versalitas', () => {
+  it('hay un único <p> de cintillo "Servicios" como primer hijo de la sección, antes del único <h2> "Servicios"', () => {
+    renderizarServicios()
+
+    const seccion = obtenerSeccionServicios()
+    const encabezados = screen.getAllByRole('heading', { level: 2, name: 'Servicios' })
+    expect(encabezados).toHaveLength(1)
+    const encabezado = encabezados[0]!
+
+    const cintillo = seccion.firstElementChild
+    if (cintillo === null) {
+      throw new Error('la sección "Servicios" no tiene ningún primer hijo')
+    }
+
+    // El cintillo es un <p>, nunca un encabezado (aunque comparta texto con el h2).
+    expect(cintillo.tagName).toBe('P')
+    expect(cintillo.textContent).toBe('Servicios')
+    expect(cintillo).not.toBe(encabezado)
+
+    // El cintillo "abre" la sección: precede al h2 en el DOM.
+    const posicionRelativa = cintillo.compareDocumentPosition(encabezado)
+    // eslint-disable-next-line no-bitwise -- API estándar de DOM (`Node.compareDocumentPosition`).
+    expect(posicionRelativa & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('".eyebrow" usa el mixin compartido, sin reescribir su color, versalitas ni espaciado entre letras', () => {
+    expect(TEXTO_REAL_DE_SERVICIOS_SCSS.length).toBeGreaterThan(0)
+
+    const bloqueEyebrow = /\.eyebrow\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_SERVICIOS_SCSS)?.[1] ?? ''
+    // El fondo de "Servicios" es un rol de color del sistema
+    // (`src/pages/Landing.tsx:54-56`, `.seccionAlterna` -> `--color-fondo-alterno`),
+    // no una fotografía a sangre como el Hero: @s33 exige aquí el
+    // "--color-acento-tinta" POR DEFECTO del mixin "eyebrow"
+    // (`src/styles/_api.scss:324-332`), sin la excepción medida de la
+    // Enmienda 2 que solo aplica al Hero (`Hero.module.scss:43-58`).
+    expect(bloqueEyebrow).toContain('@include eyebrow;')
+    expect(bloqueEyebrow).not.toContain('color:')
+    expect(bloqueEyebrow).not.toContain('text-transform:')
+    expect(bloqueEyebrow).not.toContain('letter-spacing:')
   })
 })

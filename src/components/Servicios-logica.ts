@@ -33,3 +33,14 @@ export function tieneDesglose(puntos: readonly string[]): boolean {
 export function nombreAccesibleBoton(rotulo: string, tituloBloque: string): string {
   return `${rotulo} de ${tituloBloque}`
 }
+
+/**
+ * Píldora de categoría de una tarjeta de servicio: la primera palabra
+ * significativa del título del bloque (@s31). Deriva SIEMPRE del título
+ * real -- nunca un literal fijo -- así que dos bloques con títulos
+ * distintos muestran píldoras distintas.
+ */
+export function categoriaDeServicio(tituloBloque: string): string {
+  const [primeraPalabra] = tituloBloque.trim().split(/\s+/)
+  return primeraPalabra ?? ''
+}

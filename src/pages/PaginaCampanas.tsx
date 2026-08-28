@@ -65,6 +65,7 @@ function VistaListado({ catalogo, noEncontrada = false }: VistaListadoProps): Re
   return (
     <>
       <RutaListado />
+      <p className={styles.cintillo}>Campañas</p>
       <h1>{TITULO_LISTADO}</h1>
       {noEncontrada && <output>{AVISO_CAMPANA_NO_ENCONTRADA}</output>}
       <p>{AVISO_DEMOSTRACION}</p>

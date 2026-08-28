@@ -1,7 +1,15 @@
 import React, { useState } from 'react'
 import { EQUIPO, type Profesional } from '../data/equipo'
-import { profesionalesValidos, rotuloBoton, tieneFormacion } from './Equipo-logica'
+import { inicialesDe, profesionalesValidos, rotuloBoton, tieneFormacion } from './Equipo-logica'
 import styles from './Equipo.module.scss'
+
+/**
+ * Cintillo de la sección (@s33 de `rediseno_visual.feature`): escrito en
+ * minúsculas/mayúscula inicial a propósito — las versalitas las aplica el
+ * mixin `eyebrow` (`src/styles/_api.scss:324-332`) vía `text-transform`, no
+ * un literal ya en mayúsculas, igual que `ReservaChat.tsx:123`.
+ */
+const ROTULO_CINTILLO = 'Nuestro equipo'
 
 interface EquipoProps {
   /** Listado de profesionales a mostrar. Por defecto, el listado real del proyecto. */
@@ -10,15 +18,6 @@ interface EquipoProps {
 
 interface TarjetaProfesionalProps {
   profesional: Profesional
-}
-
-function inicialesDe(nombre: string): string {
-  return nombre
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((parte) => parte[0])
-    .join('')
-    .slice(0, 2)
 }
 
 /** Cada tarjeta guarda su propio abierto/cerrado, independiente del resto (@s8). */
@@ -51,6 +50,7 @@ export function Equipo({ listado = EQUIPO }: EquipoProps = {}): React.JSX.Elemen
   }
   return (
     <section aria-label="Equipo" className={styles.equipo} data-contenedor-principal>
+      <p className={styles.eyebrow}>{ROTULO_CINTILLO}</p>
       <h2>Equipo</h2>
       {validos.map((profesional) => (
         <TarjetaProfesional key={profesional.nombre} profesional={profesional} />

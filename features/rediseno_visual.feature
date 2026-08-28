@@ -161,13 +161,49 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And no falta ninguna pareja
     And ningún token se hereda de otra variante
 
+  # ---------------------------------------------------------------------------
+  # ENMIENDA 1, aprobada por el humano el 26/08/2026. Antes y después literal en
+  # `progress/rediseno/enmiendas_contrato.md`.
+  #
+  # QUÉ SE MIDIÓ. La cláusula original decía «salvo en las tres desviaciones
+  # declaradas de @s6 y @s7», y las parejas que NO pueden coincidir carácter a
+  # carácter no son tres sino SIETE: el prototipo declara `--border` con alfa en
+  # los CUATRO temas (VLS:20, :28, :36, :44) y `--accent-soft` y `--urg-soft`
+  # con alfa solo en `tech` (VLS:38-39), mientras que el sistema declara los
+  # veinte roles de color como hexadecimal opaco; la séptima es el `--muted` de
+  # `calida` (#8A6C45, VLS:28), que @s6 ya corrige por contraste. La primera
+  # implementación reconcilió el número apartando las cuatro parejas de
+  # `--border` sin comparar nada, y el precio medido fue que daba por VERDE
+  # `--color-borde: #FF0000` y `--color-borde: #000000`. Se midió además que el
+  # `--color-borde` de `clinica` valía `#D8E0EA`, que no es la composición del
+  # rgba del prototipo ni sobre `--color-fondo` (#DADEE3) ni sobre
+  # `--color-superficie` (#E0E2E6): un número sin derivación trazable que
+  # ningún test del repositorio fijaba.
+  #
+  # QUÉ DECIDE EL HUMANO: DERIVAR EL BORDE. Las cuatro parejas de `--color-borde`
+  # dejan de ser excepciones y pasan a ser derivaciones verificables, con UNA
+  # sola regla de composición para las cuatro variantes. Las desviaciones que
+  # quedan se escriben por LISTA —nombre a nombre y motivo a motivo—, nunca por
+  # recuento, para que añadir o quitar una obligue a enmendar este contrato otra
+  # vez; con eso desaparece además la ambigüedad que la implementación devolvió
+  # como aclaración (`progress/rediseno/tdd_fidelidad-prototipo.md` §2.1: ni @s6
+  # ni @s7 nombraban `tech --accent-soft`).
+  # ---------------------------------------------------------------------------
   @s3
   Scenario: Los cuatro temas importados valen exactamente lo que declara el prototipo
     Given el texto real de "src/styles/_tokens.scss" y el texto real de "docs/diseno-claude-design/Veterinaria La Sierra.dc.html"
     And esta verificación se ejecuta leyendo el TEXTO REAL de los dos ficheros con "?raw" en Vitest
     When se extraen los bloques ":root" y ":root[data-tema=…]" del prototipo y se comparan rol a rol con las variantes "clinica", "calida", "tech" y "eco"
     Then cada rol del prototipo tiene su equivalente declarado en el sistema, según la tabla de correspondencia
-    And el valor coincide carácter a carácter, salvo en las tres desviaciones declaradas de @s6 y @s7
+    And en todo rol que el prototipo declara opaco el valor coincide carácter a carácter, salvo en las desviaciones que este escenario enumera por su nombre
+    And los cuatro "--color-borde" no se apartan de la comparación: se DERIVAN, componiendo el rgba del prototipo sobre el rol de fondo de su propia variante con la función de mezcla del repositorio, "mezclar(fondo de la variante, color del rgba, alfa del rgba)"
+    And esa regla de composición es UNA sola para las cuatro variantes y queda escrita por extenso en "src/styles/_tokens.scss", igual que la del rojo de urgencia
+    And en "clinica" el valor exigido es el de "mezclar('#F8FAFC', '#0F203C', 0.13)", que da "#DADEE3", de modo que el "#D8E0EA" declarado hasta esta enmienda —que no es la composición ni sobre el fondo ni sobre la superficie— sale en rojo
+    And la comparación de un rol que el prototipo declara translúcido nunca se da por buena con un hexadecimal cualquiera: exige el valor COMPUESTO, así que "--color-borde: #FF0000" y "--color-borde: #000000" salen en rojo
+    And las desviaciones que quedan se declaran por LISTA, con su nombre y su motivo, y ninguna aserción las cuenta: añadir o quitar una obliga a enmendar este contrato
+    And "tech --color-acento-suave" es desviación declarada, porque el prototipo lo escribe con alfa solo en ese tema —"rgba(6,182,212,.14)"— mientras que en "clinica", "calida" y "eco" lo da opaco y el sistema lo copia carácter a carácter: no hay regla uniforme que derivar y el opaco de "tech" lo pone el repositorio
+    And "tech --color-urgencia-suave" es desviación declarada por el mismo motivo, sobre "rgba(248,113,113,.16)"
+    And "calida --color-texto-suave" es desviación declarada porque el "#8A6C45" del prototipo da 4.37 sobre el fondo alterno de su variante y suspende el mínimo de 4.5 que @s6 exige
     And el recuento de roles efectivamente comparados es mayor que 0
     And si el prototipo cambiara un solo hexadecimal, esta comprobación fallaría
 
@@ -207,6 +243,33 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And en la variante "tech" ese par da al menos 6, frente al 2.77 que daría el blanco del prototipo
     And ningún fichero de estilos escribe blanco literal sobre el color de urgencia
 
+  # ---------------------------------------------------------------------------
+  # ENMIENDA 3, aprobada por el humano el 28/08/2026. Antes y después literal en
+  # `progress/rediseno/enmiendas_contrato.md`.
+  #
+  # QUÉ SE MIDIÓ. La cláusula original decía que `--color-borde-control` «se
+  # deriva por mezcla del primario con el fondo de cada variante, con la regla
+  # escrita en el propio fichero». Medido recorriendo `mezclar(fondo, primario,
+  # p)` para `p` de 0% a 100% con la función real
+  # `src/lib/diseno/mezclaDeColor.ts` (`progress/rediseno/tdd_matriz-de-
+  # contraste.md`, BLOQUEANTE 2): NINGUNA proporción produce el valor de
+  # `clinica` (#5E6E88), `calida` (#8A6C45), `tech` (#94C5FF) ni `eco`
+  # (#557368) —los tres primeros son el `--muted` del tema de su propia
+  # variante en el prototipo, y `tech` es el `rgb()` de su `--border`
+  # translúcido, `rgba(148,197,255,.18)`—, y `_tokens.scss` no contiene
+  # ninguna regla escrita de derivación para este rol. Solo `marca` SÍ es
+  # mezcla genuina: `mezclar('#FFFFFF', '#77286B', 0.7)` = `#A06997`. La parte
+  # medible que ya cumplía no cambia: las cinco variantes declaran el rol y su
+  # ratio alcanza 3 contra su propio fondo (clinica 4.94 · calida 4.72 · tech
+  # 9.94 · eco 5.20 · marca 4.23), y el prototipo no modela este rol
+  # (inventario de 18 roles, ninguno de borde de control).
+  #
+  # QUÉ DECIDE EL HUMANO: ENMENDAR EL CONTRATO, NO LOS COLORES. Ningún
+  # hexadecimal ya aprobado se toca. @s8 pasa a describir con precisión el
+  # mecanismo real: las cuatro variantes importadas del prototipo declaran el
+  # valor que ya trae su propio tema, y solo `marca` —que no tiene tema en el
+  # prototipo— deriva por mezcla, con la regla escrita en `_tokens.scss`.
+  # ---------------------------------------------------------------------------
   @s8
   Scenario: El borde de control existe en las cinco variantes y cumple el mínimo de componentes de interfaz
     Given el texto real de "src/styles/_tokens.scss"
@@ -214,7 +277,11 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     When se calcula el ratio de "--color-borde-control" contra el fondo de su propia variante
     Then las cinco variantes declaran ese rol
     And el ratio alcanza al menos 3 en las cinco
-    And el prototipo no modela este rol, así que su valor se deriva por mezcla del primario con el fondo de cada variante, con la regla escrita en el propio fichero
+    And el prototipo no modela este rol: su inventario de dieciocho roles no incluye ningún borde de control
+    And por eso cada variante lo resuelve a su manera, y esa manera se declara aquí por su nombre, no por una regla única para las cinco
+    And "clinica", "calida" y "eco" importan el valor que ya trae el "--muted" del tema de su propia variante en el prototipo versionado "docs/diseno-claude-design/Veterinaria La Sierra.dc.html": "#5E6E88", "#8A6C45" y "#557368" respectivamente
+    And "tech" importa el mismo rol de otra fuente de su propio tema: el "rgb()" del "--border" translúcido del prototipo, "rgba(148,197,255,.18)", que da "#94C5FF"
+    And "marca", que no tiene tema propio en el prototipo, es la ÚNICA variante donde el valor SÍ se deriva por mezcla del primario con el fondo, "mezclar('#FFFFFF', '#77286B', 0.7)" = "#A06997", con la regla escrita por extenso en "src/styles/_tokens.scss"
 
   @s9
   Scenario: El anillo de foco existe en las cinco variantes y se distingue de su fondo
@@ -439,14 +506,38 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And la ficha ampliada solo aparece en quien tiene formación publicada
     And ninguna tarjeta muestra número de colegiado ni idiomas, porque el cliente no los publica
 
+  # ---------------------------------------------------------------------------
+  # ENMIENDA 2, aprobada por el humano el 26/08/2026. Antes y después literal en
+  # `progress/rediseno/enmiendas_contrato.md`.
+  #
+  # QUÉ SE MIDIÓ. La cláusula original exigía acento tinta en TODOS los
+  # cintillos, y el de la sección de bienvenida va encima del velo fotográfico
+  # al que @s29 le exige el mínimo de texto normal (4,5). Medido con
+  # `src/lib/contraste.ts` en la parada del 92 % del velo, con la fotografía de
+  # debajo en sus dos extremos (la más oscura y la más clara posibles),
+  # `--color-acento-tinta` SUSPENDE en las CINCO variantes. La tinta que sí
+  # cumple es la que la propia sección ya declara para el resto de su texto,
+  # `--color-sobre-primario`. El bloqueo quedó documentado por la
+  # implementación en `progress/rediseno/fix_uso_del_acento.md` y anotado en
+  # `src/components/Hero.module.scss:44-55` con los diez ratios.
+  #
+  # QUÉ DECIDE EL HUMANO: EXCEPTUAR EL HERO. El resto de cintillos sigue
+  # llevando acento tinta; la excepción se escribe como condición MEDIBLE
+  # —fondo de token frente a fondo de imagen, con los dos recuentos afirmados—,
+  # no como nota al pie, para que no pueda crecer sin enmendar el contrato.
+  # ---------------------------------------------------------------------------
   @s33
   Scenario: Cada sección de la portada abre con su cintillo en versalitas
     Given la portada construida y servida
     When se recorren las secciones con titular propio
     Then cada una lleva por delante un rótulo corto en mayúsculas con espaciado entre letras
-    And ese rótulo usa el color de acento tinta de la variante activa
+    And las secciones se reparten en dos grupos por un criterio medible: las que pintan su fondo con un rol de color del sistema y la que lo pinta con la fotografía a sangre de @s29
+    And en toda sección cuyo fondo es un rol de color del sistema ese rótulo usa el color de acento tinta de la variante activa
+    And la sección de bienvenida queda exceptuada, y su cintillo usa "--color-sobre-primario", la misma tinta que esa sección ya declara para el resto de su texto
+    And el motivo de la excepción es medido y queda escrito: sobre la parada del 92 % del velo, "--color-acento-tinta" da 3.21 · 2.04 · 1.10 · 1.97 · 2.40 en "clinica", "calida", "tech", "eco" y "marca" con la fotografía más oscura, y 2.53 · 1.52 · 1.33 · 1.48 · 1.81 con la más clara, y suspende el mínimo de 4.5 de texto normal en las cinco
+    And "--color-sobre-primario" sobre ese mismo velo da 17.60 · 14.43 · 12.73 · 15.15 · 13.63 con la fotografía más oscura y 13.86 · 10.76 · 15.37 · 11.39 · 10.28 con la más clara, y aprueba el 4.5 en las cinco por los dos extremos
     And el rótulo no es un encabezado, para no romper la jerarquía de niveles
-    And el recuento de secciones efectivamente comprobadas es mayor que 0
+    And el recuento de secciones con fondo de token efectivamente comprobadas es mayor que 0, y el de secciones sobre fotografía es exactamente 1
 
   @s34
   Scenario: La reserva por chat se presenta en dos columnas, con la cabecera de conversación del diseño

@@ -1,9 +1,20 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45).
+// aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
+// también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
+// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
+// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
+// la cascada por orden de bundle, sin ningún test que lo protegiera —
+// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
+// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
 .faq {
-  padding-block: espaciado(64);
   max-width: 860px;
+
+  // Cintillo en versalitas delante del titular (@s33 de
+  // `rediseno_visual.feature`), rótulo real del prototipo (`docs/diseno-claude-design/Veterinaria La Sierra.dc.html:427`).
+  .eyebrow {
+    @include eyebrow;
+  }
 
   h2 {
     font-family: var(--fuente-titulares);

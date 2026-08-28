@@ -1,12 +1,17 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45).
+// aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
+// también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
+// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
+// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
+// la cascada por orden de bundle, sin ningún test que lo protegiera —
+// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
+// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
 .reservaChat {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: espaciado(32);
   align-items: start;
-  padding-block: espaciado(64);
 
   a {
     @include foco-visible;
@@ -95,6 +100,22 @@
       color: var(--color-texto-suave);
       font-size: paso-tipografico(-1);
     }
+
+    // Indicador de disponibilidad (@s34): fila propia con su punto, distinta
+    // del resto de `p` de la cabecera, que van en bloque uno debajo del otro.
+    .disponibilidad {
+      display: flex;
+      align-items: center;
+      gap: espaciado(4);
+    }
+
+    .puntoDisponible {
+      flex-shrink: 0;
+      width: espaciado(8);
+      height: espaciado(8);
+      border-radius: $radio-circulo;
+      background-color: var(--color-acento);
+    }
   }
 
   [role='log'] {
@@ -135,9 +156,13 @@
 
   // Las respuestas rápidas de un paso son alternativas entre sí, no UNA sola
   // acción: píldora seleccionable, no botón primario repetido N veces.
+  // Aquí SÍ hacen falta 44px de alto (a diferencia de otros usos de
+  // "pildora-filtro", como los filtros de la Tienda): son la interacción
+  // primaria de cada paso del guion, no un filtro decorativo (@s25).
   [aria-label='Respuestas rápidas'] button {
     @include pildora-filtro;
     margin-inline-end: espaciado(8);
     margin-block-end: espaciado(8);
+    min-height: $altura-control-media;
   }
 }

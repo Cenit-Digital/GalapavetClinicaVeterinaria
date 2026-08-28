@@ -202,6 +202,25 @@ li {
   outline-offset: $grosor-foco;
 }
 
+// Enlaces de contenido SIN estilo propio (migas de pan como "Inicio", los
+// teléfonos de contacto, "volver al artículo"…) nunca tenían ninguna regla
+// para "a" en todo el proyecto (grep de "^a\b"/"a {" sobre este fichero: 0
+// resultados antes de esta línea), así que el navegador les aplicaba su azul
+// por defecto (#0000EE). Ese azul pasa el mínimo de contraste sobre un fondo
+// claro por pura casualidad, pero contra los fondos oscuros de la variante
+// "tech" (p. ej. "--color-superficie: #16233F") axe-core midió 1,65:1, muy
+// por debajo del 4,5:1 exigido — hallazgo real de @s45 de
+// `rediseno_visual.feature`, documentado en
+// `progress/rediseno/fix_s45_axe_variantes.md`. "inherit" y no un rol nuevo:
+// así el enlace hereda el MISMO color que ya pinta el texto que lo rodea
+// (--color-texto/-tinta/-texto-suave contra el plano de fondo vigente), que
+// es exactamente la combinación que la matriz de uso del sistema
+// (`matrizDeContraste.ts`) ya verifica en las cinco variantes — no se
+// introduce ningún par (tinta, fondo) nuevo que verificar.
+a {
+  color: inherit;
+}
+
 // Enlace de salto al contenido (`App.tsx`): el PRIMER tabulable del documento,
 // invisible hasta que recibe el foco. Vive en la hoja global, y no en un
 // módulo, porque no pertenece a ningún componente: es una parada de teclado

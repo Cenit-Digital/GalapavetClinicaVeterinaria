@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { esAncla, esPaginaActual, PUNTO_DE_CORTE_NAVEGACION_PX } from './Cabecera-logica'
+import { DESTINO_TIENDA } from '../data/navegacion'
+import { esAncla, esDestinoTienda, esPaginaActual, posicionDeScrollParaAncla, PUNTO_DE_CORTE_NAVEGACION_PX } from './Cabecera-logica'
 
 describe('@s1 este proyecto declara su propio punto de corte y no hereda el ajeno', () => {
   it('el valor declarado es exactamente 1024 píxeles y no 1120, el del prototipo ajeno', () => {
@@ -46,5 +47,51 @@ describe('esPaginaActual marca como actual solo el destino de subpágina que coi
 
   it('un ancla nunca es la página actual, aunque el texto coincida literalmente con la ruta activa', () => {
     expect(esPaginaActual('#servicios', '#servicios')).toBe(false)
+  })
+})
+
+/**
+ * @s28 de `rediseno_visual.feature`: "muestra un acceso a la tienda con
+ * borde y sin relleno". `Cabecera.tsx` deriva el estilo del enlace de Tienda
+ * de su propio destino (nunca de una prop nueva "es-tienda"), comparándolo
+ * contra `DESTINO_TIENDA` — la MISMA constante que ya declara el destino real
+ * en `src/data/navegacion.ts:22`, para que los dos no puedan divergir.
+ */
+describe('esDestinoTienda distingue el destino de la Tienda del resto del catálogo (@s28)', () => {
+  it('el destino real de la Tienda ("/tienda", DESTINO_TIENDA) es el de la Tienda', () => {
+    expect(esDestinoTienda(DESTINO_TIENDA)).toBe(true)
+    expect(esDestinoTienda('/tienda')).toBe(true)
+  })
+
+  it('ningún otro destino del catálogo es el de la Tienda', () => {
+    expect(esDestinoTienda('#servicios')).toBe(false)
+    expect(esDestinoTienda('/campanas')).toBe(false)
+    expect(esDestinoTienda('/blog')).toBe(false)
+  })
+})
+
+/**
+ * @s28: "el sitio del ancla de destino al saltar a una sección se calcula
+ * desde la altura real de la cabecera más la barra de urgencias, no desde un
+ * número escrito a mano". Función pura: los tres números de entrada son
+ * SIEMPRE medidos en el momento del clic (`Cabecera.tsx`, con
+ * `getBoundingClientRect()`/`window.scrollY`), nunca literales. Se prueba
+ * aquí en aislado, con literales de test escritos a mano confrontados contra
+ * el resultado — nunca contra la propia fórmula de producción.
+ */
+describe('posicionDeScrollParaAncla calcula el nuevo scroll desde alturas REALES, nunca desde un número escrito a mano (@s28)', () => {
+  it('suma el scroll ya acumulado a la distancia del elemento y resta la altura fija real medida', () => {
+    // 200px ya desplazados + el destino está a 500px del borde superior de la
+    // ventana - 96px de franja fija real (barra + cabecera) = 604.
+    expect(posicionDeScrollParaAncla(200, 500, 96)).toBe(604)
+  })
+
+  it('si la altura fija real medida cambia, el resultado cambia con ella: no es un número fijo', () => {
+    // Misma distancia y mismo scroll que el caso anterior, pero con una
+    // franja fija real de 150px (p. ej. porque la barra de urgencias mide
+    // más en este momento): el resultado tiene que ser DISTINTO de 604.
+    const conFranjaMayor = posicionDeScrollParaAncla(200, 500, 150)
+    expect(conFranjaMayor).toBe(550)
+    expect(conFranjaMayor).not.toBe(604)
   })
 })

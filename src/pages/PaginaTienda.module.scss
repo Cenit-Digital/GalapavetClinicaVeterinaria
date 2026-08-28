@@ -3,13 +3,22 @@
   padding-block: espaciado(64);
   color: var(--color-texto);
 
+  // Cintillo del encabezado de página (@s38 de "rediseno_visual.feature"):
+  // mismo mecanismo que "Hero.module.scss:55-59" y "ReservaChat.module.scss:33-34",
+  // nunca un tamaño o un espaciado sueltos.
+  .cintillo {
+    @include eyebrow;
+  }
+
   h1 {
     font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
     margin-block-end: espaciado(8);
   }
 
-  > p {
+  // ":not(.cintillo)" para que el párrafo de aviso conserve su ancho de
+  // lectura sin heredarlo el cintillo, que ya trae el suyo del mixin "eyebrow".
+  > p:not(.cintillo) {
     color: var(--color-texto-suave);
     max-width: 62ch;
     margin-block-end: espaciado(24);

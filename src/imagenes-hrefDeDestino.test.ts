@@ -65,9 +65,9 @@ describe('@s19 los seis componentes que pintan una imagen local llaman a hrefDeD
     expect(llamadas.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('"PaginaBlog.tsx" llama a "hrefDeDestino" en sus dos puntos de renderizado de imagen: "Sigue leyendo" y la cabecera del artículo', () => {
+  it('"PaginaBlog.tsx" llama a "hrefDeDestino" en sus tres puntos de renderizado de imagen: "Sigue leyendo", la cabecera del artículo y la tarjeta del listado', () => {
     const llamadas = paginaBlogTexto.match(/src=\{hrefDeDestino\(/g) ?? []
-    expect(llamadas.length).toBe(2)
+    expect(llamadas.length).toBe(3)
   })
 
   it.each(Object.entries(FICHEROS_QUE_PINTAN_IMAGEN))('"%s" no concatena a mano el literal "/GalapavetClinicaVeterinaria/"', (_nombre, texto) => {

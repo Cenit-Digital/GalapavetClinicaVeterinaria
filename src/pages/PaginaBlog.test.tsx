@@ -156,12 +156,71 @@ describe('@s5 cada tarjeta lleva la marca de demostración y ningún otro distin
   })
 })
 
-describe('@s6 ninguna tarjeta atribuye el texto a una persona ni lo fecha', () => {
-  it('sin nombres, iniciales, fechas ni imágenes en las tarjetas del listado', () => {
+/** Las 6 "li" del listado, en el orden del catálogo (@s4 ya garantiza el orden de los enlaces). */
+function tarjetasDelListado(main: HTMLElement): HTMLLIElement[] {
+  const listado = main.querySelector("ul[aria-label='Listado de artículos']")
+  return [...(listado?.querySelectorAll('li') ?? [])] as HTMLLIElement[]
+}
+
+describe('@s40 el listado usa el patrón de tarjeta del sistema, con imagen y categoría (rediseno_visual)', () => {
+  it('cada una de las 6 tarjetas tiene una imagen cuyo "src" deriva de "articulo.imagen", decorativa (alt vacío) y con "width"/"height" en proporción 8/5', () => {
     renderizarApp()
 
     const main = screen.getByRole('main')
-    expect(main.querySelectorAll('img')).toHaveLength(0)
+    const tarjetas = tarjetasDelListado(main)
+    expect(tarjetas).toHaveLength(6)
+
+    tarjetas.forEach((tarjeta, indice) => {
+      const articuloDemo = ARTICULOS_DEMO[indice] as ArticuloDemo
+      const imagen = tarjeta.querySelector('img')
+      expect(imagen, `la tarjeta ${indice} ("${articuloDemo.titulo}") no tiene ninguna imagen`).not.toBeNull()
+      const elementoImagen = imagen as HTMLImageElement
+
+      expect(elementoImagen.getAttribute('src')).toBe(articuloDemo.imagen)
+      expect(elementoImagen.getAttribute('alt')).toBe('')
+      expect(elementoImagen.getAttribute('loading')).toBe('lazy')
+      expect(elementoImagen.getAttribute('decoding')).toBe('async')
+
+      const ancho = Number(elementoImagen.getAttribute('width'))
+      const alto = Number(elementoImagen.getAttribute('height'))
+      expect(ancho).toBeGreaterThan(0)
+      expect(alto).toBeGreaterThan(0)
+      expect(ancho / alto).toBeCloseTo(8 / 5, 2)
+    })
+
+    const fuentes = tarjetas.map((tarjeta) => tarjeta.querySelector('img')?.getAttribute('src'))
+    expect(new Set(fuentes).size).toBe(6)
+  })
+
+  it('cada tarjeta muestra el texto real de "articulo.categoria", y hay más de un texto de categoría distinto entre las 6', () => {
+    renderizarApp()
+
+    const main = screen.getByRole('main')
+    const tarjetas = tarjetasDelListado(main)
+    expect(tarjetas).toHaveLength(6)
+
+    const textosDeCategoria = tarjetas.map((tarjeta, indice) => {
+      const articuloDemo = ARTICULOS_DEMO[indice] as ArticuloDemo
+      return within(tarjeta).getByText(articuloDemo.categoria).textContent
+    })
+
+    expect(new Set(textosDeCategoria).size).toBeGreaterThan(1)
+  })
+})
+
+describe('@s6 ninguna tarjeta atribuye el texto a una persona ni lo fecha', () => {
+  it('sin nombres, iniciales, fechas, ni ningún elemento con rol "img" que represente unas iniciales de autor', () => {
+    renderizarApp()
+
+    const main = screen.getByRole('main')
+    // `pagina_blog.feature` @s6 prohíbe "ningún elemento con rol 'img' que
+    // [represente las iniciales]" — no toda imagen: desde `rediseno_visual`
+    // @s40 la tarjeta SÍ lleva la fotografía real del artículo, pero es
+    // decorativa ("alt" vacío, ver `PaginaBlog.tsx`), así que no se expone
+    // con rol "img" en el árbol de accesibilidad (colapsa a "presentation").
+    // El modelo `ArticuloDemo` tampoco declara autor (R1 del `.feature`), así
+    // que no hay ningún dato del que derivar un avatar de iniciales.
+    expect(within(main).queryAllByRole('img')).toHaveLength(0)
 
     const texto = main.textContent ?? ''
     for (const cadena of [

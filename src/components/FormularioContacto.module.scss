@@ -41,6 +41,26 @@
     min-height: calc(#{$altura-control-media} + #{espaciado(64)});
   }
 
+  // La casilla y su etiqueta viven en la misma fila (mismo contenedor
+  // propio, `FormularioContacto.tsx`), centradas en el eje transversal para
+  // que el centro vertical de la casilla caiga dentro de la línea de texto
+  // de la etiqueta (@s25) — a diferencia del resto de campos, que llevan su
+  // etiqueta en la fila anterior.
+  .grupoConsentimiento {
+    display: flex;
+    align-items: center;
+    gap: espaciado(8);
+
+    // El enlace vive ahora inline dentro del texto de la etiqueta (@s25): sin
+    // "inline-block" el min-width/min-height de "area-tactil-minima" no
+    // surte efecto en un elemento inline y su objetivo táctil colapsa al
+    // tamaño de su propio texto.
+    a {
+      @include area-tactil-minima;
+      display: inline-block;
+    }
+  }
+
   input[type='checkbox'] {
     width: auto;
     min-width: $area-tactil-minima;

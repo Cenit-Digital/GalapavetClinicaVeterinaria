@@ -31,7 +31,8 @@ interface HeroProps {
 }
 
 const TITULAR = 'Cuidamos la salud y la felicidad de tu mascota'
-const UBICACION = 'Galapagar · Madrid'
+/** La localidad y la provincia reales de la fuente única (@s30): nunca retecleadas. */
+const UBICACION = `${datosNegocio.direccion.localidad} · ${datosNegocio.direccion.region}`
 const TEXTO_DESCRIPTIVO =
   'En Galapavet cuidamos a tu mascota con medicina general, cirugía y anestesia, diagnóstico de imagen, análisis clínicos y especialidades como oftalmología o traumatología.'
 
@@ -40,7 +41,7 @@ export function Hero({
   telefono = datosNegocio.telefonoClinica.textoVisible,
   horario = datosNegocio.horario,
 }: HeroProps = {}): React.JSX.Element {
-  const cifras = construirCifrasBienvenida(SERVICIOS, EQUIPO, GALERIA, horario ?? [])
+  const cifras = construirCifrasBienvenida(EQUIPO, SERVICIOS, GALERIA, horario ?? [])
 
   return (
     <section className={styles.hero} data-contenedor-principal>

@@ -1,12 +1,27 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45).
+// aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
+// también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
+// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
+// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
+// la cascada por orden de bundle, sin ningún test que lo protegiera —
+// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
+// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
 .equipo {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: espaciado(24);
-  padding-block: espaciado(64);
   align-items: start;
+
+  // El cintillo en versalitas que precede al título (@s33): "Equipo" pinta su
+  // fondo con "--color-fondo-alterno" (`src/pages/Landing.tsx:58-60`, un ROL
+  // DE COLOR del sistema, no la fotografía a sangre del Hero), así que usa el
+  // "--color-acento-tinta" por defecto del mixin, sin la excepción de la
+  // Enmienda 2 (esa excepción es solo del Hero, `Hero.module.scss:43-58`).
+  .eyebrow {
+    @include eyebrow;
+    grid-column: 1 / -1;
+  }
 
   h2 {
     grid-column: 1 / -1;

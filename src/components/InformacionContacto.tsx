@@ -16,6 +16,18 @@ const SRC_MAPA_TERCERO = 'https://www.openstreetmap.org/export/embed.html?layer=
 const ID_AVISO_MAPA = 'informacion-contacto-aviso-mapa'
 const AVISO_MAPA_TERCEROS = 'El mapa lo sirve un proveedor externo. Es la única conexión con un tercero de esta web.'
 
+/**
+ * Rótulos visibles de los tres bloques que el cliente SÍ publica (@s36 de
+ * `rediseno_visual.feature`): son categorías fijas del panel, no un dato de
+ * negocio, así que se declaran una sola vez aquí (no en `src/lib/site.ts`) e
+ * idénticos, carácter a carácter, al `aria-label` de cada `<fieldset>` que ya
+ * fijó `informacion_contacto.feature` @s1 — para que el nombre accesible
+ * (`aria-label`) y el rótulo VISIBLE (`<legend>`) nunca diverjan.
+ */
+const ROTULO_DIRECCION = 'Dirección'
+const ROTULO_TELEFONOS = 'Teléfonos'
+const ROTULO_HORARIO = 'Horario'
+
 interface InformacionContactoProps {
   /** Teléfono legible de la clínica. Por defecto, el de la fuente única (@s11). */
   telefonoClinica?: string
@@ -51,50 +63,69 @@ export function InformacionContacto({
 
   return (
     <section aria-label="Información de contacto" className={styles.informacionContacto}>
-      {direccion !== null && (
-        <>
-          {/* `sandbox` vacío: el mapa no necesita ni script ni formularios ni
-              navegar la página desde dentro del marco — el permiso más
-              restrictivo que sigue mostrando el mapa (exigido por el linter
-              del proyecto, `react/iframe-missing-sandbox`; ningún escenario
-              del contrato fija su valor). */}
-          <iframe
-            title={tituloMapa}
-            src={SRC_MAPA_TERCERO}
-            aria-describedby={ID_AVISO_MAPA}
-            loading="lazy"
-            sandbox=""
-          />
-          <p id={ID_AVISO_MAPA}>{AVISO_MAPA_TERCEROS}</p>
-          <fieldset aria-label="Dirección">
-            <p>{direccion[0]}</p>
-            <p>{direccion[1]}</p>
+      {/* La tarjeta "debajo" (@s36): el mapa y los bloques de datos que el
+          cliente SÍ publica. El orden de lectura del DOM es el mismo que ya
+          fijó `informacion_contacto.feature` @s1 (Dirección, Teléfonos,
+          Horario) — este contrato no lo reabre, solo añade el rótulo VISIBLE
+          de cada bloque y el envoltorio de tarjeta. */}
+      <div data-tarjeta-de="datos">
+        {direccion !== null && (
+          <>
+            {/* `sandbox` vacío: el mapa no necesita ni script ni formularios ni
+                navegar la página desde dentro del marco — el permiso más
+                restrictivo que sigue mostrando el mapa (exigido por el linter
+                del proyecto, `react/iframe-missing-sandbox`; ningún escenario
+                del contrato fija su valor). */}
+            <iframe
+              title={tituloMapa}
+              src={SRC_MAPA_TERCERO}
+              aria-describedby={ID_AVISO_MAPA}
+              loading="lazy"
+              sandbox=""
+            />
+            <p id={ID_AVISO_MAPA}>{AVISO_MAPA_TERCEROS}</p>
+            <fieldset aria-label="Dirección">
+              <legend>{ROTULO_DIRECCION}</legend>
+              <p>{direccion[0]}</p>
+              <p>{direccion[1]}</p>
+            </fieldset>
+          </>
+        )}
+        <fieldset aria-label="Teléfonos">
+          <legend>{ROTULO_TELEFONOS}</legend>
+          {enlacesTelefono.map((enlace) => (
+            <a key={enlace.href} href={enlace.href}>
+              {enlace.textoVisible}
+            </a>
+          ))}
+        </fieldset>
+        {horario.length > 0 && (
+          <fieldset aria-label="Horario">
+            <legend>{ROTULO_HORARIO}</legend>
+            <dl>
+              {horario.map((tramo) => (
+                <div key={tramo.dias}>
+                  <dt>{tramo.dias}</dt>
+                  <dd>{tramo.horas}</dd>
+                </div>
+              ))}
+            </dl>
           </fieldset>
-        </>
-      )}
-      <fieldset aria-label="Teléfonos">
-        {enlacesTelefono.map((enlace) => (
-          <a key={enlace.href} href={enlace.href}>
-            {enlace.textoVisible}
-          </a>
-        ))}
-      </fieldset>
-      {horario.length > 0 && (
-        <fieldset aria-label="Horario">
-          <dl>
-            {horario.map((tramo) => (
-              <div key={tramo.dias}>
-                <dt>{tramo.dias}</dt>
-                <dd>{tramo.horas}</dd>
-              </div>
-            ))}
-          </dl>
-        </fieldset>
-      )}
+        )}
+      </div>
+      {/* La tarjeta "a la derecha" (@s36): el color de urgencia, el rótulo
+          real (derivado de la fuente única, nunca retipeado) y un botón de
+          llamada. Sigue en último lugar en el DOM (igual que antes de este
+          contrato); la maquetación la sube visualmente por encima de la
+          tarjeta de datos con "order", sin tocar el orden de lectura ya
+          aprobado. */}
       {enlaceUrgencias !== null && (
-        <fieldset aria-label="Urgencias fuera de horario">
-          <a href={enlaceUrgencias.href}>{enlaceUrgencias.textoVisible}</a>
-        </fieldset>
+        <div data-tarjeta-de="urgencia">
+          <fieldset aria-label="Urgencias fuera de horario">
+            <legend>{datosNegocio.telefonoUrgencias.rotulo}</legend>
+            <a href={enlaceUrgencias.href}>{enlaceUrgencias.textoVisible}</a>
+          </fieldset>
+        </div>
       )}
     </section>
   )

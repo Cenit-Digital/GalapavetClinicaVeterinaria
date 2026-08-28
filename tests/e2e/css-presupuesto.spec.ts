@@ -1,6 +1,8 @@
 // @s49 de `features/identidad_visual.feature` (Bloque J: las puertas del
 // arnés). NAVEGADOR REAL con Playwright, sumando los bytes de las
 // respuestas de tipo hoja de estilo de la portada.
+import { readdirSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { expect, test } from 'playwright/test'
 import { SUBPATH_DE_PRODUCCION } from './rutas'
 
@@ -34,5 +36,37 @@ test.describe('@s49 el peso del CSS servido no supera el techo declarado', () =>
     expect(TECHO_BYTES_CSS).toBeGreaterThan(0)
     expect(bytesTotales).toBeLessThanOrEqual(TECHO_BYTES_CSS)
     expect(bytesTotales).toBeGreaterThan(0)
+  })
+})
+
+// @s48 de `features/rediseno_visual.feature`: "el techo se declara en un
+// único sitio". Mismo mecanismo de "puerta de declaración única" que @s10
+// (`src/lib/diseno/contratoRedisenho.ts`,
+// `buscarDeclaracionesLiteralesDelIdentificador`), pero self-contained en
+// este fichero por alcance: aquí no hay un catálogo de variantes que
+// consumir desde producción, solo una constante de test. Se inspecciona
+// "src/" y "tests/" (TypeScript real) — no "dist/" ni ".stryker-tmp/" (son
+// artefactos generados, no fuentes) — porque ese es el universo donde este
+// techo podría razonablemente volver a copiarse.
+const RAIZ_DEL_REPO = fileURLToPath(new URL('../..', import.meta.url))
+const RUTA_DE_ESTE_FICHERO = fileURLToPath(import.meta.url).replaceAll('\\', '/')
+const ES_TYPESCRIPT = /\.tsx?$/
+const PATRON_DE_DECLARACION_DEL_TECHO = /TECHO_BYTES_CSS\s*=\s*8000\b/
+
+function rutasTypeScriptBajo(directorio: string): readonly string[] {
+  return readdirSync(directorio, { recursive: true, withFileTypes: true })
+    .filter((entrada) => entrada.isFile() && ES_TYPESCRIPT.test(entrada.name))
+    .map((entrada) => `${entrada.parentPath}/${entrada.name}`.replaceAll('\\', '/'))
+}
+
+function ficherosQueDeclaranElTecho(): readonly string[] {
+  const corpus = [...rutasTypeScriptBajo(`${RAIZ_DEL_REPO}/src`), ...rutasTypeScriptBajo(`${RAIZ_DEL_REPO}/tests`)]
+
+  return corpus.filter((ruta) => PATRON_DE_DECLARACION_DEL_TECHO.test(readFileSync(ruta, 'utf8')))
+}
+
+test.describe('@s48 el techo de bytes de CSS se declara en un único sitio', () => {
+  test('"TECHO_BYTES_CSS = 8000" solo aparece declarado en este fichero, en todo "src/" y "tests/"', () => {
+    expect(ficherosQueDeclaranElTecho()).toEqual([RUTA_DE_ESTE_FICHERO])
   })
 })

@@ -2,13 +2,56 @@
 // Los cuatro primeros temas reproducen el lenguaje del prototipo versionado;
 // `marca` preserva los quince valores de Galapavet ya aprobados y completa los
 // tres roles semánticos necesarios para la interfaz.
+//
+// EL ROJO DE URGENCIA NO ES UN COLOR DE MARCA (@s5 de
+// `features/rediseno_visual.feature:189`). Galapavet tiene TRES colores de
+// marca y solo tres, muestreados del logo y declarados en `src/lib/tokens.ts`:
+// morado #77286B, lima #B4C718 y verde profundo #48704B
+// (`docs/datos-galapavet.md` §10). El rojo #DC2626 de las variantes `clinica`,
+// `eco` y `marca` es un color SEMÁNTICO de alerta —el vocabulario de
+// urgencias—, no un cuarto color de marca: no identifica a la clínica, marca
+// una condición. Por eso solo se pinta en lo relacionado con urgencias y por
+// eso su rol suave se DERIVA en vez de copiarse: `--color-urgencia-suave` de
+// `marca` es `mezclar('#FFFFFF', '#DC2626', 0.10)` = #FCE9E9
+// (`src/lib/diseno/mezclaDeColor.ts`), recalculado por el test de @s5. El
+// #FDE9E9 que estuvo aquí hasta el 26/08/2026 era el `--urg-soft` del tema
+// `eco` del prototipo, copiado en vez de derivado.
+//
+// EL BORDE DE LAS CUATRO VARIANTES IMPORTADAS SE DERIVA, NO SE ELIGE (@s3 de
+// `features/rediseno_visual.feature:199-201`, ENMIENDA 1 aprobada por el humano
+// el 26/08/2026). El prototipo declara `--border` con alfa en sus cuatro temas
+// —`rgba(15,32,60,.13)` (VLS:20), `rgba(120,53,15,.16)` (VLS:28),
+// `rgba(148,197,255,.18)` (VLS:36) y `rgba(4,120,87,.16)` (VLS:44)—, y el
+// sistema declara los veinte roles de color como hexadecimal opaco, porque un
+// translúcido no tiene ratio propio y no se puede medir. La conversión NO es a
+// ojo: es UNA sola regla, la misma para las cuatro variantes,
+//
+//     --color-borde = mezclar(fondo de la variante, color del rgba, alfa del rgba)
+//
+// donde `mezclar()` es `src/lib/diseno/mezclaDeColor.ts` —la misma función con
+// la que se deriva `--color-urgencia-suave`— y «fondo de la variante» es el
+// `--bg` que el propio tema del prototipo declara, que es carácter a carácter
+// el `--color-fondo` de esa variante. Aplicada, da:
+//
+//     clinica  mezclar('#F8FAFC', '#0F203C', 0.13) = #DADEE3
+//     calida   mezclar('#FFFBF2', '#78350F', 0.16) = #E9DBCE
+//     tech     mezclar('#0F172A', '#94C5FF', 0.18) = #273650
+//     eco      mezclar('#FFFFFF', '#047857', 0.16) = #D7E9E4
+//
+// Los recalcula el test de @s3 (`src/lib/diseno/fidelidadPrototipo.test.ts`),
+// que además exige el valor COMPUESTO en la puerta de fidelidad: un
+// hexadecimal cualquiera en este rol sale en rojo. Hasta esta enmienda aquí
+// había `#D8E0EA`, `#E8D7BA`, `#405474` y `#C6E4D7`, que no eran la
+// composición ni sobre el fondo ni sobre la superficie y que ningún test
+// fijaba. `marca` NO entra en esta regla: el prototipo no la modela y sus
+// quince hexadecimales están congelados por @s4.
 
 :root {
   --color-fondo: #F8FAFC;
   --color-fondo-alterno: #EDF2F9;
   --color-superficie: #FFFFFF;
   --color-superficie-elevada: #FBFDFF;
-  --color-borde: #D8E0EA;
+  --color-borde: #DADEE3;
   --color-borde-control: #5E6E88;
   --color-tinta: #0B1B33;
   --color-texto: #3C4C66;
@@ -32,7 +75,7 @@
   --color-fondo-alterno: #EDF2F9;
   --color-superficie: #FFFFFF;
   --color-superficie-elevada: #FBFDFF;
-  --color-borde: #D8E0EA;
+  --color-borde: #DADEE3;
   --color-borde-control: #5E6E88;
   --color-tinta: #0B1B33;
   --color-texto: #3C4C66;
@@ -56,7 +99,7 @@
   --color-fondo-alterno: #FEF3C7;
   --color-superficie: #FFFDF8;
   --color-superficie-elevada: #FFFDF6;
-  --color-borde: #E8D7BA;
+  --color-borde: #E9DBCE;
   --color-borde-control: #8A6C45;
   --color-tinta: #3B2A12;
   --color-texto: #5C4626;
@@ -80,7 +123,7 @@
   --color-fondo-alterno: #152242;
   --color-superficie: #16233F;
   --color-superficie-elevada: #111C34;
-  --color-borde: #405474;
+  --color-borde: #273650;
   --color-borde-control: #94C5FF;
   --color-tinta: #F1F5F9;
   --color-texto: #C6D2E2;
@@ -104,7 +147,7 @@
   --color-fondo-alterno: #EFFDF7;
   --color-superficie: #FFFFFF;
   --color-superficie-elevada: #F7FEFB;
-  --color-borde: #C6E4D7;
+  --color-borde: #D7E9E4;
   --color-borde-control: #557368;
   --color-tinta: #06301F;
   --color-texto: #35544A;
@@ -129,6 +172,20 @@
   --color-superficie: #FFFFFF;
   --color-superficie-elevada: #FAF6F9;
   --color-borde: #DDC9DA;
+  // EL BORDE DE CONTROL DE "marca" ES LA ÚNICA VARIANTE QUE SE DERIVA POR
+  // MEZCLA, NO SE IMPORTA (@s8 de `features/rediseno_visual.feature:284`,
+  // ENMIENDA 3). Las otras cuatro variantes (`clinica`, `calida`, `tech`,
+  // `eco`) importan este rol de su propio tema del prototipo. `marca` no
+  // tiene tema en el prototipo, así que aquí la regla es mezclar el
+  // primario con el fondo de esta misma variante:
+  //
+  //     mezclar('#FFFFFF', '#77286B', 0.7) = #A06997
+  //
+  // donde `mezclar()` es `src/lib/diseno/mezclaDeColor.ts` —la misma
+  // función con la que se derivan `--color-urgencia-suave` y `--color-borde`
+  // de las variantes importadas— y `#FFFFFF`/`#77286B` son, carácter a
+  // carácter, el `--color-fondo` y el `--color-primario` que esta variante
+  // ya declara arriba y abajo.
   --color-borde-control: #A06997;
   --color-tinta: #531C4B;
   --color-texto: #77286B;
@@ -140,7 +197,7 @@
   --color-acento-tinta: #48704B;
   --color-acento-suave: #F6F8E3;
   --color-urgencia: #DC2626;
-  --color-urgencia-suave: #FDE9E9;
+  --color-urgencia-suave: #FCE9E9;
   --color-foco: #77286B;
   --sombra-reposo: 0 6px 18px rgba(83, 28, 75, 0.07);
   --sombra-elevada: 0 18px 45px rgba(83, 28, 75, 0.1);

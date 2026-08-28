@@ -101,6 +101,15 @@
       color: var(--color-primario);
     }
   }
+
+  // El acceso a la Tienda (@s28 de `rediseno_visual.feature`): "borde y sin
+  // relleno", distinto del resto del catálogo. El hueco lo abre el propio
+  // dato (`esDestinoTienda`, `Cabecera-logica.ts`), nunca una clase CSS
+  // opaca — el mismo mixin compartido que ya usa la tarjeta de urgencias de
+  // `InformacionContacto.module.scss`.
+  a[data-enlace-tienda] {
+    @include boton-fantasma;
+  }
 }
 
 .botonMenu {
@@ -143,5 +152,10 @@
     color: inherit;
     text-decoration: none;
     font-weight: 600;
+  }
+
+  // Mismo estilo de "botón fantasma" que la navegación de escritorio (@s28).
+  a[data-enlace-tienda] {
+    @include boton-fantasma;
   }
 }

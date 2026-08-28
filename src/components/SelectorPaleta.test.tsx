@@ -3,6 +3,10 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { SelectorPaleta } from './SelectorPaleta'
+// Texto REAL de la hoja de estilos (patrón `?raw`, `vite.config.ts:80`: la
+// query `?raw` recibe el fichero SIN pasar por el proxy de CSS Modules) para
+// anclar @s37 al marcado de la propia regla, no a un literal reinventado.
+import textoDeLaHojaDeEstilos from './SelectorPaleta.module.scss?raw'
 
 /** Centraliza el render de `SelectorPaleta` bajo test. */
 function renderizarSelectorPaleta(
@@ -172,5 +176,78 @@ describe('@s16 sin variantes en el catálogo el selector no se renderiza', () =>
 
     expect(screen.queryByRole('button', { name: 'Cambiar paleta de color' })).not.toBeInTheDocument()
     expect(document.documentElement).toHaveAttribute('data-variante', 'clinica')
+  })
+})
+
+// @s37 de `features/rediseno_visual.feature:571-578`. Las otras tres cláusulas
+// del escenario («ofrece exactamente cinco variantes», «la activa es la que
+// el documento tiene aplicada» y «al elegir una variante el documento la
+// aplica y la recuerda para la siguiente visita») ya están cubiertas por los
+// tests de arriba, heredados de `selector_paleta.feature` (ya `done`) y
+// verificados con sabotaje en su día:
+//   - «exactamente cinco variantes»                → @s2 (línea 24)
+//   - «la activa es la que el documento tiene aplicada» → @s5 (línea 82), @s6 (línea 104), @s8 (línea 136)
+//   - «la aplica y la recuerda para la siguiente visita» → @s6 (aplica), @s7 (guarda, línea 122), @s8
+//     (recuerda) de este fichero, y @s9/@s10 de `SelectorPaleta-logica.test.ts` (el gemelo puro que
+//     resuelve la variante ANTES del primer pintado)
+// No se duplican aquí. La única cláusula sin test propio hasta hoy es la de
+// las MUESTRAS, que es lo que sigue.
+
+describe('@s37 la muestra de cada variante lleva el identificador de ESA variante, no uno compartido', () => {
+  // Catálogo real de `src/data/variantesPaleta.ts`, copiado a mano id por id
+  // (doble anclaje: NO se compara contra el símbolo `variante.id` importado
+  // de producción). Si el marcado hardcodeara un único id para las 5
+  // muestras, la comparación de la segunda variante en adelante fallaría.
+  const VARIANTES_ESPERADAS_EN_ORDEN = [
+    { nombre: 'Clínica', id: 'clinica' },
+    { nombre: 'Cálida', id: 'calida' },
+    { nombre: 'Tech', id: 'tech' },
+    { nombre: 'Eco', id: 'eco' },
+    { nombre: 'Marca Galapavet', id: 'marca' },
+  ] as const
+  const TOTAL_DE_VARIANTES = 5
+
+  it('el "data-muestra-variante" de cada botón coincide con el id real de esa variante, y los 5 son distintos entre sí', async () => {
+    const usuario = userEvent.setup()
+    renderizarSelectorPaleta()
+    await usuario.click(screen.getByRole('button', { name: 'Cambiar paleta de color' }))
+    const grupo = screen.getByRole('group', { name: 'Paleta de color' })
+
+    const idsEncontrados: string[] = []
+    for (const { nombre, id } of VARIANTES_ESPERADAS_EN_ORDEN) {
+      const boton = within(grupo).getByRole('button', { name: new RegExp('^' + nombre) })
+      const contenedorDeMuestras = boton.querySelector('[data-muestra-variante]')
+      expect(contenedorDeMuestras).toHaveAttribute('data-muestra-variante', id)
+      idsEncontrados.push(id)
+    }
+
+    // Anti-vacuidad: el bucle recorrió las 5, y los 5 ids son distintos entre
+    // sí (si estuvieran hardcodeados a uno solo, este `Set` valdría 1).
+    expect(idsEncontrados).toHaveLength(TOTAL_DE_VARIANTES)
+    expect(new Set(idsEncontrados).size).toBe(TOTAL_DE_VARIANTES)
+  })
+})
+
+describe('@s37 las muestras se pintan leyendo los tokens de su variante, no un color escrito aparte', () => {
+  // Los tres roles que pinta cada muestra, en el ORDEN en que las declara el
+  // marcado (`SelectorPaleta.tsx`: primario, acento, urgencia). Literal
+  // escrito a mano, confrontado contra el TEXTO REAL de la hoja de estilos.
+  const ROLES_ESPERADOS_EN_ORDEN = ['--color-primario', '--color-acento', '--color-urgencia']
+  const NUMERO_DE_REGLAS_DE_MUESTRA = 3
+
+  it('las tres reglas ".muestra:nth-child(n)" leen "var(--color-...)" de la variante, ningún hexadecimal escrito a mano', () => {
+    const patronReglaDeMuestra = /\.muestra:nth-child\(\d\)\s*\{\s*background-color:\s*var\((--color-[a-z-]+)\)/g
+    const coincidencias = [...textoDeLaHojaDeEstilos.matchAll(patronReglaDeMuestra)]
+
+    expect(coincidencias).toHaveLength(NUMERO_DE_REGLAS_DE_MUESTRA)
+    expect(coincidencias.map((coincidencia) => coincidencia[1])).toEqual(ROLES_ESPERADOS_EN_ORDEN)
+
+    // Sobre el bloque ".muestras { … }" completo: ningún "#RRGGBB" escrito a
+    // mano. Si apareciera uno, sería una lista de colores paralela a los
+    // tokens de `_tokens.scss` — justo lo que @s37 prohíbe.
+    const indiceDelBloque = textoDeLaHojaDeEstilos.indexOf('.muestras')
+    expect(indiceDelBloque).toBeGreaterThan(-1)
+    const bloqueDeMuestras = textoDeLaHojaDeEstilos.slice(indiceDelBloque)
+    expect(bloqueDeMuestras).not.toMatch(/#[0-9a-fA-F]{6}/)
   })
 })

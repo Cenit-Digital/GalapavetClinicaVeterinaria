@@ -4,9 +4,25 @@
 // heredarlos de un wrapper.
 .campanasPortada {
   @include contenedor;
-  padding-block: espaciado(56);
+  // Relleno vertical FLUIDO (@s19), y el MENOR de la portada a propósito:
+  // esta es justo la sección que el prototipo marca como compacta
+  // (`global.scss:52`, `clamp(56px, 6.2vw, 90px)`, frente a los
+  // `clamp(72px, 7.2vw, 104px)` del ritmo normal). Antes declaraba
+  // `espaciado(56)` fijo — ni fluido ni el token que pide el contrato — y así
+  // lo confirmó `judge_rediseno_visual.md`.
+  padding-block: var(--ritmo-seccion-compacto);
   background-color: var(--color-fondo);
   color: var(--color-texto);
+
+  // Cintillo delante del h2 (@s33). El fondo de esta sección es un rol de
+  // color del sistema (`--color-fondo`, arriba), no una fotografía, así que
+  // usa la tinta de acento por defecto del mixin compartido
+  // (`_api.scss:324-332`, `color: var(--color-acento-tinta)`) sin ningún
+  // override — a diferencia del cintillo del hero, que SÍ la sobrescribe por
+  // ir sobre una foto (`Hero.module.scss`, exceptuado por la Enmienda 2).
+  .eyebrow {
+    @include eyebrow;
+  }
 
   h2 {
     font-family: var(--fuente-titulares);

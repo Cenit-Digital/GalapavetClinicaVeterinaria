@@ -90,7 +90,7 @@ function esRuidoConocidoDelMapa(texto: string): boolean {
 }
 
 test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del navegador', () => {
-  test('las 6 rutas + interacción con el selector de paleta, un desplegable de servicios y un ítem del FAQ: 0 errores, 0 avisos, 0 excepciones', async ({
+  test('las 6 rutas + interacción con el selector de paleta, un desplegable de servicios, una ficha de equipo y un ítem del FAQ: 0 errores, 0 avisos, 0 excepciones', async ({
     page,
   }) => {
     const mensajesDeError: string[] = []
@@ -126,6 +126,12 @@ test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del 
 
     const botonServicio = page.locator('section', { hasText: 'Servicios' }).getByRole('button').first()
     await botonServicio.click()
+
+    // Ficha de equipo: el botón `aria-expanded` que alterna la formación
+    // publicada (`Equipo.tsx:36-38`, @s3/@s7 de `equipo.feature`). Mismo
+    // patrón de localización por estructura que el desplegable de servicios.
+    const botonEquipo = page.locator('section', { hasText: 'Equipo' }).getByRole('button').first()
+    await botonEquipo.click()
 
     const botonFaq = page.getByRole('button', { name: '¿Qué horario tiene la clínica?' })
     await botonFaq.click()

@@ -7,6 +7,7 @@
  * enlaces), no se hereda del prototipo ajeno (1120px, ver
  * `docs/contrato-heredado/cabecera_y_navegacion.feature`).
  */
+import { DESTINO_TIENDA } from '../data/navegacion'
 export const PUNTO_DE_CORTE_NAVEGACION_PX = 1024
 
 /**
@@ -42,4 +43,37 @@ export function esAncla(destino: string): boolean {
  */
 export function esPaginaActual(destino: string, rutaActual: string): boolean {
   return !esAncla(destino) && destino === rutaActual
+}
+
+/**
+ * ¿Es este el destino de la Tienda? `Cabecera.tsx` la usa para dar al enlace
+ * de Tienda un estilo de "borde y sin relleno" (@s28 de
+ * `rediseno_visual.feature`), derivado del propio destino — nunca de una
+ * prop nueva "es-tienda" que pudiera divergir de `ENLACES_NAVEGACION`.
+ */
+export function esDestinoTienda(destino: string): boolean {
+  return destino === DESTINO_TIENDA
+}
+
+/**
+ * Nueva posición absoluta de scroll para que un elemento de destino quede
+ * justo debajo de la franja fija (barra de urgencias + cabecera) al saltar a
+ * una sección (@s28 de `rediseno_visual.feature`). Los tres números SIEMPRE
+ * se miden en el momento del clic (`Cabecera.tsx`, con
+ * `getBoundingClientRect()`/`window.scrollY`): esta función nunca ve ni
+ * produce un número escrito a mano, solo combina los que recibe.
+ *
+ * @param desplazamientoActual `window.scrollY` en el momento del clic.
+ * @param distanciaAlElemento distancia del elemento de destino al borde
+ *   superior de la ventana (`elemento.getBoundingClientRect().top`).
+ * @param alturaFijaReal altura real de la franja fija —barra de urgencias
+ *   más cabecera— medida con `getBoundingClientRect().bottom` de la propia
+ *   cabecera, que arranca justo debajo de la barra.
+ */
+export function posicionDeScrollParaAncla(
+  desplazamientoActual: number,
+  distanciaAlElemento: number,
+  alturaFijaReal: number,
+): number {
+  return desplazamientoActual + distanciaAlElemento - alturaFijaReal
 }

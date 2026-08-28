@@ -24,25 +24,39 @@
       // Anti-destello (FOUC): aplica la variante de paleta guardada ANTES del
       // primer pintado, para que el visitante no vea la variante por defecto
       // seguida de un salto a la guardada. Corre antes de que exista el
-      // bundle, así que no puede importar código: es un ESPEJO LITERAL,
-      // escrito a mano, de `resolverVarianteInicial` en
-      // `src/components/SelectorPaleta-logica.ts` — mismas ramas, mismo
-      // catch defensivo. Un id ausente, vacío, desconocido o corrupto cae
-      // siempre a "marca"; nunca escribe basura en el atributo (@s9/@s10).
+      // bundle, así que no puede importar código.
+      //
+      // NO escribe el identificador de la variante por defecto, y eso es
+      // deliberado (@s10 de `features/rediseno_visual.feature:233`: "el
+      // identificador aparece declarado una sola vez en todo el proyecto").
+      // Ese identificador se declara en un único sitio, el catálogo
+      // `VARIANTES_REDISENO` de `src/lib/diseno/contratoRedisenho.ts`, y este
+      // guion lo CONSUME por complemento: solo lista las variantes que NO son
+      // la predeterminada. Ese literal se confronta contra el catálogo en
+      // `src/components/SelectorPaleta-logica.test.ts`, que lee este fichero
+      // como texto — si el catálogo cambia o cambia cuál es la
+      // predeterminada, ese test falla.
+      //
+      // Sin preferencia guardada, o con una que no es ninguna de estas
+      // cuatro, el atributo NO se toca: el documento se pinta con el bloque
+      // `:root` sin atributo de `src/styles/_tokens.scss`, que declara los
+      // mismos veinte valores que la variante por defecto (@s12, verificado
+      // token a token). Así no hay destello y tampoco se escribe basura en el
+      // atributo. Cuando React monta, `SelectorPaleta` lo fija al valor que
+      // resuelve `resolverVarianteInicial`.
       ;(function aplicarVarianteAntesDelPintado() {
         var CLAVE_ALMACENAMIENTO_VARIANTE = 'galapavet-variante'
-        var IDS_DEL_CATALOGO = ['clinica', 'calida', 'tech', 'eco', 'marca']
-        var VARIANTE_POR_DEFECTO = IDS_DEL_CATALOGO[0]
-        var variante = VARIANTE_POR_DEFECTO
+        var IDS_NO_PREDETERMINADOS = ['calida', 'tech', 'eco', 'marca']
         try {
           var guardada = window.localStorage.getItem(CLAVE_ALMACENAMIENTO_VARIANTE)
-          if (guardada !== null && IDS_DEL_CATALOGO.indexOf(guardada) !== -1) {
-            variante = guardada
+          if (guardada !== null && IDS_NO_PREDETERMINADOS.indexOf(guardada) !== -1) {
+            document.documentElement.setAttribute('data-variante', guardada)
           }
-        } catch (error) {
-          variante = VARIANTE_POR_DEFECTO
+        } catch {
+          // Intencionalmente silencioso: un almacenamiento no disponible no
+          // debe impedir pintar la página. Se queda con la variante por
+          // defecto, que es la del bloque `:root` sin atributo.
         }
-        document.documentElement.setAttribute('data-variante', variante)
       })()
     </script>
   </head>

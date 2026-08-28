@@ -9,19 +9,27 @@
  * id)` ya aplica antes del primer pintado (`index.html:30`,
  * `selector_paleta.feature`, ya `done`).
  */
-import { ejecutarPuertaDeContraste, type ParDeContraste, type UsoDeColor } from '../contraste'
+import type { UsoDeColor } from '../contraste'
 
 /**
- * Los 15 roles de color del sistema (@s1 de `identidad_visual.feature`), sin
- * el prefijo `--color-`. Los tres primeros ya existían
- * (`sistema_de_diseno_visual.feature`); los 12 siguientes nacen con esta
- * feature.
+ * Los 18 roles de color del sistema (@s1 de `rediseno_visual.feature`), sin
+ * el prefijo `--color-`. Quince vienen del sistema anterior (@s1 de
+ * `identidad_visual.feature:148`) y tres nacen con el rediseño: `acento`,
+ * `urgencia` y `urgencia-suave`.
+ *
+ * El ORDEN es el que declara `src/styles/_tokens.scss:7-24`, la hoja que
+ * implementa el sistema, y es el mismo de `ROLES_DE_COLOR_REDISENO`
+ * (`contratoRedisenho.ts:1`): las dos declaraciones del inventario se
+ * confrontan contra un único literal escrito a mano en
+ * `contratoRedisenho.test.ts`, así que no pueden divergir en silencio (@s1).
  */
 export type RolDeColor =
   | 'fondo'
   | 'fondo-alterno'
   | 'superficie'
   | 'superficie-elevada'
+  | 'borde'
+  | 'borde-control'
   | 'tinta'
   | 'texto'
   | 'texto-suave'
@@ -33,8 +41,6 @@ export type RolDeColor =
   | 'acento-suave'
   | 'urgencia'
   | 'urgencia-suave'
-  | 'borde-control'
-  | 'borde'
   | 'foco'
 
 /** Los 2 roles de sombra del sistema (@s1), sin el prefijo `--sombra-`. No son color: no pasan por la puerta de contraste. */
@@ -48,6 +54,8 @@ const ROLES_DE_COLOR: readonly RolDeColor[] = [
   'fondo-alterno',
   'superficie',
   'superficie-elevada',
+  'borde',
+  'borde-control',
   'tinta',
   'texto',
   'texto-suave',
@@ -59,15 +67,13 @@ const ROLES_DE_COLOR: readonly RolDeColor[] = [
   'acento-suave',
   'urgencia',
   'urgencia-suave',
-  'borde-control',
-  'borde',
   'foco',
 ]
 
 const ROLES_DE_SOMBRA: readonly RolDeSombra[] = ['reposo', 'elevada']
 
 /**
- * El inventario declarado de los 17 tokens del sistema de color (15 roles de
+ * El inventario declarado de los 20 tokens del sistema de color (18 roles de
  * color + 2 de sombra, @s1). Construido a partir de `ROLES_DE_COLOR` y
  * `ROLES_DE_SOMBRA`, que son la fuente única de verdad de qué roles existen
  * — el mismo tipo `RolDeColor`/`RolDeSombra` que el resto del módulo usa para
@@ -168,6 +174,14 @@ export function leerTokenDeVariante(textoScss: string, variante: string, rol: Ro
 
 const PRIMERA_CAPTURA = 1
 
+function leerDeclaracionDelBloque(bloque: string, nombreDeToken: NombreDeToken, mensajeSiAusente: string): string {
+  const coincidencia = bloque.match(new RegExp(`${nombreDeToken}:\\s*([^;]+);`))
+  if (!coincidencia) {
+    throw new Error(mensajeSiAusente)
+  }
+  return (coincidencia[PRIMERA_CAPTURA] as string).trim()
+}
+
 /**
  * Valor declarado de CUALQUIER token dentro del bloque de `variante`, tal
  * cual lo escribe el fichero y sin interpretarlo. Existe porque
@@ -178,11 +192,11 @@ const PRIMERA_CAPTURA = 1
  */
 export function leerDeclaracionDeVariante(textoScss: string, variante: string, nombreDeToken: NombreDeToken): string {
   const bloque = extraerBloqueDeVariante(textoScss, variante)
-  const coincidencia = bloque.match(new RegExp(`${nombreDeToken}:\\s*([^;]+);`))
-  if (!coincidencia) {
-    throw new Error(`no se encontró el token "${nombreDeToken}" para la variante "${variante}"`)
-  }
-  return (coincidencia[PRIMERA_CAPTURA] as string).trim()
+  return leerDeclaracionDelBloque(
+    bloque,
+    nombreDeToken,
+    `no se encontró el token "${nombreDeToken}" para la variante "${variante}"`,
+  )
 }
 
 /**
@@ -250,6 +264,18 @@ export function leerTokenDeRaizSinAtributo(textoScss: string, rol: RolDeColor): 
   return leerTokenDelBloque(bloque, rol, `no se encontró el token "--color-${rol}" en el ":root" sin atributo`)
 }
 
+/**
+ * Valor declarado de CUALQUIER token dentro del `:root` sin atributo, tal cual
+ * lo escribe el fichero. Mismo motivo que `leerDeclaracionDeVariante`: las dos
+ * sombras del inventario no son hexadecimales, y @s12 exige comparar los
+ * VEINTE tokens del bloque de emergencia con los de la variante por defecto,
+ * no solo los de color.
+ */
+export function leerDeclaracionDeRaizSinAtributo(textoScss: string, nombreDeToken: NombreDeToken): string {
+  const bloque = extraerBloqueRaizSinAtributo(textoScss)
+  return leerDeclaracionDelBloque(bloque, nombreDeToken, `no se encontró el token "${nombreDeToken}" en el ":root" sin atributo`)
+}
+
 /** Una fila de la matriz de uso: qué rol se pinta sobre qué fondo, y con qué uso WCAG (@s5, @s6, @s7). */
 export interface EntradaDeMatrizDeUso {
   readonly rol: RolDeColor
@@ -257,66 +283,3 @@ export interface EntradaDeMatrizDeUso {
   readonly uso: UsoDeColor
 }
 
-/**
- * La matriz de uso de la variante "marca": los pares (rol, fondo) que el
- * sistema efectivamente pinta, con su uso WCAG declarado. No es la
- * combinación exhaustiva de los 15 roles — es la lista de decisiones de
- * diseño reales (@s5, @s6, @s7 de `identidad_visual.feature`). `--color-borde`
- * queda fuera a propósito: es decorativo y nunca identifica un control (@s7).
- */
-export const MATRIZ_DE_USO_MARCA: readonly EntradaDeMatrizDeUso[] = [
-  { rol: 'tinta', fondo: 'fondo', uso: 'texto normal' },
-  { rol: 'tinta', fondo: 'fondo-alterno', uso: 'texto normal' },
-  { rol: 'texto', fondo: 'fondo-alterno', uso: 'texto normal' },
-  { rol: 'texto-suave', fondo: 'fondo', uso: 'texto normal' },
-  { rol: 'texto-suave', fondo: 'fondo-alterno', uso: 'texto normal' },
-  { rol: 'texto', fondo: 'superficie-elevada', uso: 'texto normal' },
-  { rol: 'sobre-primario', fondo: 'primario', uso: 'texto normal' },
-  { rol: 'acento-tinta', fondo: 'acento-suave', uso: 'texto normal' },
-  { rol: 'acento-tinta', fondo: 'fondo-alterno', uso: 'texto normal' },
-  { rol: 'borde-control', fondo: 'fondo', uso: 'componente de interfaz o borde de foco' },
-  { rol: 'borde-control', fondo: 'fondo-alterno', uso: 'componente de interfaz o borde de foco' },
-]
-
-/**
- * Resuelve cada fila de `matriz` contra el texto real de `variante`: los
- * nombres de rol se convierten en los hexadecimales que el fichero de
- * tokens declara de verdad, nunca duplicados a mano (@s5).
- */
-export function resolverMatrizDeUso(textoScss: string, variante: string, matriz: readonly EntradaDeMatrizDeUso[]): readonly ParDeContraste[] {
-  return matriz.map(({ rol, fondo, uso }) => ({
-    color: leerTokenDeVariante(textoScss, variante, rol),
-    fondo: leerTokenDeVariante(textoScss, variante, fondo),
-    uso,
-  }))
-}
-
-const CERO_VARIANTES = 0
-
-export interface InformeContrasteDeVariantes {
-  readonly veredicto: 'aprobado' | 'suspenso'
-  readonly variantesComprobadas: number
-  readonly motivo?: string
-}
-
-function motivoDeVacuidadDeVariantes(): string {
-  return 'no se comprobó ninguna variante: el catálogo de variantes está vacío'
-}
-
-/**
- * Comprobación de contraste de las variantes de paleta: reutiliza
- * `ejecutarPuertaDeContraste` de `contraste.ts` (ya `done`, ya probada al
- * 100 %) y falla cerrada si el catálogo está vacío, ANTES de delegarle nada
- * — un `catalogo.every(...)` sobre un array vacío da `true` por verdad
- * vacua, lo que produciría un "aprobado" falso sin esta guarda (@s11).
- */
-export function ejecutarComprobacionDeContrasteDeVariantes(
-  catalogo: readonly ParDeContraste[],
-): InformeContrasteDeVariantes {
-  if (catalogo.length === CERO_VARIANTES) {
-    return { veredicto: 'suspenso', variantesComprobadas: CERO_VARIANTES, motivo: motivoDeVacuidadDeVariantes() }
-  }
-
-  const informe = ejecutarPuertaDeContraste(catalogo)
-  return { veredicto: informe.pasa ? 'aprobado' : 'suspenso', variantesComprobadas: informe.parejasEvaluadas }
-}

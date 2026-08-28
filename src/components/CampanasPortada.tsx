@@ -36,6 +36,7 @@ export function CampanasPortada({ catalogo = CAMPANAS_DEMO }: CampanasPortadaPro
       className={styles.campanasPortada}
       data-contenedor-principal
     >
+      <p className={styles.eyebrow}>Prevención</p>
       <h2>Campañas de prevención</h2>
       <p id="campanas-aviso-demostracion">
         Contenido de demostración. Galapavet no ha confirmado ninguna campaña: estas tarjetas muestran el formato

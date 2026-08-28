@@ -53,7 +53,9 @@ function TarjetaArticulo({ articulo, categoriaActiva }: TarjetaArticuloProps): R
   return (
     <li>
       <Link to={destinoArticulo(articulo.identificador, categoriaActiva)}>
+        <img src={hrefDeDestino(articulo.imagen)} alt="" width={800} height={500} loading="lazy" decoding="async" />
         <span>{DISTINTIVO_DEMOSTRACION}</span>
+        <p className={styles.categoria}>{articulo.categoria}</p>
         <h2>{articulo.titulo}</h2>
       </Link>
     </li>

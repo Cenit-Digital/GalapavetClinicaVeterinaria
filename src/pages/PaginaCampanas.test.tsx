@@ -12,6 +12,32 @@ import { CAMPANAS_DEMO } from '../data/campanas'
 import { SERVICIOS } from '../data/servicios'
 import { PaginaCampanas } from './PaginaCampanas'
 
+// TEXTO REAL de "PaginaCampanas.module.scss" que las pruebas de
+// "rediseno_visual @s39" leen con "?raw" (patrón ya establecido en
+// `PaginaTienda.test.tsx`, mismo doble anclaje: nunca se aserta contra el
+// CSS compilado, sino contra el fichero fuente tal cual está en disco).
+const TEXTO_MODULO_CAMPANAS = Object.values(
+  import.meta.glob('./PaginaCampanas.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<
+    string,
+    string
+  >,
+)[0] as string
+
+/**
+ * Extrae el contenido (sin llaves) del primer bloque `selector { ... }` que
+ * aparece en `texto`. Solo sirve para bloques SIN llaves anidadas dentro
+ * (mismo límite documentado en `PaginaTienda.test.tsx`).
+ */
+function contenidoDelBloque(texto: string, selector: string): string {
+  const indiceSelector = texto.indexOf(selector)
+  if (indiceSelector === -1) {
+    throw new Error(`No se encontró el selector "${selector}" en el texto real`)
+  }
+  const indiceApertura = texto.indexOf('{', indiceSelector)
+  const indiceCierre = texto.indexOf('}', indiceApertura)
+  return texto.slice(indiceApertura + 1, indiceCierre)
+}
+
 /** Sustituye `window.innerWidth` (jsdom lo expone como propiedad de solo lectura por defecto). */
 function establecerAnchoDeVentana(px: number): void {
   Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: px })
@@ -799,5 +825,70 @@ describe('@s39 caso límite — una ficha sin otras campañas no muestra la secc
     expect(within(main).queryByRole('heading', { level: 2, name: 'Otras campañas' })).not.toBeInTheDocument()
     expect(within(main).queryAllByRole('heading', { level: 3 })).toHaveLength(0)
     expect(screen.getByRole('navigation', { name: 'Ruta' })).toBeInTheDocument()
+  })
+})
+
+// =============================================================================
+// rediseno_visual @s39 — "La página de campañas adopta el lenguaje visual sin
+// declarar precios" (features/rediseno_visual.feature:595-601).
+// =============================================================================
+
+describe('rediseno_visual @s39 el encabezado de página lleva su cintillo delante del titular', () => {
+  it('un párrafo "Campañas" (no un encabezado) es el elemento inmediatamente anterior al "h1 Campañas de prevención"', () => {
+    window.history.pushState(null, '', '/campanas')
+    renderizarApp()
+
+    const main = screen.getByRole('main')
+    const encabezado = within(main).getByRole('heading', { level: 1, name: 'Campañas de prevención' })
+    const cintillo = within(main).getByText('Campañas', { selector: 'p' })
+
+    expect(cintillo.tagName).toBe('P')
+    expect(within(main).queryByRole('heading', { name: 'Campañas' })).not.toBeInTheDocument()
+    expect(encabezado.previousElementSibling).toBe(cintillo)
+  })
+})
+
+describe('rediseno_visual @s39 el cintillo usa el mixin "eyebrow" del sistema', () => {
+  it('el bloque ".cintillo", leído del TEXTO REAL de "PaginaCampanas.module.scss", incluye "@include eyebrow;"', () => {
+    const bloqueCintillo = contenidoDelBloque(TEXTO_MODULO_CAMPANAS, '.cintillo {')
+    expect(bloqueCintillo).toContain('@include eyebrow;')
+  })
+})
+
+describe('rediseno_visual @s39 cada ficha usa el patrón de tarjeta del sistema', () => {
+  it('el bloque "li" del listado, leído del TEXTO REAL de "PaginaCampanas.module.scss", incluye "@include tarjeta;"', () => {
+    const bloqueLi = contenidoDelBloque(TEXTO_MODULO_CAMPANAS, 'li {')
+    expect(bloqueLi).toContain('@include tarjeta;')
+  })
+})
+
+describe('rediseno_visual @s39 ninguna ficha del listado muestra precio, plazas ni vigencia', () => {
+  it('ninguna de las 3 tarjetas contiene "Precio", "Plazas", "Vigencia", "€" ni "%"', () => {
+    window.history.pushState(null, '', '/campanas')
+    renderizarApp()
+
+    const listado = screen.getByRole('list', { name: 'Listado de campañas' })
+    const tarjetas = within(listado).getAllByRole('listitem')
+    expect(tarjetas).toHaveLength(3)
+
+    for (const tarjeta of tarjetas) {
+      const texto = tarjeta.textContent ?? ''
+      for (const cadena of ['Precio', 'Plazas', 'Vigencia', '€', '%']) {
+        expect(texto).not.toContain(cadena)
+      }
+    }
+  })
+})
+
+describe('rediseno_visual @s39 el aviso de contenido de demostración sigue presente', () => {
+  it('el aviso literal de demostración de la página de campañas es visible', () => {
+    window.history.pushState(null, '', '/campanas')
+    renderizarApp()
+
+    expect(
+      screen.getByText(
+        'Contenido de demostración. Galapavet no ha confirmado ninguna campaña: esta página muestra el formato sobre servicios que la clínica sí presta. Precio, vigencia, plazas y condiciones están pendientes de confirmar con la clínica.',
+      ),
+    ).toBeInTheDocument()
   })
 })

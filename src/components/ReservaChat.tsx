@@ -132,13 +132,27 @@ export function ReservaChat(): React.JSX.Element {
         </ul>
       </div>
       <fieldset aria-label="Asistente de reserva de Galapavet">
-        <div className={styles.cabeceraChat}>
+        {/* `fieldset` en vez de un `div` con `role="group"`: oxlint (jsx-a11y/prefer-tag-over-role)
+            exige la etiqueta semántica real cuando existe una equivalente, y su rol implícito
+            YA es "group" — el resto del fichero agrupa contenido no-formulario del mismo modo
+            (p. ej. "Resumen de tu solicitud" más abajo), y el reset `fieldset { border: none; ... }`
+            de `ReservaChat.module.scss` ya cubre cualquier `fieldset` anidado dentro de `.reservaChat`. */}
+        <fieldset className={styles.cabeceraChat} aria-label="Cabecera del chat">
           <span aria-hidden="true">G</span>
           <div>
             <strong>Asistente de reserva</strong>
             <p>Galapavet</p>
+            {/* Indicador de disponibilidad real (@s34): NO dice "en línea" —
+                esa promesa la prohíbe @s17, porque no hay ninguna persona
+                conectada al otro lado, solo un guion que corre en el propio
+                navegador y que por eso está disponible siempre que la página
+                carga. */}
+            <p className={styles.disponibilidad}>
+              <span aria-hidden="true" className={styles.puntoDisponible} />
+              Disponible
+            </p>
           </div>
-        </div>
+        </fieldset>
         <div role="log" aria-live="polite">
           {historial.map((mensaje) => (
             <p key={mensaje.id}>{mensaje.texto}</p>

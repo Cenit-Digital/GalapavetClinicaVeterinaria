@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { SERVICIOS, type BloqueServicio } from '../data/servicios'
 import { hrefDeDestino } from '../lib/hrefDeDestino'
-import { nombreAccesibleBoton, puntosVisibles, rotuloBoton, tieneDesglose } from './Servicios-logica'
+import { categoriaDeServicio, nombreAccesibleBoton, puntosVisibles, rotuloBoton, tieneDesglose } from './Servicios-logica'
 import styles from './Servicios.module.scss'
 
 interface ServiciosProps {
@@ -23,7 +23,7 @@ function TarjetaServicio({ bloque }: TarjetaServicioProps): React.JSX.Element {
       {bloque.imagen !== undefined && (
         <img src={hrefDeDestino(bloque.imagen)} alt="" width={800} height={500} loading="lazy" decoding="async" />
       )}
-      <span>Atención veterinaria</span>
+      <span>{categoriaDeServicio(bloque.titulo)}</span>
       <h3>{bloque.titulo}</h3>
       {conDesglose && (
         <button
@@ -53,6 +53,7 @@ export function Servicios({ catalogo = SERVICIOS }: ServiciosProps = {}): React.
   }
   return (
     <section className={styles.servicios} data-contenedor-principal>
+      <p className={styles.eyebrow}>Servicios</p>
       <h2>Servicios</h2>
       {catalogo.map((bloque) => (
         <TarjetaServicio key={bloque.titulo} bloque={bloque} />

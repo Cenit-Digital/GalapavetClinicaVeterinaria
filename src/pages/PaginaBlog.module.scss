@@ -52,21 +52,38 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding: espaciado(20);
-      gap: espaciado(8);
       color: inherit;
       text-decoration: none;
+    }
+
+    img {
+      // 16/10 (`estudio_diseno_referencia.md` §3.6), la misma proporción que
+      // la tarjeta de servicio (`Servicios.module.scss`) y que "Blog:110" del
+      // prototipo — no la 16/9 de la imagen grande de artículo (`> article > img`,
+      // más abajo en este mismo fichero, que es "Blog:149", otra imagen).
+      @include hueco-de-imagen(8, 5);
     }
 
     span {
       @include pildora-etiqueta;
       align-self: flex-start;
+      margin: espaciado(20) espaciado(20) 0;
+    }
+
+    // Categoría real del artículo (@s40 de `rediseno_visual.feature`), no una
+    // píldora: el prototipo la pinta como rótulo corto en versalitas con la
+    // tinta de acento, sin fondo ("Blog:114") — el mismo lenguaje que ya usa
+    // el mixin "eyebrow" en el resto del sistema, distinto a propósito del
+    // distintivo "Demostración" de arriba para que ambos se distingan entre sí.
+    .categoria {
+      @include eyebrow;
+      margin: espaciado(12) espaciado(20) 0;
     }
 
     h2 {
       font-family: var(--fuente-titulares);
       font-size: paso-tipografico(2);
-      margin: 0;
+      margin: espaciado(8) espaciado(20) espaciado(20);
     }
   }
 

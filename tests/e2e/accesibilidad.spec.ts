@@ -459,3 +459,96 @@ test.describe('@s41 la jerarquía de encabezados de cada ruta es correcta y sin 
     expect(RUTAS_DEL_INVENTARIO).toHaveLength(6)
   })
 })
+
+// ---------------------------------------------------------------------------
+// @s45 de `features/rediseno_visual.feature` (Bloque F: "la puerta que
+// faltaba"): el análisis automático de accesibilidad se ejecuta sobre las 6
+// rutas CON CADA UNA de las 5 variantes de paleta, no solo la variante por
+// defecto que ya cubre @s36. @s36 (arriba) sigue siendo el contrato correcto
+// y ya cerrado de `identidad_visual.feature` (1 variante × 6 rutas = 6): no
+// se toca. Esta puerta es la ampliación, separada, que exige el rediseño
+// (5 variantes × 6 rutas = 30 combinaciones).
+// ---------------------------------------------------------------------------
+
+/**
+ * Las cinco variantes con el nombre accesible EXACTO de su botón en el
+ * selector de paleta (`src/data/variantesPaleta.ts`). Mismo literal, a
+ * propósito, que `tests/e2e/fidelidad.spec.ts:33-39` ya usa para @s42 (no
+ * exportado desde ahí, así que se replica aquí en vez de importarlo o de
+ * inventar un catálogo nuevo): si el catálogo cambiara sin avisar, el
+ * `click` no encontraría el botón y esta puerta caería en rojo en vez de
+ * medir otra cosa.
+ */
+const VARIANTES_DEL_SELECTOR: readonly { id: string; nombreAccesible: string }[] = [
+  { id: 'clinica', nombreAccesible: 'Clínica' },
+  { id: 'calida', nombreAccesible: 'Cálida' },
+  { id: 'tech', nombreAccesible: 'Tech' },
+  { id: 'eco', nombreAccesible: 'Eco' },
+  { id: 'marca', nombreAccesible: 'Marca Galapavet' },
+]
+
+const RECUENTO_DE_VARIANTES = 5
+const RECUENTO_DE_COMBINACIONES = RECUENTO_DE_VARIANTES * RUTAS_DEL_INVENTARIO.length
+
+/**
+ * Aplica una variante POR LA INTERFAZ REAL (el selector de paleta ya
+ * desplegado), mismo mecanismo que `tests/e2e/fidelidad.spec.ts:57-64` ya usa
+ * y justifica para @s42 (replicado aquí porque esa función no se exporta: no
+ * se inventa un mecanismo nuevo de cambio de variante). Dos esperas
+ * deterministas: el atributo que `SelectorPaleta` escribe al montar el
+ * efecto (`src/components/SelectorPaleta.tsx:22`) y que no quede ninguna
+ * animación en curso (el `body` transiciona "background-color"/"color",
+ * `src/styles/global.scss:290`) — sin esto, `AxeBuilder` podría analizar un
+ * fotograma a mitad de la interpolación de color.
+ */
+async function aplicarVariante(page: Page, variante: { id: string; nombreAccesible: string }): Promise<void> {
+  await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()
+  await page.waitForFunction(
+    (esperado) => document.documentElement.getAttribute('data-variante') === esperado,
+    variante.id,
+  )
+  await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+}
+
+test.describe('@s45 el análisis automático de accesibilidad sigue sin reportar violaciones, en las cinco variantes', () => {
+  test('las 5 variantes × 6 rutas = 30 combinaciones: 0 violaciones, con las 5 etiquetas acumulativas de siempre y sin mecanismo de opciones', async ({
+    page,
+  }) => {
+    // 30 análisis reales de axe-core en serie, cada uno tras una navegación y
+    // un cambio de variante: por encima del presupuesto por defecto (ver
+    // `TIMEOUT_POR_TEST_MS` en `playwright.config.ts`, ya ajustado para los 6
+    // de @s36).
+    test.setTimeout(180_000)
+
+    const informes: ResultadoDeAnalisisAutomatico['informes'][number][] = []
+
+    for (const { pagina, ruta } of RUTAS_DEL_INVENTARIO) {
+      await page.goto(ruta)
+      await page.emulateMedia({ reducedMotion: 'reduce' }) // ver justificación en `aplicarVariante`
+      await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
+
+      for (const variante of VARIANTES_DEL_SELECTOR) {
+        await aplicarVariante(page, variante)
+
+        const analisis = await new AxeBuilder({ page }).withTags([...ETIQUETAS_AXE_ACUMULATIVAS]).analyze()
+        informes.push({
+          pagina: `${pagina} — ${variante.nombreAccesible}`,
+          cargo: true,
+          violaciones: analisis.violations.map((violacion) => ({
+            criterio: violacion.id,
+            elemento: violacion.nodes.map((nodo) => nodo.target.join(' ')).join(' | '),
+          })),
+        })
+      }
+    }
+
+    const resultado: ResultadoDeAnalisisAutomatico = { reglasAplicadas: ETIQUETAS_AXE_ACUMULATIVAS.length, informes }
+    const informe = ejecutarPuertaDeAnalisisAutomatico(resultado)
+
+    expect(RECUENTO_DE_COMBINACIONES).toBe(30)
+    expect(informe.paginasAnalizadas).toBe(RECUENTO_DE_COMBINACIONES)
+    expect(informe.violaciones, JSON.stringify(informe.violaciones, null, 2)).toEqual([])
+    expect(informe.violacionesTotales).toBe(0)
+    expect(informe.veredicto).toBe('aprobado')
+  })
+})

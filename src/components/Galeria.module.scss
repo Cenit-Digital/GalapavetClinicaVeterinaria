@@ -1,6 +1,12 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45).
+// aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
+// también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
+// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
+// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
+// la cascada por orden de bundle, sin ningún test que lo protegiera —
+// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
+// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
 // REJILLA, no flexbox: no hay envoltorio propio en el DOM real
 // (`Galeria.tsx`) alrededor de los dos botones de desplazamiento y la
 // pista, así que la disposición depende de que ".galeria" coloque a sus 4
@@ -17,7 +23,6 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: espaciado(16);
-  padding-block: espaciado(64);
 
   > p {
     grid-column: 1 / -1;
@@ -35,11 +40,17 @@
   display: flex;
   gap: espaciado(16);
   overflow-x: auto;
-  scroll-snap-type: x proximity;
   // El mínimo automático de un ítem de rejilla es también el tamaño de su
   // CONTENIDO (no 0): sin este "min-width: 0" la columna "1fr" crece hasta
   // caber la pista entera y "overflow-x: auto" deja de tener efecto.
   min-width: 0;
+  // Anclaje de desplazamiento del CONTENEDOR (@s35): "x" porque el eje
+  // desplazable es horizontal (mismo eje que "overflow-x"), "mandatory" para
+  // que el navegador SIEMPRE asiente en el anclaje más cercano al soltar el
+  // gesto -- sin esto, "scroll-snap-align: start" de cada `figure` (abajo)
+  // no tiene ningún efecto: el anclaje es una pareja contenedor/hijo, no una
+  // propiedad aislada.
+  scroll-snap-type: x mandatory;
 
   @include foco-visible;
 

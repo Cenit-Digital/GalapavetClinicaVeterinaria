@@ -13,6 +13,43 @@
 - Resultado: done.
 -->
 
+## 2026-08-29 — feature `rediseno_visual` (id 24)
+
+- Contrato aprobado por el humano el 26/08/2026 (52 escenarios), con 3
+  enmiendas aprobadas después (`progress/rediseno/enmiendas_contrato.md`).
+  Implementación interrumpida el 28/08 por una suspensión del PC a mitad de
+  una oleada de TDD; recuperada sin pérdida de trabajo tras un incidente de
+  `git reset` destructivo de un subagente de esa misma oleada (recuperación
+  completa desde `git stash`, dos entradas, reconciliada por craftsman_lead).
+- judge: 4 rondas hasta APPROVED, cada una auditando bloques del contrato que
+  las anteriores no habían escrutado con el mismo rigor:
+  - Ronda 1: rechazó los bloques C/D (@s17-@s40) sin TDD documentado desde el
+    commit masivo original; 3 defectos reales (@s28, @s31, @s33 parcial).
+  - Ronda 2: @s29 (sabotaje de test olvidado), @s25 (controles del chat bajo
+    44px, casilla de consentimiento desalineada).
+  - Ronda 3: @s33 seguía incumplido en Servicios (3 de 4 secciones
+    arregladas), @s40 nunca tocado (blog sin imagen/categoría real), @s19 sin
+    test de navegador real pese a la anotación explícita del bloque C.
+  - Ronda 4: auditó por primera vez los bloques A/B y F completos; encontró
+    @s45 (axe solo cubría 1 de 5 variantes — al ampliar encontró un defecto
+    de contraste real en la variante "tech", corregido con
+    `a { color: inherit; }` en `global.scss`) y @s47 (interacción de consola
+    faltante). APPROVED: los 52 escenarios quedaron auditados entre las
+    cuatro rondas.
+- mutation_tester: primera medición FAIL (83,54 % bruto, 235 supervivientes
+  reales en 12 de 14 módulos). 6 sesiones de `tdd_craftsman` en paralelo
+  (cerrojo compartido para serializar Stryker) cerraron los huecos reales y
+  retiraron código huérfano confirmado en `tokensColor.ts`. Medición final
+  consolidada: **PASS, 100 % sobre mutantes no equivalentes** (1364/1364; 16
+  equivalentes re-verificados de forma independiente por `mutation_tester`,
+  ninguno aceptado de las sesiones de refuerzo sin prueba propia).
+- Verificación final independiente: `bin/harness init` 88/88 ficheros,
+  1300/1300 tests, lint y typecheck limpios; build verde (CSS 7,51 kB, techo
+  8 kB); Playwright completo 112/112.
+- Evidencia: `progress/judge_rediseno_visual.md`, `progress/mutation_rediseno_visual.md`,
+  ~30 informes en `progress/rediseno/`.
+- Resultado: done.
+
 ## 2026-08-26 — feature `integridad_puerta_mutacion`
 
 - Redefinición autorizada por el humano: corrección de configuración del arnés

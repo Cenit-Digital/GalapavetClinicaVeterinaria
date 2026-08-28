@@ -104,15 +104,18 @@ export function FormularioContacto(): React.JSX.Element {
       <label htmlFor={ID_MENSAJE}>Cuéntanos</label>
       <textarea id={ID_MENSAJE} />
 
-      <label htmlFor={ID_ACEPTA_AVISO_LEGAL}>He leído y acepto el aviso legal</label>
-      <input
-        id={ID_ACEPTA_AVISO_LEGAL}
-        ref={refAceptaAvisoLegal}
-        type="checkbox"
-        required
-        aria-invalid={validez.avisoLegalInvalido}
-      />
-      <a href={URL_AVISO_LEGAL}>Aviso legal</a>
+      <div className={styles.grupoConsentimiento}>
+        <input
+          id={ID_ACEPTA_AVISO_LEGAL}
+          ref={refAceptaAvisoLegal}
+          type="checkbox"
+          required
+          aria-invalid={validez.avisoLegalInvalido}
+        />
+        <label htmlFor={ID_ACEPTA_AVISO_LEGAL}>
+          He leído y acepto el aviso legal <a href={URL_AVISO_LEGAL}>Aviso legal</a>
+        </label>
+      </div>
 
       <p id={ID_AVISO_NO_ENVIO}>{AVISO_NO_ENVIO}</p>
       <button type="submit" aria-describedby={ID_AVISO_NO_ENVIO}>

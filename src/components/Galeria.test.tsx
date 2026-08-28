@@ -334,3 +334,113 @@ describe('@s17 una entrada del catálogo con el nombre en blanco no se renderiza
     expect(screen.getByText('Bruno · Alta tras cirugía de rodilla')).toBeInTheDocument()
   })
 })
+
+/**
+ * `Galeria.module.scss` LEÍDO EN CRUDO por Vite (`?raw`), no importado como
+ * módulo CSS: `rediseno_visual.feature` @s35 exige propiedades CSS concretas
+ * ("scroll-snap-type"/"scroll-snap-align", "overflow-x"), que un CSS Module
+ * transformado por jsdom no expone (jsdom no calcula layout ni resuelve
+ * hojas de estilo). Mismo patrón que `Hero-logica.test.ts:9-16` y
+ * `usoDelAcento.test.ts:152-156`.
+ */
+const TEXTO_REAL_DEL_MODULO_SCSS = (
+  import.meta.glob('/src/components/Galeria.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>
+)['/src/components/Galeria.module.scss'] as string
+
+/**
+ * Extrae el bloque completo de una regla top-level del texto SCSS crudo,
+ * contando llaves balanceadas. Necesario porque ".pista" contiene reglas
+ * ANIDADAS ("figure {}", "img {}", "@media {}"): cortar en la primera "}"
+ * (la de la primera regla anidada) truncaría el bloque a la mitad y una
+ * declaración real de ".pista" que viniera después del primer hijo anidado
+ * quedaría fuera de la comprobación sin que ningún test lo notara.
+ */
+function extraerBloqueDeRegla(textoScss: string, selector: string): string {
+  const inicioSelector = textoScss.indexOf(`${selector} {`)
+  if (inicioSelector === -1) {
+    throw new Error(`No se encontró el selector "${selector}" en el CSS`)
+  }
+  const inicioLlave = textoScss.indexOf('{', inicioSelector)
+  let profundidad = 0
+  let indice = inicioLlave
+  do {
+    if (textoScss[indice] === '{') {
+      profundidad += 1
+    } else if (textoScss[indice] === '}') {
+      profundidad -= 1
+    }
+    indice += 1
+  } while (profundidad > 0 && indice < textoScss.length)
+  return textoScss.slice(inicioLlave, indice)
+}
+
+/**
+ * Quita los comentarios SCSS ("//" hasta fin de línea y "/* ... *\/") de un
+ * bloque antes de buscar una propiedad. Sin esto, un comentario que MENCIONE
+ * el nombre de la propiedad (como el de `Galeria.module.scss` sobre
+ * "min-width: 0", que cita literalmente `"overflow-x: auto"` para explicar
+ * por qué hace falta) haría pasar la comprobación aunque la declaración REAL
+ * se hubiera roto: verificado con sabotaje, ver informe.
+ */
+function quitarComentariosScss(textoScss: string): string {
+  return textoScss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+}
+
+describe('@s35 la galería es un carrusel con anclaje de desplazamiento y controles propios', () => {
+  it('las fichas se disponen en una pista que se desplaza en horizontal', () => {
+    const bloquePista = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.pista'))
+
+    // El bloque REAL de ".pista" (sin comentarios) permite el desbordamiento
+    // horizontal ("overflow-x") y no fuerza columna: con
+    // "flex-direction: column" el eje principal pasaría a ser vertical y las
+    // fichas dejarían de desplazarse en horizontal.
+    expect(bloquePista).toMatch(/overflow-x:\s*(auto|scroll)/)
+    expect(bloquePista).not.toMatch(/flex-direction:\s*column/)
+  })
+
+  it('la pista declara anclaje de desplazamiento (scroll-snap-type/scroll-snap-align)', () => {
+    const bloquePista = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.pista'))
+
+    expect(bloquePista).toMatch(/scroll-snap-type:/)
+    expect(bloquePista).toMatch(/scroll-snap-align:/)
+  })
+
+  it('hay dos controles con nombre accesible, dado por "aria-label", para ir a la foto anterior y a la siguiente', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    const botonAnterior = screen.getByRole('button', { name: 'Foto anterior' })
+    const botonSiguiente = screen.getByRole('button', { name: 'Foto siguiente' })
+
+    // Doble anclaje: el ATRIBUTO real del DOM (no solo el nombre accesible
+    // calculado, que también podría derivar de texto visible).
+    expect(botonAnterior.getAttribute('aria-label')).toBe('Foto anterior')
+    expect(botonSiguiente.getAttribute('aria-label')).toBe('Foto siguiente')
+  })
+
+  it('cada ficha muestra su imagen, su nombre y su pie', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    const figuras = screen.getAllByRole('figure')
+    expect(figuras).toHaveLength(CATALOGO_DOS_ENTRADAS.length)
+
+    for (const [indice, entrada] of CATALOGO_DOS_ENTRADAS.entries()) {
+      const figura = figuras[indice]
+      if (figura === undefined) {
+        throw new Error(`No hay ninguna figura en la posición ${indice}`)
+      }
+      expect(within(figura).getAllByRole('img')).toHaveLength(1)
+      expect(figura.textContent).toContain(entrada.nombre)
+      expect(figura.textContent).toContain(entrada.pie)
+    }
+  })
+
+  it('el aviso de contenido de demostración sigue presente', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    expect(screen.getByText(AVISO_DEMOSTRACION)).toBeVisible()
+  })
+})

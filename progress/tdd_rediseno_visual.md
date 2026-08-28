@@ -29,3 +29,19 @@
 - Build de Vite generado correctamente; Rolldown emite un aviso de diagnóstico
   de rendimiento de `vite:css` que no se ha silenciado. Pendiente de análisis
   antes de declarar un cierre sin avisos.
+
+## Nota sobre el resto de la trazabilidad (@s2-@s52), añadida por craftsman_lead
+
+Este fichero solo documenta la Ronda 1 (13 de 52 escenarios). Deliberadamente
+no se ha regenerado como mapa único @s1-@s52: la trazabilidad del resto de la
+feature vive repartida en `progress/rediseno/*.md` (un informe por lote de
+TDD, cada uno con su propia matriz cláusula→test, mensajes de fallo
+literales y, donde aplica, sabotaje real documentado) y en las tres rondas de
+`progress/judge_rediseno_visual.md`, que auditan escenario a escenario contra
+el TEXTO VIVO del `.feature` y el código real — no contra ningún resumen
+intermedio. Ese es el patrón que las tres revisiones del `judge` han aceptado
+y seguido explícitamente (incluida su propia recomendación de desconfiar de
+`progress/rediseno/matriz_trazabilidad.md`, ya retirado por quedar
+desactualizado). Para saber qué test cubre un `@sNN` concreto, la fuente
+fiable es: `grep -rn "@sNN" progress/rediseno/ features/rediseno_visual.feature`
+seguido de una lectura del test citado, no este fichero.

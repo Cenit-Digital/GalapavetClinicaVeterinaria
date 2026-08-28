@@ -308,6 +308,7 @@ export function PaginaTienda({ catalogo: catalogoDemo = PRODUCTOS_DEMO }: Pagina
   return (
     <main id="contenido-principal" className={styles.pagina} data-contenedor-principal>
       <MetadatosPagina metadatos={METADATOS_TIENDA} datosEstructurados={DATOS_ESTRUCTURADOS_NEGOCIO} />
+      <p className={styles.cintillo}>Catálogo</p>
       <h1>Tienda</h1>
       <p id={idAviso}>{AVISO_DEMOSTRACION}</p>
       <section aria-label="Catálogo" aria-describedby={idAviso}>

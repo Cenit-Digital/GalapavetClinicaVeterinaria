@@ -7,6 +7,69 @@ import type { ProductoDemo } from '../data/tienda'
 import { PRODUCTOS_DEMO } from '../data/tienda'
 import { PaginaTienda } from './PaginaTienda'
 
+// TEXTO REAL de los dos ficheros que las pruebas de "rediseno_visual @s38" leen
+// con "?raw" (patrón ya establecido en `src/lib/diseno/tokensColor.test.ts`):
+// nunca se aserta contra el símbolo importado de producción, sino contra el
+// contenido del fichero tal cual está en disco (doble anclaje).
+const TEXTO_MODULO_TIENDA = Object.values(
+  import.meta.glob('./PaginaTienda.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
+)[0] as string
+
+const TEXTO_DATOS_TIENDA = Object.values(
+  import.meta.glob('../data/tienda.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
+)[0] as string
+
+/**
+ * Extrae el contenido (sin llaves) del primer bloque `selector { ... }` que
+ * aparece en `texto`. Solo sirve para bloques SIN llaves anidadas dentro
+ * (ningún selector de "PaginaTienda.module.scss" que estas pruebas inspeccionan
+ * anida un segundo nivel): busca la primera `{` tras el selector y la primera
+ * `}` tras esa apertura.
+ */
+function contenidoDelBloque(texto: string, selector: string): string {
+  const indiceSelector = texto.indexOf(selector)
+  if (indiceSelector === -1) {
+    throw new Error(`No se encontró el selector "${selector}" en el texto real`)
+  }
+  const indiceApertura = texto.indexOf('{', indiceSelector)
+  const indiceCierre = texto.indexOf('}', indiceApertura)
+  return texto.slice(indiceApertura + 1, indiceCierre)
+}
+
+interface ProductoLiteral {
+  readonly nombre: string
+  readonly categoria: string
+  readonly importeCentimos: number
+}
+
+/**
+ * Extrae, EN ORDEN, los tres campos de cada producto del TEXTO REAL de
+ * "../data/tienda.ts" (doble anclaje: no importa `PRODUCTOS_DEMO`, relee el
+ * fichero fuente carácter a carácter).
+ */
+function productosDeclaradosEnElTexto(textoFuente: string): ProductoLiteral[] {
+  const patronProducto = /nombre:\s*'([^']*)',\s*categoria:\s*'([^']*)',\s*importeCentimos:\s*(\d+),/g
+  const productos: ProductoLiteral[] = []
+  let coincidencia = patronProducto.exec(textoFuente)
+  while (coincidencia !== null) {
+    productos.push({
+      nombre: coincidencia[1] as string,
+      categoria: coincidencia[2] as string,
+      importeCentimos: Number(coincidencia[3]),
+    })
+    coincidencia = patronProducto.exec(textoFuente)
+  }
+  return productos
+}
+
+/** Formatea céntimos a "X,YY €", escrito a mano en el test (nunca `formatearImporte` de producción). */
+function formatearImporteLiteral(centimos: number): string {
+  const euros = Math.floor(centimos / 100)
+  const centavosDeRelleno = 2
+  const centavos = String(centimos % 100).padStart(centavosDeRelleno, '0')
+  return `${euros},${centavos} €`
+}
+
 interface RenderizarPaginaTiendaOpciones {
   catalogo?: readonly ProductoDemo[]
 }
@@ -732,5 +795,119 @@ describe('@s1 la página se anuncia con su encabezado y lleva el aviso de demost
     expect(idDescripcion).not.toBeNull()
     const descripcion = document.getElementById(idDescripcion as string)
     expect(descripcion).toHaveTextContent(AVISO_DEMOSTRACION)
+  })
+})
+
+// =============================================================================
+// rediseno_visual @s38 — "La tienda adopta el lenguaje visual del diseño sin
+// cambiar su catálogo" (features/rediseno_visual.feature:585-592).
+// =============================================================================
+
+describe('rediseno_visual @s38 el encabezado de página lleva su cintillo delante del titular', () => {
+  it('un párrafo "Catálogo" (no un encabezado) es el elemento inmediatamente anterior al "h1 Tienda"', () => {
+    renderizarPaginaTienda()
+
+    const encabezado = screen.getByRole('heading', { level: 1, name: 'Tienda' })
+    const cintillo = screen.getByText('Catálogo')
+
+    expect(cintillo.tagName).toBe('P')
+    expect(screen.queryByRole('heading', { name: 'Catálogo' })).not.toBeInTheDocument()
+    expect(encabezado.previousElementSibling).toBe(cintillo)
+  })
+})
+
+describe('rediseno_visual @s38 el cintillo y el titular usan las escalas y mixins del sistema, con el ritmo del sistema', () => {
+  it('el bloque ".cintillo", leído del TEXTO REAL de "PaginaTienda.module.scss", incluye "@include eyebrow;"', () => {
+    const bloqueCintillo = contenidoDelBloque(TEXTO_MODULO_TIENDA, '.cintillo {')
+    expect(bloqueCintillo).toContain('@include eyebrow;')
+  })
+
+  it('el bloque "h1", leído del TEXTO REAL de "PaginaTienda.module.scss", usa la fuente y el paso de la escala tipográfica del sistema', () => {
+    const bloqueH1 = contenidoDelBloque(TEXTO_MODULO_TIENDA, 'h1 {')
+    expect(bloqueH1).toContain('font-family: var(--fuente-titulares);')
+    expect(bloqueH1).toContain('font-size: paso-tipografico(5);')
+  })
+})
+
+describe('rediseno_visual @s38 cada tarjeta de producto usa el mismo patrón de tarjeta que la portada', () => {
+  it('el bloque "li" del catálogo, leído del TEXTO REAL de "PaginaTienda.module.scss", incluye "@include tarjeta;"', () => {
+    const bloqueLi = contenidoDelBloque(TEXTO_MODULO_TIENDA, 'li {')
+    expect(bloqueLi).toContain('@include tarjeta;')
+  })
+})
+
+describe('rediseno_visual @s38 la imagen de cada producto conserva su relación de aspecto y sus dimensiones declaradas', () => {
+  it('el bloque "img" del catálogo, leído del TEXTO REAL de "PaginaTienda.module.scss", fija la relación de aspecto 4/3 con el mecanismo del sistema', () => {
+    const bloqueImg = contenidoDelBloque(TEXTO_MODULO_TIENDA, 'img {')
+    expect(bloqueImg).toContain('@include hueco-de-imagen(4, 3);')
+  })
+
+  it('las ocho imágenes del catálogo declaran 800×600 en el marcado real', () => {
+    renderizarPaginaTienda()
+
+    const imagenes = document.querySelectorAll('img')
+    expect(imagenes).toHaveLength(8)
+    for (const imagen of imagenes) {
+      expect(imagen).toHaveAttribute('width', '800')
+      expect(imagen).toHaveAttribute('height', '600')
+    }
+  })
+})
+
+describe('rediseno_visual @s38 el rótulo de precio de ejemplo sigue siendo inequívoco', () => {
+  it('cada importe visible empieza literalmente por "Importe de ejemplo: ", nunca solo "Importe:"', () => {
+    renderizarPaginaTienda()
+
+    const importes = screen.getAllByText(/€/)
+    expect(importes.length).toBeGreaterThan(0)
+    for (const importe of importes) {
+      expect(importe.textContent).toMatch(/^Importe de ejemplo: \d/)
+    }
+  })
+})
+
+const CATALOGO_ANTES_DEL_REDISENO: readonly ProductoLiteral[] = [
+  { nombre: 'Pienso de ejemplo para perro adulto · 3 kg', categoria: 'Piensos', importeCentimos: 1250 },
+  { nombre: 'Pienso de ejemplo para gato esterilizado · 1,5 kg', categoria: 'Piensos', importeCentimos: 995 },
+  { nombre: 'Arnés de ejemplo talla M', categoria: 'Paseo', importeCentimos: 1875 },
+  { nombre: 'Correa de ejemplo de 2 m', categoria: 'Paseo', importeCentimos: 705 },
+  { nombre: 'Cama de ejemplo talla M', categoria: 'Descanso', importeCentimos: 2499 },
+  { nombre: 'Manta de ejemplo de 60 × 40 cm', categoria: 'Descanso', importeCentimos: 630 },
+  { nombre: 'Mordedor de ejemplo de caucho', categoria: 'Juegos', importeCentimos: 445 },
+  { nombre: 'Pelota de ejemplo con sonido', categoria: 'Juegos', importeCentimos: 315 },
+] as const
+
+describe('rediseno_visual @s38 el catálogo tiene exactamente los mismos productos que antes de este rediseño', () => {
+  it('los ocho productos declarados en el TEXTO REAL de "src/data/tienda.ts" coinciden, en orden, con el literal fijado antes de tocar ningún fichero de este rediseño', () => {
+    const productosReales = productosDeclaradosEnElTexto(TEXTO_DATOS_TIENDA)
+
+    expect(productosReales).toHaveLength(8)
+    expect(productosReales).toEqual(CATALOGO_ANTES_DEL_REDISENO)
+  })
+
+  it('el listado renderizado muestra exactamente esos ocho productos, con su categoría y su importe de ejemplo, en el mismo orden', () => {
+    renderizarPaginaTienda()
+
+    const tarjetas = screen.getAllByRole('listitem')
+    expect(tarjetas).toHaveLength(CATALOGO_ANTES_DEL_REDISENO.length)
+
+    CATALOGO_ANTES_DEL_REDISENO.forEach((productoEsperado, indice) => {
+      const tarjeta = tarjetas[indice] as HTMLElement
+      expect(within(tarjeta).getByRole('heading', { level: 2 })).toHaveTextContent(productoEsperado.nombre)
+      expect(within(tarjeta).getByText(productoEsperado.categoria)).toBeInTheDocument()
+      expect(
+        within(tarjeta).getByText(`Importe de ejemplo: ${formatearImporteLiteral(productoEsperado.importeCentimos)}`),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('si el texto real cambiara un solo dato, la comparación literal lo señalaría (verificación en memoria, sin tocar "src/data/tienda.ts", fuera de mi ámbito)', () => {
+    const textoSaboteado = TEXTO_DATOS_TIENDA.replace('importeCentimos: 1250,', 'importeCentimos: 9999,')
+    expect(textoSaboteado).not.toBe(TEXTO_DATOS_TIENDA)
+
+    const productosSaboteados = productosDeclaradosEnElTexto(textoSaboteado)
+
+    expect(productosSaboteados).not.toEqual(CATALOGO_ANTES_DEL_REDISENO)
+    expect(productosSaboteados[0]?.importeCentimos).toBe(9999)
   })
 })

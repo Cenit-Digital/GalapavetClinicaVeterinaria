@@ -15,9 +15,19 @@
   font-weight: 700;
   text-align: center;
 
+  // El indicador pulsante es el punto decorativo de `BarraUrgencias.tsx:10`
+  // (`aria-hidden`, sin papel semántico). NO declara tinta propia: hereda la
+  // de la barra (:13), porque @s7 exige que lo que se pinta sobre
+  // --color-urgencia sea SIEMPRE --color-sobre-primario de esa misma variante,
+  // y @s15 prohíbe el acento saturado como valor de "color".
+  //
+  // Medido con `src/lib/contraste.ts` contra --color-urgencia de cada variante
+  // (clinica · calida · tech · eco · marca): --color-sobre-primario da
+  // 4,83 · 5,18 · 6,04 · 4,83 · 4,83, la fila que la matriz de uso ya declara
+  // (`src/lib/diseno/matrizDeContraste.ts:268`). El acento daba
+  // 1,90 · 1,04 · 1,53 · 1,61 · 2,56: por debajo de 3 en las cinco, así que
+  // convertirlo en forma rellena habría dejado un indicador que no indica.
   span {
-    color: var(--color-acento);
-
     @media (prefers-reduced-motion: no-preference) {
       animation: pulso 1.6s ease-in-out infinite;
     }

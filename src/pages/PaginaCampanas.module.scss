@@ -3,6 +3,12 @@
   padding-block: espaciado(64);
   color: var(--color-texto);
 
+  // Cintillo del encabezado de página (@s39 de "rediseno_visual.feature"):
+  // mismo mecanismo que "PaginaTienda.module.scss" y "Hero.module.scss".
+  .cintillo {
+    @include eyebrow;
+  }
+
   h1 {
     font-family: var(--fuente-titulares);
     font-size: paso-tipografico(5);
