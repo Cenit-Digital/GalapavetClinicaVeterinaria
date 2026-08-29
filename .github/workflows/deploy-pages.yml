@@ -35,10 +35,16 @@ jobs:
           package-manager-cache: false
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
-      - name: Verificación completa del arnés (lint + typecheck + tests)
-        run: node .harness/harness.mjs init
       - name: Build de producción
         run: pnpm run build
+      - name: Verificación completa del arnés (lint + typecheck + tests)
+        # DESPUÉS del build: la puerta de afirmaciones falsas de
+        # rolesDescartados.test.ts (@s13) escanea el "dist/" real ya servido,
+        # no solo "src/" — sin un build previo en este mismo job, "dist/"
+        # no existe y ese test falla en cualquier checkout limpio (nunca se
+        # detectó en local porque ahí siempre queda un "dist/" de una build
+        # anterior).
+        run: node .harness/harness.mjs init
       - name: Configurar Pages
         uses: actions/configure-pages@v5
       - name: Subir artefacto de dist/

@@ -31,6 +31,14 @@ jobs:
           package-manager-cache: false
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
+      - name: Build de producción
+        # ANTES del init: la puerta de afirmaciones falsas de
+        # rolesDescartados.test.ts (@s13) escanea el "dist/" real ya
+        # servido, no solo "src/" — sin este build previo, "dist/" no
+        # existe en un checkout limpio y ese test falla (nunca se detectó
+        # en local porque ahí siempre queda un "dist/" de una build
+        # anterior). Mismo orden que .github/workflows/deploy-pages.yml.
+        run: pnpm run build
       - run: node .harness/harness.mjs init
       - name: Regresión de configuración de mutación
         run: pnpm run test:config
