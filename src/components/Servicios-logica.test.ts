@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoriaDeServicio, nombreAccesibleBoton, puntosVisibles, rotuloBoton, tieneDesglose } from './Servicios-logica'
+import { categoriaDeServicio, nombreAccesibleBoton, puntosVisibles, resumenDeServicio, rotuloBoton, tieneDesglose } from './Servicios-logica'
 
 describe('rotuloBoton devuelve el rótulo visible según el estado de expansión (apoyo de @s2/@s10)', () => {
   it('colapsado (false) es "Ver qué incluye"', () => {
@@ -14,6 +14,14 @@ describe('rotuloBoton devuelve el rótulo visible según el estado de expansión
 describe('puntosVisibles descarta los puntos en blanco (apoyo de @s16)', () => {
   it('una cadena en blanco entre puntos reales queda fuera, el resto conserva su orden', () => {
     expect(puntosVisibles(['Uno', '   ', 'Dos'])).toEqual(['Uno', 'Dos'])
+  })
+})
+
+describe('@s2 de fidelidad_servicios: resumen verificable de una tarjeta', () => {
+  it('une solo los dos primeros puntos publicados y descarta los vacíos', () => {
+    expect(resumenDeServicio(['  ', 'Cirugía de tejidos blandos', 'Esterilizaciones', 'Odontología'])).toBe(
+      'Cirugía de tejidos blandos · Esterilizaciones',
+    )
   })
 })
 
@@ -54,5 +62,10 @@ describe('categoriaDeServicio deriva la píldora de categoría a partir del tít
 
   it('con un espacio inicial en el título, la píldora sigue siendo la palabra real, no una cadena vacía', () => {
     expect(categoriaDeServicio(' Cirugía y anestesia')).toBe('Cirugía')
+  })
+
+  it('acepta cualquier separador de espacio y devuelve vacío cuando no existe ninguna palabra', () => {
+    expect(categoriaDeServicio('Cirugía\t y anestesia')).toBe('Cirugía')
+    expect(categoriaDeServicio(' \t ')).toBe('')
   })
 })

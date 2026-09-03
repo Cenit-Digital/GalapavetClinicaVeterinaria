@@ -48,6 +48,7 @@
   // permitir que los dos diverjan.
   --altura-cabecera: #{espaciado(64)};
   --altura-barra-urgencias: #{espaciado(32)};
+  --sangrado-lateral: clamp(#{espaciado(16)}, 5vw, #{espaciado(24)});
   --ritmo-seccion: clamp(72px, 7.2vw, 104px);
   --ritmo-seccion-compacto: clamp(56px, 6.2vw, 90px);
 }
@@ -293,7 +294,7 @@ a {
 // de la escala de espaciado. Repetir la altura a mano sería crear dos números
 // que pueden divergir (@s14).
 html {
-  scroll-padding-top: calc(var(--altura-cabecera) + #{espaciado(16)});
+  scroll-padding-top: calc(var(--altura-barra-urgencias) + var(--altura-cabecera) + #{espaciado(24)});
 }
 
 // El movimiento es OPT-IN: se declara SOLO dentro de "no-preference", nunca a

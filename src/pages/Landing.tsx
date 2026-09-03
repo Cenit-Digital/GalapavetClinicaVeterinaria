@@ -48,27 +48,31 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
   return (
     <main id="contenido-principal">
       <MetadatosPagina metadatos={METADATOS_INICIO} datosEstructurados={datosEstructurados} />
-      <div id="inicio" className={styles.seccion}>
+      <div id="inicio" className={styles.seccionHero}>
         <Hero />
       </div>
-      <div id="servicios" className={styles.seccionAlterna}>
+      <div id="servicios" className={styles.seccion}>
         <Servicios />
       </div>
-      <CampanasPortada />
-      <div id="equipo" className={styles.seccionAlterna}>
+      <div className={styles.seccionAlterna}>
+        <CampanasPortada />
+      </div>
+      <div id="equipo" className={styles.seccion}>
         <Equipo />
       </div>
-      <div id="reservar" className={styles.seccion}>
+      <div id="reservar" className={styles.seccionAlterna}>
         <ReservaChat />
       </div>
-      <div id="galeria" className={styles.seccionAlterna}>
+      <div id="galeria" className={styles.seccion}>
         <Galeria />
       </div>
-      <div id="contacto" className={styles.seccion}>
-        <FormularioContacto />
-        <InformacionContacto direccion={direccionVisible} />
+      <div id="contacto" className={`${styles.seccionAlterna} ${styles.seccionContacto}`}>
+        <div data-contacto-contenido>
+          <FormularioContacto />
+          <InformacionContacto direccion={direccionVisible} />
+        </div>
       </div>
-      <div id="faq" className={styles.seccionAlterna}>
+      <div id="faq" className={styles.seccion}>
         <Faq />
       </div>
     </main>

@@ -312,6 +312,14 @@ describe('@s16 un teléfono que no valida hace fallar al panel en vez de pintar 
 // Así se verifica aquí lo que no es DOM (la maquetación de las dos tarjetas),
 // sin Playwright (fuera del ámbito de este lote, ver el informe).
 // ---------------------------------------------------------------------------
+const TEXTO_LANDING_SCSS = Object.values(
+  import.meta.glob('../pages/Landing.module.scss', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }) as Record<string, string>,
+)[0] as string
+
 const TEXTO_INFORMACION_CONTACTO_SCSS = Object.values(
   import.meta.glob('./InformacionContacto.module.scss', {
     eager: true,
@@ -422,8 +430,8 @@ describe('@s36 la sección de contacto reparte su contenido en la tarjeta de dat
     expect(cuerpoTarjetaUrgencia).toMatch(/order:\s*-1\s*;/)
   })
 
-  it('"#contacto" (el wrapper real de Landing.tsx con el formulario y esta sección) se convierte en una rejilla de dos columnas', () => {
-    const cuerpoContacto = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '#contacto {')
+  it('el wrapper de contacto de Landing.tsx se convierte en una rejilla de dos columnas sin depender de un id hasheado', () => {
+    const cuerpoContacto = cuerpoDelBloque(TEXTO_LANDING_SCSS, '.seccionContacto > [data-contacto-contenido] {')
 
     expect(cuerpoContacto).toContain('display: grid')
     expect(cuerpoContacto).toMatch(/grid-template-columns:\s*repeat\(auto-fit/)

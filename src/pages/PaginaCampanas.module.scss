@@ -64,7 +64,7 @@
     li {
       @include tarjeta;
       position: relative;
-      padding-block-end: espaciado(20);
+      padding-block-end: espaciado(24);
     }
 
     img {
@@ -81,19 +81,19 @@
     }
 
     p {
-      margin: espaciado(16) espaciado(20) 0;
+      margin: espaciado(16) espaciado(24) 0;
       color: var(--color-texto-suave);
       font-size: paso-tipografico(-1);
     }
 
     h2 {
-      margin: espaciado(4) espaciado(20) espaciado(12);
+      margin: espaciado(4) espaciado(24) espaciado(12);
       font-size: paso-tipografico(2);
     }
 
     li > a {
       @include boton-fantasma;
-      margin: 0 espaciado(20) espaciado(4);
+      margin: 0 espaciado(24) espaciado(4);
       align-self: flex-start;
     }
   }

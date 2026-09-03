@@ -1,81 +1,96 @@
-// Sección SIN ancla propia (@s26): a diferencia de las demás secciones de la
-// landing, no vive envuelta por "Landing.module.scss" — así que este fichero
-// cablea su propio fondo Y su propio contenedor (@s44/@s45), en vez de
-// heredarlos de un wrapper.
+// Sección sin ancla propia: Landing aporta la banda completa; aquí se compone
+// el contenido compacto en dos columnas.
 .campanasPortada {
-  @include contenedor;
-  // Relleno vertical FLUIDO (@s19), y el MENOR de la portada a propósito:
-  // esta es justo la sección que el prototipo marca como compacta
-  // (`global.scss:52`, `clamp(56px, 6.2vw, 90px)`, frente a los
-  // `clamp(72px, 7.2vw, 104px)` del ritmo normal). Antes declaraba
-  // `espaciado(56)` fijo — ni fluido ni el token que pide el contrato — y así
-  // lo confirmó `judge_rediseno_visual.md`.
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: center;
+  gap: clamp(24px, 4vw, 48px);
   padding-block: var(--ritmo-seccion-compacto);
-  background-color: var(--color-fondo);
-  color: var(--color-texto);
+}
 
-  // Cintillo delante del h2 (@s33). El fondo de esta sección es un rol de
-  // color del sistema (`--color-fondo`, arriba), no una fotografía, así que
-  // usa la tinta de acento por defecto del mixin compartido
-  // (`_api.scss:324-332`, `color: var(--color-acento-tinta)`) sin ningún
-  // override — a diferencia del cintillo del hero, que SÍ la sobrescribe por
-  // ir sobre una foto (`Hero.module.scss`, exceptuado por la Enmienda 2).
-  .eyebrow {
-    @include eyebrow;
-  }
+.presentacion {
+  max-width: 52ch;
+}
 
-  h2 {
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(4);
-    margin-block-end: espaciado(8);
-  }
+.eyebrow {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
+}
 
-  > p {
-    color: var(--color-texto-suave);
-    margin-block-end: espaciado(24);
-  }
+.presentacion h2 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(4);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+}
 
-  ul {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-    gap: espaciado(24);
-    list-style: none;
-    margin: 0 0 espaciado(32);
-    padding: 0;
-  }
+.presentacion > p {
+  margin: espaciado(16) 0 espaciado(24);
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(1);
+  line-height: 1.7;
+}
 
-  li {
-    @include tarjeta;
-  }
+.cta {
+  @include boton-primario;
+}
 
-  li > a {
-    @include foco-visible;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    color: inherit;
-    text-decoration: none;
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: espaciado(16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-    img {
-      // 16/9 (`estudio_diseno_referencia.md` §3.6), el mismo que las 3
-      // fotografías reales de "public/img/campanas/" (800×450).
-      @include hueco-de-imagen(16, 9);
-    }
+.rejilla li {
+  @include tarjeta;
+}
 
-    span {
-      @include pildora-etiqueta;
-      align-self: flex-start;
-      margin: espaciado(16) espaciado(16) espaciado(8);
-    }
+.rejilla li > a {
+  @include foco-visible;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
 
-    h3 {
-      margin: 0 espaciado(16) espaciado(16);
-      font-family: var(--fuente-titulares);
-      font-size: paso-tipografico(1);
-    }
-  }
+.rejilla img {
+  @include hueco-de-imagen(16, 9);
+}
 
-  > a {
-    @include boton-fantasma;
-  }
+.cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: espaciado(4);
+  padding: espaciado(16);
+}
+
+.cuerpo span {
+  @include pildora-etiqueta;
+  align-self: flex-start;
+  font-size: paso-tipografico(-2);
+}
+
+.cuerpo h3 {
+  margin: espaciado(8) 0 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(1);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.cuerpo p {
+  margin: 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(-1);
+  line-height: 1.5;
 }

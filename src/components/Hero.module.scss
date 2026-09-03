@@ -1,9 +1,10 @@
 .hero {
   position: relative;
   display: grid;
-  aspect-ratio: 16 / 9;
-  min-height: 560px;
+  place-items: center;
+  min-height: clamp(560px, 84svh, 784px);
   overflow: hidden;
+  background-color: var(--color-tinta);
   color: var(--color-sobre-primario);
   isolation: isolate;
 
@@ -13,10 +14,10 @@
     inset: 0;
     content: '';
     background: linear-gradient(
-      105deg,
-      color-mix(in srgb, var(--color-tinta) 92%, transparent) 0%,
-      color-mix(in srgb, var(--color-tinta) 72%, transparent) 48%,
-      color-mix(in srgb, var(--color-tinta) 22%, transparent) 100%
+      180deg,
+      color-mix(in srgb, var(--color-tinta) 88%, transparent) 0%,
+      color-mix(in srgb, var(--color-tinta) 76%, transparent) 42%,
+      color-mix(in srgb, var(--color-tinta) 92%, transparent) 100%
     );
   }
 
@@ -28,141 +29,177 @@
     height: 100%;
     background-color: var(--color-fondo-alterno);
     object-fit: cover;
+    object-position: center 42%;
   }
 }
 
 .contenido {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: center;
   width: min(100% - #{espaciado(48)}, 900px);
+  min-height: inherit;
   margin-inline: auto;
-  padding-block: clamp(80px, 9vw, 144px);
+  padding: clamp(84px, 13vw, 140px) espaciado(32) clamp(60px, 9vw, 92px);
+  text-align: center;
+}
 
-  // EXCEPCIÓN PERMANENTE, Enmienda 2 de `features/rediseno_visual.feature`
-  // (@s33, líneas 509-538), aprobada por el humano el 26/08/2026. @s33 exige
-  // --color-acento-tinta en el cintillo de cada sección salvo en la de
-  // bienvenida: ESTE cintillo va encima del velo fotográfico del hero
-  // (:15-20) y @s29 exige que el texto sobre el velo alcance 4,5 (texto
-  // normal). Medido con `src/lib/contraste.ts` en la parada de 92 %, con la
-  // foto de debajo en sus dos extremos (la más oscura y la más clara
-  // posibles), --color-acento-tinta da
-  // 3,21/2,53 · 2,04/1,52 · 1,10/1,33 · 1,97/1,48 · 2,40/1,81 en clinica ·
-  // calida · tech · eco · marca: SUSPENDE en las cinco. La tinta que sí cumple
-  // —y que el contrato fija para esta sección— es --color-sobre-primario, la
-  // que .hero ya declara (:7) y que el titular y el párrafo consumen con
-  // "inherit", con 17,60/13,86 · 14,43/10,76 · 12,73/15,37 · 15,15/11,39 ·
-  // 13,63/10,28.
-  > p:first-child {
-    @include eyebrow;
-    border-color: currentColor;
+.ubicacion {
+  display: inline-flex;
+  align-items: center;
+  gap: espaciado(8);
+  margin: 0;
+  padding: espaciado(8) espaciado(16);
+  border: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 28%, transparent);
+  border-radius: $radio-completo;
+  background-color: color-mix(in srgb, var(--color-sobre-primario) 14%, transparent);
+  color: inherit;
+  font-size: paso-tipografico(-1);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  @supports (backdrop-filter: blur(1px)) {
+    backdrop-filter: blur(espaciado(8));
+  }
+}
+
+.puntoUbicacion {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: $radio-completo;
+  background-color: var(--color-acento);
+}
+
+.contenido h1 {
+  max-width: 16ch;
+  margin: espaciado(24) 0 0;
+  color: inherit;
+  font-family: var(--fuente-titulares);
+  font-size: clamp(33px, 6.4vw, 68px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.subtitulo {
+  max-width: 58ch;
+  margin: espaciado(16) 0 0;
+  color: color-mix(in srgb, var(--color-sobre-primario) 90%, transparent);
+  font-size: clamp(16px, 2.2vw, 19.5px);
+  line-height: 1.65;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: espaciado(12);
+  margin-top: espaciado(32);
+
+  a {
+    min-height: $altura-control-grande;
+    padding-inline: espaciado(24);
+  }
+
+  a:first-child {
+    @include boton-primario;
+    background-color: var(--color-primario);
+    box-shadow: var(--sombra-elevada);
+  }
+
+  a:not(:first-child) {
+    @include boton-fantasma;
+    border-color: color-mix(in srgb, var(--color-sobre-primario) 55%, transparent);
+    background-color: color-mix(in srgb, var(--color-sobre-primario) 12%, transparent);
     color: inherit;
-  }
 
-  h1 {
-    max-width: 820px;
-    margin-block: espaciado(16);
-    color: inherit;
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(5);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
-  }
-
-  > p:nth-of-type(2) {
-    max-width: 700px;
-    color: inherit;
-    font-size: clamp(16px, 2.2vw, 19.5px);
-    line-height: 1.65;
-  }
-
-  > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: espaciado(12);
-    margin-block: espaciado(32);
-
-    a:first-child {
-      @include boton-primario;
-      min-height: $altura-control-grande;
-      background-color: var(--color-primario);
-    }
-
-    a:not(:first-child) {
-      @include boton-fantasma;
-      min-height: $altura-control-grande;
-      border-color: color-mix(in srgb, var(--color-sobre-primario) 75%, transparent);
-      color: inherit;
-    }
-  }
-
-  dl {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
-    width: 100%;
-    max-width: 700px;
-    gap: espaciado(12);
-    padding-block-start: espaciado(24);
-    border-block-start: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 45%, transparent);
-
-    div {
-      display: flex;
-      flex-direction: column;
-    }
-
-    strong {
-      font-weight: 700;
-    }
-
-    span {
-      margin: 0;
-      color: color-mix(in srgb, var(--color-sobre-primario) 84%, transparent);
-      font-size: paso-tipografico(-1);
-    }
-  }
-
-  .cifras {
-    display: grid;
-    list-style: none;
-    margin: 0;
-    padding-inline-start: 0;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-width: 820px;
-    // @s30: "debajo hay una banda separada por una línea" — la propia banda
-    // de cifras necesita su línea, exista o no la franja de horario encima
-    // (con "horario: null", @s10, la banda es lo primero que hay debajo de
-    // los botones). Mismo patrón que "dl" (:106): color derivado de
-    // "--color-sobre-primario", nunca un hexadecimal.
-    border-block-start: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 45%, transparent);
-    padding-block-start: espaciado(24);
-
-    li {
-      display: flex;
-      flex-direction: column;
-    }
-
-    strong {
-      font-family: var(--fuente-titulares);
-      font-size: paso-tipografico(2);
-      line-height: 1;
-    }
-
-    span {
-      font-size: paso-tipografico(-2);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    @supports (backdrop-filter: blur(1px)) {
+      backdrop-filter: blur(espaciado(8));
     }
   }
 }
 
-@media (max-width: 560px) {
-  .contenido {
-    width: min(100% - #{espaciado(32)}, 900px);
+.contenido dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
+  width: 100%;
+  max-width: 720px;
+  gap: espaciado(12);
+  margin: espaciado(24) 0 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .contenido .cifras {
+  dt {
+    font-size: paso-tipografico(-1);
+    font-weight: 700;
+  }
+
+  dd {
+    margin: 0;
+    color: color-mix(in srgb, var(--color-sobre-primario) 84%, transparent);
+    font-size: paso-tipografico(-1);
+  }
+}
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  width: 100%;
+  max-width: 720px;
+  gap: espaciado(16) espaciado(24);
+  list-style: none;
+  margin: clamp(38px, 6vw, 58px) 0 0;
+  padding: espaciado(24) 0 0;
+  border-block-start: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 24%, transparent);
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  strong {
+    font-family: var(--fuente-titulares);
+    font-size: clamp(24px, 3.4vw, 32px);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  span {
+    margin-top: espaciado(4);
+    color: color-mix(in srgb, var(--color-sobre-primario) 78%, transparent);
+    font-size: paso-tipografico(-1);
+    letter-spacing: 0.02em;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    min-height: 0;
+  }
+
+  .contenido {
+    width: min(100% - #{espaciado(32)}, 900px);
+    padding: espaciado(64) espaciado(16) espaciado(48);
+  }
+
+  .ubicacion {
+    font-size: paso-tipografico(-2);
+  }
+
+  .acciones a {
+    padding-inline: espaciado(16);
+  }
+
+  .cifras {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

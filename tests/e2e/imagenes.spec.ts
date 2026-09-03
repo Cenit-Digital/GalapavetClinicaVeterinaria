@@ -160,19 +160,29 @@ test.describe('@s30 cada imagen declara sus dimensiones y la carga no desplaza e
           height: imagen.getAttribute('height'),
           loading: imagen.getAttribute('loading'),
           decoding: imagen.getAttribute('decoding'),
+          fetchPriority: imagen.getAttribute('fetchpriority'),
+          esImagenDeHero: imagen.matches('#inicio img'),
+          esImagenDeCabecera: imagen.matches('header img'),
         })),
       )
 
       for (const info of infoImagenes) {
         expect(info.width, JSON.stringify(info)).not.toBeNull()
         expect(info.height, JSON.stringify(info)).not.toBeNull()
-        expect(info.loading, JSON.stringify(info)).toBe('lazy')
         expect(info.decoding, JSON.stringify(info)).toBe('async')
+        if (info.esImagenDeHero) {
+          expect(info.loading, JSON.stringify(info)).toBe('eager')
+          expect(info.fetchPriority, JSON.stringify(info)).toBe('high')
+        } else if (info.esImagenDeCabecera) {
+          expect(info.loading, JSON.stringify(info)).toBe('eager')
+          expect(info.fetchPriority, JSON.stringify(info)).toBeNull()
+        } else {
+          expect(info.loading, JSON.stringify(info)).toBe('lazy')
+        }
       }
 
-      // Ninguna de las 6 rutas tiene hoy una imagen de encabezado ("Hero" no
-      // declara "<img>", `Hero.tsx`): la cláusula "si existe" del contrato
-      // queda vacía a propósito, no simulada.
+      // La portada declara una única imagen LCP eager y con prioridad alta;
+      // el resto sigue diferido. Las rutas de subpágina no tienen imagen hero.
       const cls = await page.evaluate(() => (window as unknown as { clsAcumulado: number }).clsAcumulado)
       expect(cls).toBeLessThanOrEqual(TECHO_CLS)
     })

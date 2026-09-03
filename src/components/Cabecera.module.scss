@@ -14,42 +14,70 @@
   inset-block-start: var(--altura-barra-urgencias);
   inset-inline: 0;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: espaciado(16);
-  padding-block: espaciado(12);
-  padding-inline: espaciado(24);
   background-color: var(--color-fondo);
   color: var(--color-texto);
+  padding-inline: var(--sangrado-lateral);
   border-block-end: $ancho-borde-fino solid var(--color-borde);
   font-size: paso-tipografico(0);
 
-  // El bloque de marca: nombre comercial + descriptor en versalitas espaciadas
-  // (`estudio_diseno_referencia.md` §4.6) — el detalle que convierte "un
-  // enlace con el nombre" en un logotipo, sin ningún icono de marca propio.
-  > div:first-child {
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: color-mix(in srgb, var(--color-fondo) 88%, transparent);
+    backdrop-filter: blur(espaciado(16));
+  }
+
+  .interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: var(--altura-cabecera);
+    max-width: $ancho-maximo-contenedor;
+    gap: espaciado(8);
+    margin-inline: auto;
+  }
+
+}
+
+.marca {
+  @include foco-visible;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: espaciado(12);
+  min-width: 0;
+  color: var(--color-tinta);
+  text-decoration: none;
+
+  img {
+    flex: 0 0 auto;
+    width: $altura-control-pequena;
+    height: $altura-control-pequena;
+    border-radius: $radio-medio;
+  }
+
+  > span {
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
+    min-width: 0;
+    line-height: 1.05;
+  }
 
-    a {
-      @include foco-visible;
-      font-family: var(--fuente-titulares);
-      font-weight: 700;
-      font-size: paso-tipografico(1);
-      color: var(--color-tinta);
-      text-decoration: none;
-    }
+  strong {
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(1);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
 
-    p {
-      margin: 0;
-      font-size: paso-tipografico(-2);
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--color-texto-suave);
-    }
+  > span > span {
+    overflow: hidden;
+    color: var(--color-texto-suave);
+    font-size: paso-tipografico(-2);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    text-wrap: nowrap;
   }
 }
 
@@ -71,7 +99,7 @@
   ul {
     display: flex;
     align-items: center;
-    gap: espaciado(8);
+    gap: espaciado(4);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -79,14 +107,17 @@
 
   a {
     @include foco-visible;
-    @include area-tactil-minima;
     display: inline-flex;
     align-items: center;
-    padding-inline: espaciado(12);
+    min-width: $altura-control-media;
+    min-height: $altura-control-media;
+    padding-inline: espaciado(8);
     border-radius: $radio-completo;
     color: inherit;
+    font-size: paso-tipografico(-1);
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 500;
+    text-wrap: nowrap;
 
     @media (prefers-reduced-motion: no-preference) {
       transition: background-color 150ms ease-out, color 150ms ease-out;
@@ -109,16 +140,96 @@
   // `InformacionContacto.module.scss`.
   a[data-enlace-tienda] {
     @include boton-fantasma;
+    min-height: $altura-control-media;
+    padding-inline: espaciado(16);
+    font-size: paso-tipografico(-1);
   }
+}
+
+.urgenciasEscritorio,
+.urgenciasMovil {
+  @include foco-visible;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: espaciado(8);
+  min-height: $altura-control-media;
+  padding-inline: espaciado(16);
+  border-radius: $radio-completo;
+  background-color: var(--color-urgencia);
+  color: var(--color-sobre-primario);
+  font-size: paso-tipografico(-1);
+  font-weight: 700;
+  text-decoration: none;
+  text-wrap: nowrap;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: box-shadow 150ms ease-out, text-decoration-color 150ms ease-out;
+  }
+
+  &:hover {
+    box-shadow: var(--sombra-reposo);
+    text-decoration: underline;
+  }
+}
+
+.puntoUrgencias {
+  flex: 0 0 auto;
+  width: espaciado(8);
+  height: espaciado(8);
+  border-radius: $radio-completo;
+  background-color: currentColor;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pulso-urgencias 1.6s ease-in-out infinite;
+  }
+}
+
+.rotuloUrgencias {
+  font-size: 0;
+
+  &::after {
+    content: 'Urgencias';
+    font-size: paso-tipografico(-1);
+  }
+}
+
+.textoSoloLectores {
+  position: absolute;
+  overflow: hidden;
+  clip-path: inset(50%);
+  text-wrap: nowrap;
 }
 
 .botonMenu {
   @include foco-visible;
-  @include area-tactil-minima;
-  @include boton-fantasma;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $altura-control-pequena;
+  height: $altura-control-pequena;
+  padding: 0;
+  border: $ancho-borde-fino solid var(--color-borde-control);
+  border-radius: $radio-medio;
+  background-color: var(--color-superficie);
+  color: var(--color-tinta);
 
   @media (min-width: 1024px) {
     display: none;
+  }
+}
+
+.lineasMenu {
+  display: flex;
+  flex-direction: column;
+  gap: espaciado(4);
+
+  span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    border-radius: $radio-completo;
+    background-color: currentColor;
   }
 }
 
@@ -139,23 +250,38 @@
     gap: espaciado(4);
     list-style: none;
     margin: 0;
-    padding: espaciado(16);
+    padding: espaciado(16) espaciado(24) espaciado(24);
   }
 
   a {
     @include foco-visible;
-    @include area-tactil-minima;
     display: flex;
     align-items: center;
+    min-height: $altura-control-media;
     padding-inline: espaciado(12);
     border-radius: $radio-medio;
-    color: inherit;
+    color: var(--color-tinta);
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   // Mismo estilo de "botón fantasma" que la navegación de escritorio (@s28).
   a[data-enlace-tienda] {
     @include boton-fantasma;
+  }
+
+  .urgenciasMovil {
+    width: calc(100% - #{espaciado(48)});
+    min-height: $altura-control-media;
+    margin: espaciado(8) espaciado(24) espaciado(24);
+    padding: espaciado(12) espaciado(16);
+    text-align: center;
+    text-wrap: balance;
+  }
+}
+
+@keyframes pulso-urgencias {
+  50% {
+    opacity: 0.45;
   }
 }

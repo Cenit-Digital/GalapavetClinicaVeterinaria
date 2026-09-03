@@ -106,11 +106,15 @@ describe('@s7 abrir el menú móvil despliega los mismos ocho destinos', () => {
     expect(panel).not.toBeNull()
 
     const enlaces = within(panel as HTMLElement).getAllByRole('link')
-    expect(enlaces.map((enlace) => enlace.textContent)).toEqual(NOMBRES_EN_ORDEN)
-    enlaces.forEach((enlace, indice) => {
+    const enlacesDelPanel = enlaces.filter((enlace) => !enlace.getAttribute('href')?.startsWith('tel:'))
+    expect(enlacesDelPanel.map((enlace) => enlace.textContent)).toEqual(NOMBRES_EN_ORDEN)
+    enlacesDelPanel.forEach((enlace, indice) => {
       expect(enlace).toHaveAttribute('href', DESTINOS_EN_ORDEN[indice])
     })
-    expect(enlaces.every((enlace) => !(enlace.textContent ?? '').includes('Urgencias'))).toBe(true)
+    expect(within(panel as HTMLElement).getByRole('link', { name: /Urgencias fuera de horario.*91 851 13 93/ })).toHaveAttribute(
+      'href',
+      'tel:+34918511393',
+    )
   })
 })
 
@@ -191,26 +195,44 @@ describe('@s11 ensanchar la ventana con el menú abierto no deja el panel colgad
 })
 
 describe('@s12 el logotipo lleva al inicio y rotula al cliente real', () => {
-  it('el enlace del logotipo contiene "Galapavet", apunta a "#inicio" y aparece el descriptor real, no el ficticio', () => {
+  it('el enlace de marca agrupa el logotipo real, "Galapavet" y su descriptor, sin el nombre ficticio', () => {
     const { container } = renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
 
     const enlaceLogo = screen.getByRole('link', { name: /Galapavet/ })
     expect(enlaceLogo).toHaveAttribute('href', '#inicio')
-    expect(container).toHaveTextContent('Centro integral veterinario')
+    expect(enlaceLogo.querySelector('img')).toHaveAttribute('src', expect.stringMatching(/\/img\/logo-galapavet\.webp$/))
+    expect(enlaceLogo).toHaveTextContent('Centro integral veterinario')
     expect(container).not.toHaveTextContent('Veterinaria La Sierra')
   })
 })
 
-describe('@s13 la cabecera no anuncia urgencias ni contiene teléfonos', () => {
-  it('sin "Urgencias", "24 h" ni "640 22 11 90", y ningún enlace apunta a "tel:"', () => {
+describe('@s1 de fidelidad_lienzo: el contenido de cabecera tiene un contenedor alineable', () => {
+  it('la única caja interior agrupa la marca y la navegación sin crear un landmark adicional', () => {
     const { container } = renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
 
-    expect(container).not.toHaveTextContent('Urgencias')
+    const cabecera = container.querySelector('header')
+    expect(cabecera).not.toBeNull()
+    expect(cabecera?.children).toHaveLength(1)
+    const interior = cabecera?.firstElementChild
+    expect(interior).toHaveAttribute('data-cabecera-interior')
+    expect(within(interior as HTMLElement).getByRole('link', { name: /Galapavet/ })).toBeInTheDocument()
+    expect(within(interior as HTMLElement).getByRole('navigation', { name: 'Navegación principal' })).toBeInTheDocument()
+  })
+})
+
+describe('@s2 de fidelidad_cabecera: el CTA de urgencias usa solo la fuente única y queda fuera de la navegación', () => {
+  it('en escritorio enlaza al teléfono real, conserva los ocho destinos de la navegación y nunca anuncia 24 h', () => {
+    const { container } = renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
+
+    const enlaceUrgencias = screen.getByRole('link', { name: /Urgencias fuera de horario.*91 851 13 93/ })
+    const navegacion = screen.getByRole('navigation', { name: 'Navegación principal' })
+
+    expect(enlaceUrgencias).toHaveAttribute('href', 'tel:+34918511393')
+    expect(within(navegacion).getAllByRole('link')).toHaveLength(8)
+    expect(within(navegacion).queryByRole('link', { name: /Urgencias/ })).toBeNull()
     expect(container).not.toHaveTextContent('24 h')
+    expect(container).not.toHaveTextContent('24h')
     expect(container).not.toHaveTextContent('640 22 11 90')
-    for (const enlace of screen.getAllByRole('link')) {
-      expect(enlace.getAttribute('href')).not.toMatch(/^tel:/)
-    }
   })
 })
 

@@ -1,11 +1,64 @@
 import { describe, expect, it } from 'vitest'
 import { DESTINO_TIENDA } from '../data/navegacion'
-import { esAncla, esDestinoTienda, esPaginaActual, posicionDeScrollParaAncla, PUNTO_DE_CORTE_NAVEGACION_PX } from './Cabecera-logica'
+import {
+  construirControlDeUrgencias,
+  esAncla,
+  esDestinoTienda,
+  esPaginaActual,
+  posicionDeScrollParaAncla,
+  PUNTO_DE_CORTE_NAVEGACION_PX,
+} from './Cabecera-logica'
 
 describe('@s1 este proyecto declara su propio punto de corte y no hereda el ajeno', () => {
   it('el valor declarado es exactamente 1024 píxeles y no 1120, el del prototipo ajeno', () => {
     expect(PUNTO_DE_CORTE_NAVEGACION_PX).toBe(1024)
     expect(PUNTO_DE_CORTE_NAVEGACION_PX).not.toBe(1120)
+  })
+})
+
+describe('@s2 de fidelidad_cabecera: el CTA de urgencias se deriva de la fuente unica', () => {
+  it('conserva rotulo, telefono, enlace y texto compuesto sin reescribir el destino', () => {
+    expect(
+      construirControlDeUrgencias({
+        rotulo: 'Urgencias fuera de horario',
+        textoVisible: '91 851 13 93',
+        enlaceLlamada: 'tel:+34918511393',
+      }),
+    ).toEqual({
+      rotulo: 'Urgencias fuera de horario',
+      textoVisible: '91 851 13 93',
+      enlace: 'tel:+34918511393',
+      textoCta: 'Urgencias fuera de horario · 91 851 13 93',
+    })
+  })
+
+  it('falla cerrado cuando la fuente unica no publica un rotulo de urgencias', () => {
+    expect(
+      construirControlDeUrgencias({
+        textoVisible: '91 851 13 93',
+        enlaceLlamada: 'tel:+34918511393',
+      }),
+    ).toBeNull()
+  })
+
+  it('tambien falla cerrado si el rotulo declarado esta vacio', () => {
+    expect(
+      construirControlDeUrgencias({
+        rotulo: '',
+        textoVisible: '91 851 13 93',
+        enlaceLlamada: 'tel:+34918511393',
+      }),
+    ).toBeNull()
+  })
+
+  it('considera ausente un rotulo compuesto solo por espacios', () => {
+    expect(
+      construirControlDeUrgencias({
+        rotulo: '   ',
+        textoVisible: '91 851 13 93',
+        enlaceLlamada: 'tel:+34918511393',
+      }),
+    ).toBeNull()
   })
 })
 

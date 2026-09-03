@@ -41,23 +41,29 @@ export function Hero({
   telefono = datosNegocio.telefonoClinica.textoVisible,
   horario = datosNegocio.horario,
 }: HeroProps = {}): React.JSX.Element {
-  const cifras = construirCifrasBienvenida(EQUIPO, SERVICIOS, GALERIA, horario ?? [])
+  const cifras = construirCifrasBienvenida(SERVICIOS, EQUIPO, GALERIA, horario ?? [])
 
   return (
-    <section className={styles.hero} data-contenedor-principal>
+    <section className={styles.hero} data-a-sangre data-contenedor-principal>
       <img
         src={hrefDeDestino('/img/hero/clinica.webp')}
-        alt="Perro con su familia al aire libre"
+        alt=""
         width={1600}
         height={900}
-        loading="lazy"
+        loading="eager"
+        fetchPriority="high"
         decoding="async"
       />
-      <div className={styles.contenido}>
-        <p>{UBICACION}</p>
+      <div className={styles.contenido} data-hero-contenido>
+        <p className={styles.ubicacion} data-hero-ubicacion>
+          <span className={styles.puntoUbicacion} aria-hidden="true" />
+          {UBICACION}
+        </p>
         <h1>{TITULAR}</h1>
-        <p>{TEXTO_DESCRIPTIVO}</p>
-        <div>
+        <p className={styles.subtitulo} data-hero-subtitulo>
+          {TEXTO_DESCRIPTIVO}
+        </p>
+        <div className={styles.acciones} data-hero-acciones>
           <a href="#reservar">Reservar cita</a>
           {telefono !== null && <a href={enlaceLlamada(telefono)}>{`Llamar ${telefono}`}</a>}
         </div>
@@ -71,7 +77,7 @@ export function Hero({
             ))}
           </dl>
         )}
-        <ul className={styles.cifras} aria-label="Resumen de Galapavet">
+        <ul className={styles.cifras} data-hero-cifras aria-label="Resumen de Galapavet">
           {cifras.map((cifra) => (
             <li key={cifra.etiqueta}>
               <strong>{cifra.valor}</strong>

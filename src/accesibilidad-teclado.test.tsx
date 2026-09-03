@@ -28,7 +28,9 @@ const SELECTOR_FOCALIZABLE =
 
 describe('@s23 la página entera se recorre con el tabulador en el orden de lectura', () => {
   it('todos los controles interactivos de la Landing reciben el foco, en el orden del contenido, sin quedar atrapados', async () => {
-    const usuario = userEvent.setup()
+    // La portada incorpora los cinco controles accesibles de Servicios. Este
+    // recorrido valida orden de foco, no retardos simulados de escritura.
+    const usuario = userEvent.setup({ delay: null })
     establecerAnchoDeVentana(PUNTO_DE_CORTE_NAVEGACION_PX)
     renderizar(<App />)
 

@@ -4,14 +4,12 @@
  * solo cablea esta lógica; nada aquí toca el DOM.
  */
 
-const ROTULO_CERRADO = 'Ver qué incluye'
-
 /** Rótulo visible del botón de una tarjeta, según su estado de expansión (@s2/@s10/@s11). */
 export function rotuloBoton(abierto: boolean): string {
   if (abierto) {
     return 'Ocultar detalle'
   }
-  return ROTULO_CERRADO
+  return 'Ver qué incluye'
 }
 
 /** Descarta los puntos en blanco del desglose publicado (@s16): un espacio no es un punto real. */
@@ -20,6 +18,11 @@ export function puntosVisibles(puntos: readonly string[]): string[] {
 }
 
 /** Si el bloque no tiene ni un punto real, no ofrece botón de desplegar ni lista (@s15). */
+/** Resumen breve de tarjeta, derivado de sus dos primeros puntos publicados. */
+export function resumenDeServicio(puntos: readonly string[]): string {
+  return puntosVisibles(puntos).slice(0, 2).join(' · ')
+}
+
 export function tieneDesglose(puntos: readonly string[]): boolean {
   return puntosVisibles(puntos).length > 0
 }
@@ -41,6 +44,6 @@ export function nombreAccesibleBoton(rotulo: string, tituloBloque: string): stri
  * distintos muestran píldoras distintas.
  */
 export function categoriaDeServicio(tituloBloque: string): string {
-  const [primeraPalabra] = tituloBloque.trim().split(/\s+/)
-  return primeraPalabra ?? ''
+  const palabras = tituloBloque.match(/\S+/)
+  return palabras?.[0] ?? ''
 }

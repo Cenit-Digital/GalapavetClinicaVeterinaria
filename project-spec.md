@@ -959,6 +959,146 @@ mutación apropiada para esta configuración. El informe global FAIL se mantiene
 en `progress/mutation_integridad_puerta_mutacion.md` como evidencia separada y
 pendiente de una feature futura propia.
 
+### Fidelidad visual de la portada — features 26 a 37 (`fidelidad_*`)
+
+> **Conversación de spec del 03/09/2026 con Pablo (cliente interno).** Las 25
+> features estaban `done`, con judge aprobado y mutación al 100 %, y la web
+> publicada **no se parecía al prototipo aprobado** (`docs/diseno-claude-design/`
+> `Veterinaria La Sierra.dc.html`; el Artifact que el cliente enseña a sus socios
+> es ese mismo fichero empaquetado, verificado con `diff` normalizado). El
+> cliente lo formuló así: «como el diseño no se parezca ni en el tono del blanco
+> a la web que se va a desplegar, perdemos el negocio». La estrategia acordada
+> con él: **dividir y vencer hasta lo exagerado** — una feature pequeña por
+> sección, cada una con su contrato, su TDD, su judge y su mutación, y una
+> puerta humana única sobre todos los contratos a la vez.
+
+#### Diagnóstico medido (no supuesto)
+
+Prototipo y `dist/` renderizados con Playwright a 1280 px, sección a sección,
+y trece análisis de solo lectura en `progress/fidelidad/` (`delta_*.md` e
+`inventario_red_seguridad.md`). Las puertas del arnés miden tokens, contraste,
+lógica pura y texto de los SCSS; **ninguna mide la maquetación pintada**, y así
+pasaron en verde estos defectos de producción:
+
+1. **Selectores de id en CSS Modules que nunca casan.** `#inicio` en
+   `Landing.module.scss` y `#contacto` en `InformacionContacto.module.scss` se
+   compilan como `#_inicio_…` y `#_contacto_…`: el hero hereda el contenedor
+   de 1220 px con relleno lateral (no va a sangre) y la rejilla de dos columnas
+   de contacto no se aplica (formulario a todo el ancho, tarjeta de urgencias
+   gigante y vacía).
+2. **`espaciado(20)` no existe en la escala**: Sass descarta la declaración en
+   silencio y ningún botón fantasma del sitio tiene relleno lateral (el texto
+   desborda la píldora en hero, reserva, galería y campañas; 16 usos).
+3. **`.faq { max-width: 860px }` muerta en la cascada**: la lista mide 1172 px.
+4. **Alternancia de bandas invertida** en las 7 secciones respecto al prototipo.
+5. **Mapa en blanco**: el iframe de OpenStreetMap va con `sandbox=""` y sin
+   `bbox`; el navegador bloquea su script y no pinta nada. Es además la única
+   petición a un tercero del sitio.
+6. **Anatomías incompletas** en todas las secciones: sin titular bicolor,
+   descripción ni botón «+» en servicios; campañas en fila plana; equipo sin
+   la geometría de tarjeta; galería sin titular ni tarjetas; contacto sin
+   titular ni dos columnas; FAQ sin centrar ni «+»; pie apiñado; selector de
+   paleta como píldora de texto en vez de botón redondo flotante.
+
+Lo que **sí** está bien y no se toca: tokens de las cinco variantes,
+tipografías, contraste, datos reales, accesibilidad automática, cero terceros
+(salvo el mapa, que desaparece), SEO y las tres subpáginas.
+
+#### Invariantes de todas las features `fidelidad_*`
+
+- **Datos**: solo `src/lib/site.ts`, `src/data/*` y `docs/datos-galapavet.md`.
+  Ni un literal del prototipo (nombres, cifras, teléfonos, «24 h», precios,
+  personas). Donde el prototipo pinta un dato que Galapavet no publica, se
+  **deriva de un dato real** (p. ej. «Servicios veterinarios *en Galapagar*»,
+  resumen de servicio a partir de sus puntos publicados) o se deja el hueco.
+- **Equipo sin fotos de banco** (@s32 de `rediseno_visual`): la geometría de
+  tarjeta del prototipo se conserva (zona superior grande, nombre, cargo,
+  «+», chips), y la zona de imagen se rellena con un panel de marca con las
+  iniciales, hasta que el cliente entregue retratos reales.
+- **Cero peticiones a terceros**, incluida la del mapa.
+- **Contratos vigentes**: cada feature enumera los escenarios `done` que toca
+  y los **respeta** o los **enmienda por escrito** (antes/después literal en
+  `progress/fidelidad/enmiendas_*.md`), nunca los rompe por accidente. Los
+  tests que anclan nombres de clase o selectores se enmiendan con su feature.
+- **Lógica en `*-logica.ts`**, mutación al 100 %; los `.tsx` cablean.
+- **Verificación en pantalla**: ninguna feature se declara `done` sin
+  renderizar `dist/` con Playwright a 1280 px y comparar la sección con la
+  captura del prototipo; el `judge` lo repite de forma independiente.
+
+#### Decisiones tomadas con el cliente en la puerta (03/09/2026, Pablo)
+
+Las cuatro primeras se le plantearon como pregunta con alternativas y las
+respondió explícitamente (12 features pequeñas; mapa estático local; WhatsApp
+confirmado en el 685 34 31 49; techo de CSS a 12 000 B). Las demás derivan de
+esas respuestas y del análisis de `progress/fidelidad/`.
+
+| # | Decisión | Alternativa | Motivo |
+| - | ------------------ | ----------- | ------ |
+| 61 | **La fidelidad se contrata por sección, en 12 features (26–37)**, con una puerta humana conjunta. | Una sola feature de 50+ escenarios, como `rediseno_visual`. | Una feature enorme cerró en verde con la página rota; doce contratos cortos se revisan en minutos y cada uno se verifica en pantalla. |
+| 62 | **El techo de CSS sube de 8 000 a 12 000 B** en el cable, y se reaprieta a lo medido × 1,25 al cerrar la última sección. | Subirlo sección a sección cuando el spec avise. | Quedan 511 B de margen y hay diez anatomías que añadir; el techo debe seguir siendo un trinquete, no un decorado. |
+| 63 | **Mapa estático local con pin**, compuesto con 12 teselas de OpenStreetMap (z16) y las coordenadas del nodo público `amenity=veterinary` «Galapavet» (osm id 5644506906: 40.5772872, −4.0004445, Carretera de Torrelodones 11), con atribución «© OpenStreetMap contributors» visible y la fuente citada en `docs/datos-galapavet.md`. | Mantener el iframe externo y añadirle `bbox`. | El iframe está en blanco hoy y es la única petición a un tercero; las coordenadas no las «inventa» el repo: las publica OSM sobre la dirección verificada. |
+| 64 | **El lienzo global va primero** (feature 26): bandas a sangre, contenedor de 1220 px en el hijo, alternancia del prototipo, contenedor interior de la cabecera, y arreglo del `espaciado(20)`. | Que cada sección arregle su trozo. | Los cuatro defectos son transversales; arreglarlos doce veces es duplicación. |
+| 65 | **Servicios**: titular bicolor «Servicios veterinarios / en Galapagar» (la segunda línea deriva de `datosNegocio.direccion.localidad`) y resumen bajo cada título derivado literalmente de los puntos publicados. | Titular «Servicios» de una palabra y sin resumen. | Es la anatomía del prototipo sin afirmar nada que el cliente no publique. |
+| 66 | **Reserva**: botón primario verde «WhatsApp» con el `wa.me` del móvil 685 34 31 49, más «Llamar a la clínica» en contorno, como el prototipo. **El cliente confirmó el 03/09/2026 que ese móvil atiende WhatsApp** (`docs/datos-galapavet.md` §2bis), lo que deroga la reserva de la Decisión 14 y las cláusulas de `datos_negocio.feature` y `reserva_chat.feature` (@s12/@s18) que prohibían el canal hasta tener confirmación; ambas se enmiendan por escrito con la feature 32. | Dos botones de llamada (lo que exigía el contrato mientras no hubiera confirmación). | El dato faltante ya existe; sin él la maqueta se habría hecho igual con la llamada como acción primaria. |
+| 67 | **El handoff «Convergencia visual v2» del 03/09/2026** (`progress/rediseno/HANDOFF_CONVERGENCIA_V2.md` y `convergencia_visual_v2.feature`, 35 escenarios en 11 tramos, elaborado por el cliente con otra sesión de Claude) **se absorbe en las 12 features**: cada `fidelidad_*` recoge los valores y escenarios de su tramo, y su herramienta `tools/captura-comparativa.mjs` es la puerta visual de cierre. | Registrarlo tal cual como una sola feature sin puerta humana, como pedía su prompt. | El cliente eligió las 12 features en la puerta; el handoff coincide en los tres bugs de raíz y aporta valores exactos, pero algunos escenarios chocaban con contratos vigentes (WhatsApp, mapa) y había que resolverlos por escrito, no heredarlos. |
+
+#### Contorno de cada feature
+
+- **26 `fidelidad_lienzo`** — `Landing.tsx`/`Landing.module.scss`/`_api.scss`/
+  `Cabecera` (contenedor interior): bandas a sangre con relleno lateral en la
+  banda y 1220 px en el hijo; alternancia hero(foto) · servicios `fondo` ·
+  campañas `alterno` · equipo `fondo` · reserva `alterno` · galería `fondo` ·
+  contacto `alterno` · FAQ `fondo`; variante de banda «cabecera acotada, pista a
+  sangre» para la galería; `espaciado(20)` sustituido por un paso real en toda
+  la escala; techo de CSS (Decisión 62). Puerta nueva: ningún `.module.scss`
+  declara un selector de id.
+- **27 `fidelidad_cabecera`** — barra de urgencias y cabecera con marca gráfica
+  (logotipo real), navegación, botón rojo de urgencias con el rótulo real y
+  botón «Tienda», alineados a la columna de 1220 px.
+- **28 `fidelidad_hero`** — a sangre, centrado, píldora de localidad con fondo
+  translúcido, titular, subtítulo, dos botones (primario + contorno con relleno
+  correcto), banda inferior íntegra (nunca cortada) con las cifras derivadas de
+  la fuente única que ya define `Hero-logica.ts`.
+- **29 `fidelidad_servicios`** — cintillo «Lo que hacemos», titular bicolor
+  (Decisión 65), párrafo de apoyo con recuento derivado, tarjeta con píldora
+  superpuesta a la foto, título, resumen derivado, panel de puntos con marca ✓,
+  pie con separador, «Ver qué incluye» y círculo «+» que gira al abrir.
+- **30 `fidelidad_campanas`** — dos columnas (texto + aviso de demostración +
+  CTA primario / rejilla compacta 2×2 de tarjetas con foto, píldora, título y
+  línea de detalle derivada del bloque de servicios; sin precio ni vigencia).
+- **31 `fidelidad_equipo`** — cintillo y titular centrados, tarjetas de 3
+  columnas con panel superior de iniciales (misma proporción que la foto del
+  prototipo), nombre + cargo + «+» desplegable, chips derivados de la formación
+  publicada; nunca una fotografía.
+- **32 `fidelidad_reserva`** — dos columnas; botón WhatsApp (Decisión 66) +
+  contorno de llamada; tres viñetas con check derivadas del horario/teléfonos
+  reales; tarjeta de chat alta con cabecera, burbuja, chips abajo y nota.
+- **33 `fidelidad_galeria`** — cintillo, titular «Galería · …», párrafo y
+  flechas redondas arriba a la derecha; tarjetas (foto + nombre + pie) en pista
+  con anclaje que sangra por la derecha; aviso de demostración conservado.
+- **34 `fidelidad_contacto`** — cintillo + titular + párrafo; tarjeta
+  «Escríbenos» (nombre/teléfono en dos columnas, email, motivo, mensaje,
+  casilla, botón a todo el ancho) a la izquierda; a la derecha tarjeta roja de
+  urgencias con el rótulo real, teléfono grande y «Llamar ahora», y tarjeta con
+  mapa estático (Decisión 63) y bloques DIRECCIÓN / TELÉFONOS / HORARIO (el
+  cuarto bloque, EMAIL, se omite porque el cliente no publica email).
+- **35 `fidelidad_faq`** — cintillo y titular centrados; lista de 860 px
+  centrada de verdad; línea superior y divisorias por entrada; «+» redondo
+  decorativo a la derecha; pregunta en Outfit 500.
+- **36 `fidelidad_pie`** — cuatro columnas (marca con logotipo + descriptor,
+  CLÍNICA, CONTENIDO, CONTACTO) y línea inferior con © a la izquierda y los
+  tres enlaces legales reales en fila a la derecha.
+- **37 `fidelidad_selector_paleta`** — botón redondo flotante con disco
+  tricolor de la variante activa (`aria-label` «Cambiar paleta de color» se
+  conserva), panel con rótulo, filas de dos líneas con muestras leídas de los
+  tokens; estado en ARIA.
+
+Orden de ejecución: 26 sola (cimiento), después 27–37 en paralelo por tandas.
+Cada feature cierra con `bin/harness init`, la suite de Playwright completa y
+la comparación en pantalla; la mutación se corre fichero a fichero sobre los
+`*-logica.ts` tocados (nunca dos Stryker a la vez).
+
+
 ## Riesgos abiertos
 
 1. **El cliente no publica email ni redes.** El formulario de contacto no tiene

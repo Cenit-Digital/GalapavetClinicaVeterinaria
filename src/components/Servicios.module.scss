@@ -1,77 +1,190 @@
-// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
-// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45). El propio "section.servicios" ES la
-// rejilla (sus hijos son "h2" + N "article.tarjeta" ya en el DOM real,
-// `Servicios.tsx`), sin envoltorio adicional. El relleno vertical
-// (`padding-block`) también es responsabilidad ÚNICA de ese wrapper (@s19,
-// `--ritmo-seccion`, fluido): este fichero NO vuelve a declararlo. Antes sí
-// lo hacía, con un valor fijo (`espaciado(64)`) que quedaba muerto porque el
-// wrapper ganaba la cascada por orden de bundle, sin ningún test que lo
-// protegiera — retirado tras `progress/judge_rediseno_visual.md` (hallazgo
-// 3, segunda revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
 .servicios {
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado {
+  max-width: 62ch;
+}
+
+.eyebrow {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
+}
+
+.encabezado h2 {
+  max-width: 23ch;
+  margin: 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(4);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+
+  em {
+    color: var(--color-primario);
+    font-style: normal;
+  }
+}
+
+.apoyo {
+  max-width: 62ch;
+  margin: espaciado(16) 0 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(1);
+  line-height: 1.7;
+}
+
+.rejilla {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr));
   gap: espaciado(24);
-
-  // Cintillo en versalitas delante del titular (@s33 de
-  // `rediseno_visual.feature`). El fondo de esta sección es un ROL DE COLOR
-  // del sistema (`--color-fondo-alterno`, `src/pages/Landing.tsx:54-56`), no
-  // una fotografía, así que usa el "--color-acento-tinta" por defecto del
-  // mixin compartido, sin ningún override — igual que `Equipo.module.scss`.
-  .eyebrow {
-    @include eyebrow;
-    grid-column: 1 / -1;
-  }
-
-  h2 {
-    grid-column: 1 / -1;
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(4);
-    margin-block-end: espaciado(8);
-  }
+  margin-top: clamp(36px, 5vw, 54px);
 }
 
 .tarjeta {
   @include tarjeta;
 
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform 300ms ease-out, box-shadow 300ms ease-out;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.imagen {
+  position: relative;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  background-color: var(--color-fondo-alterno);
+
   img {
-    @include hueco-de-imagen(8, 5);
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
+}
 
-  > span {
-    @include pildora-etiqueta;
-    align-self: flex-start;
-    margin: espaciado(16) espaciado(20) 0;
-  }
+.categoria {
+  position: absolute;
+  inset-block-start: espaciado(12);
+  inset-inline-start: espaciado(12);
+  padding: espaciado(4) espaciado(12);
+  border-radius: $radio-completo;
+  background-color: var(--color-superficie);
+  color: var(--color-acento-tinta);
+  font-size: paso-tipografico(-2);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
-  h3 {
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(2);
-    margin: espaciado(8) espaciado(20) espaciado(12);
-  }
+.cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: espaciado(24) espaciado(24) espaciado(16);
+}
 
-  button {
-    @include foco-visible;
-    @include area-tactil-minima;
-    margin-block-start: auto;
-    align-self: flex-start;
-    padding-inline: 0;
-    border: none;
-    background: none;
-    color: var(--color-acento-tinta);
-    font-weight: 600;
-    cursor: pointer;
-    margin: 0 espaciado(20) espaciado(20);
-  }
+.cuerpo h3 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(2);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.resumen {
+  margin: espaciado(8) 0 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(-1);
+  line-height: 1.65;
+}
+
+.detalle {
+  margin-top: espaciado(16);
+  padding-top: espaciado(16);
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
 
   ul {
-    margin: 0 espaciado(20) espaciado(20);
-    padding-inline-start: espaciado(20);
-    color: var(--color-texto-suave);
+    display: flex;
+    flex-direction: column;
+    gap: espaciado(8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
 
-    li {
-      margin-block-end: espaciado(4);
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: espaciado(8);
+    color: var(--color-texto);
+    font-size: paso-tipografico(-1);
+    line-height: 1.5;
+
+    &::before {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      margin-top: 1px;
+      border-radius: $radio-completo;
+      background-color: var(--color-acento-suave);
+      color: var(--color-acento-tinta);
+      content: '✓';
+      font-size: paso-tipografico(-2);
+      font-weight: 700;
     }
+  }
+}
+
+.cuerpo button {
+  @include foco-visible;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: $altura-control-media;
+  margin-top: auto;
+  padding: espaciado(12) espaciado(4) 0;
+  border: none;
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+  background: none;
+  color: var(--color-acento-tinta);
+  font-size: paso-tipografico(-1);
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+
+  &::after {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: $radio-completo;
+    background-color: var(--color-acento-suave);
+    color: var(--color-acento-tinta);
+    content: '+';
+    font-size: paso-tipografico(1);
+    font-weight: 600;
+    line-height: 1;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: transform 300ms ease-out;
+    }
+  }
+
+  &[aria-expanded='true']::after {
+    transform: rotate(45deg);
   }
 }

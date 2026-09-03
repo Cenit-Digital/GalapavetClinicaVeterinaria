@@ -28,6 +28,13 @@
 | Teléfono 2 | **685 34 31 49** | enlace `tel:` de la cabecera de galapavet.com |
 | Urgencias fuera de horario | **91 851 13 93** | enlace `tel:` del pie de galapavet.com, rotulado literalmente «Urgencias fuera de horario. Tlf: 91 851 13 93» |
 
+## 2bis. Datos confirmados por el cliente interno (03/09/2026)
+
+| Dato | Valor | Fuente |
+| --- | --- | --- |
+| WhatsApp | El móvil **685 34 31 49** atiende WhatsApp | Confirmado por Pablo Hurtado (Cenit Digital, responsable de la cuenta) en la conversación de spec del 03/09/2026 (Decisión 66 de `project-spec.md`). Deroga la reserva de la Decisión 14 y de `datos_negocio.feature` sobre el canal de mensajería. |
+| Coordenadas | **40.5772872, −4.0004445** | Nodo público de OpenStreetMap `amenity=veterinary` «Galapavet», osm id 5644506906, en «11, Carretera de Torrelodones, Galapagar» (consultado vía Nominatim el 03/09/2026; datos © OpenStreetMap contributors, ODbL). Coincide con la dirección verificada de §2. Se usan para el pin del mapa estático local (`public/img/mapa/`, Decisión 63) y pueden usarse en el JSON-LD. |
+
 ## 3. Horario
 
 Transcrito literalmente de galapavet.com (coincide con el `.docx` de prospección):
@@ -122,7 +129,7 @@ Verificado por ausencia — no están en su web ni en su árbol de enlaces:
 - **Redes sociales.** La web tiene una sección «Síguenos en las redes» pero
   **sin ningún enlace**. Los perfiles que devolvió una primera extracción
   automática no aparecen enlazados: se descartan por no verificados.
-- **Coordenadas geográficas exactas** para el JSON-LD y el mapa.
+- ~~Coordenadas geográficas exactas~~ — resueltas el 03/09/2026 con el nodo público de OpenStreetMap (§2bis).
 - **Precios y productos** de la tienda.
 - **Años de actividad** y número de registro del centro.
 

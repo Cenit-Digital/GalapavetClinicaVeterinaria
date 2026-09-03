@@ -77,7 +77,7 @@ describe('@s1 el listado es una página propia con un único contenido principal
 })
 
 describe('@s2 la página comparte cabecera y pie con la landing y se señala como página actual', () => {
-  it('banner y contentinfo únicos; "Blog" tiene aria-current="page" y es el único; sin "Urgencias" en la cabecera', () => {
+  it('banner y contentinfo únicos; "Blog" tiene aria-current="page" y la cabecera ofrece las urgencias reales', () => {
     renderizarApp()
 
     expect(screen.getAllByRole('banner')).toHaveLength(1)
@@ -95,9 +95,9 @@ describe('@s2 la página comparte cabecera y pie con la landing y se señala com
       expect(enlace).not.toHaveAttribute('aria-current')
     }
 
-    const urgencias = within(banner).queryAllByRole('link', { name: /Urgencias/ })
+    const urgencias = within(banner).getByRole('link', { name: /Urgencias fuera de horario.*91 851 13 93/ })
     const botonesUrgencias = within(banner).queryAllByRole('button', { name: /Urgencias/ })
-    expect(urgencias).toHaveLength(0)
+    expect(urgencias).toHaveAttribute('href', 'tel:+34918511393')
     expect(botonesUrgencias).toHaveLength(0)
   })
 })

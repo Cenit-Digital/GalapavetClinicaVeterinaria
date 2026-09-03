@@ -148,7 +148,7 @@ test.describe('@s17 el contenido tiene un único ancho máximo y es el del dise�
     for (const { ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
       const ancho = await page
-        .locator('[data-contenedor-principal]')
+        .locator('[data-contenedor-principal]:not([data-a-sangre])')
         .first()
         .evaluate((elemento) => elemento.getBoundingClientRect().width)
       anchosMedidos.push(Math.round(ancho))
@@ -292,7 +292,7 @@ test.describe('@s20 los dos pasos altos de la escala tipográfica son fluidos y 
       paso: -2,
       esperadoPx: 10.24,
       ruta: `${SUBPATH_DE_PRODUCCION}/`,
-      localizar: (paginaActual) => paginaActual.locator('header p').first(),
+      localizar: (paginaActual) => paginaActual.locator('header a[href="#inicio"] > span > span').first(),
     },
     {
       paso: -1,
@@ -310,7 +310,7 @@ test.describe('@s20 los dos pasos altos de la escala tipográfica son fluidos y 
       paso: 1,
       esperadoPx: 20,
       ruta: `${SUBPATH_DE_PRODUCCION}/`,
-      localizar: (paginaActual) => paginaActual.locator('header a[href="#inicio"]'),
+      localizar: (paginaActual) => paginaActual.locator('header a[href="#inicio"] strong'),
     },
     {
       paso: 2,

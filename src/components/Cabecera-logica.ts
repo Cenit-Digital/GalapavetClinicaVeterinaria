@@ -10,6 +10,37 @@
 import { DESTINO_TIENDA } from '../data/navegacion'
 export const PUNTO_DE_CORTE_NAVEGACION_PX = 1024
 
+/** Los únicos datos necesarios para representar un CTA de urgencias. */
+export interface TelefonoDeUrgencias {
+  readonly rotulo?: string
+  readonly textoVisible: string
+  readonly enlaceLlamada: string
+}
+
+/** Datos ya derivados que consume la cabecera, sin repetir teléfonos ni `tel:`. */
+export interface ControlDeUrgencias {
+  readonly rotulo: string
+  readonly textoVisible: string
+  readonly enlace: string
+  readonly textoCta: string
+}
+
+/**
+ * Construye el control desde la fuente única. Si falta el rótulo publicado,
+ * falla cerrado: no se inventa una promesa de atención de urgencias.
+ */
+export function construirControlDeUrgencias(telefono: TelefonoDeUrgencias): ControlDeUrgencias | null {
+  if (telefono.rotulo === undefined || telefono.rotulo.trim() === '') {
+    return null
+  }
+  return {
+    rotulo: telefono.rotulo,
+    textoVisible: telefono.textoVisible,
+    enlace: telefono.enlaceLlamada,
+    textoCta: `${telefono.rotulo} · ${telefono.textoVisible}`,
+  }
+}
+
 /**
  * Rama móvil si el ancho es estrictamente menor que el punto de corte, o si
  * el ancho todavía no es un número positivo medible (@s14: cae cerrado a

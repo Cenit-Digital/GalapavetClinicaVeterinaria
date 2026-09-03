@@ -99,12 +99,12 @@ describe('@s14 el desplazamiento hasta un ancla reserva sitio para la cabecera f
     return valor
   }
 
-  const variableDeLaAlturaDeLaCabecera = (): string => {
-    const [variable] = variablesCssUsadas(scrollPaddingTop())
-    if (variable === undefined) {
+  const variablesDeLaAlturaVisible = (): readonly string[] => {
+    const variables = variablesCssUsadas(scrollPaddingTop())
+    if (variables.length === 0) {
       throw new Error(`el valor de "scroll-padding-top" no consume ninguna variable CSS: "${scrollPaddingTop()}"`)
     }
-    return variable
+    return variables
   }
 
   const declaracionesDeAlturaDeLaCabecera = (): readonly string[] =>
@@ -122,7 +122,9 @@ describe('@s14 el desplazamiento hasta un ancla reserva sitio para la cabecera f
 
   it('esa misma variable es la que la maquetación de la cabecera usa para su propia altura', () => {
     expect(declaracionesDeAlturaDeLaCabecera().length).toBeGreaterThan(0)
-    expect(declaracionesDeAlturaDeLaCabecera().flatMap(variablesCssUsadas)).toContain(variableDeLaAlturaDeLaCabecera())
+    expect(declaracionesDeAlturaDeLaCabecera().flatMap(variablesCssUsadas)).toContain('--altura-cabecera')
+    expect(hojaDeLaCabecera()).toContain('inset-block-start: var(--altura-barra-urgencias)')
+    expect(variablesDeLaAlturaVisible()).toEqual(expect.arrayContaining(['--altura-cabecera', '--altura-barra-urgencias']))
   })
 })
 

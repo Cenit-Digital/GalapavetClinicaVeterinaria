@@ -351,7 +351,9 @@ describe('@s33 la sección abre con su cintillo en versalitas, delante del h2', 
     // Precede al h2 en el DOM: "abre" la sección.
     // eslint-disable-next-line no-bitwise -- API estándar de DOM (`Node.compareDocumentPosition`).
     expect(cintillo.compareDocumentPosition(encabezado) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(region.firstElementChild).toBe(cintillo)
+    const presentacion = region.querySelector('[data-campanas-presentacion]')
+    expect(presentacion).not.toBeNull()
+    expect(presentacion?.firstElementChild).toBe(cintillo)
   })
 
   it('".eyebrow" usa el mixin compartido, sin reescribir su color, versalitas ni espaciado entre letras', () => {

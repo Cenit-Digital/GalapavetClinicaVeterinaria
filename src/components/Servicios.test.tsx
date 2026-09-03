@@ -47,12 +47,12 @@ const TODOS_LOS_PUNTOS_EN_ORDEN = [
   'Endoscopia',
 ]
 
-/** Localiza la sección «Servicios» a partir de su encabezado de nivel 2. */
+/** Localiza la sección por el encabezado editorial real de nivel 2. */
 function obtenerSeccionServicios(): HTMLElement {
-  const encabezado = screen.getByRole('heading', { level: 2, name: 'Servicios' })
+  const encabezado = screen.getByRole('heading', { level: 2, name: /Servicios veterinarios/ })
   const seccion = encabezado.closest('section')
   if (seccion === null) {
-    throw new Error('No se encontró el elemento <section> que envuelve el encabezado "Servicios"')
+    throw new Error('No se encontró el elemento <section> que envuelve el encabezado de servicios')
   }
   return seccion
 }
@@ -87,7 +87,7 @@ const CATALOGO_CON_UN_BLOQUE_VACIO: readonly BloqueServicio[] = [
 ]
 
 describe('@s1 la sección muestra exactamente los cinco bloques publicados, en orden', () => {
-  it('hay un h2 "Servicios" y, dentro de su sección, exactamente 5 h3 con estos nombres en este orden', () => {
+  it('hay un h2 editorial de servicios y, dentro de su sección, exactamente 5 h3 con estos nombres en este orden', () => {
     renderizarServicios()
 
     const seccion = obtenerSeccionServicios()
@@ -361,7 +361,7 @@ describe('@s17 caso límite — un catálogo vacío no renderiza la sección', (
   it('no hay sección "Servicios", ni encabezados, ni botones, ni ningún texto de relleno', () => {
     const { container } = renderizarServicios({ catalogo: [] })
 
-    expect(screen.queryByRole('heading', { level: 2, name: 'Servicios' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: /Servicios veterinarios/ })).not.toBeInTheDocument()
     expect(screen.queryAllByRole('heading')).toHaveLength(0)
     expect(screen.queryAllByRole('button')).toHaveLength(0)
     expect(container).toBeEmptyDOMElement()
@@ -477,22 +477,27 @@ const TEXTO_REAL_DE_SERVICIOS_SCSS = (
 )['./Servicios.module.scss'] as string
 
 describe('@s33 la sección de servicios abre con su cintillo en versalitas', () => {
-  it('hay un único <p> de cintillo "Servicios" como primer hijo de la sección, antes del único <h2> "Servicios"', () => {
+  it('hay un único cintillo "Lo que hacemos" dentro de la cabecera de sección, antes del h2 editorial', () => {
     renderizarServicios()
 
     const seccion = obtenerSeccionServicios()
-    const encabezados = screen.getAllByRole('heading', { level: 2, name: 'Servicios' })
+    const encabezados = screen.getAllByRole('heading', { level: 2, name: /Servicios veterinarios/ })
     expect(encabezados).toHaveLength(1)
     const encabezado = encabezados[0]!
 
-    const cintillo = seccion.firstElementChild
-    if (cintillo === null) {
-      throw new Error('la sección "Servicios" no tiene ningún primer hijo')
+    const cabecera = seccion.querySelector('[data-servicios-cabecera]')
+    if (cabecera === null) {
+      throw new Error('la sección de servicios no contiene cabecera editorial')
     }
 
-    // El cintillo es un <p>, nunca un encabezado (aunque comparta texto con el h2).
+    const cintillo = cabecera.firstElementChild
+    if (cintillo === null) {
+      throw new Error('la cabecera de servicios no tiene ningún primer hijo')
+    }
+
+    // El cintillo es un <p>, nunca un encabezado.
     expect(cintillo.tagName).toBe('P')
-    expect(cintillo.textContent).toBe('Servicios')
+    expect(cintillo.textContent).toBe('Lo que hacemos')
     expect(cintillo).not.toBe(encabezado)
 
     // El cintillo "abre" la sección: precede al h2 en el DOM.

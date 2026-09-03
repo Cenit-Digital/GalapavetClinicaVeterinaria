@@ -13,14 +13,27 @@ const BASE_HEXADECIMAL = 16
  * reutilizan esa fórmula real tal cual).
  */
 export function colorComputadoAHex(colorComputado: string): string {
-  const coincidencia = colorComputado.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/)
-  if (!coincidencia) {
-    throw new Error(`"${colorComputado}" no es un color "rgb()"/"rgba()" reconocible`)
+  const coincidenciaRgb = colorComputado.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/)
+  if (coincidenciaRgb) {
+    const [, r, g, b] = coincidenciaRgb
+    return aHexadecimal(r as string, g as string, b as string)
   }
-  const [, r, g, b] = coincidencia
-  const doDigitos = (canal: string): string =>
+
+  // Chrome serializa `color-mix()` como CSS Color 4. Sus canales sRGB son
+  // valores normalizados (0..1), a diferencia de los de `rgb()`.
+  const coincidenciaSrgb = colorComputado.match(/color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/)
+  if (coincidenciaSrgb) {
+    const [, r, g, b] = coincidenciaSrgb
+    return aHexadecimal(Number(r) * 255, Number(g) * 255, Number(b) * 255)
+  }
+
+  throw new Error(`"${colorComputado}" no es un color CSS reconocible`)
+}
+
+function aHexadecimal(r: string | number, g: string | number, b: string | number): string {
+  const dosDigitos = (canal: string | number): string =>
     Math.round(Number(canal)).toString(BASE_HEXADECIMAL).padStart(2, '0')
-  return `#${doDigitos(r as string)}${doDigitos(g as string)}${doDigitos(b as string)}`.toUpperCase()
+  return `#${dosDigitos(r)}${dosDigitos(g)}${dosDigitos(b)}`.toUpperCase()
 }
 
 /** Si un color computado es transparente ("rgba(0, 0, 0, 0)" o "transparent"). */
@@ -29,7 +42,11 @@ export function esTransparente(colorComputado: string): boolean {
     return true
   }
   const coincidencia = colorComputado.match(/rgba\([\d.]+,\s*[\d.]+,\s*[\d.]+,\s*([\d.]+)\)/)
-  return coincidencia !== null && Number(coincidencia[1]) === 0
+  if (coincidencia !== null) {
+    return Number(coincidencia[1]) === 0
+  }
+  const coincidenciaSrgb = colorComputado.match(/color\(srgb\s+[\d.]+\s+[\d.]+\s+[\d.]+\s*\/\s*([\d.]+)\)/)
+  return coincidenciaSrgb !== null && Number(coincidenciaSrgb[1]) === 0
 }
 
 export interface RectanguloBase {

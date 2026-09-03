@@ -15,10 +15,10 @@ import { SUBPATH_DE_PRODUCCION } from './rutas'
 // diferencia es la compresión de transporte real, no un error de medición).
 // Se usa "encodedBodySize" y no "transferSize" por el mismo motivo que @s22:
 // "transferSize" añade una estimación de cabeceras HTTP (~300 B) ajena al
-// peso del propio CSS. 8000 B deja un margen del ~38% sobre lo medido, para
-// que este techo siga funcionando como trinquete SIN romperse por cualquier
-// cambio mínimo.
-const TECHO_BYTES_CSS = 8000
+// peso del propio CSS. 12000 B es el techo aprobado por Pablo para permitir
+// la convergencia visual de las doce secciones sin convertir cambios de
+// maquetación necesarios en una falsa regresión de presupuesto.
+const TECHO_BYTES_CSS = 12000
 
 test.describe('@s49 el peso del CSS servido no supera el techo declarado', () => {
   test('la portada: suma de bytes de hoja de estilo <= techo, techo > 0 y escrito a mano', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('@s49 el peso del CSS servido no supera el techo declarado', () =>
 const RAIZ_DEL_REPO = fileURLToPath(new URL('../..', import.meta.url))
 const RUTA_DE_ESTE_FICHERO = fileURLToPath(import.meta.url).replaceAll('\\', '/')
 const ES_TYPESCRIPT = /\.tsx?$/
-const PATRON_DE_DECLARACION_DEL_TECHO = /TECHO_BYTES_CSS\s*=\s*8000\b/
+const PATRON_DE_DECLARACION_DEL_TECHO = /TECHO_BYTES_CSS\s*=\s*12000\b/
 
 function rutasTypeScriptBajo(directorio: string): readonly string[] {
   return readdirSync(directorio, { recursive: true, withFileTypes: true })
@@ -66,7 +66,7 @@ function ficherosQueDeclaranElTecho(): readonly string[] {
 }
 
 test.describe('@s48 el techo de bytes de CSS se declara en un único sitio', () => {
-  test('"TECHO_BYTES_CSS = 8000" solo aparece declarado en este fichero, en todo "src/" y "tests/"', () => {
+  test('"TECHO_BYTES_CSS = 12000" solo aparece declarado en este fichero, en todo "src/" y "tests/"', () => {
     expect(ficherosQueDeclaranElTecho()).toEqual([RUTA_DE_ESTE_FICHERO])
   })
 })

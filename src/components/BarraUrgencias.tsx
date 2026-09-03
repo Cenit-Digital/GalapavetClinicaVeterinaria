@@ -7,8 +7,14 @@ export function BarraUrgencias(): React.JSX.Element {
   const { telefonoUrgencias } = datosNegocio
   return (
     <aside className={styles.barra} aria-label={telefonoUrgencias.rotulo}>
-      <span aria-hidden="true">●</span>
-      <a href={telefonoUrgencias.enlaceLlamada}>{`${telefonoUrgencias.rotulo} · ${telefonoUrgencias.textoVisible}`}</a>
+      <div className={styles.interior} data-barra-urgencias-interior>
+        <span className={styles.punto} aria-hidden="true" />
+        <a href={telefonoUrgencias.enlaceLlamada}>
+          <strong>{telefonoUrgencias.rotulo}</strong>
+          <span aria-hidden="true"> · </span>
+          <span data-telefono-urgencias>{telefonoUrgencias.textoVisible}</span>
+        </a>
+      </div>
     </aside>
   )
 }

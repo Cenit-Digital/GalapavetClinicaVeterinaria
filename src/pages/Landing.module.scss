@@ -16,17 +16,19 @@
 //    su propio "padding-inline"/"max-width": ese trabajo lo hace este único
 //    punto.
 .seccion {
-  scroll-margin-block-start: espaciado(96);
   background-color: var(--color-fondo);
   color: var(--color-texto);
+  padding-inline: var(--sangrado-lateral);
 
   > * {
-    @include contenedor;
+    width: 100%;
+    max-width: $ancho-maximo-contenedor;
+    margin-inline: auto;
     padding-block: var(--ritmo-seccion);
   }
 }
 
-#inicio {
+.seccionHero {
   background-color: var(--color-fondo);
 
   > * {
@@ -37,12 +39,21 @@
 }
 
 .seccionAlterna {
-  scroll-margin-block-start: espaciado(96);
   background-color: var(--color-fondo-alterno);
   color: var(--color-texto);
+  padding-inline: var(--sangrado-lateral);
 
   > * {
-    @include contenedor;
+    width: 100%;
+    max-width: $ancho-maximo-contenedor;
+    margin-inline: auto;
     padding-block: var(--ritmo-seccion);
   }
+}
+
+.seccionContacto > [data-contacto-contenido] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: start;
+  gap: clamp(24px, 3vw, 34px);
 }

@@ -14,6 +14,12 @@ function errorVigenciaNoConfirmada(titulo: string, vigencia: string): Error {
   return new Error(`La campaña "${titulo}" declara una vigencia no confirmada: "${vigencia}"`)
 }
 
+/** Línea breve de tarjeta: solo existe cuando el catálogo publica su bloque de origen. */
+export function detalleDeCampana(bloque: string | undefined): string | null {
+  const bloqueVisible = bloque?.trim()
+  return bloqueVisible === undefined || bloqueVisible === '' ? null : `Bloque de servicios: ${bloqueVisible}`
+}
+
 /**
  * Construye el modelo de la sección a partir del catálogo de demo.
  * Galapavet no ha confirmado ninguna campaña (`docs/datos-galapavet.md`

@@ -6,14 +6,24 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: espaciado(8);
   min-height: var(--altura-barra-urgencias);
-  padding-inline: espaciado(16);
+  padding-inline: var(--sangrado-lateral);
   background-color: var(--color-urgencia);
   color: var(--color-sobre-primario);
   font-size: paso-tipografico(-1);
-  font-weight: 700;
   text-align: center;
+
+  .interior {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--altura-barra-urgencias);
+    max-width: $ancho-maximo-contenedor;
+    gap: espaciado(8);
+    margin-inline: auto;
+  }
 
   // El indicador pulsante es el punto decorativo de `BarraUrgencias.tsx:10`
   // (`aria-hidden`, sin papel semántico). NO declara tinta propia: hereda la
@@ -27,7 +37,13 @@
   // (`src/lib/diseno/matrizDeContraste.ts:268`). El acento daba
   // 1,90 · 1,04 · 1,53 · 1,61 · 2,56: por debajo de 3 en las cinco, así que
   // convertirlo en forma rellena habría dejado un indicador que no indica.
-  span {
+  > .interior > .punto {
+    flex: 0 0 auto;
+    width: espaciado(8);
+    height: espaciado(8);
+    border-radius: $radio-completo;
+    background-color: currentColor;
+
     @media (prefers-reduced-motion: no-preference) {
       animation: pulso 1.6s ease-in-out infinite;
     }
@@ -37,9 +53,22 @@
     @include foco-visible;
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
     min-height: $area-tactil-minima;
     color: inherit;
+    font-weight: 400;
     text-decoration: none;
+
+    strong,
+    [data-telefono-urgencias] {
+      font-weight: 700;
+    }
+
+    [data-telefono-urgencias] {
+      text-decoration: underline;
+      text-underline-offset: 0.14em;
+    }
 
     &:focus-visible {
       // El foco global (primario) no contrasta sobre la superficie roja de

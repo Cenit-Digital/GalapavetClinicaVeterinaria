@@ -401,6 +401,198 @@
       "sdd": true,
       "status": "done",
       "notas": "DONE (26/08/2026). Redefinición autorizada explícitamente por el humano: se certifica exclusivamente la corrección de configuración y su ejecución seca; no se declara ni oculta una mutación global de producto fallida. Evidencia final: test:config 5/5, motor 49/49, bin/harness init con lint/typecheck y 1047/1047 Vitest, E2E 75/75, build y dry-run de Stryker salida 0 (970 tests, runner Vitest). La deuda global previa de 97,95 % queda separada y documentada en progress/mutation_integridad_puerta_mutacion.md."
+    },
+    {
+      "id": 26,
+      "name": "fidelidad_lienzo",
+      "title": "Fidelidad visual: lienzo global de la portada (bandas, contenedor, alternancia, escala)",
+      "description": "Cimiento de las features de fidelidad: bandas a sangre con el relleno lateral en la banda y los 1220 px en el hijo; alternancia de fondos del prototipo (servicios fondo, campañas alterno, equipo fondo, reserva alterno, galería fondo, contacto alterno, FAQ fondo); variante de banda con cabecera acotada y pista a sangre; contenedor interior de la cabecera alineado con la columna; retirada de todo selector de id de los módulos SCSS (CSS Modules los hashea y nunca casan); sustitución de espaciado(20), paso inexistente que Sass descarta; techo de CSS servido a 12 000 B (Decisión 62).",
+      "acceptance": [
+        "Ningún .module.scss declara un selector de id y el CSS de dist/ no contiene #_inicio_ ni #_contacto_",
+        "El hero y la pista de la galería van a sangre y el primer contenedor medido sigue siendo 1220 px a 1600 px",
+        "La secuencia de fondos de las 8 bandas de la portada es la del prototipo y nunca hay tres iguales seguidas",
+        "Ninguna llamada espaciado(N) usa un paso fuera de la escala y todos los botones fantasma tienen relleno lateral",
+        "El techo de CSS se declara una sola vez, vale 12000 y la portada lo respeta",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "DONE 03/09/2026. Pablo aprobó el contrato. Evidencia: bin/harness test 88/88 y 1303/1303; lint/typecheck/build verdes; Playwright específico 4/4 en dist; Stryker escalaEspaciado.ts 1/1 muerto (100 %). Review: progress/judge_fidelidad_lienzo.md; TDD y mutación: progress/tdd_fidelidad_lienzo.md, progress/mutation_fidelidad_lienzo.md; comparativa: progress/rediseno/capturas/fidelidad_lienzo_comparativa.png."
+    },
+    {
+      "id": 27,
+      "name": "fidelidad_cabecera",
+      "title": "Fidelidad visual: barra de urgencias y cabecera",
+      "description": "La cabecera adopta la anatomía del prototipo: marca gráfica con el logotipo real y bloque de nombre + descriptor, navegación en píldoras con hover de acento suave, botón rojo de urgencias con el rótulo real y enlace tel:, botón Tienda en contorno, fondo translúcido con desenfoque, todo alineado a la columna de 1220 px; la barra de urgencias fija conserva su dato real con el tamaño y ritmo del prototipo.",
+      "acceptance": [
+        "La cabecera muestra el logotipo real junto al nombre y el descriptor, en una fila",
+        "Existe un enlace de urgencias con fondo de urgencia y href tel: del teléfono de urgencias, con el rótulo exacto de la fuente única",
+        "Los enlaces de navegación son píldoras y el botón Tienda va en contorno con relleno lateral visible",
+        "El punto de corte de la navegación no cambia y el menú móvil conserva todos los destinos",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "DONE 03/09/2026. Contrato aprobado explícitamente por Pablo. Evidencia: bin/harness test 88/88 y 1307/1307; lint/typecheck/build verdes; Playwright 9/9 (cabecera, urgencias, presupuesto, foco y contraste); mutación 13/13 de la lógica nueva. Review: progress/judge_fidelidad_cabecera.md; TDD y mutación: progress/tdd_fidelidad_cabecera.md, progress/mutation_fidelidad_cabecera.md; comparativa: progress/rediseno/capturas/fidelidad_cabecera_comparativa.png. El iframe OSM roto sigue pendiente de fidelidad_contacto."
+    },
+    {
+      "id": 28,
+      "name": "fidelidad_hero",
+      "title": "Fidelidad visual: hero (bienvenida)",
+      "description": "El hero va a sangre y centrado como el prototipo: píldora de localidad translúcida con punto de acento, titular y párrafo centrados, dos botones (primario con sombra y contorno translúcido con relleno correcto), horario en fila compacta, banda de cuatro cifras reales derivadas de la fuente única separada por una línea; altura gobernada por el contenido con un mínimo fluido, nunca recortada; velo vertical con contraste medido en la parada más clara; imagen de fondo eager con prioridad alta.",
+      "acceptance": [
+        "El hero ocupa el ancho de la ventana, su contenido está centrado y nada queda recortado (la banda de cifras entera dentro de la sección)",
+        "La píldora de localidad tiene fondo translúcido, radio completo y punto de acento, con la localidad y provincia de la fuente única",
+        "Las cuatro cifras son las derivadas (servicios, profesionales, fotos, tramos de horario) en el orden correcto y ninguna es del prototipo",
+        "El contraste del texto sobre el velo aprueba 4,5 en las cinco variantes en la parada más clara del velo",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "DONE 03/09/2026. Contrato aprobado explícitamente por Pablo. Evidencia: bin/harness test 88/88 y 1307/1307; lint/typecheck/build verdes; Playwright transversal 20/20; Stryker Hero-logica.ts 10/10 (100%). Review: progress/judge_fidelidad_hero.md; TDD y mutación: progress/tdd_fidelidad_hero.md, progress/mutation_fidelidad_hero.md; comparativa: progress/rediseno/capturas/fidelidad_hero_comparativa.png. El iframe OSM roto sigue pendiente de fidelidad_contacto."
+    },
+    {
+      "id": 29,
+      "name": "fidelidad_servicios",
+      "title": "Fidelidad visual: servicios",
+      "description": "Cintillo «Lo que hacemos», titular bicolor de dos líneas cuya segunda parte deriva de la localidad real (Decisión 65), párrafo de apoyo con el recuento real de bloques, tarjetas con píldora de categoría superpuesta a la foto, resumen derivado literalmente de los puntos publicados, panel de puntos con marca ✓ entre el cuerpo y el pie, y pie con separador, «Ver qué incluye» y círculo «+» que gira al abrir.",
+      "acceptance": [
+        "El titular tiene dos partes y la segunda va en color primario y deriva de datosNegocio.direccion.localidad",
+        "El párrafo de apoyo cita el número real de bloques escrito en letra y no contiene «Doce»",
+        "Cada tarjeta lleva píldora superpuesta a la imagen, título, resumen derivado de sus puntos y pie con separador y círculo «+» decorativo",
+        "Al abrir una tarjeta el círculo rota, aria-expanded cambia y aparecen exactamente los puntos publicados con marca",
+        "Los nombres accesibles de los botones siguen siendo exactamente «Ver qué incluye» / «Ocultar detalle»",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "DONE 03/09/2026. Contrato aprobado explícitamente por Pablo. Evidencia: bin/harness test 88/88 y 1309/1309; lint/build verdes; Playwright Servicios + presupuesto + imágenes + escala 9/9; Stryker Servicios-logica.ts 30/30 (100%). Review: progress/judge_fidelidad_servicios.md; TDD y mutación: progress/tdd_fidelidad_servicios.md, progress/mutation_fidelidad_servicios.md; comparativa: progress/rediseno/capturas/fidelidad_servicios_comparativa.png. El iframe OSM roto sigue pendiente de fidelidad_contacto."
+    },
+    {
+      "id": 30,
+      "name": "fidelidad_campanas",
+      "title": "Fidelidad visual: campañas en portada",
+      "description": "Dos columnas: a la izquierda cintillo, titular real, aviso de demostración íntegro y CTA primario relleno «Ver campañas»; a la derecha rejilla compacta 2×2 de tarjetas con foto 16/9, píldora «Demostración», título y línea de detalle derivada del bloque de servicios; sin precio ni vigencia; la sección sigue siendo hermana inmediata de #servicios.",
+      "acceptance": [
+        "El bloque de texto y la rejilla comparten fila a 1440 px y se apilan en móvil",
+        "El enlace «Ver campañas» es un botón primario relleno con ese nombre accesible exacto",
+        "Cada tarjeta muestra píldora, título y línea de detalle derivada; ninguna contiene €, % ni vigencia",
+        "El aviso de demostración se conserva íntegro y sigue siendo la descripción accesible de la región",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "in_progress",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 31,
+      "name": "fidelidad_equipo",
+      "title": "Fidelidad visual: equipo",
+      "description": "Cabecera centrada (cintillo «Equipo», titular «Nuestro equipo», párrafo derivado del recuento real o hueco); tarjetas con la geometría del prototipo: panel superior 4:3 de marca con el círculo de iniciales centrado (nunca una fotografía), fila nombre + cargo con botón redondo «+» a la derecha solo cuando hay formación, ficha con línea superior; ruta de chips de especialidad preparada pero vacía hasta que el cliente publique el dato.",
+      "acceptance": [
+        "La cabecera está centrada y el párrafo, si existe, deriva del recuento real y no dice «Seis» ni «colegiados»",
+        "Cada tarjeta tiene un panel superior 4:3 sin <img> con el avatar de iniciales centrado",
+        "Las tarjetas con formación llevan un botón circular «+» con aria-expanded y las que no la tienen no llevan botón ni texto extra",
+        "No se pinta ningún chip de especialidad mientras el dato no exista en la fuente",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 32,
+      "name": "fidelidad_reserva",
+      "title": "Fidelidad visual: reserva por chat",
+      "description": "Dos columnas alineadas al centro; botón primario verde «WhatsApp» con el wa.me del móvil confirmado por el cliente (Decisión 66) y «Llamar a la clínica» en contorno con relleno correcto, en una fila; lista de los tres tramos de horario reales con marcas de verificación; tarjeta de chat alta con tres bandas (cabecera con avatar de 40 px y estado «Disponible», historial con burbujas por autor, pie con chips píldora, campo píldora y botón redondo «→»), estados final y de urgencia con la misma anatomía.",
+      "acceptance": [
+        "El primer enlace es «WhatsApp» hacia wa.me con el número del móvil de la fuente única y el segundo «Llamar a la clínica» con su tel:",
+        "La lista bajo los botones son exactamente los tres tramos de horario reales, con marca decorativa que no altera su texto",
+        "La tarjeta del chat tiene cabecera, historial y pie diferenciados, mínimo de alto y burbujas distinguidas por autor con el prefijo textual conservado",
+        "El botón de envío conserva el nombre accesible «Enviar respuesta» y los chips miden al menos 44 px",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 33,
+      "name": "fidelidad_galeria",
+      "title": "Fidelidad visual: galería",
+      "description": "Cabecera acotada a 1220 px con cintillo «Galería», titular «Galería», aviso de demostración como párrafo y dos botones circulares de 48 px arriba a la derecha; pista a sangre por la derecha con tarjetas (foto 4:3 + nombre y pie en dos líneas dentro de la tarjeta), anclaje de desplazamiento, barra de scroll oculta y paso de scroll igual a ancho + separación.",
+      "acceptance": [
+        "Existe un h2 «Galería» precedido de su cintillo y el aviso de demostración se conserva",
+        "Los dos botones de desplazamiento miden 48×48, son circulares y están en la fila de la cabecera, a la derecha",
+        "Cada figura es una tarjeta con superficie, borde y radio, con nombre y pie en elementos distintos",
+        "La pista sale a sangre por la ventana mientras el titular se alinea con el de servicios; el foco por teclado sigue alcanzando la pista",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 34,
+      "name": "fidelidad_contacto",
+      "title": "Fidelidad visual: contacto (formulario, urgencias, mapa y datos)",
+      "description": "Cabecera de sección (cintillo «Contacto», titular, párrafo sin promesas); dos columnas: tarjeta «Escríbenos» con nombre y teléfono en dos columnas, email, motivo, mensaje, casilla y botón a todo el ancho; a la derecha tarjeta roja de urgencias con el rótulo real, teléfono grande y botón blanco «Llamar ahora», y tarjeta con mapa estático local con pin (Decisión 63, teselas y nodo de OpenStreetMap, atribución visible) y tres bloques Dirección, Teléfonos y Horario; desaparece el iframe externo y con él la única petición a un tercero.",
+      "acceptance": [
+        "A 1440 px la tarjeta del formulario y la columna derecha comparten fila y en móvil se apilan sin desborde",
+        "La tarjeta de urgencias tiene fondo de urgencia, el rótulo exacto de la fuente única, el teléfono de urgencias y un botón «Llamar ahora» con href tel:",
+        "La tarjeta de datos muestra un mapa local con pin y atribución y tres bloques rotulados Dirección, Teléfonos y Horario con los datos reales separados",
+        "La portada no realiza ninguna petición a un dominio externo y la excepción del mapa desaparece de los tests",
+        "El formulario conserva sus campos, nombres accesibles y validación con el botón a todo el ancho",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 35,
+      "name": "fidelidad_faq",
+      "title": "Fidelidad visual: preguntas frecuentes",
+      "description": "Cintillo y titular centrados; lista acotada a 860 px y centrada de verdad (hoy la regla está muerta); línea superior y divisorias por entrada; pregunta en la tipografía de titulares con peso 500; círculo «+» decorativo de 30 px a la derecha que rota al abrir; acordeón excluyente y ARIA intactos.",
+      "acceptance": [
+        "El contenido de la FAQ mide como máximo 860 px y está centrado a 1440 px, medido en navegador",
+        "Cintillo y titular están centrados",
+        "Cada botón de pregunta conserva su nombre accesible exacto y lleva un círculo «+» decorativo que rota al abrir",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 36,
+      "name": "fidelidad_pie",
+      "title": "Fidelidad visual: pie de página",
+      "description": "Cuatro columnas flexibles (marca con logotipo real de 36 px y nombre en la misma fila más el descriptor; Clínica, Contenido y Contacto con rótulos en versalitas y enlaces sin subrayado en reposo) y barra inferior en una sola fila con © a la izquierda y los tres enlaces legales reales en línea a la derecha, conservando su nombre accesible completo con el aviso de ventana nueva oculto solo visualmente.",
+      "acceptance": [
+        "El logotipo y el nombre comparten fila y las tres columnas de enlaces se reparten el ancho",
+        "Los enlaces de columna no van subrayados en reposo y cambian a primario al pasar el ratón",
+        "La barra inferior va en una fila con el © a la izquierda y los enlaces legales en línea a la derecha, con su nombre accesible intacto",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 37,
+      "name": "fidelidad_selector_paleta",
+      "title": "Fidelidad visual: selector de paleta flotante",
+      "description": "Botón circular flotante con disco cónico tricolor de la variante activa y nombre accesible «Cambiar paleta de color» sin texto visible; panel de 268 px con rótulo «Paleta de color», cinco filas con contorno, nombre en negrita y tres muestras leídas de los tokens; estado activo en aria-pressed con fondo de acento suave; matriz de contraste ampliada con los pares nuevos.",
+      "acceptance": [
+        "El botón es circular, sin texto visible, con aria-label exacto y un disco con conic-gradient de los tres tokens",
+        "El panel muestra exactamente cinco opciones con tres muestras cada una, aria-pressed y rótulo visible",
+        "Las muestras se siguen leyendo de los tokens y el estado vive en ARIA, nunca en una clase",
+        "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
+      ],
+      "sdd": true,
+      "status": "spec_ready",
+      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     }
   ]
 }

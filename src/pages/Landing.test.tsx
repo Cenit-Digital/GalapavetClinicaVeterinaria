@@ -125,3 +125,23 @@ describe('@s6 la sección Contacto agrupa el formulario y el panel de informaci�
     expect(document.querySelector('[aria-label="Contacto"]')).toBeNull()
   })
 })
+
+describe('@s1 de fidelidad_lienzo: las excepciones de banda conservan un marcado explícito', () => {
+  it('el hero se marca como banda a sangre y Contacto reúne sus dos paneles en un único hijo sin nombre accesible', () => {
+    renderizarLanding()
+
+    const inicio = document.getElementById('inicio')
+    const contacto = document.getElementById('contacto')
+    expect(inicio).not.toBeNull()
+    expect(contacto).not.toBeNull()
+    expect(inicio?.firstElementChild).toHaveAttribute('data-a-sangre')
+    expect(contacto?.children).toHaveLength(1)
+
+    const contenidoContacto = contacto?.firstElementChild
+    expect(contenidoContacto).toHaveAttribute('data-contacto-contenido')
+    expect(contenidoContacto).not.toHaveAttribute('aria-label')
+    expect(contenidoContacto).not.toHaveAttribute('aria-labelledby')
+    expect(within(contenidoContacto as HTMLElement).getByRole('form', { name: 'Escríbenos' })).toBeInTheDocument()
+    expect(within(contenidoContacto as HTMLElement).getByRole('region', { name: 'Información de contacto' })).toBeInTheDocument()
+  })
+})

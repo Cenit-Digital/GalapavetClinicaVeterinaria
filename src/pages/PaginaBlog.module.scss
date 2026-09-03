@@ -67,7 +67,7 @@
     span {
       @include pildora-etiqueta;
       align-self: flex-start;
-      margin: espaciado(20) espaciado(20) 0;
+      margin: espaciado(24) espaciado(24) 0;
     }
 
     // Categoría real del artículo (@s40 de `rediseno_visual.feature`), no una
@@ -77,13 +77,13 @@
     // distintivo "Demostración" de arriba para que ambos se distingan entre sí.
     .categoria {
       @include eyebrow;
-      margin: espaciado(12) espaciado(20) 0;
+      margin: espaciado(12) espaciado(24) 0;
     }
 
     h2 {
       font-family: var(--fuente-titulares);
       font-size: paso-tipografico(2);
-      margin: espaciado(8) espaciado(20) espaciado(20);
+      margin: espaciado(8) espaciado(24) espaciado(24);
     }
   }
 

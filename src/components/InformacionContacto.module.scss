@@ -1,7 +1,7 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
 // aplica a su hijo directo (@s44/@s45). Comparte el mismo ancho máximo que
-// "FormularioContacto" (mismo wrapper "#contacto").
+// "FormularioContacto" (mismo wrapper de contacto en `Landing.tsx`).
 .informacionContacto {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
@@ -56,7 +56,7 @@
   // nunca un estilo propio duplicado.
   [data-tarjeta-de='datos'] {
     @include tarjeta;
-    padding: espaciado(20);
+    padding: espaciado(24);
 
     legend {
       @include eyebrow;
@@ -69,7 +69,7 @@
   // por `informacion_contacto.feature` @s1 se mantiene intacto).
   [data-tarjeta-de='urgencia'] {
     @include tarjeta;
-    padding: espaciado(20);
+    padding: espaciado(24);
     background-color: var(--color-urgencia-suave);
     border-inline-start: espaciado(4) solid var(--color-urgencia);
     order: -1;
@@ -79,22 +79,5 @@
   // enlace pelado.
   [data-tarjeta-de='urgencia'] a {
     @include boton-fantasma;
-  }
-}
-
-// "#contacto" (`Landing.tsx`): el wrapper real que agrupa "FormularioContacto"
-// y esta sección — el mismo `id` que ya ancla el `scroll-margin-block-start`
-// de `Landing.module.scss` (`.seccion`). En una ventana más ancha que el
-// punto de corte (@s36; el MISMO literal `min-width: 1024px` que ya usa
-// `Cabecera.module.scss`, `PUNTO_DE_CORTE_NAVEGACION_PX = 1024`) pasa a una
-// rejilla de dos columnas: el formulario a la izquierda, este panel a la
-// derecha. Por debajo del punto de corte sigue en una sola columna, en el
-// mismo orden de lectura del DOM.
-#contacto {
-  @media (min-width: 1024px) {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
-    align-items: start;
-    gap: espaciado(32);
   }
 }

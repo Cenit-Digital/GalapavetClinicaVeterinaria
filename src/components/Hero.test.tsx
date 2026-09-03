@@ -224,7 +224,7 @@ describe('@s30 la banda de cuatro cifras queda separada por una línea, no pegad
 
     expect(bloqueCifras).not.toContain('border-block-start: none')
     expect(bloqueCifras).toMatch(
-      /border-block-start:\s*\$ancho-borde-fino solid color-mix\(in srgb, var\(--color-sobre-primario\) 45%, transparent\);/,
+      /border-block-start:\s*\$ancho-borde-fino solid color-mix\(in srgb, var\(--color-sobre-primario\) 24%, transparent\);/,
     )
   })
 })
@@ -255,10 +255,10 @@ describe('@s29 el velo de la sección de bienvenida sale de tokens de color, nun
 })
 
 describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de texto normal contra el velo, en las cinco variantes', () => {
-  it('"--color-sobre-primario" contra el velo de "--color-tinta" al 92 % supera 4,5 con la fotografía en sus dos extremos', () => {
+  it('"--color-sobre-primario" contra el velo de "--color-tinta" al 76 % supera 4,5 con la fotografía en sus dos extremos', () => {
     // Mismo método que `progress/rediseno/fix_uso_del_acento.md` §1 y §3.2: el
-    // velo es "color-mix(in srgb, var(--color-tinta) 92%, transparent)" en su
-    // parada izquierda (`Hero.module.scss:17`), compuesto sobre una
+    // velo es "color-mix(in srgb, var(--color-tinta) 76%, transparent)" en la
+    // parada central donde cae el bloque de lectura, compuesto sobre una
     // fotografía cuyo color real no es conocible en jsdom — se acota por sus
     // dos extremos posibles (negro y blanco puros, `mezclar` reproduce la
     // composición alfa canal a canal): si el texto cumple contra los dos,
@@ -266,7 +266,7 @@ describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de text
     // heredan la tinta de ".hero" con "color: inherit" (`Hero.module.scss:7`),
     // así que "--color-sobre-primario" es la pareja real, no una suposición.
     const UMBRAL_TEXTO_NORMAL = 4.5 // Mínimo WCAG 2.2 AA para texto normal (Enmienda 2 del contrato).
-    const PARADA_IZQUIERDA_DEL_VELO = 0.92
+    const PARADA_CENTRAL_DEL_VELO = 0.76
     const NEGRO = '#000000'
     const BLANCO = '#FFFFFF'
     const variantes = ['clinica', 'calida', 'tech', 'eco', 'marca'] as const
@@ -275,8 +275,8 @@ describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de text
       const tinta = leerTokenDeVariante(TEXTO_REAL_DE_TOKENS, variante, 'tinta')
       const sobrePrimario = leerTokenDeVariante(TEXTO_REAL_DE_TOKENS, variante, 'sobre-primario')
 
-      const veloSobreNegro = mezclar(NEGRO, tinta, PARADA_IZQUIERDA_DEL_VELO)
-      const veloSobreBlanco = mezclar(BLANCO, tinta, PARADA_IZQUIERDA_DEL_VELO)
+      const veloSobreNegro = mezclar(NEGRO, tinta, PARADA_CENTRAL_DEL_VELO)
+      const veloSobreBlanco = mezclar(BLANCO, tinta, PARADA_CENTRAL_DEL_VELO)
 
       expect(calcularRatioContraste(sobrePrimario, veloSobreNegro)).toBeGreaterThanOrEqual(UMBRAL_TEXTO_NORMAL)
       expect(calcularRatioContraste(sobrePrimario, veloSobreBlanco)).toBeGreaterThanOrEqual(UMBRAL_TEXTO_NORMAL)
@@ -284,12 +284,12 @@ describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de text
   })
 })
 
-describe('@s29 la sección de bienvenida reserva su alto antes de que la imagen decodifique, sin desplazar el contenido de debajo', () => {
-  it('".hero" fija "aspect-ratio" y un "min-height" en píxeles', () => {
+describe('@s2 de fidelidad_hero: la bienvenida reserva alto sin forzar un aspecto que pueda recortar contenido', () => {
+  it('".hero" usa un min-height fluido y no declara "aspect-ratio"', () => {
     const bloqueHero = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.hero {')
 
-    expect(bloqueHero).toMatch(/aspect-ratio:\s*16\s*\/\s*9;/)
-    expect(bloqueHero).toMatch(/min-height:\s*\d+px;/)
+    expect(bloqueHero).not.toMatch(/aspect-ratio\s*:/)
+    expect(bloqueHero).toMatch(/min-height:\s*clamp\(560px,\s*84svh,\s*784px\);/)
   })
 })
 
@@ -307,6 +307,13 @@ describe('@s30 la píldora de ubicación, los dos botones y la banda de cuatro c
     // "within" acota la búsqueda de las cuatro cifras a la propia lista (por
     // su nombre accesible), en vez de contar "listitem" en todo el documento.
     const bandaDeCifras = screen.getByRole('list', { name: 'Resumen de Galapavet' })
-    expect(within(bandaDeCifras).getAllByRole('listitem')).toHaveLength(4)
+    const entradas = within(bandaDeCifras).getAllByRole('listitem')
+    expect(entradas).toHaveLength(4)
+    expect(entradas.map((entrada) => entrada.textContent)).toEqual([
+      '5Servicios',
+      '2Profesionales',
+      '6Fotos de galería',
+      '3Franjas horarias',
+    ])
   })
 })

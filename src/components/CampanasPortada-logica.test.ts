@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { CampanaDemo } from '../data/campanas'
-import { construirModeloCampanas } from './CampanasPortada-logica'
+import { construirModeloCampanas, detalleDeCampana } from './CampanasPortada-logica'
+
+describe('@s2 de fidelidad_campanas: detalle honesto de una tarjeta', () => {
+  it('solo compone la línea de detalle a partir del bloque publicado y omite el dato ausente', () => {
+    expect(detalleDeCampana('Medicina general')).toBe('Bloque de servicios: Medicina general')
+    expect(detalleDeCampana(undefined)).toBeNull()
+    expect(detalleDeCampana('   ')).toBeNull()
+  })
+})
 
 describe('@s9 una campaña con precio hace fallar la construcción de la sección', () => {
   it('lanza un error cuyo mensaje contiene "precio no confirmado"', () => {

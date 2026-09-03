@@ -46,7 +46,10 @@ test.describe('@s45 el contenido tiene un único ancho máximo de contenedor, el
 
     for (const { ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
-      const ancho = await page.locator('[data-contenedor-principal]').first().evaluate((el) => el.getBoundingClientRect().width)
+      const ancho = await page
+        .locator('[data-contenedor-principal]:not([data-a-sangre])')
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().width)
       anchosMedidos.push(Math.round(ancho))
     }
 
