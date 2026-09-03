@@ -18,3 +18,29 @@ Revisión contra `features/fidelidad_servicios.feature`, `progress/fidelidad/del
 - Se preservan solo los cinco servicios reales. El prototipo contiene quince, pero completar la cuadrícula con nombres o prestaciones inventados sería una promesa comercial falsa.
 - «Galapagar» procede de la fuente única de datos de negocio; no queda repetido como literal de diseño.
 - La fotografía es decorativa y local, con carga lazy y decodificación async, como el resto de contenido no LCP.
+
+## Addenda — Regresión reparada el 03/09 (oleada B)
+
+Detectada por el judge de campañas y reparada por TDD en la tarea
+`regresiones_27_28_29` (`progress/tdd_regresiones_27_28_29.md`):
+
+- **Titular con copy del prototipo** («Servicios veterinarios *de principio a
+  fin en Galapagar*»): la Decisión 65 fija «Servicios veterinarios» + «en
+  <localidad>» derivado de `datosNegocio.direccion.localidad`. Este judge lo
+  dio por bueno porque el unitario (`/Servicios veterinarios/`) y el E2E
+  (`toContainText`) eran laxos. Ahora `Servicios.test.tsx` fija el texto
+  exacto del h2 y prohíbe la frase, `fidelidad-servicios.spec.ts` @s1 usa
+  `toHaveText`, y `datos-reales.spec.ts` @s52 prohíbe «de principio a fin» en
+  las 6 rutas servidas.
+- **h3 con interlineado 1,15** (`geometria-escalas` @s22, esperado 1,08): la
+  tarjeta pisaba el 1,08 de `global.scss`; se elimina la declaración
+  (anclado por `Servicios.test.tsx` «@s22 de rediseno_visual»).
+- **Las 5 `img` sin fondo de reserva en el propio `<img>`** (`imagenes`
+  @s31): el fondo estaba en el `<div>`; ahora `img { @include
+  hueco-de-imagen(8, 5) }` y el envoltorio solo posiciona la píldora
+  (anclado por `Servicios.test.tsx` «@s31 de identidad_visual»).
+
+Verificación: `fidelidad-servicios.spec.ts` 4/4, `geometria-escalas.spec.ts`,
+`imagenes.spec.ts` y `datos-reales.spec.ts` verdes contra el `dist/` final;
+comparativa `progress/rediseno/capturas/regresiones_27_28_29_comparativa.png`
+mirada: titular «Servicios veterinarios / en Galapagar».

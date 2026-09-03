@@ -2,156 +2,245 @@
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
 // aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
 // también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
-// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
-// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
-// la cascada por orden de bundle, sin ningún test que lo protegiera —
-// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
-// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
+// fluido): este fichero NO vuelve a declararlo (retirado tras
+// `progress/judge_rediseno_visual.md`, hallazgo 3, segunda revisión).
+//
+// Anatomía del prototipo (`progress/fidelidad/delta_reserva.md`), portada por
+// escala — nunca un número copiado: dos columnas centradas entre sí, columna
+// de texto con cintillo/titular/párrafo, fila de dos píldoras y lista con
+// marcas; tarjeta de chat alta con tres bandas (cabecera, historial, pie).
 .reservaChat {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  gap: espaciado(32);
-  align-items: start;
+  gap: clamp(#{espaciado(24)}, 4vw, #{espaciado(48)});
+  align-items: center;
+}
 
-  a {
-    @include foco-visible;
-    @include area-tactil-minima;
+// Columna de texto (VLS:256-259). El titular hereda familia, peso, tracking e
+// interlineado de `global.scss`; aquí solo su paso y su margen.
+.informacion .eyebrow {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
+}
+
+.informacion h2 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-size: paso-tipografico(4);
+}
+
+.descripcion {
+  max-width: 52ch;
+  margin: espaciado(16) 0 0;
+  color: var(--color-texto-suave);
+  line-height: 1.7;
+}
+
+// Fila de acciones (VLS:260-262, @s2 de `fidelidad_reserva`): las dos
+// píldoras en UNA fila que salta de línea si no caben; la primera rellena
+// (`boton-primario`, par `sobre-primario`/`primario` de la matriz: el par
+// `sobre-primario`/`acento-tinta` del prototipo no está dado de alta), la
+// segunda de contorno. Misma altura para las dos, como la fila de acciones
+// del Hero (`Hero.module.scss`, `.acciones a`).
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: espaciado(12);
+  margin-block-start: espaciado(24);
+
+  a:first-child {
+    @include boton-primario;
   }
 
-  > div:first-child {
+  a:not(:first-child) {
+    @include boton-fantasma;
+    min-height: $altura-control-grande;
+  }
+}
+
+// Lista con marcas de verificación (VLS:264-270, @s3 de `fidelidad_reserva`):
+// sus ítems son los tres tramos de horario reales que fija `reserva_chat`
+// @s19, no las "ventajas" del prototipo (promesas no publicadas). La marca
+// "✓" va en un pseudoelemento con alternativa vacía: decora, no se lee ni
+// entra en el `textContent` de cada tramo.
+.horario {
+  display: flex;
+  flex-direction: column;
+  gap: espaciado(12);
+  margin: espaciado(24) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-texto);
+
+  li {
     display: flex;
-    flex-direction: column;
     align-items: flex-start;
-    gap: espaciado(12);
-
-    a {
-      @include boton-fantasma;
-    }
-
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      color: var(--color-texto-suave);
-    }
-
-    .eyebrow {
-      @include eyebrow;
-      margin: 0;
-    }
-
-    h2 {
-      margin: 0;
-      font-family: var(--fuente-titulares);
-      font-size: paso-tipografico(4);
-    }
-
-    > p:not(.eyebrow) {
-      max-width: 42ch;
-      margin: 0 0 espaciado(8);
-      color: var(--color-texto-suave);
-    }
+    gap: espaciado(8);
   }
 
-  fieldset {
-    border: none;
-    padding: 0;
+  li::before {
+    content: '✓' / '';
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: $altura-control-pequena * 0.5; // la mitad del control pequeño: 20px (VLS:267)
+    aspect-ratio: 1;
+    border-radius: $radio-circulo;
+    background-color: var(--color-acento-suave);
+    color: var(--color-acento-tinta);
+    font-size: paso-tipografico(-1);
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+// El panel del chat (VLS:273): el patrón "tarjeta" (`estudio_diseno_referencia.md`
+// §4.11), sin la sombra de hover de una tarjeta clicable (el panel no es un
+// enlace; `geometria-escalas.spec.ts` @s24 la cuenta "en reposo"). Como
+// `fieldset`, retira el relleno del agente de usuario y su
+// `min-inline-size: min-content`, que a 320 px haría la tarjeta más ancha que
+// la ventana en cuanto un chip fuera largo (@s5).
+.tarjeta {
+  @include tarjeta;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+
+  &:hover {
+    box-shadow: var(--sombra-reposo);
+  }
+}
+
+// La altura mínima es la que da a la tarjeta su hueco de conversación bajo la
+// primera burbuja (@s1 de `fidelidad_reserva`, ≥ 470 px): cinco pasos del
+// extremo de la escala. Vive en el interior, no en el `fieldset`: la caja
+// anónima de contenido de un `fieldset` no hereda su altura mínima, así que
+// sus hijos flex no la repartirían y el pie no quedaría anclado abajo.
+.interior {
+  display: flex;
+  flex-direction: column;
+  min-height: espaciado(96) * 5;
+}
+
+// Los `fieldset` anidados (cabecera, respuestas rápidas, resumen) agrupan
+// semánticamente, sin la caja del agente de usuario.
+.tarjeta fieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+// Banda 1 — cabecera de conversación (VLS:274-280): avatar circular de
+// iniciales en primario, nombre comercial, estado y descriptor del asistente.
+.cabeceraChat {
+  display: flex;
+  align-items: center;
+  gap: espaciado(12);
+  padding: espaciado(16);
+  border-block-end: $ancho-borde-fino solid var(--color-borde);
+  background-color: var(--color-superficie);
+
+  > span {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: $altura-control-pequena;
+    aspect-ratio: 1;
+    border-radius: $radio-circulo;
+    background-color: var(--color-primario);
+    color: var(--color-sobre-primario);
+    font-family: var(--fuente-titulares);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  > div {
+    min-width: 0;
+  }
+
+  strong {
+    display: block;
+    color: var(--color-tinta);
+    line-height: 1.2;
+  }
+
+  p {
     margin: 0;
+    color: var(--color-texto-suave);
+    font-size: paso-tipografico(-1);
   }
 
-  // El panel del chat: el patrón "tarjeta" (panel elevado, `estudio_diseno_referencia.md`
-  // §4.11), sin la sombra de hover de una tarjeta clicable (el panel no es un enlace).
-  > fieldset {
-    @include tarjeta;
-    padding: espaciado(24);
-    gap: espaciado(16);
-
-    &:hover {
-      box-shadow: var(--sombra-reposo);
-    }
-  }
-
-  .cabeceraChat {
+  // Indicador de disponibilidad (@s34): fila propia con su punto, en la tinta
+  // de acento (VLS:278). El punto es el único uso del acento saturado (@s15).
+  .disponibilidad {
     display: flex;
     align-items: center;
-    gap: espaciado(12);
-    padding-block-end: espaciado(12);
-    border-block-end: $ancho-borde-fino solid var(--color-borde);
-
-    > span {
-      display: grid;
-      width: espaciado(32);
-      height: espaciado(32);
-      place-items: center;
-      border-radius: $radio-circulo;
-      background-color: var(--color-acento-suave);
-      color: var(--color-acento-tinta);
-      font-family: var(--fuente-titulares);
-      font-weight: 700;
-    }
-
-    strong,
-    p {
-      display: block;
-      margin: 0;
-    }
-
-    p {
-      color: var(--color-texto-suave);
-      font-size: paso-tipografico(-1);
-    }
-
-    // Indicador de disponibilidad (@s34): fila propia con su punto, distinta
-    // del resto de `p` de la cabecera, que van en bloque uno debajo del otro.
-    .disponibilidad {
-      display: flex;
-      align-items: center;
-      gap: espaciado(4);
-    }
-
-    .puntoDisponible {
-      flex-shrink: 0;
-      width: espaciado(8);
-      height: espaciado(8);
-      border-radius: $radio-circulo;
-      background-color: var(--color-acento);
-    }
+    gap: espaciado(4);
+    color: var(--color-acento-tinta);
+    font-weight: 600;
   }
 
-  [role='log'] {
+  .puntoDisponible {
+    flex-shrink: 0;
+    width: espaciado(8);
+    aspect-ratio: 1;
+    border-radius: $radio-circulo;
+    background-color: var(--color-acento);
+  }
+}
+
+// Banda 2 — historial (VLS:282-286, VLS:757-765): absorbe el alto sobrante de
+// la tarjeta sobre el fondo de página y desplaza cuando la conversación crece.
+// Cada burbuja declara su autor en `data-autor` (Invariante 5: estado en
+// atributo, nunca en clase): la del asistente a la izquierda sobre superficie
+// con borde y cola inferior izquierda; la del visitante a la derecha, en
+// primario, con cola inferior derecha. El rótulo "Asistente:"/"Tú:" sigue en
+// el texto (@s20).
+[role='log'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: espaciado(8);
+  padding: espaciado(16);
+  max-height: 320px;
+  overflow-y: auto;
+  background-color: var(--color-fondo);
+
+  p {
+    max-width: 84%;
+    margin: 0;
+    padding: espaciado(12) espaciado(16);
+    align-self: flex-start;
+    border: $ancho-borde-fino solid var(--color-borde);
+    border-radius: $radio-medio $radio-medio $radio-medio $radio-pequeno;
+    background-color: var(--color-superficie);
+    color: var(--color-tinta);
+
+    &[data-autor='visitante'] {
+      align-self: flex-end;
+      border-color: transparent;
+      border-radius: $radio-medio $radio-medio $radio-pequeno $radio-medio;
+      background-color: var(--color-primario);
+      color: var(--color-sobre-primario);
+    }
+  }
+}
+
+// Banda 3 — pie del widget (VLS:288-313): chips, fila de texto, cierre o
+// derivación, y siempre la nota de demostración.
+.pie {
+  display: flex;
+  flex-direction: column;
+  gap: espaciado(8);
+  padding: espaciado(12) espaciado(16) espaciado(16);
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+  background-color: var(--color-superficie);
+
+  [aria-label='Respuestas rápidas'] {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: espaciado(8);
-    margin-block: espaciado(16);
-    max-height: 320px;
-    overflow-y: auto;
-
-    p {
-      margin: 0;
-      padding: espaciado(8) espaciado(12);
-      border-radius: $radio-medio;
-      background-color: var(--color-fondo-alterno);
-    }
-  }
-
-  input {
-    @include foco-visible;
-    @include area-tactil-minima;
-    display: block;
-    width: 100%;
-    margin-block-end: espaciado(8);
-    padding-inline: espaciado(12);
-    border: $ancho-borde-control solid var(--color-borde-control);
-    border-radius: $radio-medio;
-    background-color: var(--color-superficie-elevada);
-    color: inherit;
-    min-height: $altura-control-media;
-  }
-
-  // Botón por defecto: la acción primaria de cada paso ("Enviar respuesta",
-  // "Pedir otra cita", "Empezar de nuevo").
-  button {
-    @include boton-primario;
   }
 
   // Las respuestas rápidas de un paso son alternativas entre sí, no UNA sola
@@ -161,8 +250,84 @@
   // primaria de cada paso del guion, no un filtro decorativo (@s25).
   [aria-label='Respuestas rápidas'] button {
     @include pildora-filtro;
-    margin-inline-end: espaciado(8);
-    margin-block-end: espaciado(8);
     min-height: $altura-control-media;
+
+    &:hover {
+      border-color: var(--color-primario);
+    }
+  }
+
+  // Paso de texto libre (VLS:298-301): campo píldora y botón redondo en fila.
+  .filaDeTexto {
+    display: flex;
+    gap: espaciado(8);
+
+    input {
+      @include foco-visible;
+      flex: 1;
+      min-width: 0;
+      min-height: $altura-control-media;
+      padding-inline: espaciado(16);
+      border: $ancho-borde-control solid var(--color-borde-control);
+      border-radius: $radio-completo;
+      background-color: var(--color-superficie-elevada);
+      color: inherit;
+    }
+
+    button {
+      @include foco-visible;
+      display: grid;
+      flex-shrink: 0;
+      place-items: center;
+      width: $altura-control-media;
+      height: $altura-control-media;
+      padding: 0;
+      border: none;
+      border-radius: $radio-circulo;
+      background-color: var(--color-primario);
+      color: var(--color-sobre-primario);
+      font-size: paso-tipografico(1);
+      line-height: 1;
+      cursor: pointer;
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition: background-color 150ms ease-out;
+      }
+
+      &:hover {
+        background-color: var(--color-primario-fuerte);
+      }
+
+      &[aria-disabled='true'] {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // Cierre (VLS:304-307) y derivación a urgencias (Decisión 5): la acción
+  // principal rellena a ancho completo; las demás, de contorno.
+  .primario {
+    @include boton-primario;
+    width: 100%;
+  }
+
+  .secundario {
+    @include boton-fantasma;
+    width: 100%;
+  }
+
+  .resumen ul {
+    margin: 0;
+    padding: espaciado(12) espaciado(16);
+    border-radius: $radio-medio;
+    background-color: var(--color-fondo);
+    list-style: none;
+  }
+
+  .aviso {
+    margin: 0;
+    color: var(--color-texto-suave);
+    font-size: paso-tipografico(-1);
+    line-height: 1.5;
   }
 }

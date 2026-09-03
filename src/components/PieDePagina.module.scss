@@ -16,10 +16,14 @@
 
 .interior {
   @include contenedor;
-  display: flex;
-  flex-wrap: wrap;
-  gap: espaciado(32);
   padding-block: espaciado(48) espaciado(24);
+}
+
+.superior {
+  display: grid;
+  grid-template-columns: minmax(280px, 2fr) repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: espaciado(32);
 
   h3 {
     font-size: paso-tipografico(0);
@@ -49,29 +53,35 @@
 }
 
 .marca {
-  flex: 1 1 260px;
+  min-width: 0;
+
+  .cabeceraMarca {
+    display: flex;
+    align-items: center;
+    gap: espaciado(8);
+    margin-block-end: espaciado(8);
+  }
 
   img {
     // 1/1 (el logotipo real mide 201×201): mismo mecanismo de hueco
     // reservado que las fotografías de contenido (@s31), a escala de icono.
     @include hueco-de-imagen(1, 1);
-    width: espaciado(48);
-    height: espaciado(48);
+    width: $altura-control-pequena;
+    height: $altura-control-pequena;
     border-radius: $radio-medio;
-    margin-block-end: espaciado(8);
   }
 
   p {
     margin: 0;
   }
 
-  p:first-of-type {
+  .cabeceraMarca p {
     font-family: var(--fuente-titulares);
     font-weight: 700;
     color: var(--color-tinta);
   }
 
-  p:last-of-type {
+  > p:last-child {
     color: var(--color-texto-suave);
   }
 }
@@ -93,5 +103,40 @@
     padding: 0;
     display: flex;
     gap: espaciado(16);
+    flex-wrap: nowrap;
+  }
+}
+
+.columna a {
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-primario);
+  }
+}
+
+// El aviso se mantiene dentro del nombre accesible, pero no rompe la fila
+// visual de enlaces legales que cierra la página.
+.soloLectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  text-wrap: nowrap;
+}
+
+@media (max-width: 700px) {
+  .superior {
+    grid-template-columns: 1fr;
+  }
+
+  .barraInferior {
+    flex-direction: column;
+
+    ul {
+      flex-wrap: wrap;
+    }
   }
 }

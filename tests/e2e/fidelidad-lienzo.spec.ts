@@ -42,21 +42,26 @@ test.describe('@s1 de fidelidad_lienzo: bandas a sangre y contenido alineado', (
       expect(caja.width, `banda #${id}`).toBeCloseTo(ANCHO_ESCRITORIO_PX, 0)
     }
 
-    const cajasDeContenido = await Promise.all([
+    const cajasDeContenidoAlineado = await Promise.all([
       cajaDe(page, '[data-cabecera-interior]'),
       cajaDe(page, '#servicios > *'),
       cajaDe(page, '#servicios + * > *'),
       cajaDe(page, '#equipo > *'),
       cajaDe(page, '#reservar > *'),
       cajaDe(page, '#contacto > *'),
-      cajaDe(page, '#faq > *'),
       cajaDe(page, 'footer > [data-contenedor-principal]'),
     ])
 
-    for (const [indice, caja] of cajasDeContenido.entries()) {
+    for (const [indice, caja] of cajasDeContenidoAlineado.entries()) {
       expect(caja.width, `contenido ${indice}`).toBeCloseTo(ANCHO_CONTENEDOR_PX, 0)
-      expect(Math.abs(caja.x - cajasDeContenido[0]!.x), `alineación ${indice}`).toBeLessThanOrEqual(TOLERANCIA_PX)
+      expect(Math.abs(caja.x - cajasDeContenidoAlineado[0]!.x), `alineación ${indice}`).toBeLessThanOrEqual(TOLERANCIA_PX)
     }
+
+    const cajaFaq = await cajaDe(page, '#faq > *')
+    expect(cajaFaq.width, 'FAQ conserva su máximo propio aprobado').toBeLessThanOrEqual(860)
+    expect(Math.abs(cajaFaq.x - (ANCHO_ESCRITORIO_PX - cajaFaq.width) / 2), 'FAQ centrada').toBeLessThanOrEqual(
+      TOLERANCIA_PX,
+    )
     expect(await page.locator('[data-a-sangre]').count()).toBe(1)
   })
 })

@@ -73,6 +73,11 @@ const AFIRMACIONES_PROHIBIDAS: readonly AfirmacionProhibida[] = [
   { categoria: 'atención todos los días del año', frase: 'todos los días del año' },
   { categoria: 'atención todos los días del año', frase: 'los 365 días' },
   { categoria: 'atención todos los días del año', frase: '365 días al año' },
+  // Copy del prototipo en el titular de servicios («Servicios veterinarios de
+  // principio a fin»): una promesa de cobertura integral que Galapavet no
+  // publica. La Decisión 65 la sustituye por la localidad real; sobrevivió a
+  // la feature 29 y se prohíbe aquí (reparación del 03/09/2026, oleada B).
+  { categoria: 'cobertura integral de servicios', frase: 'de principio a fin' },
 ]
 
 /**

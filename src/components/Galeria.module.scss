@@ -1,48 +1,108 @@
-// El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
-// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
-// también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
-// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
-// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
-// la cascada por orden de bundle, sin ningún test que lo protegiera —
-// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
-// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
-// REJILLA, no flexbox: no hay envoltorio propio en el DOM real
-// (`Galeria.tsx`) alrededor de los dos botones de desplazamiento y la
-// pista, así que la disposición depende de que ".galeria" coloque a sus 4
-// hijos directos (p, button, div.pista, button) sola. Con
-// "flex-direction: column" (el primer intento) el eje CRUZADO es horizontal
-// y, sin "align-items: stretch", cada hijo se dimensiona por su CONTENIDO
-// sin límite — medido en vivo: el aviso y la pista medían su ancho de
-// contenido completo (1544px/1520px) a 320px de viewport, @s44. La rejilla
-// evita esa ambigüedad: "grid-template-columns" fija el hueco de cada
-// columna de antemano, y "1fr" para la pista es lo que permite que
-// "min-width: 0" (abajo) la encoja de verdad.
-.galeria {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: espaciado(16);
+// El fondo de la banda lo pinta el wrapper de `Landing.module.scss`
+// (`.seccion` + `.seccionGaleria`), que también aporta el ritmo vertical
+// (`--ritmo-seccion`) y deja este hijo SIN acotar: solo la cabecera se ciñe
+// al ancho compartido de 1220 px y la pista sangra por la derecha de la
+// ventana (fidelidad_galeria @s1/@s4). Ninguna regla de este fichero vuelve a
+// declarar `padding-block` (ver `progress/rediseno/tdd_geometria-escalas.md`).
 
-  > p {
-    grid-column: 1 / -1;
-    color: var(--color-texto-suave);
+// Ancho del contenido de las demás secciones: 100 % menos el sangrado lateral
+// del wrapper, con el mismo techo. Así el titular arranca en la misma x que
+// el de Servicios sin depender de un wrapper acotado.
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: espaciado(16);
+  width: calc(100% - 2 * var(--sangrado-lateral));
+  max-width: $ancho-maximo-contenedor;
+  margin-inline: auto;
+}
+
+.texto {
+  max-width: 56ch;
+}
+
+.eyebrow {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
+}
+
+// Familia, peso, "letter-spacing" y "line-height" del titular los da ya la
+// regla de encabezados de `global.scss` (`h1..h6`); aquí solo lo que cambia
+// respecto a ella.
+.cabecera h2 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-size: paso-tipografico(4);
+}
+
+// El aviso de demostración (literal de galeria.feature @s12) ocupa el hueco
+// del párrafo de apoyo de la cabecera.
+.aviso {
+  margin: espaciado(16) 0 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(0);
+  line-height: 1.7;
+}
+
+.controles {
+  display: flex;
+  gap: espaciado(8);
+
+  button {
+    @include foco-visible;
+    display: inline-grid;
+    place-items: center;
+    width: $altura-control-media;
+    height: $altura-control-media;
+    padding: 0;
+    border: $ancho-borde-control solid var(--color-borde-control);
+    border-radius: $radio-circulo;
+    background-color: var(--color-superficie);
+    color: var(--color-tinta);
+    cursor: pointer;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: border-color 150ms ease-out;
+    }
+
+    &:hover {
+      border-color: var(--color-primario);
+    }
   }
 
-  > button {
-    @include boton-fantasma;
-    padding-inline: espaciado(12);
-    font-size: paso-tipografico(2);
+  svg {
+    width: espaciado(16);
+    height: espaciado(16);
   }
 }
 
+// Borde izquierdo del contenido de la cabecera, visto desde la pista (que
+// mide el ancho de la ventana): el sangrado lateral o, cuando la ventana
+// supera el ancho compartido, el margen que centra los 1220 px. Sirve de
+// relleno inicial Y de "scroll-padding": sin lo segundo, el anclaje
+// "mandatory" arrastraría la primera tarjeta hasta x = 0.
+$inicio-de-columna: max(var(--sangrado-lateral), calc((100% - #{$ancho-maximo-contenedor}) / 2));
+
 .pista {
   display: flex;
+  // = SEPARACION_ENTRE_TARJETAS_PX (`Galeria-logica.ts`): el paso de los
+  // controles es "ancho de tarjeta + este gap".
   gap: espaciado(16);
+  margin-block-start: clamp(#{espaciado(24)}, 4vw, #{espaciado(48)});
+  // Sitio por arriba y por abajo para la sombra de reposo de las tarjetas,
+  // que el "overflow" de la pista recortaría.
+  padding-block: espaciado(8) espaciado(24);
+  padding-inline-start: $inicio-de-columna;
+  padding-inline-end: var(--sangrado-lateral);
+  scroll-padding-inline-start: $inicio-de-columna;
   overflow-x: auto;
-  // El mínimo automático de un ítem de rejilla es también el tamaño de su
-  // CONTENIDO (no 0): sin este "min-width: 0" la columna "1fr" crece hasta
-  // caber la pista entera y "overflow-x: auto" deja de tener efecto.
+  // Sin barra nativa: la pista tiene sus dos controles y recibe foco (@s4).
+  scrollbar-width: none;
+  // El mínimo automático de un ítem flex/grid es también el tamaño de su
+  // CONTENIDO (no 0): sin este "min-width: 0" la pista crece hasta caber
+  // entera y "overflow-x: auto" deja de tener efecto.
   min-width: 0;
   // Anclaje de desplazamiento del CONTENEDOR (@s35): "x" porque el eje
   // desplazable es horizontal (mismo eje que "overflow-x"), "mandatory" para
@@ -54,24 +114,48 @@
 
   @include foco-visible;
 
+  // Tarjeta (fidelidad_galeria @s2): la caja redondeada con sombra es la
+  // figura; la foto va a sangre dentro y sus esquinas las recorta el
+  // "overflow: hidden" del mixin, no un radio propio de la imagen. Anidada
+  // aquí a propósito: @s35 extrae este bloque y exige ver "scroll-snap-align".
   figure {
+    @include tarjeta;
     flex: 0 0 clamp(240px, 32vw, 360px);
     margin: 0;
     scroll-snap-align: start;
-  }
 
-  img {
-    // Retrato 4/3 (`estudio_diseno_referencia.md` §3.6), el mismo que las
-    // 6 fotografías reales de "public/img/galeria/" (800×600). El hueco se
-    // pinta con "--color-fondo-alterno" antes de decodificar (@s31).
-    @include hueco-de-imagen(4, 3);
-    border-radius: $radio-grande;
-  }
+    // La pista recorta en vertical (todo "overflow" no visible arrastra al
+    // otro eje): la sombra elevada del mixin quedaría cortada, así que la
+    // ficha no se eleva al pasar el puntero (mismo criterio que ReservaChat).
+    &:hover {
+      box-shadow: var(--sombra-reposo);
+    }
 
-  figcaption {
-    font-size: paso-tipografico(-1);
-    color: var(--color-texto-suave);
-    margin-block-start: espaciado(8);
+    img {
+      // Retrato 4/3 (`estudio_diseno_referencia.md` §3.6), el mismo que las
+      // 6 fotografías de "public/img/galeria/" (800×600). El hueco se pinta
+      // con "--color-fondo-alterno" antes de decodificar (@s31).
+      @include hueco-de-imagen(4, 3);
+    }
+
+    figcaption {
+      padding: espaciado(12) espaciado(16) espaciado(16);
+    }
+
+    .nombre {
+      display: block;
+      color: var(--color-tinta);
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(0);
+      font-weight: 600;
+    }
+
+    .pie {
+      display: block;
+      margin-block-start: espaciado(4);
+      color: var(--color-texto-suave);
+      font-size: paso-tipografico(-1);
+    }
   }
 
   // El propio desplazamiento "smooth" ya lo decide `Galeria-logica.ts`

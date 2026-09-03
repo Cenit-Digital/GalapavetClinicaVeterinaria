@@ -317,3 +317,48 @@ describe('@s30 la píldora de ubicación, los dos botones y la banda de cuatro c
     ])
   })
 })
+
+/**
+ * Reparación del 03/09/2026 (oleada B): `accesibilidad.spec.ts` @s38/@s39
+ * midieron el anillo de foco de los dos botones de la bienvenida a 1,98:1
+ * contra el fondo que hay bajo el anillo — `--color-tinta`, el `background-color`
+ * de `.hero` (`Hero.module.scss`), que es lo que el navegador encuentra al
+ * trepar desde el control (los píxeles de la fotografía y del velo `::after`
+ * no son ancestros). El anillo global `--color-foco` está pensado para los
+ * fondos claros de página; sobre el velo oscuro el anillo semántico correcto
+ * es `--color-sobre-primario`, la misma tinta ya validada que pinta el texto
+ * del hero (mismo recurso que `BarraUrgencias.module.scss` sobre su rojo).
+ */
+describe('@s38/@s39 de accesibilidad: el anillo de foco de las acciones contrasta contra el velo de tinta, en las cinco variantes', () => {
+  it('los dos botones (primario y contorno) cambian el color del anillo a "--color-sobre-primario" bajo ":focus-visible"', () => {
+    const bloqueAcciones = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.acciones {')
+    const bloquePrimario = extraerBloqueCss(bloqueAcciones, 'a:first-child {')
+    const bloqueContorno = extraerBloqueCss(bloqueAcciones, 'a:not(:first-child) {')
+
+    for (const bloqueBoton of [bloquePrimario, bloqueContorno]) {
+      const bloqueFoco = extraerBloqueCss(bloqueBoton, '&:focus-visible {')
+      expect(bloqueFoco).toContain('outline-color: var(--color-sobre-primario);')
+    }
+  })
+
+  it('"--color-sobre-primario" alcanza 3 contra "--color-tinta" y contra el velo al 76 % sobre negro y sobre blanco', () => {
+    const UMBRAL_COMPONENTE_DE_INTERFAZ = 3 // Mínimo WCAG 2.2 AA para un anillo de foco (SC 2.4.11 / 1.4.11).
+    const PARADA_CENTRAL_DEL_VELO = 0.76
+    const NEGRO = '#000000'
+    const BLANCO = '#FFFFFF'
+    const variantes = ['clinica', 'calida', 'tech', 'eco', 'marca'] as const
+
+    for (const variante of variantes) {
+      const tinta = leerTokenDeVariante(TEXTO_REAL_DE_TOKENS, variante, 'tinta')
+      const sobrePrimario = leerTokenDeVariante(TEXTO_REAL_DE_TOKENS, variante, 'sobre-primario')
+
+      expect(calcularRatioContraste(sobrePrimario, tinta)).toBeGreaterThanOrEqual(UMBRAL_COMPONENTE_DE_INTERFAZ)
+      expect(calcularRatioContraste(sobrePrimario, mezclar(NEGRO, tinta, PARADA_CENTRAL_DEL_VELO))).toBeGreaterThanOrEqual(
+        UMBRAL_COMPONENTE_DE_INTERFAZ,
+      )
+      expect(calcularRatioContraste(sobrePrimario, mezclar(BLANCO, tinta, PARADA_CENTRAL_DEL_VELO))).toBeGreaterThanOrEqual(
+        UMBRAL_COMPONENTE_DE_INTERFAZ,
+      )
+    }
+  })
+})

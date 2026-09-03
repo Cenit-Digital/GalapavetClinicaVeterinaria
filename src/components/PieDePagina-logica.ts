@@ -11,6 +11,7 @@ import { construirEnlaceTelefono } from './InformacionContacto-logica'
 const SUFIJO_VENTANA_NUEVA = ' (se abre en una ventana nueva)'
 
 export interface EnlaceLegalRenderable {
+  readonly nombreVisible: string
   readonly nombreAccesible: string
   readonly destino: string
 }
@@ -23,6 +24,7 @@ export interface EnlaceLegalRenderable {
  */
 export function construirEnlacesLegales(paginas: readonly PaginaLegal[]): readonly EnlaceLegalRenderable[] {
   return paginas.map((pagina) => ({
+    nombreVisible: pagina.nombre,
     nombreAccesible: `${pagina.nombre}${SUFIJO_VENTANA_NUEVA}`,
     destino: pagina.destino,
   }))

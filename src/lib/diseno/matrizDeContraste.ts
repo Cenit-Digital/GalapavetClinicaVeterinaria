@@ -347,6 +347,7 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
 
   // Titulares y rótulos fuertes.
   { rol: 'tinta', fondo: 'fondo', uso: 'texto normal' }, // `global.scss:243-244`
+  { rol: 'tinta', fondo: 'fondo-alterno', uso: 'texto normal' }, // `CampanasPortada.module.scss` dentro de `Landing.tsx` `.seccionAlterna`
   { rol: 'tinta', fondo: 'superficie', uso: 'texto normal' }, // `PieDePagina.module.scss:12` + `:29`
 
   // Texto secundario: es el rol que el prototipo dejaba por debajo del mínimo
@@ -364,20 +365,27 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
   // Acento legible: nunca `--color-acento` a secas, siempre su tinta.
   { rol: 'acento-tinta', fondo: 'acento-suave', uso: 'texto normal' }, // `_api.scss:281-282` (mixin `pildora-etiqueta`)
   { rol: 'acento-tinta', fondo: 'fondo', uso: 'texto normal' }, // `_api.scss:330-331` (mixin `eyebrow`)
+  { rol: 'acento-tinta', fondo: 'fondo-alterno', uso: 'texto normal' }, // `CampanasPortada.module.scss` (`.eyebrow`) dentro de `Landing.tsx` `.seccionAlterna`
   { rol: 'acento-tinta', fondo: 'superficie', uso: 'texto normal' }, // `Servicios.module.scss:52` dentro de `tarjeta`
 
   // Bordes que IDENTIFICAN un control: mínimo de 3:1 por SC 1.4.11 (@s8).
   { rol: 'borde-control', fondo: 'fondo', uso: 'componente de interfaz o borde de foco' }, // `_api.scss:246-255` (mixin `boton-fantasma`)
-  { rol: 'borde-control', fondo: 'fondo-alterno', uso: 'componente de interfaz o borde de foco' }, // `Galeria.module.scss:27-28` en sección alterna
+  { rol: 'borde-control', fondo: 'fondo-alterno', uso: 'componente de interfaz o borde de foco' }, // `ReservaChat.module.scss` (`.acciones a:not(:first-child)`, `boton-fantasma`) dentro de `Landing.tsx` `.seccionAlterna`
+  { rol: 'borde-control', fondo: 'superficie', uso: 'componente de interfaz o borde de foco' }, // `Galeria.module.scss` (`.controles button`: borde de control sobre su propio relleno de superficie)
   { rol: 'borde-control', fondo: 'superficie-elevada', uso: 'componente de interfaz o borde de foco' }, // `FormularioContacto.module.scss:31-33`
 
   // Anillo de foco: mínimo de 3:1 por SC 2.4.11 (@s9).
   { rol: 'foco', fondo: 'fondo', uso: 'componente de interfaz o borde de foco' }, // `_api.scss:75` (mixin `foco-visible`)
   { rol: 'foco', fondo: 'superficie', uso: 'componente de interfaz o borde de foco' }, // `PieDePagina.module.scss:12` + `:42-43`
+  // Sobre el velo oscuro del hero el anillo global no llega a 3:1; los dos
+  // botones lo cambian a la tinta ya validada de la sección (fidelidad_hero,
+  // reparación del 03/09/2026: `accesibilidad` @s38/@s39).
+  { rol: 'sobre-primario', fondo: 'tinta', uso: 'componente de interfaz o borde de foco' }, // `Hero.module.scss` (`.acciones a … &:focus-visible`)
 
-  // Franja semántica del aviso de urgencias: identifica el bloque, así que es
-  // componente de interfaz, no adorno.
-  { rol: 'urgencia', fondo: 'urgencia-suave', uso: 'componente de interfaz o borde de foco' }, // `InformacionContacto.module.scss:58-62`
+  // La píldora del teléfono de urgencias de contacto (fidelidad_contacto @s3):
+  // la tinta de urgencia sobre el relleno "sobre-primario" — el par simétrico
+  // al de la barra, así que da el mismo ratio en las cinco variantes.
+  { rol: 'urgencia', fondo: 'sobre-primario', uso: 'texto normal' }, // `InformacionContacto.module.scss` (`[data-tarjeta-de='urgencia'] a`)
 ]
 
 /**

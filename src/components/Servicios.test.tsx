@@ -522,3 +522,87 @@ describe('@s33 la sección de servicios abre con su cintillo en versalitas', () 
     expect(bloqueEyebrow).not.toContain('letter-spacing:')
   })
 })
+
+/**
+ * Reparación del 03/09/2026 (oleada B, `progress/tdd_regresiones_27_28_29.md`):
+ * el titular pintaba «Servicios veterinarios de principio a fin en Galapagar».
+ * «de principio a fin» es copy del prototipo (`Veterinaria La Sierra.dc.html`,
+ * sección servicios): una promesa de cobertura integral que Galapavet no
+ * publica. La Decisión 65 fija «Servicios veterinarios» + «en <localidad>»,
+ * con la localidad derivada de `datosNegocio.direccion.localidad`. Ni
+ * `@s1` (regex `/Servicios veterinarios/`) ni el E2E lo atrapaban: este test
+ * fija el texto EXACTO del h2 y prohíbe la frase.
+ */
+describe('@s1 de fidelidad_servicios (Decisión 65): la segunda parte del titular es la localidad real, sin copy del prototipo', () => {
+  it('el h2 dice exactamente "Servicios veterinarios en Galapagar", su <em> solo "en Galapagar", y nunca "de principio a fin"', () => {
+    renderizarServicios()
+
+    // Literal escrito a mano (doble anclaje): la localidad real publicada,
+    // nunca leída de `datosNegocio` desde el test.
+    const encabezado = screen.getByRole('heading', { level: 2, name: 'Servicios veterinarios en Galapagar' })
+    const enfasis = encabezado.querySelector('em')
+    if (enfasis === null) {
+      throw new Error('el titular de servicios no tiene la segunda parte en <em>')
+    }
+
+    expect(enfasis.textContent).toBe('en Galapagar')
+    expect(encabezado).not.toHaveTextContent('de principio a fin')
+  })
+})
+
+/**
+ * Reparación del 03/09/2026 (oleada B): `geometria-escalas.spec.ts` @s22 de
+ * `rediseno_visual` mide que `#servicios article h3` computa 1,08 de
+ * interlineado (el que `global.scss` da a `h1..h6`), y la tarjeta lo pisaba
+ * con `line-height: 1.15` (copiado del prototipo, `delta_servicios.md`
+ * servicios-14: «manda la escala del repo»). El h3 no redeclara interlineado.
+ */
+describe('@s22 de rediseno_visual: el h3 de la tarjeta hereda el interlineado de titular de la hoja global', () => {
+  it('".cuerpo h3" no declara "line-height" (lo da "global.scss" a h1..h6: 1.08)', () => {
+    const bloqueH3 = /\.cuerpo h3\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_SERVICIOS_SCSS)?.[1]
+    if (bloqueH3 === undefined) {
+      throw new Error('no se encontró el bloque ".cuerpo h3 {" en el texto real de Servicios.module.scss')
+    }
+
+    expect(bloqueH3).not.toMatch(/line-height\s*:/)
+  })
+})
+
+/**
+ * El cuerpo (sin las llaves que lo delimitan) del bloque cuya cabecera literal
+ * es `encabezadoDelBloque`, casando llaves anidadas — mismo ayudante que
+ * `Cabecera.test.tsx` e `InformacionContacto.test.tsx`. La regex de arriba
+ * (`[^}]*`) no sirve aquí porque `.imagen {` anida un bloque `img {`.
+ */
+function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezadoDelBloque)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezadoDelBloque}" en el texto real de Servicios.module.scss`)
+  }
+  const indiceDeAperturaLlave = indiceDeCabecera + encabezadoDelBloque.length - 1
+  let profundidad = 1
+  let indice = indiceDeAperturaLlave + 1
+  while (profundidad > 0) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
+}
+
+/**
+ * Reparación del 03/09/2026 (oleada B): `imagenes.spec.ts` @s31 de
+ * `identidad_visual` bloquea `/img/**` y exige que cada `<img>` pinte su
+ * hueco con `--color-fondo-alterno` EN EL PROPIO `<img>`. Las cinco de
+ * servicios lo pintaban en el `<div>` envolvente y el `<img>` quedaba
+ * transparente. El mixin `hueco-de-imagen` (`_api.scss`) es la única forma
+ * del sistema de reservar un hueco (Galería, Campañas, Pie, Contacto).
+ */
+describe('@s31 de identidad_visual: cada imagen de servicio reserva su hueco 8/5 con el mixin compartido', () => {
+  it('el bloque "img" dentro de ".imagen" incluye "hueco-de-imagen(8, 5)"', () => {
+    const cuerpoImagen = cuerpoDelBloque(TEXTO_REAL_DE_SERVICIOS_SCSS, '.imagen {')
+    const cuerpoImg = cuerpoDelBloque(cuerpoImagen, 'img {')
+
+    expect(cuerpoImg).toContain('@include hueco-de-imagen(8, 5);')
+  })
+})

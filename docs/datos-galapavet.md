@@ -132,6 +132,10 @@ Verificado por ausencia — no están en su web ni en su árbol de enlaces:
 - ~~Coordenadas geográficas exactas~~ — resueltas el 03/09/2026 con el nodo público de OpenStreetMap (§2bis).
 - **Precios y productos** de la tienda.
 - **Años de actividad** y número de registro del centro.
+- **Especialidades por profesional.** El prototipo asignaba tres etiquetas a
+  cada miembro; galapavet.com no publica ninguna. El campo opcional
+  `especialidades` de `src/data/equipo.ts` queda sin valor hasta que el
+  cliente las confirme (`fidelidad_equipo` @s3).
 
 ## 10. Marca visual
 

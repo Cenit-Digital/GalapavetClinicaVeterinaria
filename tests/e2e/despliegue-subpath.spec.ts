@@ -18,8 +18,9 @@ const RAIZ_DEL_REPO = fileURLToPath(new URL('../..', import.meta.url))
 
 const ANCLAS_DE_LA_LANDING = ['inicio', 'servicios', 'equipo', 'reservar', 'galeria', 'contacto', 'faq'] as const
 
-/** El mapa embebido (Invariante 3, único tercero admitido) escribe un aviso de consola al sandbox — no es un error de esta feature (mismo criterio que `red-limpia.spec.ts` @s34). */
-const PATRON_MENSAJE_DEL_MAPA_SANDBOXED = /openstreetmap\.org/i
+// El filtro del aviso de consola del antiguo mapa embebido sandboxeado se
+// retiró el 03/09/2026 con `fidelidad_contacto` @s4 (mapa estático local,
+// Decisión 63): la consola queda sin excepciones, igual que en `red-limpia.spec.ts` @s34.
 
 test.describe('@s13 el sitio construido y servido bajo el subpath real carga el mismo árbol que en local', () => {
   test(`carga "${URL_ESPERADA}": monta #root, las 7 anclas existen, todo responde 200, sin errores de consola`, async ({
@@ -30,7 +31,7 @@ test.describe('@s13 el sitio construido y servido bajo el subpath real carga el 
 
     const mensajesDeError: string[] = []
     page.on('console', (mensaje) => {
-      if (mensaje.type() === 'error' && !PATRON_MENSAJE_DEL_MAPA_SANDBOXED.test(mensaje.text())) {
+      if (mensaje.type() === 'error') {
         mensajesDeError.push(mensaje.text())
       }
     })
@@ -154,14 +155,14 @@ test.describe('@s16 el build completo con el nuevo --base sigue pasando la puert
 })
 
 // ---------------------------------------------------------------------------
-// @s23 (enmienda 26/08/2026, Decisiones 52-55): las 24 rutas de imagen reales
+// @s23 (enmienda 26/08/2026, Decisiones 52-55): las 25 rutas de imagen reales
 // (Decisión 53, mismo literal escrito a mano que @s18 de
 // `src/lib/hrefDeDestino.test.ts`) más "og:image" resuelven con 200 bajo el
 // subpath real — mismo nivel de verificación que @s13/@s14.
 // ---------------------------------------------------------------------------
 
 /**
- * Las 24 rutas de imagen crudas reales (sin el subpath, tal y como las
+ * Las 25 rutas de imagen crudas reales (sin el subpath, tal y como las
  * declaran `PieDePagina.tsx`/`galeria.ts`/`campanas.ts`/`blog.ts`/
  * `tienda.ts`). Literal escrito a mano, no importado de `src/data/*.ts`
  * (patrón "doble-de-test-anclado-al-literal-no-al-simbolo",
@@ -192,6 +193,7 @@ const RUTAS_DE_IMAGEN_CRUDAS = [
   '/img/tienda/manta-60x40.webp',
   '/img/tienda/mordedor-caucho.webp',
   '/img/tienda/pelota-con-sonido.webp',
+  '/img/mapa/galapagar.webp', // src/data/mapa.ts (fidelidad_contacto, Decisión 63)
 ] as const
 
 /** Mismo forzado de carga diferida que `tests/e2e/imagenes.spec.ts` @s27: Chromium solo dispara "lazy" cerca del viewport, y el umbral no es determinista entre corridas. */
@@ -203,7 +205,7 @@ async function cargarImagenesDiferidas(page: Page): Promise<void> {
 }
 
 test.describe('@s23 las imágenes de las 6 features y og:image resuelven con 200 bajo el subpath real', () => {
-  test('las 25 rutas responden 200 bajo el subpath, ninguna imagen renderizada queda con naturalWidth 0, sin errores de red', async ({
+  test('las 26 rutas responden 200 bajo el subpath, ninguna imagen renderizada queda con naturalWidth 0, sin errores de red', async ({
     page,
     request,
   }) => {
@@ -216,7 +218,7 @@ test.describe('@s23 las imágenes de las 6 features y og:image resuelven con 200
 
     const rutasBajoElSubpath = RUTAS_DE_IMAGEN_CRUDAS.map((ruta) => `${SUBPATH_DE_PRODUCCION}${ruta}`)
     const todasLasRutas = [...rutasBajoElSubpath, rutaOgImage]
-    expect(todasLasRutas).toHaveLength(25)
+    expect(todasLasRutas).toHaveLength(26)
 
     for (const ruta of todasLasRutas) {
       const respuesta = await request.get(ruta)
@@ -245,7 +247,7 @@ test.describe('@s23 las imágenes de las 6 features y og:image resuelven con 200
     expect(mensajesDeErrorDeRed, `errores de red: ${JSON.stringify(mensajesDeErrorDeRed)}`).toEqual([])
   })
 
-  test('el recuento de rutas de imagen efectivamente comprobadas es exactamente 25', () => {
-    expect(RUTAS_DE_IMAGEN_CRUDAS.length + 1).toBe(25)
+  test('el recuento de rutas de imagen efectivamente comprobadas es exactamente 26', () => {
+    expect(RUTAS_DE_IMAGEN_CRUDAS.length + 1).toBe(26)
   })
 })

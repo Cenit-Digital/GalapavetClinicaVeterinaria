@@ -91,6 +91,36 @@ describe('@s5 el nombre accesible de cada tarjeta lleva su título y la marca de
   })
 })
 
+describe('@s2 el detalle publicado se cablea al DOM de cada tarjeta', () => {
+  it('la tarjeta de Vacunaciones conserva imagen, etiqueta, título y el detalle exacto en ese orden editorial', () => {
+    renderizarCampanasPortada()
+
+    const titulo = screen.getByRole('heading', { level: 3, name: 'Vacunaciones' })
+    const enlace = titulo.closest('a')
+    if (enlace === null) {
+      throw new Error('la tarjeta "Vacunaciones" no está envuelta en un enlace')
+    }
+    const imagen = enlace.querySelector('[data-imagen-campana]')
+    const etiqueta = enlace.querySelector('[data-etiqueta-campana]')
+    const detalle = enlace.querySelector('[data-detalle-campana]')
+    expect(imagen).not.toBeNull()
+    expect(etiqueta?.textContent).toBe('Demostración')
+    // Texto EXACTO (no subcadena): cablear `campana.titulo` en vez de
+    // `campana.bloque` daría «Bloque de servicios: Vacunaciones» y caería aquí.
+    expect(detalle?.textContent).toBe('Bloque de servicios: Medicina general')
+    expect(enlace.querySelectorAll('p')).toHaveLength(1)
+
+    // Orden editorial del prototipo: imagen → píldora → título → detalle.
+    const piezasEnOrden = [imagen, etiqueta, titulo, detalle]
+    for (let indice = 1; indice < piezasEnOrden.length; indice += 1) {
+      const anterior = piezasEnOrden[indice - 1]
+      const siguiente = piezasEnOrden[indice]
+      // eslint-disable-next-line no-bitwise -- API estándar de DOM (`Node.compareDocumentPosition`).
+      expect((anterior?.compareDocumentPosition(siguiente as Node) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
+  })
+})
+
 describe('@s6 ninguna tarjeta muestra un precio', () => {
   it('el texto completo de la sección no contiene "€", "EUR" ni "%"', () => {
     renderizarCampanasPortada()
@@ -207,6 +237,7 @@ describe('@s14 una campaña sin imagen sigue mostrando su tarjeta', () => {
     expect(within(tarjeta).getByRole('heading', { level: 3, name: 'Vacunaciones' })).toBeInTheDocument()
     expect(within(tarjeta).getByText('Demostración')).toBeInTheDocument()
     expect(tarjeta.querySelector('img')).toBeNull()
+    expect(tarjeta.querySelector('[data-detalle-campana]')).toBeNull()
   })
 })
 
@@ -351,8 +382,17 @@ describe('@s33 la sección abre con su cintillo en versalitas, delante del h2', 
     // Precede al h2 en el DOM: "abre" la sección.
     // eslint-disable-next-line no-bitwise -- API estándar de DOM (`Node.compareDocumentPosition`).
     expect(cintillo.compareDocumentPosition(encabezado) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Enmienda escrita en `progress/fidelidad/enmiendas_fidelidad_campanas.md`:
+    // la aserción heredada de `rediseno_visual` @s33 era
+    // `expect(region.firstElementChild).toBe(cintillo)`. Con la anatomía de
+    // dos columnas de `fidelidad_campanas` @s1, el primer hijo de la región es
+    // la columna de presentación (`[data-campanas-presentacion]`) y el
+    // cintillo abre ESA columna; el escenario («cada sección abre con su
+    // cintillo por delante del h2») se sigue cumpliendo tal cual. Precedente:
+    // `ReservaChat` (@s34) envuelve su columna en `> div:first-child`.
     const presentacion = region.querySelector('[data-campanas-presentacion]')
     expect(presentacion).not.toBeNull()
+    expect(region.firstElementChild).toBe(presentacion)
     expect(presentacion?.firstElementChild).toBe(cintillo)
   })
 
@@ -366,12 +406,70 @@ describe('@s33 la sección abre con su cintillo en versalitas, delante del h2', 
     // El mixin `eyebrow` (`_api.scss:324-332`) ya fija
     // `text-transform: uppercase`, `letter-spacing: 0.12em` y
     // `color: var(--color-acento-tinta)` — el rol correcto aquí, porque el
-    // fondo de esta sección es un token del sistema (`--color-fondo`), no una
+    // fondo de esta sección es un token del sistema (`--color-fondo-alterno`,
+    // la banda que `Landing` da a campañas desde `fidelidad_lienzo`), no una
     // fotografía. Ningún override local: si lo hubiera, dejaría de ser la
     // tinta de acento que exige @s33 para las secciones de fondo de token.
+    // El judge de la ronda 1 midió el cintillo a 20 px y en `--color-texto-suave`:
+    // no por un override aquí, sino por el selector `.presentacion > p`
+    // (0,1,1) que pisaba a `.eyebrow` (0,1,0); lo prohíbe el test de estilos
+    // de la presentación y lo mide por valor `tests/e2e/fidelidad-campanas.spec.ts`.
     expect(declaraciones).toContain('@include eyebrow;')
     expect(declaraciones).not.toContain('color:')
     expect(declaraciones).not.toContain('text-transform:')
     expect(declaraciones).not.toContain('letter-spacing:')
+  })
+})
+
+describe('@s1 y @s3 de fidelidad_campanas: estilos de la presentación', () => {
+  it('separa el aviso del cintillo, conserva el mixin compartido y no deja que un selector genérico lo pise', () => {
+    const bloqueDelAviso = /\.aviso\s*\{([^}]*)\}/.exec(TEXTO_DE_ESTILOS_PROPIOS)
+    expect(bloqueDelAviso).not.toBeNull()
+    const declaraciones = bloqueDelAviso?.[1] ?? ''
+
+    expect(declaraciones).toContain('color: var(--color-texto-suave);')
+    // El texto intro del prototipo va a 16,5 px / 1.7 (delta campanas-7):
+    // el paso de la escala más próximo es el cuerpo, `paso-tipografico(0)`,
+    // no el 20 px del paso 1, que pesaba más que el propio ritmo del h2.
+    expect(declaraciones).toContain('font-size: paso-tipografico(0);')
+    expect(declaraciones).toContain('max-width: 52ch;')
+    expect(TEXTO_DE_ESTILOS_PROPIOS).not.toContain('.presentacion > p {')
+  })
+
+  it('usa el botón primario compartido y la píldora compartida, sin reducirlos localmente', () => {
+    const bloqueCta = /\.cta\s*\{([^}]*)\}/.exec(TEXTO_DE_ESTILOS_PROPIOS)?.[1] ?? ''
+    const bloquePildora = /\.cuerpo span\s*\{([^}]*)\}/.exec(TEXTO_DE_ESTILOS_PROPIOS)?.[1] ?? ''
+
+    expect(bloqueCta).toContain('@include boton-primario;')
+    expect(bloqueCta).not.toContain('boton-fantasma')
+    expect(bloquePildora).toContain('@include pildora-etiqueta;')
+    expect(bloquePildora).not.toContain('font-size:')
+  })
+
+  it('usa la escala de espaciado para el hueco y no repite en local la tipografía global del h2', () => {
+    const bloqueDelTitulo = /\.presentacion h2\s*\{([^}]*)\}/.exec(TEXTO_DE_ESTILOS_PROPIOS)?.[1] ?? ''
+
+    expect(TEXTO_DE_ESTILOS_PROPIOS).toContain('gap: clamp(espaciado(24), 4vw, espaciado(48));')
+    expect(bloqueDelTitulo).toContain('margin: 0;')
+    // `global.scss` (bloque `h1…h6`) da a los titulares familia, peso 600,
+    // `letter-spacing` e interlineado 1.08 — pero NO el color: sin esta
+    // declaración el h2 heredaría `--color-texto` del cuerpo (y de
+    // `.seccionAlterna` en `Landing`), no la tinta que pintan el prototipo
+    // (`--ink`) y los h2 de Servicios/Equipo. Es además el par
+    // `tinta / fondo-alterno` que esta sección declara en la matriz de contraste.
+    expect(bloqueDelTitulo).toContain('color: var(--color-tinta);')
+    expect(bloqueDelTitulo).not.toContain('font-weight:')
+    expect(bloqueDelTitulo).not.toContain('letter-spacing:')
+    expect(bloqueDelTitulo).not.toContain('line-height:')
+  })
+
+  it('el h3 de cada tarjeta conserva solo escala, margen y tinta; peso e interlineado los da la hoja global', () => {
+    const bloqueDelH3 = /\.cuerpo h3\s*\{([^}]*)\}/.exec(TEXTO_DE_ESTILOS_PROPIOS)?.[1] ?? ''
+
+    expect(bloqueDelH3).toContain('font-size: paso-tipografico(1);')
+    expect(bloqueDelH3).toContain('color: var(--color-tinta);')
+    expect(bloqueDelH3).not.toContain('font-weight:')
+    expect(bloqueDelH3).not.toContain('letter-spacing:')
+    expect(bloqueDelH3).not.toContain('line-height:')
   })
 })

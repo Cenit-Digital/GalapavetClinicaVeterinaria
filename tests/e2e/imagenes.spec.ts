@@ -209,15 +209,35 @@ test.describe('@s31 una imagen que aún no ha cargado reserva su hueco en vez de
         const [, r, g, b] = coincidencia
         return `#${[r, g, b].map((canal) => Number(canal).toString(16).padStart(2, '0')).join('')}`.toUpperCase()
       }
+      // Una imagen DE CUBIERTA (fuera de flujo: `position: absolute` con los
+      // cuatro lados a 0, como la fotografía de fondo del hero,
+      // `Hero.module.scss` `.hero > img`) no tiene hueco propio que reservar:
+      // su rectángulo ES el de la sección que cubre, cuya altura la fija el
+      // contenido (`min-height` fluido, `fidelidad_hero` @s2), no la
+      // relación intrínseca del fichero. "La relación de aspecto que su
+      // propia maquetación declara" (@s31) es, para ella, la del contenedor
+      // que cubre; los atributos `width`/`height` siguen siendo la relación
+      // intrínseca (@s30, CLS) y se comprueban en las imágenes en flujo.
+      // Enmienda del 03/09/2026 (`progress/fidelidad/enmiendas_regresiones_27_28_29.md`).
+      const esDeCubierta = (estilo: CSSStyleDeclaration): boolean =>
+        estilo.position === 'absolute' &&
+        estilo.top === '0px' &&
+        estilo.right === '0px' &&
+        estilo.bottom === '0px' &&
+        estilo.left === '0px'
       return Array.from(document.images).map((imagen) => {
         const caja = imagen.getBoundingClientRect()
         const estilo = getComputedStyle(imagen)
         const anchoDeclarado = Number(imagen.getAttribute('width'))
         const altoDeclarado = Number(imagen.getAttribute('height'))
+        const contenedorCubierto = esDeCubierta(estilo) ? imagen.offsetParent?.getBoundingClientRect() : undefined
         return {
           alto: caja.height,
           relacionMedida: caja.width / caja.height,
-          relacionDeclarada: anchoDeclarado / altoDeclarado,
+          relacionDeclarada:
+            contenedorCubierto === undefined
+              ? anchoDeclarado / altoDeclarado
+              : contenedorCubierto.width / contenedorCubierto.height,
           fondo: aHex(estilo.backgroundColor),
           fondoEsperadoHex: hexEsperado.startsWith('#') ? hexEsperado.toUpperCase() : aHex(hexEsperado),
         }

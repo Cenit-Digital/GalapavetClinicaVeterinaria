@@ -49,3 +49,27 @@ export function siguientePaso(pasoActual: IdPaso, respuesta: string): IdPaso {
       return pasoActual
   }
 }
+
+/** Quién dice cada mensaje del historial; es también el valor de `data-autor` de su burbuja (@s20, @s4 de `fidelidad_reserva`). */
+export type AutorDeMensaje = 'asistente' | 'visitante'
+
+export const AUTOR_ASISTENTE: AutorDeMensaje = 'asistente'
+export const AUTOR_VISITANTE: AutorDeMensaje = 'visitante'
+
+/** Los dos autores posibles, en el orden en que abren el guion. */
+export const AUTORES_DE_MENSAJE: readonly AutorDeMensaje[] = [AUTOR_ASISTENTE, AUTOR_VISITANTE]
+
+const ROTULO_POR_AUTOR: Readonly<Record<AutorDeMensaje, string>> = {
+  asistente: 'Asistente',
+  visitante: 'Tú',
+}
+
+const SEPARADOR_DE_ROTULO = ': '
+
+/**
+ * Antepone al texto el rótulo de su autor ("Asistente: …" / "Tú: …"): cada
+ * mensaje dice quién lo dice sin depender del color de la burbuja (@s20).
+ */
+export function rotularMensaje(autor: AutorDeMensaje, texto: string): string {
+  return `${ROTULO_POR_AUTOR[autor]}${SEPARADOR_DE_ROTULO}${texto}`
+}

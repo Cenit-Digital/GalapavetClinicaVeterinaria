@@ -34,10 +34,11 @@
 #     Ctra. de la Sierra, 42 · 28792 Miraflores de la Sierra
 #
 # PENDIENTE (no verificado — no se afirma en ningún escenario como hecho del negocio)
-#   - PENDIENTE: el cliente NO publica canal de WhatsApp. El móvil 685 34 31 49 es el único móvil
-#     publicado, pero que ese número atienda mensajería está SIN CONFIRMAR. Por eso @s5, @s6 y @s12
-#     fijan el FORMATO de la derivación (contrato del módulo) y NO autorizan a publicar ningún
-#     botón de mensajería en la UI: hasta que el cliente lo confirme, ninguna sección lo muestra.
+#   - RESUELTO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66 (docs/datos-galapavet.md
+#     §2bis): el cliente confirmó que el móvil 685 34 31 49 atiende WhatsApp. @s5, @s6 y @s12 siguen
+#     fijando el FORMATO de la derivación; la reserva «ninguna sección muestra botón de mensajería
+#     hasta que el cliente lo confirme» queda derogada y la sección Reservar publica el enlace wa.me.
+#     Antes/después literal en progress/fidelidad/enmiendas_fidelidad_reserva.md.
 #   - PENDIENTE: el host de mensajería (`wa.me` frente a `api.whatsapp.com/send`) se ancla aquí a
 #     `wa.me` para que el contrato sea medible, pero debe verificarse a mano en dispositivo real
 #     antes de publicar (el patrón organizacional avisa de no fijar hosts sin comprobarlos).
@@ -192,12 +193,14 @@ Feature: Fuente única canónica de los datos del negocio
     And la forma de una sola línea es exactamente "Carretera de Torrelodones, 11, 28260 Galapagar, Madrid"
     And la forma de una sola línea contiene el código postal "28260" y la localidad "Galapagar" que aparecen en las líneas visibles
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Decisión 63 (mapa estático local):
+  # antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s18
-  Scenario: La fuente única no declara coordenadas geográficas porque el cliente no las publica
-    Given docs/datos-galapavet.md §9 registra las coordenadas exactas como dato pendiente
+  Scenario: La fuente única declara las coordenadas del nodo público de OpenStreetMap citado en docs/datos-galapavet.md §2bis
+    Given docs/datos-galapavet.md §2bis registra las coordenadas del nodo público de OpenStreetMap sobre la dirección verificada, con su licencia
     When se piden a la fuente única las coordenadas geográficas del negocio
-    Then no se obtiene ningún valor de latitud ni de longitud
-    And la dirección postal sigue estando disponible para centrar el mapa y el dato estructurado
+    Then se obtiene exactamente latitud 40.5772872 y longitud -4.0004445
+    And la dirección postal sigue estando disponible para describir el mapa y el dato estructurado
 
   @s19
   Scenario: Ningún módulo de la web escribe un teléfono a mano fuera de la fuente única

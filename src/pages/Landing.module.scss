@@ -51,9 +51,29 @@
   }
 }
 
+// Banda con pista a sangre (fidelidad_galeria @s1/@s4): se combina con
+// `.seccion` (fondo y ritmo vertical) y retira el sangrado lateral y el
+// techo de ancho, porque el propio hijo acota SOLO su cabecera a 1220 px y
+// deja que la pista de tarjetas llegue al borde derecho de la ventana.
+.seccionGaleria {
+  padding-inline: 0;
+
+  > * {
+    max-width: none;
+  }
+}
+
+// Dos columnas como máximo (fidelidad_contacto @s1): la cabecera de la
+// sección abarca la fila entera (`grid-column: 1 / -1`), y con un ítem que
+// ocupa todas las pistas "auto-fit" ya no colapsa las vacías, así que el
+// mínimo de cada columna se ata a la mitad del ancho que queda tras UN hueco
+// (`--hueco-contacto`, la misma variable que pinta el `gap`): nunca caben
+// tres. Por debajo de 320 px por columna (el mismo umbral que antes) se
+// apila en una sola, sin @media.
 .seccionContacto > [data-contacto-contenido] {
+  --hueco-contacto: clamp(#{espaciado(24)}, 3vw, 34px);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(max(320px, calc((100% - var(--hueco-contacto)) / 2)), 100%), 1fr));
   align-items: start;
-  gap: clamp(24px, 3vw, 34px);
+  gap: var(--hueco-contacto);
 }

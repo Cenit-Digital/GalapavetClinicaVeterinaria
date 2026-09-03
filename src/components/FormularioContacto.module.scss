@@ -1,25 +1,47 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
-// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45). "#contacto" tiene DOS hijos directos
-// (este formulario e "InformacionContacto"): ambos reciben el mismo
-// contenedor, así que comparten el mismo ancho máximo (@s45) aunque vivan en
-// ficheros distintos.
+// este fichero maqueta el contenido. El formulario es la columna izquierda de
+// la rejilla de dos columnas de `[data-contacto-contenido]` (`Landing.tsx`,
+// `fidelidad_contacto` @s1): una tarjeta blanca con el título visible, los
+// campos en parejas etiqueta+control y el botón a todo el ancho (@s2).
 .formulario {
   @include tarjeta;
-  padding: espaciado(24);
+  padding: espaciado(32);
   display: flex;
   flex-direction: column;
-  gap: espaciado(12);
-  margin-block-end: espaciado(32);
+  gap: espaciado(16);
 
   &:hover {
     // Un formulario no es una tarjeta "clicable": no sube de sombra al pasar el ratón por encima.
     box-shadow: var(--sombra-reposo);
   }
 
-  label {
-    font-size: paso-tipografico(0);
+  h3 {
+    margin: 0;
+    color: var(--color-tinta);
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(1);
     font-weight: 600;
+  }
+
+  label {
+    font-size: paso-tipografico(-1);
+    font-weight: 600;
+    color: var(--color-tinta);
+  }
+
+  // Una pareja etiqueta+control: la etiqueta encima, pegada al campo.
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: espaciado(8);
+  }
+
+  // Nombre y teléfono comparten fila mientras quepan dos parejas (@s2 de
+  // `fidelidad_contacto.feature`); por debajo se apilan solas, sin @media.
+  .filaDoble {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+    gap: espaciado(16);
   }
 
   input,
@@ -39,6 +61,7 @@
   textarea {
     padding-block: espaciado(8);
     min-height: calc(#{$altura-control-media} + #{espaciado(64)});
+    resize: vertical;
   }
 
   // La casilla y su etiqueta viven en la misma fila (mismo contenedor
@@ -50,6 +73,15 @@
     display: flex;
     align-items: center;
     gap: espaciado(8);
+
+    // El texto de consentimiento es letra pequeña y apagada, no un rótulo de
+    // campo: hereda de `label` el peso y el color y aquí se rebajan.
+    label {
+      font-size: paso-tipografico(-1);
+      font-weight: 400;
+      color: var(--color-texto-suave);
+      line-height: 1.5;
+    }
 
     // El enlace vive ahora inline dentro del texto de la etiqueta (@s25): sin
     // "inline-block" el min-width/min-height de "area-tactil-minima" no
@@ -65,23 +97,30 @@
     width: auto;
     min-width: $area-tactil-minima;
     min-height: $area-tactil-minima;
+    accent-color: var(--color-primario);
   }
 
   a {
     @include foco-visible;
   }
 
+  // El aviso de no envío es una nota al pie del formulario, no un párrafo de cuerpo.
+  p {
+    margin: 0;
+    font-size: paso-tipografico(-1);
+    color: var(--color-texto-suave);
+  }
+
+  // A todo el ancho de la tarjeta, como en el diseño aprobado (@s2).
   button {
     @include boton-primario;
-    align-self: flex-start;
-    margin-block-start: espaciado(8);
+    align-self: stretch;
   }
 }
 
 .confirmacion {
   @include tarjeta;
-  padding: espaciado(24);
-  margin-block-end: espaciado(32);
+  padding: espaciado(32);
 
   h2 {
     font-family: var(--fuente-titulares);

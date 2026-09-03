@@ -151,9 +151,15 @@ describe('@s17 la dirección se declara una vez y sus dos formas dicen lo mismo'
   })
 })
 
-describe('@s18 la fuente única no declara coordenadas geográficas porque el cliente no las publica', () => {
-  it('no hay coordenadas y la dirección postal sigue disponible para centrar el mapa', () => {
-    expect(datosNegocio.coordenadas).toBeUndefined()
+// ENMIENDA (03/09/2026, Decisión 63, `fidelidad_contacto` @s4; antes/después
+// literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`): el cliente
+// sigue sin publicar coordenadas, pero existe una fuente pública citada en
+// `docs/datos-galapavet.md` §2bis (nodo OpenStreetMap «Galapavet», osm id
+// 5644506906) y la fuente única las declara desde ahí para el pin del mapa
+// estático local. Literal escrito a mano, nunca importado de producción.
+describe('@s18 la fuente única declara las coordenadas del nodo público de OpenStreetMap citado en docs/datos-galapavet.md §2bis', () => {
+  it('latitud y longitud exactas del nodo, y la dirección postal sigue disponible para centrar el mapa', () => {
+    expect(datosNegocio.coordenadas).toEqual({ latitud: 40.5772872, longitud: -4.0004445 })
     expect(datosNegocio.direccion.unaLinea).toBe('Carretera de Torrelodones, 11, 28260 Galapagar, Madrid')
   })
 })

@@ -105,10 +105,21 @@
     padding-inline: espaciado(24);
   }
 
+  // El anillo global (`--color-foco`, mixin `foco-visible`) está afinado para
+  // los fondos claros de página: sobre el velo de `--color-tinta` de esta
+  // sección medía 1,98:1 (`accesibilidad` @s38/@s39, mínimo 3). El anillo
+  // pasa a `--color-sobre-primario`, la tinta ya validada del propio hero
+  // (mismo recurso que `BarraUrgencias.module.scss` sobre su rojo). Se
+  // declara en cada botón porque el `:focus-visible` del mixin lleva la
+  // especificidad de `a:first-child` / `a:not(:first-child)`.
   a:first-child {
     @include boton-primario;
     background-color: var(--color-primario);
     box-shadow: var(--sombra-elevada);
+
+    &:focus-visible {
+      outline-color: var(--color-sobre-primario);
+    }
   }
 
   a:not(:first-child) {
@@ -119,6 +130,10 @@
 
     @supports (backdrop-filter: blur(1px)) {
       backdrop-filter: blur(espaciado(8));
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-sobre-primario);
     }
   }
 }

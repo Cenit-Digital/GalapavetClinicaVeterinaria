@@ -14,8 +14,11 @@ test.describe('@s1 de fidelidad_servicios: jerarquía y catálogo real', () => {
   test('a 1440px muestra el cintillo, titular bicolor con localidad y texto que deriva el recuento publicado', async ({ page }) => {
     const seccion = await cargarServicios(page, ANCHO_ESCRITORIO_PX)
     await expect(seccion.locator('[data-servicios-cintillo]')).toHaveText('Lo que hacemos')
-    await expect(seccion.locator('h2')).toContainText('Servicios veterinarios')
-    await expect(seccion.locator('h2 em')).toContainText('Galapagar')
+    // Texto EXACTO (Decisión 65), no `toContainText`: con la aserción laxa
+    // sobrevivió el copy del prototipo «de principio a fin» dentro del <em>
+    // (reparación del 03/09/2026, oleada B).
+    await expect(seccion.locator('h2')).toHaveText('Servicios veterinarios en Galapagar')
+    await expect(seccion.locator('h2 em')).toHaveText('en Galapagar')
     await expect(seccion.locator('[data-servicios-apoyo]')).toContainText('5 servicios')
     await expect(seccion.locator('[data-servicios-apoyo]')).not.toContainText(/urgencias 24|peluquería|animales exóticos/i)
   })

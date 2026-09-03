@@ -1,41 +1,58 @@
 .selector {
-  position: fixed;
-  inset-block-end: espaciado(16);
-  inset-inline-end: espaciado(16);
+  --lado-selector: calc(#{$altura-control-media} + #{espaciado(4)});
   z-index: 20;
 
   > button {
     @include foco-visible;
-    @include boton-fantasma;
-    min-height: $altura-control-media;
+    position: fixed;
+    inset-block-end: espaciado(16);
+    inset-inline-end: espaciado(16);
+    display: grid;
+    place-items: center;
+    width: var(--lado-selector);
+    height: var(--lado-selector);
+    padding: espaciado(8);
+    border: none;
+    border-radius: $radio-circulo;
     background-color: var(--color-superficie-elevada);
     box-shadow: var(--sombra-reposo);
+    cursor: pointer;
   }
 }
 
 .panel {
   @include tarjeta;
-  position: absolute;
-  inset-block-end: calc(100% + #{espaciado(8)});
-  inset-inline-end: 0;
+  position: fixed;
+  inset-block-end: calc(#{espaciado(16)} + var(--lado-selector) + #{espaciado(8)});
+  inset-inline-end: espaciado(16);
   display: flex;
   flex-direction: column;
   gap: espaciado(4);
+  min-inline-size: 0;
   padding: espaciado(12);
-  min-width: 220px;
+  width: min(268px, calc(100vw - #{espaciado(32)}));
 
   &:hover {
     box-shadow: var(--sombra-reposo);
   }
 
+  legend {
+    padding-inline: espaciado(4);
+    color: var(--color-tinta);
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(1);
+    font-weight: 600;
+  }
+
   button {
     @include foco-visible;
     @include area-tactil-minima;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: espaciado(8);
     padding-inline: espaciado(12);
-    border: none;
+    border: $ancho-borde-fino solid transparent;
     border-radius: $radio-medio;
     background: none;
     color: inherit;
@@ -44,10 +61,23 @@
 
     &[aria-pressed='true'] {
       background-color: var(--color-acento-suave);
+      border-color: var(--color-acento-tinta);
       color: var(--color-acento-tinta);
       font-weight: 700;
     }
   }
+}
+
+.disco {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: $radio-circulo;
+  background: conic-gradient(
+    var(--color-primario) 0 33.333%,
+    var(--color-acento) 33.333% 66.666%,
+    var(--color-urgencia) 66.666% 100%
+  );
 }
 
 .muestra {

@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   align-items: center;
-  gap: clamp(24px, 4vw, 48px);
+  gap: clamp(espaciado(24), 4vw, espaciado(48));
   padding-block: var(--ritmo-seccion-compacto);
 }
 
@@ -22,15 +22,13 @@
   color: var(--color-tinta);
   font-family: var(--fuente-titulares);
   font-size: paso-tipografico(4);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.08;
 }
 
-.presentacion > p {
+.aviso {
   margin: espaciado(16) 0 espaciado(24);
   color: var(--color-texto-suave);
-  font-size: paso-tipografico(1);
+  max-width: 52ch;
+  font-size: paso-tipografico(0);
   line-height: 1.7;
 }
 
@@ -76,7 +74,6 @@
 .cuerpo span {
   @include pildora-etiqueta;
   align-self: flex-start;
-  font-size: paso-tipografico(-2);
 }
 
 .cuerpo h3 {
@@ -84,8 +81,6 @@
   color: var(--color-tinta);
   font-family: var(--fuente-titulares);
   font-size: paso-tipografico(1);
-  font-weight: 600;
-  line-height: 1.2;
 }
 
 .cuerpo p {

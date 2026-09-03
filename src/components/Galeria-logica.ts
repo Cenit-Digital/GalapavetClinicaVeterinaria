@@ -16,14 +16,14 @@ export function entradasValidas(catalogo: readonly EntradaGaleria[]): EntradaGal
 }
 
 /**
- * Separación entre tarjetas heredada de la INTERACCIÓN aprobada del
- * prototipo (18px, ver cabecera de `features/galeria.feature`). El propio
- * contrato deja dicho que este valor "se re-mide en la feature
- * tokens_marca" — a día de hoy esa feature declara la escala de espaciado
- * como PENDIENTE, así que sigue viviendo aquí como constante única hasta que
- * exista un token que la sustituya.
+ * Separación entre tarjetas: el `gap` REAL de la pista, `espaciado(16)` en
+ * `Galeria.module.scss`. El contrato (`features/galeria.feature`, cabecera,
+ * PENDIENTE 3) heredaba 18px del prototipo y dejaba dicho que el valor se
+ * re-mediría sobre la escala del repo: re-medido en `fidelidad_galeria` @s3
+ * (03/09/2026), porque el paso de desplazamiento tiene que ser "ancho de
+ * tarjeta + separación efectiva" y 18 no existe en la escala de 8.
  *
- * `Galeria-logica.test.ts` la ancla contra el literal `18` escrito a mano
+ * `Galeria-logica.test.ts` la ancla contra el literal `16` escrito a mano
  * (mismo patrón que `PUNTO_DE_CORTE_NAVEGACION_PX` en
  * `Cabecera-logica.test.ts:6`), para que un mutante que cambie este valor se
  * detecte: el resto de aserciones que la usan como parte del cálculo
@@ -33,7 +33,7 @@ export function entradasValidas(catalogo: readonly EntradaGaleria[]): EntradaGal
  * mockea con `fijarAnchoDePrimeraTarjeta`; eso es independiente de que esta
  * separación quede o no mordida.
  */
-export const SEPARACION_ENTRE_TARJETAS_PX = 18
+export const SEPARACION_ENTRE_TARJETAS_PX = 16
 
 export type Sentido = 'anterior' | 'siguiente'
 

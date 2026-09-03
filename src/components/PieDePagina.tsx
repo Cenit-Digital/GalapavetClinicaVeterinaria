@@ -31,7 +31,7 @@ function resolverDestinos(enlaces: readonly EnlacePieDePagina[]): readonly Enlac
 /** Una columna del pie: encabezado seguido de su lista de enlaces (@s2). */
 function ColumnaEnlaces({ titulo, enlaces }: ColumnaEnlacesProps): React.JSX.Element {
   return (
-    <div>
+    <div className={styles.columna} data-pie-columna>
       <h3>{titulo}</h3>
       <ul>
         {enlaces.map((enlace) => (
@@ -75,22 +75,27 @@ export function PieDePagina({
   return (
     <footer className={styles.pie}>
       <div className={styles.interior} data-contenedor-principal>
-        <div className={styles.marca}>
-          {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
-          <img src={hrefDeDestino(SRC_LOGO)} alt="" width={201} height={201} loading="lazy" decoding="async" />
-          <p>{datosNegocio.identidad.nombreComercial}</p>
-          <p>{datosNegocio.identidad.descriptorConLocalidad}</p>
+        <div className={styles.superior} data-pie-superior>
+          <div className={styles.marca} data-pie-marca>
+            <div className={styles.cabeceraMarca} data-pie-marca-cabecera>
+              {/* alt vacío: el nombre accesible ya lo aporta el texto contiguo (@s1). */}
+              <img src={hrefDeDestino(SRC_LOGO)} alt="" width={201} height={201} loading="lazy" decoding="async" />
+              <p>{datosNegocio.identidad.nombreComercial}</p>
+            </div>
+            <p>{datosNegocio.identidad.descriptorConLocalidad}</p>
+          </div>
+          <ColumnaEnlaces titulo="Clínica" enlaces={resolverDestinos(ENLACES_CLINICA)} />
+          <ColumnaEnlaces titulo="Contenido" enlaces={resolverDestinos(ENLACES_CONTENIDO)} />
+          <ColumnaEnlaces titulo="Contacto" enlaces={enlacesContacto} />
         </div>
-        <ColumnaEnlaces titulo="Clínica" enlaces={resolverDestinos(ENLACES_CLINICA)} />
-        <ColumnaEnlaces titulo="Contenido" enlaces={resolverDestinos(ENLACES_CONTENIDO)} />
-        <ColumnaEnlaces titulo="Contacto" enlaces={enlacesContacto} />
-        <div className={styles.barraInferior}>
+        <div className={styles.barraInferior} data-pie-barra-legal>
           <p>{copyright}</p>
           <ul aria-label="Enlaces legales">
             {enlacesLegales.map((enlace) => (
               <li key={enlace.destino}>
-                <a href={enlace.destino} target="_blank" rel="noopener noreferrer">
-                  {enlace.nombreAccesible}
+                <a href={enlace.destino} target="_blank" rel="noopener noreferrer" aria-label={enlace.nombreAccesible}>
+                  {enlace.nombreVisible}
+                  <span className={styles.soloLectores}> (se abre en una ventana nueva)</span>
                 </a>
               </li>
             ))}

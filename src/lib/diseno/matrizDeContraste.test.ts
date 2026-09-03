@@ -433,13 +433,34 @@ describe('@s9 el anillo de foco existe en las cinco variantes y se distingue de 
 })
 
 describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color', () => {
-  it('la matriz declara los veintiún pares (rol, fondo, uso) que el sistema pinta de verdad', () => {
-    expect(MATRIZ_DE_USO_DEL_SISTEMA).toHaveLength(21)
+  it('la matriz declara los veinticinco pares (rol, fondo, uso) que el sistema pinta de verdad', () => {
+    // 22 desde fidelidad_galeria (03/09/2026): los controles circulares de
+    // la galería llevan el borde de control sobre `--color-superficie`, par
+    // que ningún módulo pintaba antes (`Galeria.module.scss`, `.controles button`).
+    // 24 desde fidelidad_campanas (03/09/2026): la sección vive en la banda
+    // alterna de `Landing` y pinta `tinta` (h2) y `acento-tinta` (cintillo
+    // `eyebrow`) sobre `--color-fondo-alterno` (`CampanasPortada.module.scss`).
+    // 25 desde la reparación de la oleada B (03/09/2026): el anillo de foco
+    // de las acciones del hero pasa a `--color-sobre-primario` sobre el velo
+    // de `--color-tinta` (`Hero.module.scss`, `accesibilidad` @s38/@s39).
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toHaveLength(25)
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({
+      rol: 'borde-control',
+      fondo: 'superficie',
+      uso: 'componente de interfaz o borde de foco',
+    })
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({ rol: 'tinta', fondo: 'fondo-alterno', uso: 'texto normal' })
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({ rol: 'acento-tinta', fondo: 'fondo-alterno', uso: 'texto normal' })
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({
+      rol: 'sobre-primario',
+      fondo: 'tinta',
+      uso: 'componente de interfaz o borde de foco',
+    })
 
     // Ningún par repetido: una fila duplicada inflaría el recuento sin
     // comprobar nada nuevo.
     const claves = MATRIZ_DE_USO_DEL_SISTEMA.map((entrada) => `${entrada.rol} sobre ${entrada.fondo}`)
-    expect(new Set(claves).size).toBe(21)
+    expect(new Set(claves).size).toBe(25)
 
     // Todo rol citado existe en el inventario del sistema.
     for (const entrada of MATRIZ_DE_USO_DEL_SISTEMA) {
@@ -485,7 +506,7 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
     )
 
     expect(informe.variantesComprobadas).toBe(5)
-    expect(informe.parejasComprobadas).toBe(105)
+    expect(informe.parejasComprobadas).toBe(125) // 25 pares × 5 variantes
     expect(informe.suspensos).toEqual([])
     expect(informe.veredicto).toBe('aprobado')
   })
@@ -507,11 +528,12 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
       MATRIZ_DE_USO_DEL_SISTEMA,
     )
 
-    expect(informe.parejasComprobadas).toBe(105)
+    expect(informe.parejasComprobadas).toBe(125) // 25 pares × 5 variantes
     expect(informe.veredicto).toBe('suspenso')
     expect(informe.suspensos.map(({ variante, rol, fondo }) => `${variante}: ${rol} sobre ${fondo}`)).toEqual([
       'marca: borde-control sobre fondo',
       'marca: borde-control sobre fondo-alterno',
+      'marca: borde-control sobre superficie', // controles circulares de la galería (fidelidad_galeria)
       'marca: borde-control sobre superficie-elevada',
     ])
     for (const suspenso of informe.suspensos) {
@@ -702,5 +724,27 @@ describe('@s11 la matriz se reconcilia con el TEXTO REAL de las hojas de estilo'
 
     expect(informe.paresSinRepresentar).toEqual([])
     expect(informe.pasa).toBe(true)
+  })
+})
+
+// `fidelidad_contacto` @s3 (03/09/2026): la píldora del teléfono de urgencias
+// pinta la tinta de urgencia sobre `--color-sobre-primario`
+// (`InformacionContacto.module.scss`), y la franja `urgencia` sobre
+// `urgencia-suave` que citaba la matriz ya no se pinta en ningún sitio. La
+// matriz es "lo que se pinta de verdad" (@s11): entra la fila nueva y sale la
+// muerta.
+describe('la matriz refleja la píldora de urgencias de contacto y retira la franja suave que ya no se pinta', () => {
+  it('declara urgencia sobre sobre-primario como texto normal y no declara urgencia sobre urgencia-suave', () => {
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({ rol: 'urgencia', fondo: 'sobre-primario', uso: 'texto normal' })
+    expect(MATRIZ_DE_USO_DEL_SISTEMA.some((entrada) => entrada.fondo === 'urgencia-suave')).toBe(false)
+  })
+
+  it('esa fila aprueba 4.5 en las cinco variantes', () => {
+    const fila = MATRIZ_DE_USO_DEL_SISTEMA.filter((entrada) => entrada.rol === 'urgencia' && entrada.fondo === 'sobre-primario')
+    const informe = ejecutarMatrizDeContrasteDeVariantes(TEXTO_TOKENS, VARIANTES_REDISENO, fila)
+
+    expect(informe.parejasComprobadas).toBe(5)
+    expect(informe.suspensos).toEqual([])
+    expect(informe.veredicto).toBe('aprobado')
   })
 })

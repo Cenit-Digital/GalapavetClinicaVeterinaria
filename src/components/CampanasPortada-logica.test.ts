@@ -3,9 +3,19 @@ import type { CampanaDemo } from '../data/campanas'
 import { construirModeloCampanas, detalleDeCampana } from './CampanasPortada-logica'
 
 describe('@s2 de fidelidad_campanas: detalle honesto de una tarjeta', () => {
-  it('solo compone la línea de detalle a partir del bloque publicado y omite el dato ausente', () => {
+  it('compone la línea exacta a partir del bloque publicado', () => {
     expect(detalleDeCampana('Medicina general')).toBe('Bloque de servicios: Medicina general')
+  })
+
+  it('omite el detalle si el bloque está ausente', () => {
     expect(detalleDeCampana(undefined)).toBeNull()
+  })
+
+  it('omite el detalle si el bloque es una cadena vacía', () => {
+    expect(detalleDeCampana('')).toBeNull()
+  })
+
+  it('omite el detalle si el bloque contiene solo espacios', () => {
     expect(detalleDeCampana('   ')).toBeNull()
   })
 })

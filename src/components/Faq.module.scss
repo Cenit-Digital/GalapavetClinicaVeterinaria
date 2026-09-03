@@ -16,10 +16,20 @@
     @include eyebrow;
   }
 
+  .cabecera {
+    margin-block-end: espaciado(24);
+    text-align: center;
+  }
+
   h2 {
     font-family: var(--fuente-titulares);
     font-size: paso-tipografico(4);
-    margin-block-end: espaciado(24);
+    margin: 0;
+  }
+
+  .lista {
+    border-block-start: $ancho-borde-fino solid var(--color-borde);
+    text-align: start;
   }
 
   button {
@@ -32,8 +42,9 @@
     text-align: start;
     gap: espaciado(16);
     padding-block: espaciado(16);
+    font-family: var(--fuente-titulares);
     font-size: paso-tipografico(1);
-    font-weight: 600;
+    font-weight: 500;
     border: none;
     border-block-end: $ancho-borde-fino solid var(--color-borde);
     background: none;
@@ -50,6 +61,29 @@
     &:hover {
       padding-inline-start: espaciado(8);
     }
+
+    &::after {
+      content: '+';
+      display: grid;
+      flex: 0 0 30px;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: $radio-circulo;
+      background-color: var(--color-acento-suave);
+      color: var(--color-acento-tinta);
+      font-family: var(--fuente-titulares);
+      font-size: paso-tipografico(1);
+      font-weight: 700;
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition: transform 150ms ease-out;
+      }
+    }
+
+    &[aria-expanded='true']::after {
+      transform: rotate(45deg);
+    }
   }
 
   section {
@@ -57,9 +91,19 @@
     padding-block: espaciado(16);
     color: var(--color-texto-suave);
     line-height: 1.7;
+    text-align: start;
   }
 
   a {
     @include foco-visible;
   }
+}
+
+// `Landing.module.scss` aplica un máximo de 1220 px a cualquier hijo directo
+// de su banda. Esta especificidad adicional hace efectivo el ancho propio de
+// FAQ (860 px) y sus márgenes simétricos en la banda `#faq`.
+:global(#faq) > .faq {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
 }

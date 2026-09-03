@@ -89,7 +89,7 @@ export function Servicios({ catalogo = SERVICIOS }: ServiciosProps = {}): React.
           Lo que hacemos
         </p>
         <h2>
-          Servicios veterinarios <em>{`de principio a fin en ${localidad}`}</em>
+          Servicios veterinarios <em>{`en ${localidad}`}</em>
         </h2>
         <p className={styles.apoyo} data-servicios-apoyo>
           {`Nuestro catálogo reúne ${catalogo.length} servicios veterinarios publicados en ${localidad}. Abre cada tarjeta para ver qué incluye.`}

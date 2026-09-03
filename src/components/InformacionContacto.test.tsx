@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { InformacionContacto } from './InformacionContacto'
+import { CabeceraDeContacto, InformacionContacto } from './InformacionContacto'
 
 /** Centraliza el render de `InformacionContacto` bajo test. */
 function renderizarInformacionContacto(
@@ -88,8 +88,9 @@ describe('@s5 el teléfono de urgencias aparece con el rótulo real de fuera de 
 
     const enlaces = within(grupo).getAllByRole('link')
     expect(enlaces).toHaveLength(1)
-    expect(enlaces[0]).toHaveAccessibleName('91 851 13 93')
+    expect(enlaces[0]).toHaveAccessibleName('Llamar ahora')
     expect(enlaces[0]).toHaveAttribute('href', 'tel:+34918511393')
+    expect(within(grupo).getByText('91 851 13 93')).toBeVisible()
 
     expect(grupo.textContent).not.toContain('24')
     expect(grupo.textContent).not.toContain('todos los días')
@@ -97,11 +98,10 @@ describe('@s5 el teléfono de urgencias aparece con el rótulo real de fuera de 
 })
 
 describe('@s6 no existe ningún bloque ni reclamo que anuncie urgencias 24 h', () => {
-  it('no hay "Llamar ahora", ni "24 h/24h/24 horas", ni el guardia falso, y el teléfono de urgencias aparece 1 sola vez', () => {
+  it('hay una única acción «Llamar ahora», sin "24 h/24h/24 horas" ni guardia falso, y el teléfono aparece 1 sola vez', () => {
     const { container } = renderizarInformacionContacto()
 
-    expect(screen.queryByText('Llamar ahora')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Llamar ahora' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Llamar ahora' })).toHaveAttribute('href', 'tel:+34918511393')
 
     const texto = container.textContent ?? ''
     expect(texto).not.toContain('24 h')
@@ -135,67 +135,80 @@ describe('@s7 no existe bloque de email porque el cliente no publica ninguna dir
   })
 })
 
-describe('@s8 el mapa se muestra con el título accesible del nombre real y encabeza el panel', () => {
-  it('hay exactamente 1 marco embebido, con el título exacto, y aparece antes que los grupos de datos', () => {
+// ---------------------------------------------------------------------------
+// ENMIENDA (03/09/2026, Decisión 63, `fidelidad_contacto` @s4; antes/después
+// literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`): @s8, @s9,
+// @s10 y @s14 de `informacion_contacto.feature` estaban escritos para un
+// `<iframe>` de un proveedor externo. El mapa pasa a ser una IMAGEN LOCAL
+// (`public/img/mapa/galapagar.webp`, `docs/mapa-estatico.md`) con el pin en
+// CSS y la atribución visible de OpenStreetMap: cero peticiones a terceros.
+// ---------------------------------------------------------------------------
+const ALT_DEL_MAPA = 'Mapa con la ubicación de Galapavet en Carretera de Torrelodones, 11, 28260 Galapagar, Madrid'
+const RUTA_DEL_MAPA = '/img/mapa/galapagar.webp'
+
+describe('@s8 el mapa es una imagen local con el nombre accesible derivado del nombre y la dirección reales, y encabeza el panel', () => {
+  it('hay exactamente 1 imagen de mapa y ningún marco embebido; su alt es el derivado, con dimensiones declaradas, y va antes que los grupos', () => {
     renderizarInformacionContacto()
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
-    const marcos = region.querySelectorAll('iframe')
-    expect(marcos).toHaveLength(1)
+    expect(region.querySelectorAll('iframe')).toHaveLength(0)
+    const imagenes = region.querySelectorAll('img')
+    expect(imagenes).toHaveLength(1)
 
-    const marco = marcos[0] as HTMLIFrameElement
-    expect(marco.title).toBe('Mapa de Galapavet')
-    expect(marco.title).not.toContain('La Sierra')
-    expect(marco.title).not.toContain('Miraflores')
+    const mapa = imagenes[0] as HTMLImageElement
+    expect(mapa.getAttribute('alt')).toBe(ALT_DEL_MAPA)
+    expect(mapa.getAttribute('src')).toBe(RUTA_DEL_MAPA)
+    expect(mapa.getAttribute('width')).toBe('1024')
+    expect(mapa.getAttribute('height')).toBe('520')
+    expect(mapa.getAttribute('decoding')).toBe('async')
+    expect(mapa.getAttribute('alt')).not.toContain('La Sierra')
+    expect(mapa.getAttribute('alt')).not.toContain('Miraflores')
 
     const primerGrupo = screen.getByRole('group', { name: 'Dirección' })
-    expect(marco.compareDocumentPosition(primerGrupo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(mapa.compareDocumentPosition(primerGrupo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
-})
 
-const AVISO_MAPA_TERCEROS =
-  'El mapa lo sirve un proveedor externo. Es la única conexión con un tercero de esta web.'
-
-// Decisión 11 (project-spec.md): el origen real de una hoja de estilo o
-// tipografía no es medible con `test.css: false` en `vite.config.ts`. Esa
-// cláusula de @s9 se verifica con navegador real, fuera de este gate.
-describe('@s9 el mapa es la única petición a un tercero de la página y se declara como tal', () => {
-  it('ninguna imagen ni script de la región declara un origen ajeno, y el aviso existe como texto real, sin aria-hidden ni hidden', () => {
+  it('el pin es decorativo y se coloca con los porcentajes derivados de las coordenadas de la fuente única (43,53 % / 50,06 %)', () => {
     renderizarInformacionContacto()
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
-    for (const elemento of region.querySelectorAll('img, script')) {
-      const src = elemento.getAttribute('src') ?? ''
-      expect(src).not.toMatch(/^https?:\/\//)
-    }
-
-    const marco = region.querySelector('iframe') as HTMLIFrameElement
-    const idDescripcion = marco.getAttribute('aria-describedby')
-    expect(idDescripcion).toBeTruthy()
-
-    const aviso = document.getElementById(idDescripcion ?? '')
-    expect(aviso).not.toBeNull()
-    expect(aviso).toBe(screen.getByText(AVISO_MAPA_TERCEROS))
-    expect(region.contains(aviso)).toBe(true)
-    expect(aviso?.getAttribute('aria-hidden')).not.toBe('true')
-    expect(aviso?.hasAttribute('hidden')).toBe(false)
+    const mapa = region.querySelector('img') as HTMLImageElement
+    const pin = mapa.parentElement?.querySelector('[aria-hidden="true"]') as HTMLElement | null
+    expect(pin).not.toBeNull()
+    expect(pin?.textContent).toBe('')
+    expect(pin?.style.left).toBe('43.53%')
+    expect(pin?.style.top).toBe('50.06%')
   })
 })
 
-// Decisión 11 (project-spec.md): que no se haya solicitado nada al proveedor
-// mientras el marco sigue fuera de la ventana visible no es medible en jsdom
-// (no dispara peticiones de red reales; `IntersectionObserver` es un
-// observador inerte en `src/test/setup.ts`). Esa cláusula de @s10 se
-// verifica con navegador real, fuera de este gate. Aquí solo se cubre lo
-// medible: el atributo de carga diferida declarado en el marco.
-describe('@s10 el mapa no se solicita al tercero hasta que hace falta', () => {
-  it('el marco del mapa declara carga diferida', () => {
+const AVISO_MAPA_TERCEROS_RETIRADO =
+  'El mapa lo sirve un proveedor externo. Es la única conexión con un tercero de esta web.'
+
+describe('@s9 la sección no declara ningún origen ajeno y atribuye el mapa a OpenStreetMap de forma visible', () => {
+  it('ningún elemento con "src" de la región apunta fuera del propio sitio; la atribución existe como texto real, con enlace a la licencia, sin aria-hidden ni hidden', () => {
     renderizarInformacionContacto()
 
-    const marco = screen
-      .getByRole('region', { name: 'Información de contacto' })
-      .querySelector('iframe') as HTMLIFrameElement
-    expect(marco.getAttribute('loading')).toBe('lazy')
+    const region = screen.getByRole('region', { name: 'Información de contacto' })
+    for (const elemento of region.querySelectorAll('[src]')) {
+      expect(elemento.getAttribute('src') ?? '').not.toMatch(/^(https?:)?\/\//)
+    }
+    expect(region.querySelectorAll('iframe, script')).toHaveLength(0)
+    expect(screen.queryByText(AVISO_MAPA_TERCEROS_RETIRADO)).not.toBeInTheDocument()
+
+    const atribucion = within(region).getByText('© OpenStreetMap contributors')
+    expect(atribucion.getAttribute('aria-hidden')).not.toBe('true')
+    expect(atribucion.closest('[hidden]')).toBeNull()
+    const enlaceLicencia = within(region).getByRole('link', { name: '© OpenStreetMap contributors' })
+    expect(enlaceLicencia).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright')
+  })
+})
+
+describe('@s10 la imagen del mapa no se descarga hasta que hace falta', () => {
+  it('la imagen del mapa declara carga diferida', () => {
+    renderizarInformacionContacto()
+
+    const mapa = screen.getByRole('region', { name: 'Información de contacto' }).querySelector('img') as HTMLImageElement
+    expect(mapa.getAttribute('loading')).toBe('lazy')
   })
 })
 
@@ -263,14 +276,15 @@ describe('@s13 un horario sin ningún tramo hace desaparecer el bloque de horari
   })
 })
 
-describe('@s14 sin dirección no se muestra el mapa, porque el mapa se centra por la dirección postal', () => {
-  it('sin dirección postal, no hay grupo "Dirección" ni ningún marco embebido, y no queda ninguna petición externa', () => {
+describe('@s14 sin dirección no se muestra el mapa, porque el mapa describe y sitúa la dirección postal', () => {
+  it('sin dirección postal, no hay grupo "Dirección", ni imagen de mapa, ni marco embebido, ni atribución, y no queda ninguna petición externa', () => {
     renderizarInformacionContacto({ direccion: null })
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
 
     expect(within(region).queryByRole('group', { name: 'Dirección' })).not.toBeInTheDocument()
-    expect(region.querySelectorAll('iframe')).toHaveLength(0)
+    expect(region.querySelectorAll('iframe, img')).toHaveLength(0)
+    expect(within(region).queryByText(/OpenStreetMap/)).not.toBeInTheDocument()
     for (const elemento of region.querySelectorAll('[src]')) {
       expect(elemento.getAttribute('src') ?? '').not.toMatch(/^https?:\/\//)
     }
@@ -408,20 +422,92 @@ describe('@s36 la sección de contacto reparte su contenido en la tarjeta de dat
     expect(cuerpoLegendDeDatos).toContain('@include eyebrow')
   })
 
-  it('la tarjeta de urgencias lleva el color de urgencia como fondo suave y como acento de borde', () => {
+  // ENMIENDA (03/09/2026, `fidelidad_contacto` @s3, `progress/fidelidad/enmiendas_fidelidad_contacto.md`):
+  // @s36 de `rediseno_visual.feature` pide "una tarjeta con el color de
+  // urgencia"; estas dos aserciones habían sobre-especificado ese color como
+  // fondo SUAVE + franja lateral y el teléfono como "boton-fantasma". El
+  // diseño aprobado pinta la banda roja sólida (fondo `--color-urgencia`,
+  // tinta `--color-sobre-primario`, sin borde ni sombra de tarjeta) y el
+  // teléfono como píldora blanca con la tinta de urgencia.
+  it('la tarjeta de urgencias es una banda roja sólida: fondo de urgencia, tinta sobre-primario, sin franja lateral ni patrón tarjeta', () => {
     const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
 
-    expect(cuerpoTarjetaUrgencia).toContain('background-color: var(--color-urgencia-suave)')
-    expect(cuerpoTarjetaUrgencia).toMatch(/border-inline-start:.*var\(--color-urgencia\)/)
+    expect(cuerpoTarjetaUrgencia).toContain('background-color: var(--color-urgencia);')
+    expect(cuerpoTarjetaUrgencia).toContain('color: var(--color-sobre-primario);')
+    expect(cuerpoTarjetaUrgencia).not.toContain('urgencia-suave')
+    expect(cuerpoTarjetaUrgencia).not.toContain('border-inline-start')
+    expect(cuerpoTarjetaUrgencia).not.toContain('@include tarjeta')
   })
 
-  it('el teléfono de la tarjeta de urgencias se maqueta como un botón real ("boton-fantasma"), no como un enlace pelado', () => {
+  // Ronda de reparación 1 (judge, 03/09/2026): la píldora ya no es el número.
+  // Anatomía del prototipo (`delta_contacto.md`, contacto-4): rótulo y número
+  // apilados a la izquierda, píldora «Llamar ahora» pequeña a la derecha, en una
+  // sola fila. El `fieldset` es una rejilla de dos columnas (1fr auto): rótulo y
+  // número en la primera (filas 1 y 2), la píldora en la segunda abarcando ambas.
+  it('la banda apila rótulo y número a la izquierda (rejilla 1fr auto) y el número es el elemento grande: titulares, paso 2', () => {
+    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
+    const cuerpoFieldset = cuerpoDelBloque(cuerpoTarjetaUrgencia, 'fieldset {')
+    const cuerpoLegend = cuerpoDelBloque(cuerpoTarjetaUrgencia, 'legend {')
+    const cuerpoNumero = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] p {")
+
+    expect(cuerpoFieldset).toContain('display: grid;')
+    expect(cuerpoFieldset).toMatch(/grid-template-columns:\s*1fr auto;/)
+    expect(cuerpoLegend).toMatch(/grid-column:\s*1;/)
+    expect(cuerpoLegend).toMatch(/grid-row:\s*1;/)
+    expect(cuerpoNumero).toMatch(/grid-column:\s*1;/)
+    expect(cuerpoNumero).toMatch(/grid-row:\s*2;/)
+    expect(cuerpoNumero).toContain('font-family: var(--fuente-titulares);')
+    expect(cuerpoNumero).toContain('font-size: paso-tipografico(2);')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('accionesUrgencia')
+  })
+
+  it('la píldora «Llamar ahora» es blanca, pequeña y en negrita, con altura de control media, a la derecha abarcando las dos filas', () => {
     const cuerpoEnlaceDeUrgencia = cuerpoDelBloque(
       TEXTO_INFORMACION_CONTACTO_SCSS,
       "[data-tarjeta-de='urgencia'] a {",
     )
 
-    expect(cuerpoEnlaceDeUrgencia).toContain('@include boton-fantasma')
+    expect(cuerpoEnlaceDeUrgencia).toContain('background-color: var(--color-sobre-primario);')
+    expect(cuerpoEnlaceDeUrgencia).toContain('color: var(--color-urgencia);')
+    expect(cuerpoEnlaceDeUrgencia).toContain('border-radius: $radio-completo;')
+    expect(cuerpoEnlaceDeUrgencia).toContain('min-height: $altura-control-media;')
+    expect(cuerpoEnlaceDeUrgencia).toContain('font-size: paso-tipografico(0);')
+    expect(cuerpoEnlaceDeUrgencia).toContain('font-weight: 700;')
+    expect(cuerpoEnlaceDeUrgencia).not.toContain('--fuente-titulares')
+    expect(cuerpoEnlaceDeUrgencia).toMatch(/grid-column:\s*2;/)
+    expect(cuerpoEnlaceDeUrgencia).toMatch(/grid-row:\s*1 \/ span 2;/)
+    expect(cuerpoEnlaceDeUrgencia).not.toContain('boton-fantasma')
+  })
+
+  // El prototipo pliega la banda con `flex-wrap` cuando no caben rótulo y
+  // píldora en una fila. Aquí el plegado depende del ancho de la PROPIA banda
+  // (consulta de contenedor), no de la ventana: la banda es estrecha tanto a
+  // 320 px como en las columnas intermedias del escritorio.
+  it('la banda estrecha se pliega por consulta de contenedor: una columna y la píldora en la tercera fila, sin @media de anchura', () => {
+    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
+    const cuerpoPlegado = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '@container (max-width: 28rem) {')
+
+    expect(cuerpoTarjetaUrgencia).toContain('container-type: inline-size;')
+    expect(cuerpoDelBloque(cuerpoPlegado, 'fieldset {')).toMatch(/grid-template-columns:\s*1fr;/)
+    expect(cuerpoDelBloque(cuerpoPlegado, 'a {')).toMatch(/grid-row:\s*3;/)
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('@media (max-width')
+  })
+
+  it('el rótulo de urgencias lleva un punto decorativo pulsante que no cambia su texto, y su animación solo corre sin "reduce"', () => {
+    renderizarInformacionContacto()
+
+    const grupo = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
+    const rotulo = within(grupo).getByText('Urgencias fuera de horario')
+    expect(rotulo.tagName).toBe('LEGEND')
+    const punto = rotulo.querySelector('[aria-hidden="true"]')
+    expect(punto).not.toBeNull()
+    expect(punto?.textContent).toBe('')
+    expect(rotulo.textContent).toBe('Urgencias fuera de horario')
+
+    const cuerpoPulso = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '.pulso {')
+    const cuerpoSinReduce = cuerpoDelBloque(cuerpoPulso, '@media (prefers-reduced-motion: no-preference) {')
+    expect(cuerpoSinReduce).toMatch(/animation:\s*pulso\b/)
+    expect(cuerpoPulso.replace(cuerpoSinReduce, '')).not.toContain('animation')
   })
 
   it('la tarjeta de urgencias sube visualmente por encima de la de datos con "order", sin reordenar el DOM ya aprobado', () => {
@@ -435,5 +521,85 @@ describe('@s36 la sección de contacto reparte su contenido en la tarjeta de dat
 
     expect(cuerpoContacto).toContain('display: grid')
     expect(cuerpoContacto).toMatch(/grid-template-columns:\s*repeat\(auto-fit/)
+
+    // Ronda de reparación 1 (judge, menor 6): el mínimo de columna es "la
+    // mitad del ancho menos medio hueco"; hueco y mínimo comparten la variable
+    // `--hueco-contacto` en vez de retipear a mano la mitad del máximo del clamp.
+    expect(cuerpoContacto).toMatch(/--hueco-contacto:\s*clamp\(/)
+    expect(cuerpoContacto).toMatch(/gap:\s*var\(--hueco-contacto\)/)
+    expect(cuerpoContacto).toContain('calc((100% - var(--hueco-contacto)) / 2)')
+    expect(cuerpoContacto).not.toContain('17px')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// `features/fidelidad_contacto.feature` (34): la cabecera de la sección de
+// contacto. Vive en este fichero (y no en un módulo nuevo) para no ampliar el
+// inventario de 18 módulos con estilos (`inventarioModulos.ts`).
+// ---------------------------------------------------------------------------
+describe('@s1 de fidelidad_contacto: la cabecera de la sección', () => {
+  it('el cintillo "Contacto" es un párrafo, no un encabezado ni un landmark (ensamblaje_landing @s6)', () => {
+    render(<CabeceraDeContacto />)
+
+    const cintillo = screen.getByText('Contacto')
+    expect(cintillo.tagName).toBe('P')
+    expect(screen.queryByRole('heading', { name: 'Contacto' })).not.toBeInTheDocument()
+    expect(document.querySelector('[aria-label="Contacto"]')).toBeNull()
+  })
+
+  it('el titular es un h2 derivado de la localidad real, y el párrafo no promete nada ni menciona urgencias', () => {
+    const { container } = render(<CabeceraDeContacto />)
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Estamos en Galapagar')
+
+    const texto = container.textContent ?? ''
+    expect(texto.toLowerCase()).not.toContain('urgencias')
+    for (const promesa of ['24 h', 'mismo día', 'guardia', 'paseo de casa', 'te contestamos']) {
+      expect(texto).not.toContain(promesa)
+    }
+    const parrafos = container.querySelectorAll('p')
+    expect(parrafos).toHaveLength(2)
+    expect(parrafos[1]?.textContent?.length ?? 0).toBeGreaterThan(0)
+  })
+})
+
+describe('@s4 de fidelidad_contacto: la tarjeta de datos usa un mapa local a sangre y bloques separados', () => {
+  it('el mapa va a sangre dentro de la tarjeta (sin relleno de tarjeta, sin borde ni radio propios) y los bloques forman una rejilla auto-fit con relleno', () => {
+    const cuerpoTarjetaDatos = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='datos'] {")
+    expect(cuerpoTarjetaDatos).toContain('@include tarjeta')
+    expect(cuerpoTarjetaDatos).toContain('padding: 0;')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('iframe')
+
+    const cuerpoMapa = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '.mapa {')
+    expect(cuerpoMapa).toContain('position: relative;')
+    const cuerpoImagen = cuerpoDelBloque(cuerpoMapa, 'img {')
+    expect(cuerpoImagen).toContain('@include hueco-de-imagen(1024, 520)')
+    expect(cuerpoImagen).toContain('border: 0;')
+    expect(cuerpoImagen).toContain('border-radius: 0;')
+
+    const cuerpoBloques = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '.bloques {')
+    expect(cuerpoBloques).toContain('display: grid;')
+    expect(cuerpoBloques).toMatch(/grid-template-columns:\s*repeat\(auto-fit/)
+    expect(cuerpoBloques).toMatch(/padding:\s*espaciado\(24\)/)
+  })
+
+  it('los tres bloques cuelgan del mismo envoltorio de rejilla, y los dos teléfonos van uno por línea (fieldset en columna, sin "space-between" ni bordes en el horario)', () => {
+    renderizarInformacionContacto()
+
+    const region = screen.getByRole('region', { name: 'Información de contacto' })
+    const direccion = within(region).getByRole('group', { name: 'Dirección' })
+    const telefonos = within(region).getByRole('group', { name: 'Teléfonos' })
+    const horario = within(region).getByRole('group', { name: 'Horario' })
+    expect(direccion.parentElement).toBe(telefonos.parentElement)
+    expect(telefonos.parentElement).toBe(horario.parentElement)
+    expect(direccion.parentElement).not.toBe(region)
+
+    const cuerpoBloques = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '.bloques {')
+    const cuerpoFieldset = cuerpoDelBloque(cuerpoBloques, 'fieldset {')
+    expect(cuerpoFieldset).toContain('display: flex;')
+    expect(cuerpoFieldset).toContain('flex-direction: column;')
+    const cuerpoDl = cuerpoDelBloque(cuerpoBloques, 'dl {')
+    expect(cuerpoDl).not.toContain('space-between')
+    expect(cuerpoDl).not.toContain('border-block-end')
   })
 })

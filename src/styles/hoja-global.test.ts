@@ -322,3 +322,49 @@ describe('(paso 5 del plan) el anillo de foco global usa el token de color y nun
     expect(hojaGlobal()).not.toMatch(/outline:\s*(none|0)\s*;/)
   })
 })
+
+/**
+ * El cuerpo (sin sus llaves) del bloque Sass ANIDADO cuya cabecera literal es
+ * `encabezado`, casando llaves: `extraerReglas` trocea reglas planas y no
+ * entra en la anidación de `.salto-contenido { &:focus::before { … } }`.
+ */
+function cuerpoDelBloqueAnidado(texto: string, encabezado: string): string {
+  const indiceDeCabecera = texto.indexOf(encabezado)
+  if (indiceDeCabecera === -1) {
+    throw new Error(`no se encontró la cabecera "${encabezado}" en el texto de la hoja global`)
+  }
+  const apertura = indiceDeCabecera + encabezado.length - 1
+  let profundidad = 1
+  let indice = apertura + 1
+  while (profundidad > 0 && indice < texto.length) {
+    if (texto[indice] === '{') profundidad++
+    if (texto[indice] === '}') profundidad--
+    indice++
+  }
+  return texto.slice(apertura + 1, indice - 1)
+}
+
+/**
+ * Reparación del 03/09/2026 (oleada B, `progress/tdd_regresiones_27_28_29.md`):
+ * `accesibilidad.spec.ts` @s39 midió el anillo del enlace de salto a 1,98:1 en
+ * la portada. El enlace aterriza, por SC 2.4.11, justo debajo de la cabecera
+ * fija, y desde `fidelidad_hero` eso es el velo oscuro de `--color-tinta`; en
+ * las subpáginas es `--color-fondo`. Ningún color de anillo sirve a los dos,
+ * así que el enlace enfocado pinta un halo opaco de `--color-fondo` bajo el
+ * anillo (indicador a dos tonos): el par foco/fondo ya lo valida la matriz de
+ * uso en las cinco variantes. El halo solo existe con foco: oculto, el enlace
+ * asoma exactamente su altura por encima del área visible y un halo
+ * permanente dejaría una franja visible sobre la barra de urgencias.
+ */
+describe('@s39 de accesibilidad: el enlace de salto enfocado lleva un halo opaco de "--color-fondo" bajo su anillo', () => {
+  it('".salto-contenido" declara "&:focus::before" absoluto, por detrás, con "--color-fondo" y un sangrado negativo de la escala', () => {
+    const enlace = cuerpoDelBloqueAnidado(hojaGlobal(), '.salto-contenido {')
+    const halo = cuerpoDelBloqueAnidado(enlace, '&:focus::before {')
+
+    expect(halo).toMatch(/content:\s*'';/)
+    expect(halo).toContain('position: absolute;')
+    expect(halo).toContain('z-index: -1;')
+    expect(halo).toContain('background-color: var(--color-fondo);')
+    expect(halo).toMatch(/inset:\s*-#\{espaciado\(8\)\};/)
+  })
+})

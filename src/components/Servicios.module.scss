@@ -55,17 +55,14 @@
   }
 }
 
+// Solo posiciona la píldora superpuesta: el hueco (8/5, fondo de reserva
+// `--color-fondo-alterno`, `imagenes` @s31) lo reserva el propio `<img>` con
+// el mixin compartido, como en Galería, Campañas y Contacto.
 .imagen {
   position: relative;
-  aspect-ratio: 8 / 5;
-  overflow: hidden;
-  background-color: var(--color-fondo-alterno);
 
   img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    @include hueco-de-imagen(8, 5);
   }
 }
 
@@ -90,13 +87,14 @@
   padding: espaciado(24) espaciado(24) espaciado(16);
 }
 
+// Sin `line-height` propio: hereda el 1,08 de titular que `global.scss` da a
+// h1..h6 (`geometria-escalas` @s22); el 1,15 del prototipo no se porta.
 .cuerpo h3 {
   margin: 0;
   color: var(--color-tinta);
   font-family: var(--fuente-titulares);
   font-size: paso-tipografico(2);
   font-weight: 600;
-  line-height: 1.15;
 }
 
 .resumen {

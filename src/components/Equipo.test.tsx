@@ -21,9 +21,18 @@ const LISTADO_TRES_CON_FORMACION: readonly Profesional[] = [
   { nombre: 'Ciro Tres', rol: 'Veterinario', formacion: 'Formación de Ciro Tres' },
 ]
 
-/** Localiza la sección «Equipo» a partir de su encabezado de nivel 2. */
+/**
+ * Localiza la sección «Equipo» a partir de su encabezado de nivel 2.
+ *
+ * ENMIENDA de `equipo.feature` @s1/@s10 (03/09/2026, `progress/fidelidad/enmiendas_equipo.md`):
+ * el prototipo pone el cintillo «Equipo» y el h2 «Nuestro equipo» (VLS:212-213);
+ * la web los tenía al revés. El h2 pasa a «Nuestro equipo» y la REGIÓN conserva
+ * el nombre accesible «Equipo» (ancla `#equipo` del menú y @s1 «existe una
+ * región Equipo» siguen valiendo). Los literales de @s1, @s10 y @s33 de este
+ * fichero cambian solo en esa palabra.
+ */
 function obtenerSeccionEquipo(): HTMLElement {
-  const encabezado = screen.getByRole('heading', { level: 2, name: 'Equipo' })
+  const encabezado = screen.getByRole('heading', { level: 2, name: 'Nuestro equipo' })
   const seccion = encabezado.closest('section')
   if (seccion === null) {
     throw new Error('No se encontró el elemento <section> que envuelve el encabezado "Equipo"')
@@ -62,7 +71,7 @@ function textoAccesibleDe(elemento: HTMLElement): string {
 }
 
 describe('@s1 se muestran exactamente los dos profesionales publicados, con su nombre y su rol', () => {
-  it('hay un h2 "Equipo", una región accesible "Equipo" y, dentro, exactamente 2 h3 con sus roles', () => {
+  it('hay un h2 "Nuestro equipo", una región accesible "Equipo" y, dentro, exactamente 2 h3 con sus roles', () => {
     renderizarEquipo()
 
     const seccion = obtenerSeccionEquipo()
@@ -213,10 +222,10 @@ describe('@s9 un profesional sin nombre no se renderiza y no arrastra al resto',
 })
 
 describe('@s10 con el listado de profesionales vacío la sección no se renderiza', () => {
-  it('no hay ningún h2 "Equipo" ni ninguna región "Equipo"', () => {
+  it('no hay ningún h2 "Nuestro equipo" ni ninguna región "Equipo"', () => {
     renderizarEquipo({ listado: [] })
 
-    expect(screen.queryByRole('heading', { level: 2, name: 'Equipo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: 'Nuestro equipo' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Equipo' })).not.toBeInTheDocument()
   })
 })
@@ -299,13 +308,13 @@ describe('@s32 cada tarjeta del equipo lleva un avatar de iniciales, nunca una f
 
 describe('@s33 la sección de equipo abre con su cintillo en versalitas', () => {
   /** El texto tecleado a mano del cintillo — nunca importado de `Equipo.tsx`. */
-  const ROTULO_CINTILLO = 'Nuestro equipo'
+  const ROTULO_CINTILLO = 'Equipo'
 
-  it('hay un <p> con el cintillo, antes del <h2> "Equipo", y no es un encabezado', () => {
+  it('hay un <p> con el cintillo, antes del <h2> "Nuestro equipo", y no es un encabezado', () => {
     renderizarEquipo()
 
     const seccion = obtenerSeccionEquipo()
-    const encabezado = screen.getByRole('heading', { level: 2, name: 'Equipo' })
+    const encabezado = screen.getByRole('heading', { level: 2, name: 'Nuestro equipo' })
     const cintillo = within(seccion).getByText(ROTULO_CINTILLO)
 
     expect(cintillo.tagName).toBe('P')
@@ -330,5 +339,174 @@ describe('@s33 la sección de equipo abre con su cintillo en versalitas', () => 
     // Hero, `Hero.module.scss:58`): el cintillo hereda el "--color-acento-tinta"
     // que ya trae el mixin, sin sobrescribirlo.
     expect(bloqueEyebrow).not.toMatch(/(?<![a-z-])color\s*:/)
+  })
+})
+
+/**
+ * `features/fidelidad_equipo.feature` (feature 31, 03/09/2026). Cada
+ * `describe` lleva el tag de su escenario. Los literales van tecleados a
+ * mano — nunca importados de `Equipo.tsx` ni calculados con `Equipo-logica.ts`.
+ * La geometría pintada (centrado, 4:3, 320 px) la mide el navegador real en
+ * `tests/e2e/fidelidad-equipo.spec.ts`; aquí se contrata el DOM y el texto
+ * real de la hoja de estilos.
+ */
+describe('@s1 de fidelidad_equipo: la cabecera centrada deriva el recuento de la fuente real', () => {
+  const RESUMEN_CON_LOS_DATOS_REALES =
+    'Dos profesionales en el equipo de Galapavet. Pulsa el + para ver la formación publicada.'
+
+  it('la región abre con un bloque de cabecera: cintillo «Equipo», h2 «Nuestro equipo» y el resumen, en ese orden y fuera de toda tarjeta', () => {
+    renderizarEquipo()
+
+    const cabecera = obtenerSeccionEquipo().querySelector<HTMLElement>('[data-equipo-cabecera]')
+    expect(cabecera).not.toBeNull()
+    const cintillo = within(cabecera as HTMLElement).getByText('Equipo')
+    const titular = within(cabecera as HTMLElement).getByRole('heading', { level: 2, name: 'Nuestro equipo' })
+    const resumen = within(cabecera as HTMLElement).getByText(RESUMEN_CON_LOS_DATOS_REALES)
+
+    expect(cintillo.tagName).toBe('P')
+    expect(resumen.tagName).toBe('P')
+    expect(cintillo.compareDocumentPosition(titular) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(titular.compareDocumentPosition(resumen) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    // El resumen vive FUERA de los `article`: @s7 de `equipo.feature` limita el
+    // texto accesible de la tarjeta sin formación a su nombre y su rol.
+    expect(resumen.closest('article')).toBeNull()
+  })
+
+  it('el resumen nunca afirma seis profesionales, colegiación ni especialidades, y sin formación publicada no invita a pulsar el +', () => {
+    renderizarEquipo({
+      listado: [
+        { nombre: 'Ana Uno', rol: 'Veterinaria' },
+        { nombre: 'Bea Dos', rol: 'Auxiliar' },
+      ],
+    })
+
+    const texto = obtenerSeccionEquipo().textContent ?? ''
+    expect(texto).toContain('Dos profesionales en el equipo de Galapavet.')
+    expect(texto).not.toContain('Pulsa el +')
+    expect(texto).not.toMatch(/seis/i)
+    expect(texto).not.toMatch(/colegiad/i)
+    expect(texto).not.toMatch(/especialidad/i)
+  })
+
+  it('el bloque .cabecera del SCSS real centra el texto y acota su anchura por debajo del contenedor', () => {
+    const bloqueCabecera = /\.cabecera\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_EQUIPO_SCSS)?.[1] ?? ''
+    expect(bloqueCabecera).toContain('text-align: center;')
+    expect(bloqueCabecera).toContain('margin-inline: auto;')
+    const anchoMaximoPx = Number(/max-width:\s*(\d+)px;/.exec(bloqueCabecera)?.[1])
+    expect(anchoMaximoPx).toBeGreaterThan(0)
+    expect(anchoMaximoPx).toBeLessThan(1220)
+  })
+})
+
+describe('@s2 de fidelidad_equipo: cada miembro usa la geometría de tarjeta sin fotografía', () => {
+  it('cada tarjeta abre con un panel cuyo único contenido es el avatar oculto de iniciales, y bajo él la fila con el nombre y el cargo', () => {
+    renderizarEquipo()
+
+    for (const [nombre, iniciales, cargo] of [
+      ['Marcos Pérez', 'MP', 'Veterinario'],
+      ['Joaquín Herranz', 'JH', 'Auxiliar'],
+    ] as const) {
+      const tarjeta = obtenerTarjetaDe(nombre)
+      const panel = tarjeta.firstElementChild as HTMLElement
+      expect(panel.tagName).toBe('DIV')
+      expect(panel).toHaveAttribute('data-equipo-panel')
+      expect(panel.querySelector('img')).toBeNull()
+      expect(panel.children).toHaveLength(1)
+      const avatar = panel.firstElementChild as HTMLElement
+      expect(avatar.tagName).toBe('SPAN')
+      expect(avatar).toHaveAttribute('aria-hidden', 'true')
+      expect(avatar.textContent).toBe(iniciales)
+      // El panel no anuncia nada: su único hijo es decorativo (@s7 de `equipo.feature`).
+      expect(textoAccesibleDe(panel)).toBe('')
+
+      const encabezado = within(tarjeta).getByRole('heading', { level: 3, name: nombre })
+      const rotuloCargo = within(tarjeta).getByText(cargo)
+      expect(rotuloCargo).toHaveAttribute('data-equipo-cargo')
+      expect(panel.compareDocumentPosition(encabezado) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+      expect(encabezado.compareDocumentPosition(rotuloCargo) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    }
+  })
+
+  it('el SCSS real da al panel la proporción 4:3 con el avatar centrado, y reparte las tarjetas en pistas acotadas que no se estiran', () => {
+    const bloquePanel = /\.panel\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_EQUIPO_SCSS)?.[1] ?? ''
+    expect(bloquePanel).toContain('aspect-ratio: 4 / 3;')
+    expect(bloquePanel).toContain('place-items: center;')
+    expect(bloquePanel).toContain('background-color: var(--color-primario);')
+    // El panel de marca no lleva tinta propia: el único texto que contiene es el avatar, con su propio par de contraste.
+    expect(bloquePanel).not.toMatch(/(?<![a-z-])color\s*:/)
+
+    // `auto-fill` (no `auto-fit`): con dos miembros la tercera pista queda vacía
+    // en vez de estirar cada tarjeta a medio contenedor y deformar el 4:3.
+    const bloqueRejilla = /\.rejilla\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_EQUIPO_SCSS)?.[1] ?? ''
+    expect(bloqueRejilla).toContain('grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));')
+    expect(bloqueRejilla).toContain('align-items: start;')
+
+    // Los pasos inexistentes de la escala compilan a `null` en silencio (`delta_equipo.md`, defecto 1).
+    expect(TEXTO_REAL_DE_EQUIPO_SCSS).not.toContain('espaciado(20)')
+  })
+})
+
+describe('@s3 de fidelidad_equipo: solo la formación publicada se despliega desde el botón circular', () => {
+  it('el único botón vive en la tarjeta con formación, lleva el glifo «+» oculto y conserva su nombre accesible; la tarjeta sin formación no tiene botón', () => {
+    renderizarEquipo()
+
+    const boton = screen.getByRole('button', { name: 'Ver la formación de Marcos Pérez' })
+    expect(boton).toHaveAttribute('data-equipo-control')
+    expect(boton.closest('article')).toBe(obtenerTarjetaDe('Marcos Pérez'))
+    const glifo = boton.querySelector('[aria-hidden="true"]')
+    expect(glifo?.textContent).toBe('+')
+    // El «+» es decorativo: el nombre accesible viene solo del `aria-label`.
+    expect(textoAccesibleDe(boton)).toBe('')
+    expect(within(obtenerTarjetaDe('Joaquín Herranz')).queryByRole('button')).toBeNull()
+  })
+
+  it('al activar el botón, aria-expanded pasa a "true" y la formación se revela en una ficha propia de esa tarjeta', async () => {
+    const usuario = userEvent.setup()
+    renderizarEquipo()
+
+    await usuario.click(screen.getByRole('button', { name: 'Ver la formación de Marcos Pérez' }))
+
+    const boton = screen.getByRole('button', { name: 'Ocultar la formación de Marcos Pérez' })
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+    const ficha = obtenerTarjetaDe('Marcos Pérez').querySelector('[data-equipo-ficha]')
+    expect(ficha).not.toBeNull()
+    expect(ficha).toHaveTextContent('Licenciado en veterinaria por la Universidad Complutense de Madrid')
+    expect(obtenerTarjetaDe('Joaquín Herranz').querySelector('[data-equipo-ficha]')).toBeNull()
+  })
+
+  it('con los datos reales ninguna tarjeta pinta chips de especialidad: el cliente no publica ese dato', () => {
+    renderizarEquipo()
+
+    expect(obtenerSeccionEquipo().querySelector('ul')).toBeNull()
+    expect(within(obtenerSeccionEquipo()).queryByRole('list')).toBeNull()
+  })
+
+  it('con un doble que sí publica especialidades, esa tarjeta las lista en orden (solo las reales) y la que no las publica sigue sin lista ni texto extra', () => {
+    renderizarEquipo({
+      listado: [
+        { nombre: 'Ana Uno', rol: 'Veterinaria', especialidades: ['Uno', ' ', 'Dos'] },
+        { nombre: 'Bea Dos', rol: 'Auxiliar' },
+      ],
+    })
+
+    const lista = within(obtenerTarjetaDe('Ana Uno')).getByRole('list')
+    expect(within(lista).getAllByRole('listitem').map((chip) => chip.textContent)).toEqual(['Uno', 'Dos'])
+    expect(within(obtenerTarjetaDe('Bea Dos')).queryByRole('list')).toBeNull()
+    expect(textoAccesibleDe(obtenerTarjetaDe('Bea Dos'))).toBe('Bea DosAuxiliar')
+  })
+
+  it('el SCSS real hace circular el botón con la altura de control media, lo gira al abrir y solo anima bajo prefers-reduced-motion: no-preference; la ficha lleva línea superior', () => {
+    const inicio = TEXTO_REAL_DE_EQUIPO_SCSS.indexOf('.fila button {')
+    expect(inicio).toBeGreaterThanOrEqual(0)
+    const bloqueBoton = TEXTO_REAL_DE_EQUIPO_SCSS.slice(inicio, TEXTO_REAL_DE_EQUIPO_SCSS.indexOf('\n}\n', inicio))
+    expect(bloqueBoton).toContain('width: $altura-control-media;')
+    expect(bloqueBoton).toContain('height: $altura-control-media;')
+    expect(bloqueBoton).toContain('border-radius: $radio-circulo;')
+    // El estado vive en ARIA, nunca en una clase.
+    expect(bloqueBoton).toMatch(/&\[aria-expanded='true'\]\s*\{[^}]*transform: rotate\(45deg\);/)
+    expect(bloqueBoton).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{[^}]*transition:/)
+
+    const bloqueFicha = /\.ficha\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_EQUIPO_SCSS)?.[1] ?? ''
+    expect(bloqueFicha).toContain('border-block-start: $ancho-borde-fino solid var(--color-borde);')
   })
 })

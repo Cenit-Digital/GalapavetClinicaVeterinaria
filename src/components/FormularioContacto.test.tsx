@@ -356,3 +356,59 @@ describe('@s14 el bloque del formulario no publica ninguna dirección de correo'
     expect(document.body.textContent ?? '').not.toMatch(/\w@\w/)
   })
 })
+
+// ---------------------------------------------------------------------------
+// @s2 de `features/fidelidad_contacto.feature` (34): "El formulario vive en
+// una tarjeta y conserva sus campos accesibles". El nombre accesible
+// «Escríbenos» (formulario_contacto @s1/@s13) pasa a salir de un `<h3>`
+// visible (`aria-labelledby`), no de un `aria-label` invisible.
+// ---------------------------------------------------------------------------
+describe('@s2 de fidelidad_contacto: la tarjeta «Escríbenos»', () => {
+  it('el formulario muestra un h3 visible "Escríbenos" y sigue llamándose así', () => {
+    renderizarFormularioContacto()
+
+    const formulario = screen.getByRole('form', { name: 'Escríbenos' })
+    const titulo = within(formulario).getByRole('heading', { name: 'Escríbenos', level: 3 })
+    expect(titulo.getAttribute('aria-hidden')).not.toBe('true')
+    expect(formulario).toHaveAttribute('aria-labelledby', titulo.id)
+    expect(formulario).not.toHaveAttribute('aria-label')
+    // Ronda de reparación 1 (judge, menor 7): la tarjeta es un ítem de la
+    // rejilla de contacto, no el contenedor principal de la sección. Ese
+    // atributo lo leen `layout.spec.ts` y `geometria-escalas.spec.ts` para
+    // medir el ancho de contenedor compartido; aquí describiría algo falso.
+    expect(formulario).not.toHaveAttribute('data-contenedor-principal')
+  })
+})
+
+describe('@s2 de fidelidad_contacto: nombre y teléfono comparten una fila', () => {
+  it('"Tu nombre" y "Teléfono" viven en un contenedor propio (no el <form>) que "Email" no comparte, y ese contenedor es una rejilla auto-fit', () => {
+    renderizarFormularioContacto()
+
+    const formulario = screen.getByRole('form', { name: 'Escríbenos' })
+    const nombre = within(formulario).getByRole('textbox', { name: 'Tu nombre' })
+    const telefono = within(formulario).getByRole('textbox', { name: 'Teléfono' })
+    const email = within(formulario).getByRole('textbox', { name: 'Email' })
+
+    // Cada campo va con su etiqueta en un envoltorio propio; los dos primeros
+    // envoltorios cuelgan de la misma fila doble.
+    const filaDoble = nombre.parentElement?.parentElement
+    expect(filaDoble).not.toBe(formulario)
+    expect(filaDoble).toBe(telefono.parentElement?.parentElement)
+    expect(filaDoble?.contains(email)).toBe(false)
+
+    const cuerpoFilaDoble = cuerpoDelBloque(TEXTO_FORMULARIO_CONTACTO_SCSS, '.filaDoble {')
+    expect(cuerpoFilaDoble).toContain('display: grid;')
+    expect(cuerpoFilaDoble).toMatch(/grid-template-columns:\s*repeat\(auto-fit/)
+  })
+})
+
+describe('@s2 de fidelidad_contacto: el botón «Enviar mensaje» ocupa todo el ancho de la tarjeta', () => {
+  it('el botón del formulario se estira en el eje transversal de la columna ("align-self: stretch"), no queda a la izquierda', () => {
+    const cuerpoFormulario = cuerpoDelBloque(TEXTO_FORMULARIO_CONTACTO_SCSS, '.formulario {')
+    const cuerpoBoton = cuerpoDelBloque(cuerpoFormulario, 'button {')
+
+    expect(cuerpoBoton).toContain('@include boton-primario')
+    expect(cuerpoBoton).toContain('align-self: stretch;')
+    expect(cuerpoBoton).not.toContain('align-self: flex-start')
+  })
+})

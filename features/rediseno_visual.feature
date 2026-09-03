@@ -539,11 +539,14 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And el rótulo no es un encabezado, para no romper la jerarquía de niveles
     And el recuento de secciones con fondo de token efectivamente comprobadas es mayor que 0, y el de secciones sobre fotografía es exactamente 1
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32): «lista de ventajas» pedía, leída al pie
+  # de la letra, inventar promesas que reserva_chat @s19 prohíbe; los ítems son los tramos de
+  # horario reales. Antes/después literal en progress/fidelidad/enmiendas_fidelidad_reserva.md.
   @s34
   Scenario: La reserva por chat se presenta en dos columnas, con la cabecera de conversación del diseño
     Given la portada construida y servida, en una ventana más ancha que el punto de corte
     When se inspecciona la sección de reserva
-    Then a la izquierda hay un texto con su cintillo, su titular y una lista de ventajas con marcas de verificación
+    Then a la izquierda hay un texto con su cintillo, su titular y una lista con marcas de verificación cuyos ítems son los tramos de horario reales que fija reserva_chat @s19
     And a la derecha hay un panel de conversación con esquina redondeada y sombra
     And el panel abre con un avatar circular, el nombre comercial real y un indicador de disponibilidad
     And el aviso de que la solicitud no se envía a ningún servidor sigue presente

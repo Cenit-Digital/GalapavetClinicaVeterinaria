@@ -85,9 +85,17 @@ describe('@s10 lo que lee la máquina coincide con lo que lee la persona', () =>
     const digitosDeclarados = String(bloque.telephone).replace(/\D/g, '')
     const digitosPrimerEnlace = (primerEnlace?.textContent ?? '').replace(/\D/g, '')
     const digitosSegundoEnlace = (segundoEnlace?.textContent ?? '').replace(/\D/g, '')
-    const digitosUrgencias = (
-      within(screen.getByRole('group', { name: 'Urgencias fuera de horario' })).getByRole('link').textContent ?? ''
-    ).replace(/\D/g, '')
+    // ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Enmienda 7 de
+    // `progress/fidelidad/enmiendas_fidelidad_contacto.md` (informacion_contacto
+    // @s5/@s6): el único enlace del grupo de urgencias se llama «Llamar ahora»
+    // y el número visible va en un párrafo, así que los dígitos del enlace se
+    // leen de su destino `tel:` (derivado de la fuente única), no de su texto.
+    const grupoUrgencias = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
+    const enlaceUrgencias = within(grupoUrgencias).getByRole('link', { name: 'Llamar ahora' })
+    const digitosUrgencias = (enlaceUrgencias.getAttribute('href') ?? '').replace(/\D/g, '')
+    const digitosVisiblesDeUrgencias = (within(grupoUrgencias).getByText(/\d{2} \d{3} \d{2} \d{2}/).textContent ?? '').replace(/\D/g, '')
+    expect(digitosUrgencias).not.toBe('')
+    expect(digitosUrgencias.endsWith(digitosVisiblesDeUrgencias)).toBe(true)
 
     expect(digitosDeclarados.endsWith(digitosPrimerEnlace)).toBe(true)
     expect(digitosDeclarados.endsWith(digitosSegundoEnlace)).toBe(false)

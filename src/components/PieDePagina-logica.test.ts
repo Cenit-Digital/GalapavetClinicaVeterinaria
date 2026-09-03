@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { construirEnlacesContacto, textoCopyright } from './PieDePagina-logica'
+import { construirEnlacesContacto, construirEnlacesLegales, textoCopyright } from './PieDePagina-logica'
+
+describe('los enlaces legales separan el rótulo visible del aviso accesible', () => {
+  it('conservan el nombre publicado y añaden el aviso de ventana nueva solo al nombre accesible', () => {
+    expect(construirEnlacesLegales([{ nombre: 'Aviso legal', destino: 'https://galapavet.com/aviso-legal' }])).toEqual([
+      {
+        nombreVisible: 'Aviso legal',
+        nombreAccesible: 'Aviso legal (se abre en una ventana nueva)',
+        destino: 'https://galapavet.com/aviso-legal',
+      },
+    ])
+  })
+})
 
 describe('@s12 el aviso de copyright no incluye ningún número de registro', () => {
   it('para el 17 de agosto de 2026 el texto es exactamente "© 2026 Galapavet", sin registro ni nombre heredado', () => {

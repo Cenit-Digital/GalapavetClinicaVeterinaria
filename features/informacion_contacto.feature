@@ -140,18 +140,25 @@ Feature: Panel de información de contacto
     And el tercer tramo muestra "Domingos" junto a "Cerrado"
     And su texto no contiene "urgencias" ni "24"
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34): la acción visual
+  # aprobada no implica disponibilidad 24 h. Antes/después literal en
+  # `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s5
   Scenario: El teléfono de urgencias aparece con el rótulo real de fuera de horario
     When el visitante lee el grupo cuyo nombre accesible es "Urgencias fuera de horario"
     Then dentro de ese grupo hay exactamente 1 enlace
-    And ese enlace tiene el nombre accesible exacto "91 851 13 93" y su destino es exactamente "tel:+34918511393"
+    And ese enlace tiene el nombre accesible exacto "Llamar ahora" y su destino es exactamente "tel:+34918511393"
+    And el número real "91 851 13 93" se muestra junto a la acción de llamada
     And el texto del grupo no contiene "24" ni "todos los días"
     And el nombre accesible del grupo es exactamente "Urgencias fuera de horario", sin ninguna palabra añadida
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34): se permite una
+  # única acción de llamada, pero no ningún reclamo de disponibilidad continua.
+  # Antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s6
   Scenario: No existe ningún bloque ni reclamo que anuncie urgencias 24 h
     When el visitante recorre la sección de contacto entera
-    Then no hay ningún elemento cuyo nombre accesible sea "Llamar ahora"
+    Then existe exactamente una acción cuyo nombre accesible es "Llamar ahora" y apunta al teléfono real de urgencias fuera de horario
     And el texto de la sección no contiene "24 h" ni "24h" ni "24 horas"
     And el texto de la sección no contiene "todos los días del año" ni "siempre hay alguien de guardia"
     And el número "91 851 13 93" aparece exactamente una vez en toda la sección
@@ -164,29 +171,34 @@ Feature: Panel de información de contacto
     And el texto de la región no contiene ninguna dirección de correo electrónico
     And el texto de la región no contiene "hola@veterinarialasierra.es" ni "info@galapavet.com"
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Decisión 63 (mapa estático local):
+  # antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s8
-  Scenario: El mapa se muestra con el título accesible del nombre real y encabeza el panel
+  Scenario: El mapa es una imagen local con el nombre accesible derivado y encabeza el panel
     When el visitante recorre la región cuyo nombre accesible es "Información de contacto"
-    Then hay exactamente 1 marco embebido
-    And su nombre accesible es exactamente "Mapa de Galapavet"
-    And su nombre accesible no contiene "La Sierra" ni "Miraflores"
-    And ese marco aparece antes que los grupos de datos en el orden de lectura
+    Then hay exactamente 1 imagen de mapa y ningún marco embebido
+    And su texto alternativo es exactamente "Mapa con la ubicación de Galapavet en Carretera de Torrelodones, 11, 28260 Galapagar, Madrid", derivado del nombre comercial y de la dirección de la fuente única
+    And su texto alternativo no contiene "La Sierra" ni "Miraflores"
+    And la imagen declara ancho y alto, y lleva encima un pin decorativo cuya posición deriva de las coordenadas de la fuente única
+    And esa imagen aparece antes que los grupos de datos en el orden de lectura
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Decisión 63 (mapa estático local):
+  # antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s9
-  Scenario: El mapa es la única petición a un tercero de la página y se declara como tal
+  Scenario: La sección no declara ningún origen ajeno y atribuye el mapa a OpenStreetMap de forma visible
     When el visitante recorre la sección de contacto entera
-    Then el único elemento que declara un origen ajeno al propio sitio es el marco del mapa
-    And ninguna imagen ni script de la sección declara un origen ajeno al propio sitio
-    And [Decisión 11 — verificado con navegador real (Claude in Chrome / skill browser-automation), fuera del gate de Vitest/Stryker] ninguna tipografía ni hoja de estilo de la sección declara un origen ajeno al propio sitio
-    And la descripción accesible del marco del mapa es exactamente "El mapa lo sirve un proveedor externo. Es la única conexión con un tercero de esta web."
-    And ese aviso existe como texto del documento dentro de la región "Información de contacto", no solo como valor de un atributo aria-label o aria-describedby
+    Then ningún elemento con atributo "src" de la sección declara un origen ajeno al propio sitio, y no hay ningún marco embebido ni script
+    And [Decisión 11 — verificado con navegador real (Playwright, `tests/e2e/red-limpia.spec.ts` @s32 y `tests/e2e/fidelidad-contacto.spec.ts` @s4), fuera del gate de Vitest/Stryker] la portada no realiza ninguna petición a un dominio externo
+    And la atribución "© OpenStreetMap contributors" existe como texto del documento dentro de la región "Información de contacto", enlazada a "https://www.openstreetmap.org/copyright"
     And el elemento que contiene ese texto no declara el atributo "aria-hidden" a "true" ni el atributo "hidden"
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Decisión 63 (mapa estático local):
+  # antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s10
-  Scenario: El mapa no se solicita al tercero hasta que hace falta
+  Scenario: La imagen del mapa no se descarga hasta que hace falta
     When el visitante abre la página con la sección de contacto todavía fuera de la ventana visible
-    Then el marco del mapa declara carga diferida
-    And [Decisión 11 — verificado con navegador real (Claude in Chrome / skill browser-automation), fuera del gate de Vitest/Stryker] no se ha solicitado nada al proveedor externo mientras el marco sigue fuera de la ventana visible
+    Then la imagen del mapa declara carga diferida
+    And [Decisión 11 — verificado con navegador real (`tests/e2e/imagenes.spec.ts` @s30), fuera del gate de Vitest/Stryker] la imagen declara sus dimensiones y decodificación asíncrona, y la portada no desplaza contenido al cargarla
 
   @s11
   Scenario: El panel no reescribe a mano ningún teléfono, lo deriva de la fuente única
@@ -213,12 +225,14 @@ Feature: Panel de información de contacto
     And los demás grupos conservan sus nombres accesibles y su orden relativo
     And no se muestra ninguna lista de tramos vacía
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Decisión 63 (mapa estático local):
+  # antes/después literal en `progress/fidelidad/enmiendas_fidelidad_contacto.md`.
   @s14
-  Scenario: Sin dirección no se muestra el mapa, porque el mapa se centra por la dirección postal
+  Scenario: Sin dirección no se muestra el mapa, porque el mapa describe y sitúa la dirección postal
     Given la fuente única no declara dirección postal
     When el visitante recorre la región cuyo nombre accesible es "Información de contacto"
     Then no hay ningún grupo cuyo nombre accesible sea "Dirección"
-    And no hay ningún marco embebido
+    And no hay ninguna imagen de mapa, ningún marco embebido ni la atribución del mapa
     And no se realiza ninguna petición a ningún proveedor externo
 
   @s15

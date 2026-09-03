@@ -58,6 +58,12 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
 
+    // Varios contratos cambian deliberadamente el foco, localStorage y el
+    // historial del navegador. Ejecutar archivos concurrentemente introduce
+    // carreras no deterministas entre esos estados globales; el arnés exige
+    // una suite repetible, por lo que los serializamos a nivel de archivo.
+    fileParallelism: false,
+
     // Vitest no procesa CSS por defecto: los CSS Modules devuelven un proxy. Es
     // deliberado — el contrato de este repo prohíbe aseverar sobre clases CSS, así
     // que el estado condicional vive en atributos ARIA y no en nombres de clase.

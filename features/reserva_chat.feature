@@ -113,6 +113,14 @@
 #   - Fuera de alcance: el detalle de cada bloque de servicio vive en `features/servicios.feature`;
 #     aquí los cinco nombres solo se usan como opciones del primer paso.
 
+# ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66 de project-spec.md: el cliente
+# confirmó que el móvil 685 34 31 49 atiende WhatsApp (docs/datos-galapavet.md §2bis). Quedan
+# derogados el cambio 6 de arriba («desaparece el botón WhatsApp de la sección») y el PENDIENTE
+# «canal de mensajería»: @s18 ofrece el enlace wa.me del móvil como primera acción de la columna de
+# texto y @s12 fija que el cierre del chat sigue siendo la llamada (el texto prellenado del enlace
+# de mensajería queda como decisión de producto pendiente, no se inventa). Antes/después literal en
+# progress/fidelidad/enmiendas_fidelidad_reserva.md.
+
 Feature: Reserva de cita guiada por chat
   Como visitante que prefiere no llamar de entrada para pedir cita
   Quiero responder unas pocas preguntas guiadas y quedarme con mi solicitud resumida
@@ -217,6 +225,9 @@ Feature: Reserva de cita guiada por chat
     And ese mensaje no contiene "WhatsApp"
     And ese mensaje no contiene "2 horas" ni ninguna otra promesa de plazo de respuesta
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66: antes/después literal en
+  # progress/fidelidad/enmiendas_fidelidad_reserva.md (la cláusula «ni wa.me ni whatsapp» era la
+  # reserva del canal sin confirmar; ahora se fija lo que el widget ofrece de verdad).
   @s12
   Scenario: Al terminar el guion se ofrece la llamada con el resumen a la vista
     Given el chat ha llegado al estado final tras responder "Medicina general", "Una gata de 4 años", "Entre semana por la mañana" y "Nala y Ana Martín"
@@ -224,7 +235,7 @@ Feature: Reserva de cita guiada por chat
     Then existe un grupo cuyo nombre accesible es "Resumen de tu solicitud" con exactamente estas 4 líneas, en este orden: "Servicio: Medicina general", "Animal: Una gata de 4 años", "Cuándo: Entre semana por la mañana" y "Nombre: Nala y Ana Martín"
     And existe un elemento con rol "link" cuyo nombre accesible es "Llamar para cerrar la cita · 91 082 92 67" y cuyo destino es exactamente "tel:+34910829267"
     And existe un elemento con rol "button" cuyo nombre accesible es "Pedir otra cita"
-    And dentro del widget no existe ningún elemento con rol "link" cuyo destino contenga "wa.me" ni "whatsapp"
+    And ese enlace de llamada es el único elemento con rol "link" dentro del widget: el canal de mensajería confirmado (Decisión 66) se ofrece en la columna de texto (@s18), no en el cierre del chat
     And dentro del widget no existe ningún elemento con rol "textbox" ni ningún grupo "Respuestas rápidas"
 
   @s13
@@ -274,13 +285,14 @@ Feature: Reserva de cita guiada por chat
     And ese mismo aviso, palabra por palabra, se ve también cuando el chat ha llegado al estado final y cuando ha derivado a urgencias
     And el widget no muestra ningún indicador de disponibilidad en directo: no aparece el texto "en línea"
 
+  # ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66 (docs/datos-galapavet.md §2bis):
+  # antes/después literal en progress/fidelidad/enmiendas_fidelidad_reserva.md.
   @s18
-  Scenario: El visitante puede saltarse el chat y llamar directamente
+  Scenario: El visitante puede saltarse el chat y escribir o llamar directamente
     When el visitante mira la columna de texto de la sección "Reservar"
-    Then existe un elemento con rol "link" cuyo nombre accesible es "Llamar a la clínica · 91 082 92 67" y cuyo destino es exactamente "tel:+34910829267"
-    And existe un elemento con rol "link" cuyo nombre accesible es "Llamar al móvil · 685 34 31 49" y cuyo destino es exactamente "tel:+34685343149"
-    And en toda la sección no existe ningún elemento con rol "link" cuyo destino contenga "wa.me" ni "whatsapp"
-    And en toda la sección ningún nombre accesible contiene "WhatsApp"
+    Then existe un elemento con rol "link" cuyo nombre accesible es "WhatsApp" y cuyo destino es exactamente "https://wa.me/34685343149"
+    And existe un elemento con rol "link" cuyo nombre accesible es "Llamar a la clínica" y cuyo destino es exactamente "tel:+34910829267"
+    And en toda la sección el único elemento con rol "link" cuyo destino contenga "wa.me" o "whatsapp" es ese enlace "WhatsApp" al móvil confirmado
     And en toda la sección no existe ningún elemento con rol "link" cuyo destino empiece por "mailto:"
 
   @s19

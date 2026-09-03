@@ -470,7 +470,7 @@
     },
     {
       "id": 30,
-      "name": "fidelidad_campanas",
+        "name": "fidelidad_campanas",
       "title": "Fidelidad visual: campañas en portada",
       "description": "Dos columnas: a la izquierda cintillo, titular real, aviso de demostración íntegro y CTA primario relleno «Ver campañas»; a la derecha rejilla compacta 2×2 de tarjetas con foto 16/9, píldora «Demostración», título y línea de detalle derivada del bloque de servicios; sin precio ni vigencia; la sección sigue siendo hermana inmediata de #servicios.",
       "acceptance": [
@@ -481,7 +481,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "in_progress",
+        "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -497,7 +497,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+        "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -513,7 +513,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -529,7 +529,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -546,12 +546,12 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
-      "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+      "status": "done",
+      "notas": "DONE 03/09/2026. Contrato aprobado explícitamente por Pablo. Evidencia final: bin/harness test 89/89 y 1373/1373; lint, typecheck y build verdes; Playwright fidelidad-contacto 5/5; Stryker InformacionContacto-logica.ts 33/33 (100 %). Review: progress/judge_fidelidad_contacto.md; TDD y mutación: progress/tdd_fidelidad_contacto.md, progress/mutation_fidelidad_contacto.md; comparativa revisada: progress/rediseno/capturas/fidelidad_contacto_final_comparativa.png. No certifica las secciones que continúan spec_ready."
     },
     {
       "id": 35,
-      "name": "fidelidad_faq",
+        "name": "fidelidad_faq",
       "title": "Fidelidad visual: preguntas frecuentes",
       "description": "Cintillo y titular centrados; lista acotada a 860 px y centrada de verdad (hoy la regla está muerta); línea superior y divisorias por entrada; pregunta en la tipografía de titulares con peso 500; círculo «+» decorativo de 30 px a la derecha que rota al abrir; acordeón excluyente y ARIA intactos.",
       "acceptance": [
@@ -561,12 +561,12 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+        "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
       "id": 36,
-      "name": "fidelidad_pie",
+        "name": "fidelidad_pie",
       "title": "Fidelidad visual: pie de página",
       "description": "Cuatro columnas flexibles (marca con logotipo real de 36 px y nombre en la misma fila más el descriptor; Clínica, Contenido y Contacto con rótulos en versalitas y enlaces sin subrayado en reposo) y barra inferior en una sola fila con © a la izquierda y los tres enlaces legales reales en línea a la derecha, conservando su nombre accesible completo con el aviso de ventana nueva oculto solo visualmente.",
       "acceptance": [
@@ -576,12 +576,12 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+        "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
       "id": 37,
-      "name": "fidelidad_selector_paleta",
+        "name": "fidelidad_selector_paleta",
       "title": "Fidelidad visual: selector de paleta flotante",
       "description": "Botón circular flotante con disco cónico tricolor de la variante activa y nombre accesible «Cambiar paleta de color» sin texto visible; panel de 268 px con rótulo «Paleta de color», cinco filas con contorno, nombre en negrita y tres muestras leídas de los tokens; estado activo en aria-pressed con fondo de acento suave; matriz de contraste ampliada con los pares nuevos.",
       "acceptance": [
@@ -591,7 +591,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-      "status": "spec_ready",
+        "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     }
   ]

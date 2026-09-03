@@ -445,3 +445,41 @@ describe('@s28 el salto a una sección desde la navegación de escritorio se cal
     expect(window.location.hash).toBe('#contacto')
   })
 })
+
+/**
+ * Reparación del 03/09/2026 (oleada B): `imagenes.spec.ts` @s31 de
+ * `identidad_visual` bloquea `/img/**` y exige que TODA `<img>` pinte su hueco
+ * con `--color-fondo-alterno` en el propio elemento; el logotipo de la marca
+ * (`/img/logo-galapavet.webp`, 201×201) quedaba transparente. Mismo mecanismo
+ * a escala de icono que ya usa el pie (`PieDePagina.module.scss`, `.marca img`).
+ */
+describe('@s31 de identidad_visual: el logotipo de la marca reserva su hueco 1/1 con el mixin compartido', () => {
+  it('el bloque "img" dentro de ".marca" incluye "hueco-de-imagen(1, 1)"', () => {
+    const cuerpoMarca = cuerpoDelBloque(TEXTO_CABECERA_SCSS, '.marca {')
+    const cuerpoImg = cuerpoDelBloque(cuerpoMarca, 'img {')
+
+    expect(cuerpoImg).toContain('@include hueco-de-imagen(1, 1);')
+  })
+})
+
+/**
+ * Reparación del 03/09/2026 (oleada B): `fidelidad.spec.ts` @s44 de
+ * `rediseno_visual` midió a 320 px que el `<span>` solo para lectores «Abrir
+ * menú» del botón hamburguesa sobresalía del viewport (borde derecho 326 >
+ * 320): la clase solo recortaba con `clip-path`, pero la caja absoluta seguía
+ * midiendo el ancho del texto y nacía en el borde del botón, pegado al margen
+ * derecho. La técnica de ocultación visual tiene que reducir la caja a 1×1 px
+ * ADEMÁS de recortarla, para que nunca salga del botón que la contiene.
+ */
+describe('@s44 de rediseno_visual: el texto solo para lectores no ocupa sitio fuera de su botón', () => {
+  it('".textoSoloLectores" es absoluto, mide 1×1 px, recorta con overflow y clip-path, y no parte líneas', () => {
+    const cuerpo = cuerpoDelBloque(TEXTO_CABECERA_SCSS, '.textoSoloLectores {')
+
+    expect(cuerpo).toContain('position: absolute;')
+    expect(cuerpo).toContain('width: 1px;')
+    expect(cuerpo).toContain('height: 1px;')
+    expect(cuerpo).toContain('overflow: hidden;')
+    expect(cuerpo).toContain('clip-path: inset(50%);')
+    expect(cuerpo).toContain('text-wrap: nowrap;')
+  })
+})

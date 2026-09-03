@@ -276,6 +276,26 @@ a {
   &:focus {
     transform: translateY(var(--desplazamiento-al-enfocar));
   }
+
+  // Halo opaco bajo el anillo. Por SC 2.4.11 el enlace aterriza justo debajo
+  // de la cabecera fija (arriba), y en la portada eso es el velo oscuro del
+  // hero: el anillo global daba 1,98:1 contra `--color-tinta` (`accesibilidad`
+  // @s39), mientras que en las subpáginas cae sobre `--color-fondo`. Ningún
+  // color de anillo sirve a los dos, así que el anillo se apoya siempre en su
+  // propio halo de `--color-fondo` (indicador a dos tonos): el par foco/fondo
+  // lo valida la matriz de uso en las cinco variantes. Solo con foco: oculto,
+  // el enlace asoma exactamente su altura por encima del área visible y un
+  // halo permanente dejaría una franja sobre la barra de urgencias. Por
+  // detrás del texto (`z-index: -1` dentro del contexto de apilamiento que
+  // abre el propio enlace) y más ancho que el anillo y su hueco.
+  &:focus::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -#{espaciado(8)};
+    border-radius: calc(#{$radio-medio} + #{espaciado(8)});
+    background-color: var(--color-fondo);
+  }
 }
 
 // ----------------------------------------------------------------------------

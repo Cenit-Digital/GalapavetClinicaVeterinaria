@@ -1,20 +1,42 @@
 import React from 'react'
+import { MAPA_ESTATICO } from '../data/mapa'
+import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { datosNegocio } from '../lib/site'
-import { construirEnlaceTelefono, type TramoHorario } from './InformacionContacto-logica'
+import {
+  construirEnlaceTelefono,
+  describirMapa,
+  posicionDelPin,
+  titularDeContacto,
+  type TramoHorario,
+} from './InformacionContacto-logica'
 import styles from './InformacionContacto.module.scss'
 
 /**
- * Proveedor del mapa embebido: la ÚNICA petición a un tercero admitida en
- * toda la página (`project-spec.md` → Decisión 9, Invariante 3). El proveedor
- * concreto y el formato de consulta exacto están PENDIENTES de confirmar con
- * el cliente (`features/informacion_contacto.feature` líneas 93-96); ningún
- * escenario fija su valor exacto, solo que declara un origen ajeno y que es
- * el único elemento que lo hace (@s9).
+ * Texto de interfaz de la cabecera de la sección (@s1 de
+ * `fidelidad_contacto.feature`). No es un dato de negocio: describe lo que
+ * hay en la sección, sin plazos de respuesta ni disponibilidad. NO menciona
+ * urgencias a propósito: toda mención debe ir seguida del cualificador real
+ * (`datos-reales.spec.ts` @s52) y ya lo hace la tarjeta de urgencias.
  */
-const SRC_MAPA_TERCERO = 'https://www.openstreetmap.org/export/embed.html?layer=mapnik'
+const INTRODUCCION_DE_CONTACTO =
+  'Aquí tienes la dirección, los teléfonos y el horario de la clínica, y un formulario para escribirnos.'
 
-const ID_AVISO_MAPA = 'informacion-contacto-aviso-mapa'
-const AVISO_MAPA_TERCEROS = 'El mapa lo sirve un proveedor externo. Es la única conexión con un tercero de esta web.'
+/**
+ * Cabecera de la sección de contacto: cintillo (un `<p>`, nunca un
+ * encabezado ni un landmark llamado «Contacto», `ensamblaje_landing` @s6),
+ * titular derivado de la localidad real y párrafo neutro. Vive en este
+ * fichero, no en un módulo nuevo, para no ampliar el inventario de módulos
+ * con estilos (`inventarioModulos.ts`).
+ */
+export function CabeceraDeContacto(): React.JSX.Element {
+  return (
+    <div className={styles.cabecera} data-contacto-cabecera>
+      <p className={styles.cintillo}>Contacto</p>
+      <h2>{titularDeContacto(datosNegocio.direccion.localidad)}</h2>
+      <p>{INTRODUCCION_DE_CONTACTO}</p>
+    </div>
+  )
+}
 
 /**
  * Rótulos visibles de los tres bloques que el cliente SÍ publica (@s36 de
@@ -41,13 +63,13 @@ interface InformacionContactoProps {
   horario?: readonly TramoHorario[]
   /**
    * Líneas de la dirección postal. Por defecto, las de la fuente única.
-   * `null`: la fuente única no la declara (@s14) — sin dirección no hay por
-   * dónde centrar el mapa, así que tampoco se renderiza el marco.
+   * `null`: la fuente única no la declara (@s14) — sin dirección no hay nada
+   * que situar, así que tampoco se renderiza el mapa.
    */
   direccion?: readonly [string, string] | null
 }
 
-/** Panel de información de contacto de la landing: mapa + bloques de datos. */
+/** Panel de información de contacto de la landing: tarjeta de urgencias + tarjeta con mapa local y bloques de datos. */
 export function InformacionContacto({
   telefonoClinica = datosNegocio.telefonoClinica.textoVisible,
   telefonoUrgencias = datosNegocio.telefonoUrgencias.textoVisible,
@@ -59,7 +81,8 @@ export function InformacionContacto({
     construirEnlaceTelefono(datosNegocio.telefonoMovil.textoVisible),
   ]
   const enlaceUrgencias = telefonoUrgencias !== null ? construirEnlaceTelefono(telefonoUrgencias) : null
-  const tituloMapa = `Mapa de ${datosNegocio.identidad.nombreComercial}`
+  const pin = posicionDelPin(datosNegocio.coordenadas, MAPA_ESTATICO.encuadre)
+  const descripcionDelMapa = describirMapa(datosNegocio.identidad.nombreComercial, datosNegocio.direccion.unaLinea)
 
   return (
     <section aria-label="Información de contacto" className={styles.informacionContacto}>
@@ -71,47 +94,59 @@ export function InformacionContacto({
       <div data-tarjeta-de="datos">
         {direccion !== null && (
           <>
-            {/* `sandbox` vacío: el mapa no necesita ni script ni formularios ni
-                navegar la página desde dentro del marco — el permiso más
-                restrictivo que sigue mostrando el mapa (exigido por el linter
-                del proyecto, `react/iframe-missing-sandbox`; ningún escenario
-                del contrato fija su valor). */}
-            <iframe
-              title={tituloMapa}
-              src={SRC_MAPA_TERCERO}
-              aria-describedby={ID_AVISO_MAPA}
-              loading="lazy"
-              sandbox=""
-            />
-            <p id={ID_AVISO_MAPA}>{AVISO_MAPA_TERCEROS}</p>
+            {/* Mapa estático LOCAL (Decisión 63, @s4 de `fidelidad_contacto`):
+                una imagen del propio origen, a sangre dentro de la tarjeta,
+                con el pin en CSS en la posición derivada de las coordenadas
+                de la fuente única. Ni marco embebido ni petición a terceros. */}
+            <div className={styles.mapa} data-mapa-de-contacto>
+              <img
+                src={hrefDeDestino(MAPA_ESTATICO.ruta)}
+                alt={descripcionDelMapa}
+                width={MAPA_ESTATICO.encuadre.ancho}
+                height={MAPA_ESTATICO.encuadre.alto}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className={styles.pin} aria-hidden="true" style={{ left: `${pin.x}%`, top: `${pin.y}%` }} />
+            </div>
+            {/* Atribución exigida por la licencia ODbL de los datos del mapa
+                (`docs/mapa-estatico.md`): un enlace a un tercero NO es una
+                petición; nada se carga de fuera del propio origen. */}
+            <p className={styles.atribucion}>
+              <a href={MAPA_ESTATICO.urlDeLicencia}>{MAPA_ESTATICO.atribucion}</a>
+            </p>
+          </>
+        )}
+        <div className={styles.bloques}>
+          {direccion !== null && (
             <fieldset aria-label="Dirección">
               <legend>{ROTULO_DIRECCION}</legend>
               <p>{direccion[0]}</p>
               <p>{direccion[1]}</p>
             </fieldset>
-          </>
-        )}
-        <fieldset aria-label="Teléfonos">
-          <legend>{ROTULO_TELEFONOS}</legend>
-          {enlacesTelefono.map((enlace) => (
-            <a key={enlace.href} href={enlace.href}>
-              {enlace.textoVisible}
-            </a>
-          ))}
-        </fieldset>
-        {horario.length > 0 && (
-          <fieldset aria-label="Horario">
-            <legend>{ROTULO_HORARIO}</legend>
-            <dl>
-              {horario.map((tramo) => (
-                <div key={tramo.dias}>
-                  <dt>{tramo.dias}</dt>
-                  <dd>{tramo.horas}</dd>
-                </div>
-              ))}
-            </dl>
+          )}
+          <fieldset aria-label="Teléfonos">
+            <legend>{ROTULO_TELEFONOS}</legend>
+            {enlacesTelefono.map((enlace) => (
+              <a key={enlace.href} href={enlace.href}>
+                {enlace.textoVisible}
+              </a>
+            ))}
           </fieldset>
-        )}
+          {horario.length > 0 && (
+            <fieldset aria-label="Horario">
+              <legend>{ROTULO_HORARIO}</legend>
+              <dl>
+                {horario.map((tramo) => (
+                  <div key={tramo.dias}>
+                    <dt>{tramo.dias}</dt>
+                    <dd>{tramo.horas}</dd>
+                  </div>
+                ))}
+              </dl>
+            </fieldset>
+          )}
+        </div>
       </div>
       {/* La tarjeta "a la derecha" (@s36): el color de urgencia, el rótulo
           real (derivado de la fuente única, nunca retipeado) y un botón de
@@ -122,8 +157,20 @@ export function InformacionContacto({
       {enlaceUrgencias !== null && (
         <div data-tarjeta-de="urgencia">
           <fieldset aria-label="Urgencias fuera de horario">
-            <legend>{datosNegocio.telefonoUrgencias.rotulo}</legend>
-            <a href={enlaceUrgencias.href}>{enlaceUrgencias.textoVisible}</a>
+            <legend>
+              {/* Punto pulsante decorativo del diseño (@s3 de `fidelidad_contacto`):
+                  sin texto ni papel semántico, igual que el de `BarraUrgencias`. */}
+              <span className={styles.pulso} aria-hidden="true" />
+              {datosNegocio.telefonoUrgencias.rotulo}
+            </legend>
+            {/* El número real, visible y grande, debajo del rótulo; la píldora
+                blanca «Llamar ahora» es la única acción (informacion_contacto
+                @s5/@s6 enmendados el 03/09/2026, Enmienda 7 de
+                `progress/fidelidad/enmiendas_fidelidad_contacto.md`). Los dos
+                son hijos directos del fieldset porque son ítems de su rejilla
+                (`.module.scss`). Nada aquí implica atención 24 h. */}
+            <p>{enlaceUrgencias.textoVisible}</p>
+            <a href={enlaceUrgencias.href}>Llamar ahora</a>
           </fieldset>
         </div>
       )}

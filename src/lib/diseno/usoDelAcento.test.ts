@@ -67,6 +67,60 @@ describe('@s15 el acento saturado clasificado por la propiedad CSS que lo pinta'
     expect(informe.pasa).toBe(true)
   })
 
+  it('clasifica el acento de un conic-gradient multilínea como relleno', () => {
+    const estilos: readonly FicheroDeTexto[] = [
+      {
+        ruta: 'src/components/SelectorPaleta.module.scss',
+        contenido: [
+          '.disco {',
+          '  background: conic-gradient(',
+          '    var(--color-primario) 0 33.333%,',
+          '    var(--color-acento) 33.333% 66.666%,',
+          '    var(--color-urgencia) 66.666% 100%',
+          '  );',
+          '}',
+        ].join('\n'),
+      },
+    ]
+
+    const informe = ejecutarPuertaDeUsoDelAcento(estilos)
+
+    expect(informe.comoRelleno).toEqual([
+      {
+        ruta: 'src/components/SelectorPaleta.module.scss',
+        linea: 4,
+        declaracion: 'var(--color-acento) 33.333% 66.666%,',
+      },
+    ])
+    expect(informe.sinClasificar).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+
+  it('no arrastra una propiedad terminada a una línea posterior sin declaración', () => {
+    const estilos: readonly FicheroDeTexto[] = [
+      {
+        ruta: 'src/components/SelectorPaleta.module.scss',
+        contenido: [
+          '.disco {',
+          '  background: var(--color-primario);',
+          '  var(--color-acento)',
+          '}',
+        ].join('\n'),
+      },
+    ]
+
+    const informe = ejecutarPuertaDeUsoDelAcento(estilos)
+
+    expect(informe.sinClasificar).toEqual([
+      {
+        ruta: 'src/components/SelectorPaleta.module.scss',
+        linea: 3,
+        declaracion: 'var(--color-acento)',
+      },
+    ])
+    expect(informe.comoRelleno).toEqual([])
+  })
+
   it('una declaración sin dos puntos tras la última llave no se clasifica por accidente', () => {
     // Sin separador, el rol queda vacío y por tanto "sin clasificar". El
     // texto se elige a propósito: leer mal "sin separador" (confundirlo con

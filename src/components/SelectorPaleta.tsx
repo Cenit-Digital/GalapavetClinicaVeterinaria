@@ -27,12 +27,18 @@ export function SelectorPaleta({ catalogo = VARIANTES_PALETA }: SelectorPaletaPr
   }
 
   return (
-    <div className={styles.selector}>
-      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((valorPrevio) => !valorPrevio)}>
-        {NOMBRE_ACCESIBLE_BOTON}
+    <div className={styles.selector} data-selector-paleta>
+      <button
+        type="button"
+        aria-label={NOMBRE_ACCESIBLE_BOTON}
+        aria-expanded={abierto}
+        onClick={() => setAbierto((valorPrevio) => !valorPrevio)}
+      >
+        <span aria-hidden="true" className={styles.disco} />
       </button>
       {abierto && (
         <fieldset aria-label={NOMBRE_ACCESIBLE_GRUPO} className={styles.panel}>
+          <legend>Paleta de color</legend>
           {catalogo.map((variante) => (
             <button
               key={variante.id}

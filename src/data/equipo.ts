@@ -9,6 +9,13 @@ export interface Profesional {
   readonly nombre: string
   readonly rol: string
   readonly formacion?: string
+  /**
+   * Especialidades publicadas por profesional. Pendiente del cliente
+   * (`docs/datos-galapavet.md` §9): ninguno de los dos reales la tiene y no se
+   * rellena con un valor plausible. Cuando llegue el dato, será un cambio de
+   * datos, no de código (`fidelidad_equipo` @s3).
+   */
+  readonly especialidades?: readonly string[]
 }
 
 export const EQUIPO: readonly Profesional[] = [

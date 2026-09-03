@@ -4,12 +4,13 @@
 import { expect, test } from 'playwright/test'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
-/** La única excepción declarada del proyecto: el mapa embebido de "InformacionContacto.tsx" (Invariante 3). */
-const DOMINIO_DEL_MAPA_EMBEBIDO = 'openstreetmap.org'
+// La excepción del mapa embebido (`openstreetmap.org`, Invariante 3) se
+// retiró el 03/09/2026 con `fidelidad_contacto` @s4 (Decisión 63): el mapa es
+// una imagen local y el sitio no tiene ya NINGÚN dominio externo admitido.
 const DOMINIOS_PROHIBIDOS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'unsplash.com']
 
 test.describe('@s32 cargar cualquier ruta no dispara ni una sola petición a un tercero', () => {
-  test('las 6 rutas: ningún dominio prohibido, el único externo es el del mapa, imágenes del visitante en el propio origen', async ({
+  test('las 6 rutas: ningún dominio prohibido, ningún dominio externo en absoluto, imágenes del visitante en el propio origen', async ({
     page,
     baseURL,
   }) => {
@@ -37,10 +38,9 @@ test.describe('@s32 cargar cualquier ruta no dispara ni una sola petición a un 
       }
     }
 
-    const dominiosNoDelMapa = [...dominiosExternos].filter((dominio) => !dominio.endsWith(DOMINIO_DEL_MAPA_EMBEBIDO))
-    expect(dominiosNoDelMapa, `dominios externos inesperados: ${JSON.stringify(dominiosNoDelMapa)}`).toEqual([])
+    expect([...dominiosExternos], `dominios externos inesperados: ${JSON.stringify([...dominiosExternos])}`).toEqual([])
 
-    // Toda imagen real del visitante (no el marco del mapa, un "iframe") sale del propio origen.
+    // Toda imagen real del visitante (incluido el mapa estático local) sale del propio origen.
     const imagenesDeOtroOrigen = peticiones.filter(
       (peticion) => /\.(webp|png|jpe?g|svg)(\?|$)/i.test(peticion.url) && !peticion.url.startsWith(origenPropio),
     )
@@ -70,25 +70,10 @@ test.describe('@s33 ninguna ruta produce una respuesta de error al cargarse', ()
   })
 })
 
-/**
- * HALLAZGO REAL (no un ajuste a ciegas): el `sandbox=""` del mapa embebido
- * (`InformacionContacto.tsx`, feature 10 ya `done` — el permiso MÁS
- * restrictivo que sigue mostrando el mapa) hace que Chromium escriba
- * "Blocked script execution in '<url del mapa>'..." en la consola de la
- * PÁGINA cuando el propio iframe de OpenStreetMap intenta correr su script
- * interno y el sandbox lo bloquea. Es la CONSECUENCIA CORRECTA de sandboxear
- * el único tercero admitido del proyecto (@s32), no un error de esta
- * feature: añadir "allow-scripts" lo callaría, pero ampliaría el permiso del
- * único punto de la página que toca un origen ajeno, y por una razón
- * puramente cosmética. Se filtra por texto, documentado, no silenciado sin
- * más.
- */
-const PATRON_MENSAJE_DEL_MAPA_SANDBOXED = /openstreetmap\.org/i
-
-function esRuidoConocidoDelMapa(texto: string): boolean {
-  return PATRON_MENSAJE_DEL_MAPA_SANDBOXED.test(texto)
-}
-
+// El filtro por texto del ruido "Blocked script execution in
+// '<openstreetmap.org>'" del antiguo mapa embebido sandboxeado se retiró el
+// 03/09/2026 con `fidelidad_contacto` @s4: sin marco de terceros no hay ruido
+// que perdonar, y la consola tiene que quedar limpia sin ninguna excepción.
 test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del navegador', () => {
   test('las 6 rutas + interacción con el selector de paleta, un desplegable de servicios, una ficha de equipo y un ítem del FAQ: 0 errores, 0 avisos, 0 excepciones', async ({
     page,
@@ -98,9 +83,6 @@ test.describe('@s34 ninguna ruta escribe un error ni un aviso en la consola del 
     const excepciones: string[] = []
 
     page.on('console', (mensaje) => {
-      if (esRuidoConocidoDelMapa(mensaje.text())) {
-        return
-      }
       if (mensaje.type() === 'error') {
         mensajesDeError.push(mensaje.text())
       }

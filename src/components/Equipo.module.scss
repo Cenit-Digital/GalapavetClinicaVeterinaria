@@ -2,80 +2,194 @@
 // este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
 // aplica a su hijo directo (@s44/@s45). El relleno vertical (`padding-block`)
 // también es responsabilidad ÚNICA de ese wrapper (@s19, `--ritmo-seccion`,
-// fluido): este fichero NO vuelve a declararlo. Antes sí lo hacía, con un
-// valor fijo (`espaciado(64)`) que quedaba muerto porque el wrapper ganaba
-// la cascada por orden de bundle, sin ningún test que lo protegiera —
-// retirado tras `progress/judge_rediseno_visual.md` (hallazgo 3, segunda
-// revisión); ver `progress/rediseno/tdd_geometria-escalas.md`.
+// fluido): este fichero NO vuelve a declararlo (retirado tras
+// `progress/judge_rediseno_visual.md`, hallazgo 3, segunda revisión).
+//
+// Anatomía del prototipo (`progress/fidelidad/delta_equipo.md`), portada por
+// escala — nunca un número copiado: cabecera centrada, rejilla de pistas
+// acotadas, tarjeta con panel 4:3 de marca (sin fotografía, @s32 de
+// `rediseno_visual`), fila nombre/cargo con el botón «+» circular, ficha con
+// línea superior y chips solo cuando el dato exista.
 .equipo {
+  display: flex;
+  flex-direction: column;
+}
+
+// Cabecera de sección centrada (@s1 de `fidelidad_equipo`): un bloque acotado
+// y centrado con todo su texto centrado. El ancho máximo es una medida de
+// composición del mismo tipo que `Faq.module.scss` (860px) o
+// `Hero.module.scss` (720px): más estrecho que el contenedor de 1220 px para
+// que el párrafo caiga en dos líneas legibles.
+.cabecera {
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+// El cintillo en versalitas que precede al título (@s33): "Equipo" pinta su
+// fondo con un ROL DE COLOR del sistema (`Landing.tsx`), no la fotografía a
+// sangre del Hero, así que usa el "--color-acento-tinta" por defecto del
+// mixin, sin la excepción de la Enmienda 2 (solo del Hero). El centrado lo
+// hereda de `.cabecera`.
+.cabecera .eyebrow {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
+}
+
+.cabecera h2 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(4);
+}
+
+.resumen {
+  margin: espaciado(16) 0 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(0);
+  line-height: 1.7;
+}
+
+// Rejilla de tarjetas (@s2): `auto-fill`, no `auto-fit` — con dos miembros la
+// tercera pista queda vacía en vez de estirar cada tarjeta a medio contenedor
+// y deformar el panel 4:3. `align-items: start`: la tarjeta desplegada crece
+// sola sin estirar a sus vecinas.
+.rejilla {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: espaciado(24);
+  margin-block-start: espaciado(48);
   align-items: start;
-
-  // El cintillo en versalitas que precede al título (@s33): "Equipo" pinta su
-  // fondo con "--color-fondo-alterno" (`src/pages/Landing.tsx:58-60`, un ROL
-  // DE COLOR del sistema, no la fotografía a sangre del Hero), así que usa el
-  // "--color-acento-tinta" por defecto del mixin, sin la excepción de la
-  // Enmienda 2 (esa excepción es solo del Hero, `Hero.module.scss:43-58`).
-  .eyebrow {
-    @include eyebrow;
-    grid-column: 1 / -1;
-  }
-
-  h2 {
-    grid-column: 1 / -1;
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(4);
-    margin-block-end: espaciado(8);
-  }
 }
 
 .tarjeta {
   @include tarjeta;
+}
+
+// Panel de marca (@s2): ocupa la zona que en el prototipo lleva el retrato,
+// con su misma proporción, hasta que el cliente entregue fotografías reales.
+// Sin tinta propia: su único contenido es el avatar, con su propio par.
+.panel {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-color: var(--color-primario);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: espaciado(96);
+  aspect-ratio: 1;
+  border-radius: $radio-circulo;
+  background-color: var(--color-acento-suave);
+  color: var(--color-acento-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(3);
+  font-weight: 700;
+}
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: espaciado(16);
   padding: espaciado(24);
+}
 
-  h3 {
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(2);
-    margin-block-end: espaciado(4);
+// Fila de cabecera de la tarjeta: nombre y cargo a la izquierda, el botón a la
+// derecha. La altura mínima iguala las tarjetas cerradas tengan botón o no.
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: espaciado(12);
+  min-height: $altura-control-media;
+}
+
+.fila > div {
+  min-width: 0;
+}
+
+.fila h3 {
+  margin: 0;
+  color: var(--color-tinta);
+  font-family: var(--fuente-titulares);
+  font-size: paso-tipografico(1);
+  line-height: 1.2;
+}
+
+.fila p {
+  margin: espaciado(4) 0 0;
+  color: var(--color-texto-suave);
+  font-size: paso-tipografico(-1);
+}
+
+// Botón «+» circular (@s3): a la derecha de la fila, solo cuando hay
+// formación publicada. El estado vive en `aria-expanded`, nunca en una clase:
+// abierto pasa a primario/sobre-primario y el glifo gira a «×».
+.fila button {
+  @include foco-visible;
+  @include area-tactil-minima;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: $altura-control-media;
+  height: $altura-control-media;
+  padding: 0;
+  border: $ancho-borde-fino solid var(--color-borde);
+  border-radius: $radio-circulo;
+  background-color: var(--color-acento-suave);
+  color: var(--color-acento-tinta);
+  font-size: paso-tipografico(2);
+  line-height: 1;
+  cursor: pointer;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      transform 300ms ease-out,
+      background-color 150ms ease-out,
+      color 150ms ease-out;
   }
 
-  .avatar {
-    display: grid;
-    place-items: center;
-    width: $altura-control-grande;
-    aspect-ratio: 1;
-    margin: espaciado(24) espaciado(24) 0;
-    border-radius: $radio-circulo;
-    background-color: var(--color-acento-suave);
-    color: var(--color-acento-tinta);
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(1);
-    font-weight: 700;
+  &[aria-expanded='true'] {
+    background-color: var(--color-primario);
+    color: var(--color-sobre-primario);
+    transform: rotate(45deg);
   }
+}
 
-  > p:first-of-type {
-    color: var(--color-acento-tinta);
-    font-weight: 600;
-    margin-block-end: espaciado(12);
-  }
+// Ficha desplegada (@s3): la formación publicada, separada por una línea.
+.ficha {
+  padding-block: espaciado(16) espaciado(4);
+  border-block-start: $ancho-borde-fino solid var(--color-borde);
+  color: var(--color-texto);
+  font-size: paso-tipografico(0);
+  line-height: 1.7;
+}
 
-  button {
-    @include foco-visible;
-    @include area-tactil-minima;
-    margin-block-start: auto;
-    align-self: flex-start;
-    padding-inline: 0;
-    border: none;
-    background: none;
-    color: var(--color-acento-tinta);
-    font-weight: 600;
-    cursor: pointer;
-  }
+.ficha p {
+  margin: 0;
+}
 
-  > p:last-child {
-    margin-block-start: espaciado(12);
-    color: var(--color-texto-suave);
-  }
+// Chips de especialidad (@s3): en caja baja, solo cuando la fuente única
+// publique el dato. Hoy ninguna tarjeta los pinta.
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: espaciado(8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  padding: espaciado(4) espaciado(12);
+  border-radius: $radio-completo;
+  background-color: var(--color-acento-suave);
+  color: var(--color-acento-tinta);
+  font-size: paso-tipografico(-1);
+  font-weight: 600;
 }

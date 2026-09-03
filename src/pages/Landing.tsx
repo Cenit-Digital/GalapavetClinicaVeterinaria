@@ -5,7 +5,7 @@ import { Faq } from '../components/Faq'
 import { FormularioContacto } from '../components/FormularioContacto'
 import { Galeria } from '../components/Galeria'
 import { Hero } from '../components/Hero'
-import { InformacionContacto } from '../components/InformacionContacto'
+import { CabeceraDeContacto, InformacionContacto } from '../components/InformacionContacto'
 import { MetadatosPagina } from '../components/MetadatosPagina'
 import { ReservaChat } from '../components/ReservaChat'
 import { Servicios } from '../components/Servicios'
@@ -63,11 +63,12 @@ export function Landing({ calleDireccion = datosNegocio.direccion.calle }: Landi
       <div id="reservar" className={styles.seccionAlterna}>
         <ReservaChat />
       </div>
-      <div id="galeria" className={styles.seccion}>
+      <div id="galeria" className={`${styles.seccion} ${styles.seccionGaleria}`}>
         <Galeria />
       </div>
       <div id="contacto" className={`${styles.seccionAlterna} ${styles.seccionContacto}`}>
         <div data-contacto-contenido>
+          <CabeceraDeContacto />
           <FormularioContacto />
           <InformacionContacto direccion={direccionVisible} />
         </div>

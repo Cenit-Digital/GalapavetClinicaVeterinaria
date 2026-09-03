@@ -1,20 +1,12 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
-// este fichero maqueta el contenido, ya dentro del contenedor que ese wrapper
-// aplica a su hijo directo (@s44/@s45). Comparte el mismo ancho máximo que
-// "FormularioContacto" (mismo wrapper de contacto en `Landing.tsx`).
+// este fichero maqueta el contenido. La región es la columna derecha de la
+// rejilla de `[data-contacto-contenido]` (`fidelidad_contacto` @s1): una
+// columna con la banda de urgencias arriba y la tarjeta de datos debajo.
 .informacionContacto {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  display: flex;
+  flex-direction: column;
   gap: espaciado(16);
   font-size: paso-tipografico(0);
-
-  iframe {
-    grid-column: 1 / -1;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border: $ancho-borde-fino solid var(--color-borde);
-    border-radius: $radio-grande;
-  }
 
   fieldset {
     border: none;
@@ -29,55 +21,283 @@
     align-items: center;
   }
 
-  dl {
-    margin: 0;
-
-    div {
-      display: flex;
-      justify-content: space-between;
-      gap: espaciado(8);
-      padding-block: espaciado(4);
-      border-block-end: $ancho-borde-fino solid var(--color-borde);
-    }
-
-    dt {
-      font-weight: 600;
-    }
-
-    dd {
-      margin: 0;
-      color: var(--color-texto-suave);
-    }
-  }
-
-  // La tarjeta "debajo" (@s36): mapa + los tres bloques de datos reales. Cada
-  // rótulo VISIBLE (el <legend> de cada <fieldset>) va en versalitas con el
-  // color de acento tinta — el mixin "eyebrow" ya existente en `_api.scss`,
-  // nunca un estilo propio duplicado.
+  // La tarjeta "debajo" (@s36 de `rediseno_visual`, @s4 de
+  // `fidelidad_contacto`): el mapa a sangre arriba (el radio lo recorta el
+  // "overflow: hidden" del patrón tarjeta, no un radio propio), la atribución
+  // y la rejilla de bloques con su propio relleno debajo. Cada rótulo VISIBLE
+  // (el <legend> de cada <fieldset>) va en versalitas con el color de acento
+  // tinta — el mixin "eyebrow" ya existente en `_api.scss`.
   [data-tarjeta-de='datos'] {
     @include tarjeta;
-    padding: espaciado(24);
+    padding: 0;
+
+    &:hover {
+      // Una tarjeta de datos no es "clicable": no sube de sombra al pasar el ratón por encima.
+      box-shadow: var(--sombra-reposo);
+    }
 
     legend {
       @include eyebrow;
     }
   }
 
-  // La tarjeta "a la derecha" (@s36): el color de urgencia como fondo suave y
-  // como acento de borde. "order" la sube visualmente por encima de la
-  // tarjeta de datos SIN reordenar el DOM (el orden de lectura ya aprobado
-  // por `informacion_contacto.feature` @s1 se mantiene intacto).
-  [data-tarjeta-de='urgencia'] {
-    @include tarjeta;
-    padding: espaciado(24);
-    background-color: var(--color-urgencia-suave);
-    border-inline-start: espaciado(4) solid var(--color-urgencia);
-    order: -1;
+  // Mapa estático local (Decisión 63): la imagen reserva su hueco con la
+  // proporción real del recorte (1024×520, `docs/mapa-estatico.md`) y el pin
+  // se posiciona encima en porcentajes derivados (`InformacionContacto.tsx`).
+  .mapa {
+    position: relative;
+
+    img {
+      @include hueco-de-imagen(1024, 520);
+      border: 0;
+      border-radius: 0;
+    }
   }
 
-  // El teléfono de esa tarjeta se maqueta como un botón real, no como un
-  // enlace pelado.
-  [data-tarjeta-de='urgencia'] a {
-    @include boton-fantasma;
+  .pin {
+    position: absolute;
+    width: espaciado(16);
+    height: espaciado(16);
+    border: $ancho-borde-control solid var(--color-sobre-primario);
+    border-radius: $radio-circulo;
+    background-color: var(--color-primario);
+    box-shadow: var(--sombra-elevada);
+    transform: translate(-50%, -50%);
   }
+
+  .atribucion {
+    margin: 0;
+    padding: espaciado(8) espaciado(24) 0;
+    font-size: paso-tipografico(-1);
+    color: var(--color-texto-suave);
+  }
+
+  // Rejilla de bloques rotulados: dos por fila mientras quepan, uno por
+  // debajo, sin @media. Cada bloque apila su rótulo y sus líneas: la primera
+  // en tinta y peso medio, la segunda más pequeña y apagada, como el diseño.
+  .bloques {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+    gap: espaciado(16) espaciado(24);
+    padding: espaciado(24);
+
+    fieldset {
+      display: flex;
+      flex-direction: column;
+      gap: espaciado(4);
+      min-width: 0;
+    }
+
+    // El diseño llena una rejilla 2×2 con un cuarto bloque (correo) que
+    // Galapavet no publica: con un recuento impar, el último bloque abarca la
+    // fila entera en vez de dejar una celda vacía a su derecha.
+    fieldset:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    p:first-of-type,
+    a:first-of-type,
+    dt {
+      color: var(--color-tinta);
+      font-weight: 500;
+    }
+
+    p + p,
+    a + a,
+    dd {
+      color: var(--color-texto-suave);
+      font-size: paso-tipografico(-1);
+    }
+
+    // Un teléfono por línea (@s4): cada enlace es un ítem de la columna.
+    a {
+      width: fit-content;
+    }
+
+    dl {
+      display: flex;
+      flex-direction: column;
+      gap: espaciado(4);
+      margin: 0;
+
+      div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 espaciado(8);
+        line-height: 1.6;
+      }
+
+      dd {
+        margin: 0;
+      }
+    }
+  }
+
+  // La tarjeta "a la derecha" (@s36 de `rediseno_visual`, @s3 de
+  // `fidelidad_contacto`): banda roja sólida y compacta — fondo de urgencia,
+  // tinta `--color-sobre-primario` (nunca blanco literal, @s7), sin borde ni
+  // sombra de tarjeta. "order" la sube visualmente por encima de la tarjeta
+  // de datos SIN reordenar el DOM (el orden de lectura ya aprobado por
+  // `informacion_contacto.feature` @s1 se mantiene intacto).
+  //
+  // Anatomía del prototipo (`delta_contacto.md`, contacto-4) en UNA fila:
+  // rótulo y número apilados a la izquierda (columna 1, filas 1 y 2) y la
+  // píldora «Llamar ahora» a la derecha (columna 2, abarcando las dos filas).
+  // El `fieldset` es la rejilla; la tarjeta es un contenedor de consulta para
+  // que el plegado de la banda estrecha dependa de su propio ancho (abajo).
+  [data-tarjeta-de='urgencia'] {
+    container-type: inline-size;
+    order: -1;
+    padding: espaciado(24);
+    border-radius: $radio-grande;
+    background-color: var(--color-urgencia);
+    color: var(--color-sobre-primario);
+
+    fieldset {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: espaciado(4) espaciado(16);
+      min-width: 0;
+    }
+
+    // El `legend` solo participa como ítem de la rejilla si deja de ser la
+    // "leyenda renderizada" del fieldset; `float: left` lo consigue (la
+    // rejilla ignora el float para maquetar, pero el navegador ya no lo trata
+    // como leyenda) sin quitarle su papel semántico.
+    legend {
+      float: left;
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      gap: espaciado(8);
+      padding: 0;
+      font-size: paso-tipografico(-1);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+  }
+
+  // El punto pulsante del rótulo: hereda la tinta de la banda (currentColor)
+  // y solo se anima sin "prefers-reduced-motion: reduce", como el de la barra.
+  .pulso {
+    flex: 0 0 auto;
+    width: espaciado(8);
+    height: espaciado(8);
+    border-radius: $radio-circulo;
+    background-color: currentColor;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: pulso 1.6s ease-in-out infinite;
+    }
+  }
+
+  // El número real es el elemento grande de la banda (titulares, paso 2),
+  // debajo del rótulo y alineado con él; su interlineado corto mantiene la
+  // banda a la altura de la píldora.
+  [data-tarjeta-de='urgencia'] p {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(2);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  // La única acción de la banda es la píldora blanca «Llamar ahora» del
+  // diseño: pequeña y en negrita (lo grande es el número), altura de control
+  // media, a la derecha abarcando las dos filas. Conserva el contraste
+  // urgencia/sobre-primario validado en las cinco variantes
+  // (`matrizDeContraste.ts`) y llama al teléfono real derivado.
+  [data-tarjeta-de='urgencia'] a {
+    @include foco-visible;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: inline-flex;
+    align-items: center;
+    min-height: $altura-control-media;
+    padding-inline: espaciado(24);
+    border-radius: $radio-completo;
+    background-color: var(--color-sobre-primario);
+    color: var(--color-urgencia);
+    font-size: paso-tipografico(0);
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      // El anillo global no contrasta sobre la banda roja; la tinta sobre
+      // urgencia ya validada sí lo hace en las cinco variantes.
+      outline-color: var(--color-sobre-primario);
+    }
+  }
+
+  // Banda estrecha (por debajo de 28rem de contenido no caben rótulo, número
+  // y píldora en una fila): una sola columna y la píldora en la tercera fila,
+  // al borde izquierdo — el mismo plegado que hace el `flex-wrap` del
+  // prototipo, pero decidido por el ancho de la propia banda.
+  @container (max-width: 28rem) {
+    [data-tarjeta-de='urgencia'] {
+      fieldset {
+        grid-template-columns: 1fr;
+      }
+
+      a {
+        grid-column: 1;
+        grid-row: 3;
+        justify-self: start;
+        margin-block-start: espaciado(8);
+      }
+    }
+  }
+}
+
+@keyframes pulso {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// Cabecera de la sección (@s1 de `fidelidad_contacto.feature`): es un ítem
+// más de la rejilla de dos columnas de `Landing.module.scss`
+// (`[data-contacto-contenido]`), así que abarca la fila entera y deja las dos
+// tarjetas debajo. El bloque de texto se acota a 40rem, alineado a la
+// izquierda, como el resto de cabeceras de la portada.
+.cabecera {
+  grid-column: 1 / -1;
+  max-width: 40rem;
+
+  h2 {
+    margin: 0;
+    color: var(--color-tinta);
+    font-family: var(--fuente-titulares);
+    font-size: paso-tipografico(4);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+  }
+
+  h2 + p {
+    margin: espaciado(16) 0 0;
+    color: var(--color-texto-suave);
+    font-size: paso-tipografico(1);
+    line-height: 1.7;
+  }
+}
+
+.cintillo {
+  @include eyebrow;
+  margin-block-end: espaciado(12);
 }

@@ -14,6 +14,7 @@ const OPCIONES_MOTIVO: readonly string[] = [
 
 const URL_AVISO_LEGAL = 'https://galapavet.com/aviso-legal'
 
+const ID_TITULO = 'formulario-contacto-titulo'
 const ID_NOMBRE = 'formulario-contacto-nombre'
 const ID_TELEFONO = 'formulario-contacto-telefono'
 const ID_EMAIL = 'formulario-contacto-email'
@@ -61,7 +62,7 @@ export function FormularioContacto(): React.JSX.Element {
     const enlaceClinica = construirEnlaceTelefono(datosNegocio.telefonoClinica.textoVisible)
     const enlaceUrgencias = construirEnlaceTelefono(datosNegocio.telefonoUrgencias.textoVisible)
     return (
-      <output className={styles.confirmacion} data-contenedor-principal>
+      <output className={styles.confirmacion}>
         <h2>Formulario completado</h2>
         <p>
           Tu mensaje no se ha enviado a ningún servidor. Para hablar con nosotros, llama al{' '}
@@ -79,30 +80,44 @@ export function FormularioContacto(): React.JSX.Element {
 
   return (
     <form
-      aria-label="Escríbenos"
+      aria-labelledby={ID_TITULO}
       onSubmit={manejarEnvio}
       noValidate
       className={styles.formulario}
-      data-contenedor-principal
     >
-      <label htmlFor={ID_NOMBRE}>Tu nombre</label>
-      <input id={ID_NOMBRE} ref={refNombre} type="text" required aria-invalid={validez.nombreInvalido} />
+      <h3 id={ID_TITULO}>Escríbenos</h3>
+      {/* Nombre y teléfono comparten fila en escritorio (@s2 de
+          `fidelidad_contacto.feature`); cada pareja etiqueta+control va en su
+          propio envoltorio para que la rejilla reparta parejas, no piezas. */}
+      <div className={styles.filaDoble}>
+        <div className={styles.campo}>
+          <label htmlFor={ID_NOMBRE}>Tu nombre</label>
+          <input id={ID_NOMBRE} ref={refNombre} type="text" required aria-invalid={validez.nombreInvalido} />
+        </div>
+        <div className={styles.campo}>
+          <label htmlFor={ID_TELEFONO}>Teléfono</label>
+          <input id={ID_TELEFONO} ref={refTelefono} type="tel" required aria-invalid={validez.telefonoInvalido} />
+        </div>
+      </div>
 
-      <label htmlFor={ID_TELEFONO}>Teléfono</label>
-      <input id={ID_TELEFONO} ref={refTelefono} type="tel" required aria-invalid={validez.telefonoInvalido} />
+      <div className={styles.campo}>
+        <label htmlFor={ID_EMAIL}>Email</label>
+        <input id={ID_EMAIL} ref={refEmail} type="email" required aria-invalid={validez.emailInvalido} />
+      </div>
 
-      <label htmlFor={ID_EMAIL}>Email</label>
-      <input id={ID_EMAIL} ref={refEmail} type="email" required aria-invalid={validez.emailInvalido} />
+      <div className={styles.campo}>
+        <label htmlFor={ID_MOTIVO}>Motivo</label>
+        <select id={ID_MOTIVO}>
+          {OPCIONES_MOTIVO.map((opcion) => (
+            <option key={opcion}>{opcion}</option>
+          ))}
+        </select>
+      </div>
 
-      <label htmlFor={ID_MOTIVO}>Motivo</label>
-      <select id={ID_MOTIVO}>
-        {OPCIONES_MOTIVO.map((opcion) => (
-          <option key={opcion}>{opcion}</option>
-        ))}
-      </select>
-
-      <label htmlFor={ID_MENSAJE}>Cuéntanos</label>
-      <textarea id={ID_MENSAJE} />
+      <div className={styles.campo}>
+        <label htmlFor={ID_MENSAJE}>Cuéntanos</label>
+        <textarea id={ID_MENSAJE} />
+      </div>
 
       <div className={styles.grupoConsentimiento}>
         <input

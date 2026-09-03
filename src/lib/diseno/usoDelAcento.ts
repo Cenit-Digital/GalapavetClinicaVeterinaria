@@ -92,16 +92,32 @@ interface UsoClasificado extends UsoDeAcento {
 }
 
 function usosDe(fichero: FicheroDeTexto): readonly UsoClasificado[] {
-  return fichero.contenido
-    .split('\n')
-    .map((linea, indice) => ({ linea: linea.trim(), numero: indice + PRIMERA_LINEA }))
-    .filter(({ linea }) => PATRON_USO_DEL_ACENTO.test(linea))
-    .map(({ linea, numero }) => ({
-      ruta: fichero.ruta,
-      linea: numero,
-      declaracion: linea,
-      papel: papelDe(propiedadDe(linea)),
-    }))
+  let propiedadActiva: string | undefined
+
+  return fichero.contenido.split('\n').flatMap((texto, indice) => {
+    const linea = texto.trim()
+    const propiedadDeclarada = propiedadDe(linea)
+    if (propiedadDeclarada !== '') {
+      propiedadActiva = propiedadDeclarada
+    }
+
+    const usos = PATRON_USO_DEL_ACENTO.test(linea)
+      ? [
+          {
+            ruta: fichero.ruta,
+            linea: indice + PRIMERA_LINEA,
+            declaracion: linea,
+            papel: propiedadActiva === undefined ? 'sin clasificar' : papelDe(propiedadActiva),
+          },
+        ]
+      : []
+
+    if (linea.includes(';')) {
+      propiedadActiva = undefined
+    }
+
+    return usos
+  })
 }
 
 function conPapel(usos: readonly UsoClasificado[], papel: Papel): readonly UsoDeAcento[] {

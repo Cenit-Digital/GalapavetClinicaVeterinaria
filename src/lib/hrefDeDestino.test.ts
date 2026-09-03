@@ -94,6 +94,7 @@ const RUTAS_DE_IMAGEN_REALES = [
   '/img/tienda/manta-60x40.webp',
   '/img/tienda/mordedor-caucho.webp',
   '/img/tienda/pelota-con-sonido.webp',
+  '/img/mapa/galapagar.webp', // src/data/mapa.ts, MAPA_ESTATICO (fidelidad_contacto, Decisión 63)
   '/img/og/galapavet.png', // MetadatosPagina.tsx, RUTA_IMAGEN_OPEN_GRAPH
 ] as const
 
@@ -112,8 +113,8 @@ describe('@s18 hrefDeDestino calcula igual para una ruta de imagen que para una 
     expect(hrefDeDestino(ruta, BASE_TEST)).toBe(ruta)
   })
 
-  it('el recuento de rutas efectivamente comprobadas es exactamente 25', () => {
-    expect(RUTAS_DE_IMAGEN_REALES).toHaveLength(25)
+  it('el recuento de rutas efectivamente comprobadas es exactamente 26', () => {
+    expect(RUTAS_DE_IMAGEN_REALES).toHaveLength(26)
   })
 })
 

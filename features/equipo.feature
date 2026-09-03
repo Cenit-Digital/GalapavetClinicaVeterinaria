@@ -59,11 +59,14 @@ Feature: Presentación del equipo de Galapavet
   Background:
     Given el visitante ha abierto la landing de Galapavet
 
+  # ENMIENDA 1 (fidelidad_equipo, 03/09/2026): el h2 pasa de "Equipo" a "Nuestro
+  # equipo" como en el prototipo (VLS:213); la región conserva "Equipo". Antes y
+  # después literal en `progress/fidelidad/enmiendas_equipo.md`.
   @s1
   Scenario: Se muestran exactamente los dos profesionales publicados, con su nombre y su rol
     Given la sección se alimenta del listado real de profesionales de Galapavet
     When el visitante llega a la sección "Equipo"
-    Then la sección tiene un encabezado de nivel 2 cuyo nombre accesible es "Equipo"
+    Then la sección tiene un encabezado de nivel 2 cuyo nombre accesible es "Nuestro equipo"
     And existe una región cuyo nombre accesible es "Equipo"
     And la sección contiene exactamente 2 encabezados de nivel 3
     And existe un encabezado de nivel 3 cuyo nombre accesible es "Marcos Pérez"
@@ -138,7 +141,7 @@ Feature: Presentación del equipo de Galapavet
   Scenario: Con el listado de profesionales vacío la sección no se renderiza
     Given la sección se alimenta de un listado de prueba vacío
     When el visitante llega al lugar de la landing donde iría la sección "Equipo"
-    Then no existe ningún encabezado de nivel 2 cuyo nombre accesible sea "Equipo"
+    Then no existe ningún encabezado de nivel 2 cuyo nombre accesible sea "Nuestro equipo"
     And no existe ninguna región cuyo nombre accesible sea "Equipo"
 
   @s11

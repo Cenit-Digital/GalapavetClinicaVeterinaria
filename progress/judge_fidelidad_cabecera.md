@@ -19,3 +19,21 @@ Revisión hecha contra `features/fidelidad_cabecera.feature`, la fuente única `
 - La regla CSS anterior para `.interior > div:first-child` ya no correspondía al DOM nuevo y se eliminó; no deja estilo muerto ni añade otra estructura semántica.
 - `color-mix()` queda dentro de `@supports`; el fondo sólido sigue funcionando donde no hay `backdrop-filter`.
 - No se oculta el fallo conocido del mapa: la captura registra el iframe sandboxed. Su corrección aprobada (mapa estático local) corresponde exclusivamente a `fidelidad_contacto`.
+
+## Addenda — Regresión reparada el 03/09 (oleada B)
+
+Detectada por el judge de campañas y reparada por TDD en la tarea
+`regresiones_27_28_29` (`progress/tdd_regresiones_27_28_29.md`):
+
+- **Logotipo sin fondo de reserva** (`imagenes` @s31): `.marca img` no pintaba
+  `--color-fondo-alterno` en el propio `<img>`. Ahora `@include
+  hueco-de-imagen(1, 1)` (mismo patrón que el pie), anclado por
+  `Cabecera.test.tsx` «@s31 de identidad_visual».
+- **«Abrir menú» solo para lectores sobresalía del viewport a 320 px**
+  (`fidelidad` @s44, borde derecho 326 > 320): `.textoSoloLectores` solo
+  recortaba con `clip-path`. Ahora mide 1×1 px además de recortar; anclado
+  por `Cabecera.test.tsx` «@s44 de rediseno_visual». Medido: 1×1 px, borde
+  derecho 285,6, `scrollWidth` 320.
+
+Verificación: `imagenes.spec.ts`, `fidelidad.spec.ts`, `fidelidad-cabecera.spec.ts`
+verdes contra el `dist/` reconstruido; `accesibilidad.spec.ts` 15/15.

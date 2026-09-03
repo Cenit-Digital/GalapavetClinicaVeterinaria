@@ -69,6 +69,9 @@ const DIRECCION = crearDireccion({
   region: PROVINCIA,
 })
 
+/** Nodo `amenity=veterinary` «Galapavet» de OpenStreetMap (id citado en `docs/datos-galapavet.md` §2bis), verificado sobre la dirección de §2. */
+const COORDENADAS = { latitud: 40.5772872, longitud: -4.0004445 }
+
 const NOMBRE_COMERCIAL = 'Galapavet'
 const DESCRIPTOR = 'Centro integral veterinario'
 
@@ -92,7 +95,13 @@ export const datosNegocio = {
   /** El cliente no publica ningún perfil de red social (`docs/datos-galapavet.md` §9): la lista se declara vacía, no se inventa (@s16). */
   redesSociales: [] as readonly string[],
   direccion: DIRECCION,
-  /** El cliente no publica coordenadas exactas (`docs/datos-galapavet.md` §9): no se inventan (@s18). */
-  coordenadas: undefined as { latitud: number; longitud: number } | undefined,
+  /**
+   * El cliente no publica coordenadas (`docs/datos-galapavet.md` §9); las de
+   * aquí son las del nodo público de OpenStreetMap «Galapavet» (id y consulta
+   * citados en `docs/datos-galapavet.md` §2bis; datos © OpenStreetMap
+   * contributors, ODbL), adoptadas con la Decisión 63 para el pin del mapa
+   * estático local (@s18 enmendado el 03/09/2026).
+   */
+  coordenadas: COORDENADAS,
   identidad: IDENTIDAD,
 }

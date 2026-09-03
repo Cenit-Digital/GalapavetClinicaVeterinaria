@@ -75,24 +75,29 @@ export function Faq({
 
   return (
     <section aria-label="Preguntas frecuentes" className={styles.faq} data-contenedor-principal>
-      <p className={styles.eyebrow}>FAQ</p>
-      <h2>Preguntas frecuentes</h2>
-      {validas.map((entrada, indice) => {
-        const abierto = indiceAbierto === indice
-        return (
-          <React.Fragment key={entrada.pregunta}>
-            <button
-              type="button"
-              aria-expanded={abierto}
-              aria-controls={idRegion(indice)}
-              onClick={() => setIndiceAbierto((actual) => siguienteIndiceAbierto(actual, indice))}
-            >
-              {entrada.pregunta}
-            </button>
-            {abierto && <RespuestaFaq entrada={entrada} indice={indice} enlaces={enlaces} />}
-          </React.Fragment>
-        )
-      })}
+      <div className={styles.cabecera} data-faq-cabecera>
+        <p className={styles.eyebrow}>FAQ</p>
+        <h2>Preguntas frecuentes</h2>
+      </div>
+      <div className={styles.lista} data-faq-lista>
+        {validas.map((entrada, indice) => {
+          const abierto = indiceAbierto === indice
+          return (
+            <React.Fragment key={entrada.pregunta}>
+              <button
+                type="button"
+                aria-label={entrada.pregunta}
+                aria-expanded={abierto}
+                aria-controls={idRegion(indice)}
+                onClick={() => setIndiceAbierto((actual) => siguienteIndiceAbierto(actual, indice))}
+              >
+                {entrada.pregunta}
+              </button>
+              {abierto && <RespuestaFaq entrada={entrada} indice={indice} enlaces={enlaces} />}
+            </React.Fragment>
+          )
+        })}
+      </div>
     </section>
   )
 }

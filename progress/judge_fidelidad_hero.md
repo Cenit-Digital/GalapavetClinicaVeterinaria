@@ -18,3 +18,28 @@ Revisión contra `features/fidelidad_hero.feature`, `progress/fidelidad/delta_he
 - Se conserva el horario publicado entre las acciones y las cifras. No se elimina información real aunque el prototipo use datos ficticios; ya no tiene línea adicional, sangrado de `dd` ni recorte.
 - El velo usa solo tokens. Su parada central al 76% supera 4.5:1 contra los extremos de fotografía para las cinco variantes, comprobado por test unitario.
 - La resolución del iframe de OpenStreetMap sigue fuera de este alcance y continúa anotada como bloqueo conocido de `fidelidad_contacto`.
+
+## Addenda — Regresión reparada el 03/09 (oleada B)
+
+Detectada por el judge de campañas y reparada por TDD en la tarea
+`regresiones_27_28_29` (`progress/tdd_regresiones_27_28_29.md`):
+
+- **Anillo de foco de los dos botones a 1,98:1 sobre el velo de
+  `--color-tinta`** (`accesibilidad` @s38/@s39): cada botón declara ahora
+  `outline-color: var(--color-sobre-primario)` bajo `:focus-visible` (mismo
+  recurso que la barra de urgencias sobre su rojo); par nuevo en la matriz de
+  contraste (`sobre-primario` sobre `tinta`, componente de interfaz, 25 pares)
+  y test en `Hero.test.tsx` que verifica ≥ 3 en las cinco variantes contra la
+  tinta y contra el velo al 76 % sobre negro y blanco.
+- **Enlace de salto «Saltar al contenido principal»** (el control que en
+  realidad fallaba primero en @s39): aterriza bajo la cabecera fija, que en la
+  portada es el hero a sangre. `global.scss` le da un halo opaco de
+  `--color-fondo` bajo el anillo, solo con foco (`src/styles/hoja-global.test.ts`).
+- **Cubierta del hero frente a `imagenes` @s31** (tapado hasta hoy por el
+  logotipo): la fotografía de fondo, fuera de flujo, no puede cumplir 16:9
+  porque su alto lo fija el contenido (este mismo judge aprobó quitar el
+  `aspect-ratio`). Enmienda del test, con antes/después literal, en
+  `progress/fidelidad/enmiendas_regresiones_27_28_29.md`.
+
+Verificación: `accesibilidad.spec.ts` 15/15 (@s38/@s39 en las 6 rutas),
+`imagenes.spec.ts` y `fidelidad-hero.spec.ts` verdes contra el `dist/` final.

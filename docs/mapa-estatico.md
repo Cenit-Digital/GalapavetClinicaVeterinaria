@@ -7,5 +7,5 @@
   La atribución «© OpenStreetMap contributors» debe verse junto al mapa.
 - El pin se pinta en CSS sobre la posición del nodo público `amenity=veterinary`
   «Galapavet» (osm id 5644506906; 40.5772872, −4.0004445; Carretera de
-  Torrelodones 11, Galapagar). En el recorte, el nodo cae en x = 446, y = 260
-  (43,55 % del ancho, 50 % del alto).
+  Torrelodones 11, Galapagar). En el recorte, el cálculo Web Mercator usado
+  por la aplicación sitúa el pin en 43,53 % del ancho y 50,06 % del alto.

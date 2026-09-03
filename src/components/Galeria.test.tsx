@@ -116,16 +116,22 @@ describe('@s4 la pista desplazable es alcanzable con el teclado', () => {
     const usuario = userEvent.setup()
     renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
 
-    // El botón "Foto anterior" es el primer elemento focusable del componente.
+    // ENMIENDA (fidelidad_galeria @s1, 03/09/2026): los dos controles viven
+    // juntos en la cabecera, ANTES de la pista, como en el prototipo; el
+    // contrato @s4 solo exige que el teclado alcance la pista, no que sea la
+    // segunda parada. Recorrido real: "Foto anterior" → "Foto siguiente" →
+    // pista. Ver `progress/fidelidad/enmiendas_fidelidad_galeria.md`.
     await usuario.tab()
     expect(screen.getByRole('button', { name: 'Foto anterior' })).toHaveFocus()
+    await usuario.tab()
+    expect(screen.getByRole('button', { name: 'Foto siguiente' })).toHaveFocus()
 
     await usuario.tab()
 
     const pista = document.activeElement
     expect(pista).not.toBeNull()
     expect(pista?.tagName).not.toBe('BUTTON')
-    expect(pista).not.toBe(screen.getByRole('button', { name: 'Foto siguiente' }))
+    expect(pista).toBe(screen.getByRole('group', { name: /Fotografías/ }))
     expect(pista?.getAttribute('aria-label')?.length).toBeGreaterThan(0)
   })
 })
@@ -330,8 +336,23 @@ describe('@s17 una entrada del catálogo con el nombre en blanco no se renderiza
 
     expect(screen.getByRole('img', { name: 'Nala y Coco' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Bruno' })).toBeInTheDocument()
-    expect(screen.getByText('Nala y Coco · Primera vacunación')).toBeInTheDocument()
-    expect(screen.getByText('Bruno · Alta tras cirugía de rodilla')).toBeInTheDocument()
+    // ENMIENDA (fidelidad_galeria @s2, 03/09/2026): el contrato @s17 pide que
+    // "las otras dos entradas se muestran con su nombre y su pie", no el formato
+    // "nombre · pie" en una sola cadena que este test daba por hecho. Ahora
+    // nombre y pie son dos elementos dentro de la figura. Ver
+    // `progress/fidelidad/enmiendas_fidelidad_galeria.md`.
+    const entradasVisibles: readonly (readonly [nombre: string, pie: string])[] = [
+      ['Nala y Coco', 'Primera vacunación'],
+      ['Bruno', 'Alta tras cirugía de rodilla'],
+    ]
+    for (const [nombre, pie] of entradasVisibles) {
+      const figura = screen.getByRole('img', { name: nombre }).closest('figure')
+      if (figura === null) {
+        throw new Error(`No hay figura para "${nombre}"`)
+      }
+      expect(within(figura).getByText(nombre)).toBeInTheDocument()
+      expect(within(figura).getByText(pie)).toBeInTheDocument()
+    }
   })
 })
 
@@ -444,3 +465,180 @@ describe('@s35 la galería es un carrusel con anclaje de desplazamiento y contro
     expect(screen.getByText(AVISO_DEMOSTRACION)).toBeVisible()
   })
 })
+
+// ---------------------------------------------------------------------------
+// `features/fidelidad_galeria.feature` (33): la anatomía de la sección.
+// ---------------------------------------------------------------------------
+
+/** Rótulo del cintillo tecleado a mano — nunca importado de `Galeria.tsx`. */
+const ROTULO_CINTILLO = 'Galería'
+
+/** Si `despues` va detrás de `antes` en el orden del documento. */
+function vaDespues(antes: Element, despues: Element): boolean {
+  return (antes.compareDocumentPosition(despues) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+}
+
+describe('@s1 de fidelidad_galeria: la cabecera abre con cintillo y titular "Galería"', () => {
+  it('hay un <p> "Galería" que precede al <h2> "Galería", no es encabezado, y el titular no atribuye las fotos a la clínica', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    const seccion = screen.getByRole('region', { name: /Galería/ })
+    const titular = within(seccion).getByRole('heading', { level: 2, name: 'Galería' })
+    const cintillo = within(seccion)
+      .getAllByText(ROTULO_CINTILLO)
+      .find((elemento) => elemento.tagName === 'P')
+    if (cintillo === undefined) {
+      throw new Error('No hay ningún <p> con el rótulo del cintillo')
+    }
+
+    // "FOLLOWING" visto desde el cintillo: el titular va DESPUÉS en el documento.
+    expect(cintillo.compareDocumentPosition(titular) === Node.DOCUMENT_POSITION_FOLLOWING).toBe(true)
+    expect(within(seccion).getAllByRole('heading')).toHaveLength(1)
+    expect(titular.textContent).not.toMatch(/peludos|pacientes/i)
+  })
+
+  it('el aviso es el párrafo de la cabecera (comparte contenedor con el titular) y los dos controles, juntos, van tras él y antes de la pista', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    const titular = screen.getByRole('heading', { level: 2, name: 'Galería' })
+    const aviso = screen.getByText(AVISO_DEMOSTRACION)
+    const botonAnterior = screen.getByRole('button', { name: 'Foto anterior' })
+    const botonSiguiente = screen.getByRole('button', { name: 'Foto siguiente' })
+    const pista = screen.getByRole('group', { name: /Fotografías/ })
+
+    expect(aviso.parentElement).toBe(titular.parentElement)
+    expect(botonAnterior.parentElement).toBe(botonSiguiente.parentElement)
+
+    expect(vaDespues(aviso, botonAnterior)).toBe(true)
+    expect(vaDespues(botonAnterior, botonSiguiente)).toBe(true)
+    expect(vaDespues(botonSiguiente, pista)).toBe(true)
+
+    // La cabecera es el abuelo común de titular y controles, y NO contiene la pista.
+    const cabecera = titular.parentElement?.parentElement ?? null
+    expect(cabecera).not.toBeNull()
+    expect(cabecera).toBe(botonAnterior.parentElement?.parentElement)
+    expect(cabecera?.contains(pista)).toBe(false)
+  })
+
+  it('el SCSS acota la cabecera al ancho compartido, con los controles a la derecha, y el cintillo usa el mixin sin color propio', () => {
+    const bloqueCabecera = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.cabecera'))
+    expect(bloqueCabecera).toMatch(/max-width:\s*\$ancho-maximo-contenedor/)
+    expect(bloqueCabecera).toMatch(/justify-content:\s*space-between/)
+    expect(bloqueCabecera).toMatch(/align-items:\s*flex-end/)
+
+    const bloqueEyebrow = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.eyebrow'))
+    expect(bloqueEyebrow).toContain('@include eyebrow;')
+    expect(bloqueEyebrow).not.toMatch(/(?<![a-z-])color\s*:/)
+  })
+
+  it('el SCSS hace circulares de 48px los dos controles: lado $altura-control-media, radio $radio-circulo, superficie y borde de control', () => {
+    const bloqueControles = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.controles'))
+
+    expect(bloqueControles).toMatch(/width:\s*\$altura-control-media/)
+    expect(bloqueControles).toMatch(/height:\s*\$altura-control-media/)
+    expect(bloqueControles).toMatch(/border-radius:\s*\$radio-circulo/)
+    expect(bloqueControles).toMatch(/background-color:\s*var\(--color-superficie\)/)
+    expect(bloqueControles).toMatch(/border:\s*\$ancho-borde-control solid var\(--color-borde-control\)/)
+    expect(bloqueControles).toContain('@include foco-visible;')
+  })
+
+  it('cada control lleva una única flecha svg decorativa (aria-hidden) con un trazo propio, distinto del otro, y ningún texto visible', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    const trazos: string[] = []
+    for (const nombre of ['Foto anterior', 'Foto siguiente']) {
+      const boton = screen.getByRole('button', { name: nombre })
+      // El único indicio VISIBLE del sentido es la flecha; el nombre sigue
+      // siendo el `aria-label` (@s3 de `galeria.feature`), así que el botón
+      // no aporta texto propio (ni glifo de reserva de la fuente).
+      expect(boton.textContent?.trim(), `${nombre}: sin texto visible`).toBe('')
+
+      const flechas = boton.querySelectorAll('svg')
+      expect(flechas, `${nombre}: una única flecha`).toHaveLength(1)
+      const flecha = flechas[0]
+      expect(flecha?.getAttribute('aria-hidden'), `${nombre}: decorativa`).toBe('true')
+
+      const trazosDeLaFlecha = flecha?.querySelectorAll('path[d]') ?? []
+      expect(trazosDeLaFlecha, `${nombre}: un único trazo`).toHaveLength(1)
+      const trazo = trazosDeLaFlecha[0]?.getAttribute('d')?.trim() ?? ''
+      expect(trazo.length, `${nombre}: trazo no vacío`).toBeGreaterThan(0)
+      trazos.push(trazo)
+    }
+    // Dos sentidos, dos dibujos: la misma flecha en los dos controles no
+    // distinguiría "anterior" de "siguiente" a la vista.
+    expect(new Set(trazos).size).toBe(2)
+  })
+})
+
+describe('@s2 de fidelidad_galeria: cada fotografía es una tarjeta con dos líneas de contexto', () => {
+  it('el pie de cada figura lleva el nombre y la descripción en dos elementos distintos dentro del figcaption', () => {
+    renderizarGaleria({ catalogo: CATALOGO_DOS_ENTRADAS })
+
+    for (const entrada of CATALOGO_DOS_ENTRADAS) {
+      const figura = screen.getByRole('img', { name: entrada.nombre }).closest('figure')
+      if (figura === null) {
+        throw new Error(`No hay figura para "${entrada.nombre}"`)
+      }
+      const pieDeFigura = figura.querySelector('figcaption')
+      if (pieDeFigura === null) {
+        throw new Error(`La figura "${entrada.nombre}" no tiene figcaption`)
+      }
+      const nombre = within(pieDeFigura).getByText(entrada.nombre)
+      const pie = within(pieDeFigura).getByText(entrada.pie)
+      expect(nombre).not.toBe(pie)
+      expect(nombre.textContent).toBe(entrada.nombre)
+      expect(pie.textContent).toBe(entrada.pie)
+    }
+  })
+
+  it('en el SCSS la figura, anidada en la pista, es una tarjeta con la foto en un hueco 4/3 sin radio propio y el pie en dos líneas', () => {
+    const bloquePista = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.pista'))
+    const bloqueFigura = quitarComentariosScss(extraerBloqueDeRegla(bloquePista, 'figure'))
+    const bloqueImagen = quitarComentariosScss(extraerBloqueDeRegla(bloqueFigura, 'img'))
+
+    expect(bloqueFigura).toContain('@include tarjeta;')
+    expect(bloqueFigura).toMatch(/scroll-snap-align:\s*start/)
+    expect(bloqueImagen).toContain('@include hueco-de-imagen(4, 3);')
+    expect(bloqueImagen).not.toMatch(/border-radius/)
+
+    const bloqueNombre = quitarComentariosScss(extraerBloqueDeRegla(bloqueFigura, '.nombre'))
+    const bloquePie = quitarComentariosScss(extraerBloqueDeRegla(bloqueFigura, '.pie'))
+    expect(bloqueNombre).toMatch(/display:\s*block/)
+    expect(bloqueNombre).toMatch(/font-family:\s*var\(--fuente-titulares\)/)
+    expect(bloqueNombre).toMatch(/color:\s*var\(--color-tinta\)/)
+    expect(bloquePie).toMatch(/display:\s*block/)
+    expect(bloquePie).toMatch(/color:\s*var\(--color-texto-suave\)/)
+  })
+})
+
+describe('@s3 de fidelidad_galeria: la pista separa las tarjetas el paso de la escala, oculta la barra nativa y ancla en el contenedor', () => {
+  it('el bloque real de la pista declara gap espaciado(16) (= SEPARACION_ENTRE_TARJETAS_PX), scrollbar-width none y el mismo inicio para padding y scroll-padding', () => {
+    const bloquePista = quitarComentariosScss(extraerBloqueDeRegla(TEXTO_REAL_DEL_MODULO_SCSS, '.pista'))
+    // Solo las declaraciones PROPIAS de la pista: sin los bloques anidados.
+    const declaracionesPropias = bloquePista.replaceAll(/\b[\w.&:-]+\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '')
+
+    expect(declaracionesPropias).toMatch(/gap:\s*espaciado\(16\)/)
+    expect(SEPARACION_ENTRE_TARJETAS_PX).toBe(16)
+    expect(declaracionesPropias).toMatch(/scrollbar-width:\s*none/)
+
+    const inicio = /(?<![\w-])padding-inline-start:\s*([^;]+);/.exec(declaracionesPropias)?.[1]
+    const inicioDeAnclaje = /scroll-padding-inline-start:\s*([^;]+);/.exec(declaracionesPropias)?.[1]
+    expect(inicio).toBeDefined()
+    expect(inicioDeAnclaje).toBe(inicio)
+    const expresionDeInicio = resolverVariableSass(TEXTO_REAL_DEL_MODULO_SCSS, inicio ?? '')
+    expect(expresionDeInicio).toContain('var(--sangrado-lateral)')
+    expect(expresionDeInicio).toContain('$ancho-maximo-contenedor')
+  })
+})
+
+/** Si `valor` es una variable Sass del módulo (`$nombre`), devuelve su definición; si no, el propio valor. */
+function resolverVariableSass(textoScss: string, valor: string): string {
+  if (!valor.startsWith('$')) {
+    return valor
+  }
+  const definicion = new RegExp(`\\${valor}:\\s*([^;]+);`).exec(quitarComentariosScss(textoScss))?.[1]
+  if (definicion === undefined) {
+    throw new Error(`La variable Sass "${valor}" no está definida en el módulo`)
+  }
+  return definicion
+}

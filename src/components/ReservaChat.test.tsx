@@ -284,10 +284,13 @@ describe('@s12 al terminar el guion se ofrece la llamada con el resumen a la vis
     expect(enlace).toHaveAttribute('href', 'tel:+34910829267')
     expect(within(widget).getByRole('button', { name: 'Pedir otra cita' })).toBeInTheDocument()
 
-    for (const enlaceWidget of within(widget).queryAllByRole('link')) {
-      const destino = enlaceWidget.getAttribute('href') ?? ''
-      expect(destino).not.toMatch(/wa\.me|whatsapp/i)
-    }
+    // ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66: la
+    // cláusula "ningún enlace wa.me dentro del widget" era la reserva del canal
+    // sin confirmar, hoy derogada. Lo que se fija ahora es lo que el widget
+    // ofrece de verdad: la llamada es su ÚNICO enlace de cierre; el canal de
+    // mensajería confirmado vive en la columna de texto (@s18). Antes/después en
+    // `progress/fidelidad/enmiendas_fidelidad_reserva.md`.
+    expect(within(widget).getAllByRole('link')).toEqual([enlace])
     expect(within(widget).queryByRole('textbox')).not.toBeInTheDocument()
     expect(within(widget).queryByRole('group', { name: 'Respuestas rápidas' })).not.toBeInTheDocument()
   })
@@ -399,24 +402,30 @@ describe('@s17 el aviso de que nada se envía a ningún servidor se ve en todos 
   })
 })
 
-describe('@s18 el visitante puede saltarse el chat y llamar directamente', () => {
-  it('hay enlaces a la clínica y al móvil, y en toda la sección no hay WhatsApp ni mailto', () => {
+// ENMENDADO el 03/09/2026 con `fidelidad_reserva` (32), Decisión 66: el cliente
+// confirmó que el móvil 685 34 31 49 atiende WhatsApp (`docs/datos-galapavet.md`
+// §2bis), lo que deroga la prohibición del canal que este escenario fijaba
+// mientras el dato estuviera sin confirmar. Antes/después literal en
+// `progress/fidelidad/enmiendas_fidelidad_reserva.md`. Se conserva la
+// prohibición de `mailto:` (el cliente sigue sin publicar email) y se exige
+// que el ÚNICO enlace de mensajería sea el del móvil confirmado.
+describe('@s18 el visitante puede saltarse el chat y escribir o llamar directamente', () => {
+  it('hay un enlace "WhatsApp" al móvil confirmado y otro "Llamar a la clínica"; ningún otro wa.me y ningún mailto en la sección', () => {
     const { container } = renderizarReservaChat()
 
-    expect(screen.getByRole('link', { name: 'Llamar a la clínica · 91 082 92 67' })).toHaveAttribute(
-      'href',
-      'tel:+34910829267',
-    )
-    expect(screen.getByRole('link', { name: 'Llamar al móvil · 685 34 31 49' })).toHaveAttribute(
-      'href',
-      'tel:+34685343149',
-    )
+    expect(screen.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', 'https://wa.me/34685343149')
+    expect(screen.getByRole('link', { name: 'Llamar a la clínica' })).toHaveAttribute('href', 'tel:+34910829267')
 
-    for (const enlace of screen.getAllByRole('link')) {
+    const enlaces = screen.getAllByRole('link')
+    const enlacesDeMensajeria = enlaces.filter((enlace) => /wa\.me|whatsapp/i.test(enlace.getAttribute('href') ?? ''))
+    expect(enlacesDeMensajeria).toHaveLength(1)
+    for (const enlace of enlacesDeMensajeria) {
+      expect(enlace.getAttribute('href')).toBe('https://wa.me/34685343149')
+      expect(enlace).toHaveAccessibleName('WhatsApp')
+    }
+    for (const enlace of enlaces) {
       const destino = enlace.getAttribute('href') ?? ''
-      expect(destino).not.toMatch(/wa\.me|whatsapp/i)
       expect(destino).not.toMatch(/^mailto:/)
-      expect(enlace).not.toHaveAccessibleName(/WhatsApp/i)
     }
     expect(container).toHaveTextContent('Llamar a la clínica')
   })
@@ -537,5 +546,227 @@ describe('@s34 el panel de conversación abre con una cabecera identificable, co
     // un guion que corre en el propio navegador, no una persona conectada.
     expect(within(cabecera).getByText('Disponible')).toBeInTheDocument()
     expect(cabecera).not.toHaveTextContent('en línea')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// `features/fidelidad_reserva.feature` (feature 32). Igual que @s25/@s34 de
+// arriba: la GEOMETRÍA pintada (dos columnas, 470 px, 44 px, apilado a 320 px)
+// se mide en navegador real en `tests/e2e/fidelidad-reserva.spec.ts`; aquí se
+// blindan la anatomía del DOM (con doble anclaje de literales a mano) y las
+// reglas fuente del `.module.scss`, leídas con `?raw` por cabecera literal.
+// ---------------------------------------------------------------------------
+describe('@s1 de fidelidad_reserva: información y chat como dos columnas equilibradas', () => {
+  it('el bloque informativo precede a la tarjeta del chat como hermanos directos de la rejilla', () => {
+    renderizarReservaChat()
+
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    const informacion = widget.previousElementSibling
+
+    expect(informacion).not.toBeNull()
+    expect(informacion).toHaveAttribute('data-reserva-informacion')
+    expect(within(informacion as HTMLElement).getByRole('heading', { level: 2 })).toBeInTheDocument()
+    expect(widget.parentElement).toBe(informacion?.parentElement)
+  })
+
+  it('la rejilla centra verticalmente sus dos columnas y la tarjeta declara una altura mínima con la sombra de reposo fija', () => {
+    const rejilla = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.reservaChat {')
+    expect(rejilla).toContain('grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));')
+    expect(rejilla).toContain('align-items: center;')
+
+    // La tarjeta mantiene la sombra de reposo también con el puntero encima:
+    // `geometria-escalas.spec.ts` @s24 la cuenta entre las tarjetas "en reposo".
+    const tarjeta = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.tarjeta {')
+    expect(tarjeta).toContain('@include tarjeta;')
+    expect(cuerpoDelBloque(tarjeta, '&:hover {')).toContain('box-shadow: var(--sombra-reposo);')
+    // La altura mínima vive en el interior de la tarjeta: la caja anónima de un
+    // `fieldset` no hereda `min-height`, y sin ella el pie no se anclaría abajo.
+    const interior = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.interior {')
+    expect(interior).toContain('flex-direction: column;')
+    expect(interior).toMatch(/min-height: [^;]+;/)
+  })
+})
+
+describe('@s2 de fidelidad_reserva: los dos canales confirmados de la fuente única, en una fila', () => {
+  it('el primer enlace es exactamente "WhatsApp" hacia el wa.me del móvil confirmado y el segundo "Llamar a la clínica" hacia el tel: de la clínica', () => {
+    const { container } = renderizarReservaChat()
+
+    const acciones = container.querySelector('[data-reserva-acciones]')
+    expect(acciones).not.toBeNull()
+    const enlaces = within(acciones as HTMLElement).getAllByRole('link')
+    expect(enlaces).toHaveLength(2)
+
+    // Doble anclaje: destino y nombre tecleados a mano (Decisión 66,
+    // `docs/datos-galapavet.md` §2bis: el 685 34 31 49 atiende WhatsApp).
+    expect(enlaces[0]).toHaveAccessibleName('WhatsApp')
+    expect(enlaces[0]).toHaveAttribute('href', 'https://wa.me/34685343149')
+    expect(enlaces[0]).toHaveAttribute('target', '_blank')
+    expect(enlaces[0]).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(enlaces[1]).toHaveAccessibleName('Llamar a la clínica')
+    expect(enlaces[1]).toHaveAttribute('href', 'tel:+34910829267')
+
+    // La fila de acciones va dentro del bloque informativo, tras el titular.
+    const informacion = container.querySelector('[data-reserva-informacion]') as HTMLElement
+    const titular = within(informacion).getByRole('heading', { level: 2 })
+    expect(informacion).toContainElement(acciones as HTMLElement)
+    expect(titular.compareDocumentPosition(acciones as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('la fila de acciones es flex con salto de línea y viste el primer enlace como botón primario y el resto como fantasma', () => {
+    const fila = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.acciones {')
+
+    expect(fila).toContain('display: flex;')
+    expect(fila).toContain('flex-wrap: wrap;')
+    expect(cuerpoDelBloque(fila, 'a:first-child {')).toContain('@include boton-primario;')
+    expect(cuerpoDelBloque(fila, 'a:not(:first-child) {')).toContain('@include boton-fantasma;')
+    // El paso 20 no existe en la escala: Sass lo descartaba y dejaba las píldoras sin relleno lateral.
+    expect(TEXTO_RESERVA_CHAT_SCSS).not.toContain('espaciado(20)')
+  })
+})
+
+describe('@s3 de fidelidad_reserva: la lista con marcas son los tres tramos de horario reales', () => {
+  it('la lista va bajo las acciones, cada tramo es texto plano sin nodos de marca y no hay promesas de plazo ni disponibilidad', () => {
+    const { container } = renderizarReservaChat()
+
+    const lista = container.querySelector('[data-reserva-horario]')
+    expect(lista).not.toBeNull()
+    const acciones = container.querySelector('[data-reserva-acciones]') as HTMLElement
+    expect(acciones.compareDocumentPosition(lista as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    const tramos = within(lista as HTMLElement).getAllByRole('listitem')
+    expect(tramos.map((tramo) => tramo.textContent)).toEqual([
+      'Lunes a viernes: 11:00 a 14:00 y 16:30 a 20:00',
+      'Sábados: 11:00 a 14:00',
+      'Domingos: Cerrado',
+    ])
+    // La marca "✓" es decorativa y vive en CSS: ningún nodo hijo, ningún texto extra.
+    for (const tramo of tramos) {
+      expect(tramo.children).toHaveLength(0)
+    }
+    for (const promesa of ['Confirmamos', 'en menos de', 'Recordatorio', 'sin coste', 'en línea']) {
+      expect(container).not.toHaveTextContent(promesa)
+    }
+  })
+
+  it('el bloque `.horario` quita las viñetas y pinta la marca en `li::before` con texto alternativo vacío, sobre el acento suave', () => {
+    const horario = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.horario {')
+    expect(horario).toContain('list-style: none;')
+
+    const marca = cuerpoDelBloque(horario, 'li::before {')
+    // La alternativa vacía (`/ ''`) deja el glifo fuera del árbol accesible: el
+    // `textContent` de @s19 y el nombre accesible de cada tramo no cambian.
+    expect(marca).toContain("content: '✓' / '';")
+    expect(marca).toContain('border-radius: $radio-circulo;')
+    expect(marca).toContain('background-color: var(--color-acento-suave);')
+    expect(marca).toContain('color: var(--color-acento-tinta);')
+  })
+})
+
+describe('@s4 de fidelidad_reserva: la tarjeta conserva sus tres bandas y sus controles accesibles', () => {
+  it('la cabecera abre con el avatar de iniciales, luego el nombre comercial y el estado "Disponible" con su punto decorativo', () => {
+    renderizarReservaChat()
+
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    const cabecera = within(widget).getByRole('group', { name: 'Cabecera del chat' })
+    const avatar = within(cabecera).getByText('G', { selector: '[aria-hidden="true"]' })
+    const nombre = within(cabecera).getByText('Galapavet')
+    const estado = within(cabecera).getByText('Disponible')
+
+    expect(cabecera.firstElementChild).toBe(avatar)
+    expect(avatar.compareDocumentPosition(nombre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(nombre.compareDocumentPosition(estado) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(estado.querySelector('[aria-hidden="true"]')).not.toBeNull()
+  })
+
+  it('cada burbuja del historial declara su autor en `data-autor`, además del rótulo del propio texto', async () => {
+    const usuario = userEvent.setup()
+    renderizarReservaChat()
+    await usuario.click(screen.getByRole('button', { name: 'Medicina general' }))
+
+    const burbujas = [...screen.getByRole('log').children]
+    expect(burbujas.map((burbuja) => burbuja.getAttribute('data-autor'))).toEqual(['asistente', 'visitante', 'asistente'])
+    expect(burbujas.map((burbuja) => burbuja.textContent)).toEqual([
+      'Asistente: Hola, soy el asistente de Galapavet. ¿Qué necesita tu mascota?',
+      'Tú: Medicina general',
+      'Asistente: Entendido. ¿Con qué animal vienes?',
+    ])
+  })
+
+  it('el pie agrupa las respuestas rápidas y el aviso de demostración, fuera del historial y dentro del widget', () => {
+    const { container } = renderizarReservaChat()
+
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    const pie = container.querySelector('[data-reserva-pie]')
+    expect(pie).not.toBeNull()
+    expect(widget).toContainElement(pie as HTMLElement)
+    expect(pie).not.toContainElement(screen.getByRole('log'))
+    expect(within(pie as HTMLElement).getByRole('group', { name: 'Respuestas rápidas' })).toBeInTheDocument()
+    expect(pie).toHaveTextContent(AVISO_DEMO)
+  })
+
+  it('en el paso de texto libre, "Enviar respuesta" es el botón redondo "→" en la misma fila que el campo, con su nombre en aria-label', async () => {
+    const usuario = userEvent.setup()
+    renderizarReservaChat()
+    await usuario.click(screen.getByRole('button', { name: 'Medicina general' }))
+
+    const campo = screen.getByRole('textbox', { name: 'Tu respuesta' })
+    const boton = screen.getByRole('button', { name: 'Enviar respuesta' })
+    expect(boton).toHaveAttribute('aria-label', 'Enviar respuesta')
+    expect(boton.querySelector('[aria-hidden="true"]')).toHaveTextContent('→')
+    expect(boton.parentElement).toBe(campo.parentElement)
+    expect(boton.parentElement).toHaveAttribute('data-reserva-fila-de-texto')
+  })
+
+  it('las reglas fuente de las tres bandas: avatar primario de 40px, burbujas por autor, pie con borde superior, chips en fila y botón redondo de 48px', () => {
+    const cabecera = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.cabeceraChat {')
+    expect(cabecera).toContain('border-block-end: $ancho-borde-fino solid var(--color-borde);')
+    const avatar = cuerpoDelBloque(cabecera, '> span {')
+    expect(avatar).toContain('width: $altura-control-pequena;')
+    expect(avatar).toContain('border-radius: $radio-circulo;')
+    expect(avatar).toContain('background-color: var(--color-primario);')
+    expect(avatar).toContain('color: var(--color-sobre-primario);')
+
+    const historial = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, "[role='log'] {")
+    expect(historial).toContain('flex: 1;')
+    expect(historial).toContain('background-color: var(--color-fondo);')
+    const visitante = cuerpoDelBloque(historial, "&[data-autor='visitante'] {")
+    expect(visitante).toContain('align-self: flex-end;')
+    expect(visitante).toContain('background-color: var(--color-primario);')
+    expect(visitante).toContain('color: var(--color-sobre-primario);')
+
+    expect(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.pie {')).toContain(
+      'border-block-start: $ancho-borde-fino solid var(--color-borde);',
+    )
+    expect(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, "[aria-label='Respuestas rápidas'] {")).toContain('flex-wrap: wrap;')
+
+    const fila = cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.filaDeTexto {')
+    const campo = cuerpoDelBloque(fila, 'input {')
+    expect(campo).toContain('border-radius: $radio-completo;')
+    expect(campo).toContain('min-height: $altura-control-media;')
+    const boton = cuerpoDelBloque(fila, 'button {')
+    expect(boton).toContain('width: $altura-control-media;')
+    expect(boton).toContain('height: $altura-control-media;')
+    expect(boton).toContain('border-radius: $radio-circulo;')
+
+    expect(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.aviso {')).toContain('color: var(--color-texto-suave);')
+  })
+})
+
+describe('@s5 de fidelidad_reserva: la reserva se apila en móvil sin perder los canales ni el chat', () => {
+  it('en el orden de lectura las acciones preceden a la tarjeta, y las reglas fuente evitan el desborde: sin ancho mínimo intrínseco de fieldset y campo encogible', () => {
+    const { container } = renderizarReservaChat()
+
+    const acciones = container.querySelector('[data-reserva-acciones]') as HTMLElement
+    const widget = screen.getByRole('group', { name: 'Asistente de reserva de Galapavet' })
+    expect(acciones.compareDocumentPosition(widget) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // El `fieldset` del agente de usuario trae `min-inline-size: min-content`:
+    // con un chip largo, la tarjeta (y los grupos anidados) serían más anchos
+    // que una ventana de 320 px. El campo de texto, como ítem flex, necesita
+    // `min-width: 0` para poder encoger por debajo de su ancho intrínseco.
+    expect(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.tarjeta {')).toContain('min-inline-size: 0;')
+    expect(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.tarjeta fieldset {')).toContain('min-inline-size: 0;')
+    const campo = cuerpoDelBloque(cuerpoDelBloque(TEXTO_RESERVA_CHAT_SCSS, '.filaDeTexto {'), 'input {')
+    expect(campo).toContain('min-width: 0;')
   })
 })
