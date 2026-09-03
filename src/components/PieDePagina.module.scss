@@ -105,6 +105,15 @@
     gap: espaciado(16);
     flex-wrap: nowrap;
   }
+
+  // Los enlaces legales son texto compacto, pero siguen siendo controles
+  // interactivos: su rectángulo real debe conservar el mínimo táctil del
+  // sistema igual que el resto de enlaces del pie.
+  a {
+    @include area-tactil-minima;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .columna a {
@@ -138,5 +147,18 @@
     ul {
       flex-wrap: wrap;
     }
+  }
+}
+
+// En tableta, cuatro columnas cumplen geométricamente pero hacen que el
+// contenido se lea comprimido. La marca abre una fila y las columnas se
+// reparten en dos pistas hasta que la cabecera vuelve a escritorio a 1024 px.
+@media (min-width: 701px) and (max-width: 1023px) {
+  .superior {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .marca {
+    grid-column: 1 / -1;
   }
 }

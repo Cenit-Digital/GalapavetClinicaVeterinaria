@@ -382,3 +382,18 @@ por WhatsApp con resumen prellenado (no está en @s1–@s5).
 - La compilación de producción termina verde. CSS: 10,36 kB gzip (límite
   aprobado: 12 kB); la puerta de terceros no encuentra referencias externas.
 - No se ha creado ningún commit ni se ha descartado ningún cambio ajeno.
+
+## Cierre de responsive integral — feature 38 — 03/09/2026
+
+- Pablo aprobó explícitamente el contrato `fidelidad_responsive_integral`.
+- Se resolvieron por TDD: pie comprimido de tableta, control de menú menor de
+  44 px, opciones de paleta de 24 px, hero recortado en 561–600 px, enlaces
+  legales sin área táctil y salto del h1 cuando falta la fuente de marca.
+- Validación final: Playwright 167/167; `bin/harness init` con 89/89 ficheros
+  y 1.416/1.416 tests; lint, TypeScript y build verdes. CSS 10,41 kB gzip bajo
+  el techo de 12 kB y puerta de terceros limpia. Mutación dirigida al bloque
+  lógico añadido: 1/1 eliminado, 100 %.
+- Evidencia: `progress/tdd_fidelidad_responsive_integral.md`,
+  `progress/judge_fidelidad_responsive_integral.md`,
+  `progress/mutation_fidelidad_responsive_integral.md` y
+  `progress/responsive/verificacion_final.md`.

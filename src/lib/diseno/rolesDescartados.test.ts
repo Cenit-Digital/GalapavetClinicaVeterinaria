@@ -148,6 +148,20 @@ const rotulo = 'Urgencias fuera de horario'`
     expect(visible).toContain('https://wa.me/34685343149')
     expect(visible).toContain('24 h')
   })
+
+  it('descarta solo los identificadores numéricos generados por Stryker sin ocultar una promesa escrita en el código', () => {
+    const instrumentado = [
+      'if (stryMutAct_abc123("365")) { ejecutar() }',
+      'stryCov_abc123("365", "366")',
+      "const texto = 'Atención 24 h'",
+    ].join('\n')
+
+    const visible = textoVisibleDe(instrumentado)
+
+    expect(visible).not.toContain('"365"')
+    expect(visible).not.toContain('"366"')
+    expect(visible).toContain('Atención 24 h')
+  })
 })
 
 /**

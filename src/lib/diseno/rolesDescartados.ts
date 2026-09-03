@@ -56,6 +56,13 @@ const CERO_VARIANTES = 0
 
 const PATRON_COMENTARIO_DE_BLOQUE = /\/\*[\s\S]*?\*\//g
 const PATRON_COMENTARIO_DE_LINEA_COMPLETA = /^[ \t]*\/\/.*$/gm
+// Stryker instrumenta cada expresión con llamadas como
+// `stryMutAct_ab12("365")` y `stryCov_ab12("365", "366")`. Esos números
+// son IDs internos, no texto servido ni una promesa de la clínica. El patrón
+// exige el nombre generado Y una lista completa de IDs numéricos: un literal
+// "365" escrito por la aplicación fuera de esa llamada sigue siendo visible
+// para la puerta.
+const PATRON_IDENTIFICADORES_STRYKER = /\bstry(?:MutAct|Cov)_[A-Za-z0-9_]+\(\s*(?:["']\d+["']\s*,?\s*)+\)/g
 const SIN_TEXTO = ''
 
 const CARACTERES_ESPECIALES_DE_REGEX = /[.*+?^${}()|[\]\\]/g
@@ -97,6 +104,7 @@ function comoAfirmacionDePalabraSuelta(afirmacionEnMinusculas: string): RegExp {
 export function textoVisibleDe(contenido: string): string {
   return contenido
     .replace(PATRON_COMENTARIO_DE_BLOQUE, SIN_TEXTO)
+    .replace(PATRON_IDENTIFICADORES_STRYKER, SIN_TEXTO)
     .replace(PATRON_COMENTARIO_DE_LINEA_COMPLETA, SIN_TEXTO)
 }
 

@@ -1158,3 +1158,41 @@ la comparación en pantalla; la mutación se corre fichero a fichero sobre los
    repositorio.** Cuatro piezas de la capa visual dependen de ello, y la más
    cara es `backdrop-filter`: sin soporte, la cabecera translúcida queda
    ilegible. Ver PREGUNTA ABIERTA 2 de la sección `identidad_visual`.
+
+## Fidelidad responsive integral — feature 38
+
+### Decisiones
+
+68. **La fidelidad visual incluye la adaptación.** No basta con que una página
+    no tenga barra horizontal: a cada ancho debe conservar jerarquía, ritmo,
+    legibilidad, objetivos táctiles y controles alcanzables. La referencia de
+    Claude Design sigue siendo la fuente visual para escritorio; sus patrones
+    se reordenan, no se encogen arbitrariamente, al bajar de ancho.
+69. **Matriz verificable de viewport.** Se prueban teléfonos de 320, 360, 375,
+    390 y 414 px; formatos intermedios de 480 y 600 px; tabletas de 768, 820 y
+    900 px; los dos lados exactos de la cabecera (1023/1024 px); y escritorios
+    de 1280, 1440 y 1600 px. Además, una prueba de barrido cubre intervalos de
+    16 px desde 320 hasta 1600 para detectar un ancho no representado por la
+    matriz.
+70. **Pie en tres regímenes.** El pie mantiene cuatro columnas solo desde 1024
+    px, pasa a dos columnas legibles entre 701 y 1023 px y a una sola columna
+    en 700 px o menos. La barra legal puede apilarse solo cuando haga falta;
+    los nombres accesibles no cambian.
+71. **No hay contenido recortado como solución responsive.** Salvo la pista de
+    galería, cuyo scroll horizontal es una interacción explícita y focalizable,
+    ningún control ni texto se oculta, se superpone o se recorta para caber.
+    Los controles interactivos conservan 44×44 px como mínimo cuando el
+    contrato existente lo exige.
+
+### Alcance y evidencia
+
+- La auditoría del sitio construido en servidor bajo el subpath real no ha
+  encontrado errores de consola ni `scrollWidth` de documento superior a la
+  ventana en los 16 anchos iniciales de 320 a 1600 px. Es una línea base, no
+  una declaración de cierre.
+- La revisión visual detectó el pie comprimido a 768–1023 px: técnicamente
+  cabe, pero no proporciona una composición de tableta aceptable. La feature
+  lo corrige con la Decisión 70.
+- La feature se cierra solo con Playwright de matriz y barrido, comprobación
+  visual de 320/768/1023/1024/1440 contra la jerarquía aprobada, suite del
+  harness, build y mutación sobre toda lógica nueva (si la hubiera).

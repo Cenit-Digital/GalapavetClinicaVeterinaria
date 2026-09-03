@@ -75,7 +75,11 @@
 }
 
 .contenido h1 {
-  max-width: 16ch;
+  // El 16ch del prototipo equivale a ~720 px en Outfit. Como `ch` cambia
+  // con la fuente de respaldo, al bloquear la descarga el titular pasaba de
+  // dos a tres líneas. Este ancho físico conserva la misma composición del
+  // diseño y evita el salto durante `font-display: swap`.
+  width: min(100%, 720px);
   margin: espaciado(24) 0 0;
   color: inherit;
   font-family: var(--fuente-titulares);
@@ -214,6 +218,15 @@
     padding-inline: espaciado(16);
   }
 
+  .cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Cuatro cifras requieren su ancho mínimo más tres huecos. Entre el móvil
+// estrecho y 700 px, conservarlas en una fila forzaba el contenido del hero
+// fuera del viewport y quedaba oculto por su propio `overflow: hidden`.
+@media (min-width: 561px) and (max-width: 700px) {
   .cifras {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

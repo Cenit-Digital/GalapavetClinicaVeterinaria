@@ -213,11 +213,12 @@
 
 .botonMenu {
   @include foco-visible;
+  flex: 0 0 $altura-control-media;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: $altura-control-pequena;
-  height: $altura-control-pequena;
+  width: $altura-control-media;
+  height: $altura-control-media;
   padding: 0;
   border: $ancho-borde-fino solid var(--color-borde-control);
   border-radius: $radio-medio;

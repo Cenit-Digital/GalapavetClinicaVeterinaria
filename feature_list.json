@@ -593,6 +593,23 @@
       "sdd": true,
         "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
+    },
+    {
+      "id": 38,
+      "name": "fidelidad_responsive_integral",
+      "title": "Fidelidad visual: responsive integral de la portada",
+      "description": "Verifica y corrige la portada frente al diseño aprobado en teléfonos, tabletas, el salto 1023/1024 y escritorio. El pie adopta una rejilla de cuatro, dos y una columna según el ancho; ninguna sección puede resolver un ancho estrecho recortando contenido o perdiendo controles.",
+      "acceptance": [
+        "La matriz 320/360/375/390/414/480/600/768/820/900/1023/1024/1280/1440/1600 no tiene overflow de documento ni errores de consola",
+        "El pie pasa de una a dos y cuatro columnas en los intervalos aprobados sin perder enlaces ni nombres accesibles",
+        "El menú móvil y la navegación de escritorio cambian exactamente entre 1023 y 1024 píxeles, sin solape",
+        "Los controles, tarjetas, formularios, galería y selector conservan jerarquía, texto íntegro y áreas táctiles; solo la pista de galería puede desplazar contenido horizontalmente",
+        "Un barrido de 16 píxeles entre 320 y 1600 y capturas de referencia demuestran que no queda una franja intermedia rota",
+        "Tests, lint, typecheck, build, revisión visual y mutación de la lógica nueva están en verde"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "Contrato aprobado explícitamente por Pablo el 03/09/2026. Cierre: Playwright completo 167/167 (incluye barrido cada 16 px entre 320 y 1600), bin/harness init 89/89 ficheros y 1.416/1.416 tests, lint, TypeScript y build verdes. Mutación dirigida al bloque lógico añadido: 1/1 eliminado, 100 %. Capturas y veredictos en progress/."
     }
   ]
 }

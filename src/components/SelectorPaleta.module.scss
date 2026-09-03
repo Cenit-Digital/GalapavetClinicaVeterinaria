@@ -50,6 +50,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    min-height: $altura-control-media;
     gap: espaciado(8);
     padding-inline: espaciado(12);
     border: $ancho-borde-fino solid transparent;

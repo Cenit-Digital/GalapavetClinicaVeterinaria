@@ -14,6 +14,12 @@ test.describe('@s42 con la preferencia de menos movimiento activa no queda ningu
     for (const { ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
 
+      // Con movimiento reducido la duración efectiva es 0.01 ms, no cero:
+      // medir inmediatamente después de navegar puede capturar ese instante
+      // transitorio. Se espera el estado asentado igual que tras interactuar
+      // más abajo; no se relaja la aserción de cero animaciones.
+      await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+
       const animacionesEnCurso = await page.evaluate(
         () => document.getAnimations().filter((animacion) => animacion.playState === 'running').length,
       )
