@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router'
 import { RUTAS_DE_SUBPAGINA } from './App-logica'
 import { Cabecera } from './components/Cabecera'
-import { BarraUrgencias } from './components/BarraUrgencias'
 import { PieDePagina } from './components/PieDePagina'
 import { SelectorPaleta } from './components/SelectorPaleta'
 import { Landing } from './pages/Landing'
@@ -53,7 +52,6 @@ function AppInterior({ ancho }: AppInteriorProps): React.JSX.Element {
       <a className="salto-contenido" href="#contenido-principal">
         Saltar al contenido principal
       </a>
-      <BarraUrgencias />
       <Cabecera ancho={ancho} rutaActual={pathname} />
       <Routes>
         <Route path="/" element={<Landing />} />
