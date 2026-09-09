@@ -4,6 +4,63 @@
 > (regla anti-teléfono-descompuesto). Al cerrar la sesión, mueve el resumen a
 > `history.md` y deja este archivo con solo esta plantilla.
 
+## 09/09/2026 — Retirada de la barra de urgencias: CI reparado
+
+**Decisión de diseño (Pablo con Rober):** la barra de urgencias fija por
+encima de la cabecera NO forma parte del diseño acordado. Commit `4a681ec`
+borró `BarraUrgencias.tsx`, su `.module.scss` y su test, y lo desmontó de
+`App.tsx`.
+
+**Lo que ese commit dejó colgando y se ha reparado aquí:**
+
+1. **Ambos workflows en rojo** (`Harness CI` y `Deploy a GitHub Pages`), 8
+   tests, todos de aritmética de censo: `inventarioModulos` seguía
+   declarando el módulo (18 → 17), y `rolesDescartados` / `usoDelAcento`
+   anclaban su corpus a `BarraUrgencias.module.scss` y contaban 20 hojas de
+   estilo (→ 19). Las anclas se han REEMPLAZADO por `Cabecera.module.scss`,
+   no borrado: existían para que un glob mal escrito no dejase la puerta
+   inerte, y esa protección se conserva.
+2. **Defecto de maquetación real, no cubierto por ninguna puerta:**
+   `--altura-barra-urgencias: 32px` seguía declarada y consumida en cuatro
+   sitios, así que la cabecera fija arrancaba en `y = 32` — 32px de franja
+   vacía sobre ella—, `#root` reservaba 96px en vez de 64, y el
+   `scroll-padding-top` y el enlace de salto iban 32px sobrados. El token se
+   ha eliminado y los cuatro cálculos se han rehecho sobre `--altura-cabecera`
+   sola. **Verificado en Chrome real** sobre `dist/` servido con `vite
+   preview`: `header.top = 0`, `#root` padding `64px`, `scroll-padding-top`
+   `88px`, `#inicio` a `y = 64` — sin salto ni franja.
+3. **E2E rotos** (no corren en CI, pero apuntaban a lo borrado):
+   `fidelidad-cabecera` medía `[data-barra-urgencias-interior]`,
+   `rediseno-visual` buscaba el `aside[aria-label="Urgencias fuera de
+   horario"]`, y `geometria-escalas` usaba la barra como representante del
+   paso tipográfico -1. Reapuntados al CTA de urgencias de la cabecera, que
+   es quien declara hoy `paso-tipografico(-1)`.
+4. **Contratos Gherkin** (puerta humana, aprobada por Pablo el 09/09/2026):
+   `rediseno_visual.feature` @s27 eliminado con nota de por qué; @s26 y @s28
+   sin la mención a la barra; `fidelidad_cabecera.feature` @s1 reescrito para
+   hablar solo de la cabecera. `accesibilidad.feature` NO se toca: su
+   Decisión 2 y su @s17 ya exigían que no existiera barra superior, de modo
+   que la retirada **resuelve** una contradicción que arrastraban los
+   contratos entre sí.
+
+**El acceso a urgencias no se ha perdido:** vive en el CTA de la cabecera, en
+el pie y en la tarjeta de contacto. `urgencias.spec.ts` sigue exigiendo al
+menos una mención con el rótulo real en las seis rutas.
+
+**Verificado en verde:** `harness init` completo (88 ficheros, 1415 tests) +
+`test:config` (5/5) — exactamente lo que corren los dos workflows. Y los
+cuatro specs de Playwright tocados, ejecutados aparte (no corren en CI):
+`fidelidad-cabecera`, `rediseno-visual`, `urgencias` y `geometria-escalas`.
+
+**Lo que delató el E2E y las puertas de Vitest no:** el primer representante
+que elegí para el paso tipográfico -1 fue el CTA de urgencias de la cabecera,
+y `geometria-escalas` mide a 320px ANTES que a 1220px — a 320px la cabecera
+está en modo móvil y ese control solo existe dentro del panel plegado. El
+representante definitivo es el propio `<footer>` (`PieDePagina.module.scss:14`),
+que declara el paso -1 y no lo cambia en ninguna media query.
+
+---
+
 ## 03/09/2026 — Fidelidad visual de la portada al prototipo
 
 **Problema reportado por el cliente (Pablo):** las 25 features están `done`,

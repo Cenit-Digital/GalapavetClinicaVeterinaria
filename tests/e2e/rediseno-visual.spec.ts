@@ -50,7 +50,7 @@ test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo s
     })
   }
 
-  test('la portada materializa hero, barra de urgencias y fotografías locales de servicios', async ({ page }) => {
+  test('la portada materializa hero, CTA de urgencias y fotografías locales de servicios', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 1000 })
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
@@ -58,7 +58,7 @@ test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo s
     await expect(hero.getByRole('heading', { level: 1 })).toHaveCSS('font-weight', '600')
     await expect(hero.locator('img')).toHaveCount(1)
     await expect(page.locator('#servicios img')).toHaveCount(5)
-    await expect(page.locator('aside[aria-label="Urgencias fuera de horario"] a')).toHaveAttribute('href', /^tel:/)
+    await expect(page.locator('header a[href^="tel:"]').first()).toHaveAttribute('href', /^tel:/)
 
     const rutasDeServicio = await page.locator('#servicios img').evaluateAll((imagenes) => imagenes.map((imagen) => imagen.getAttribute('src')))
     expect(rutasDeServicio).toHaveLength(5)

@@ -145,8 +145,8 @@ test.describe('@s42 los tokens que el navegador resuelve coinciden con los que e
     page,
   }) => {
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
-    // La animación infinita de la barra de urgencias
-    // (`BarraUrgencias.module.scss:32`) nunca deja quieto a
+    // La animación infinita del punto del CTA de urgencias
+    // (`Cabecera.module.scss:188`, `pulso-urgencias`) nunca deja quieto a
     // `document.getAnimations()`: con "reduce", `global.scss:301` la limita a
     // una iteración de 0.01ms y la espera de `aplicarVariante` sí converge.
     await page.emulateMedia({ reducedMotion: 'reduce' })

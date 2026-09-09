@@ -360,7 +360,7 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
   // blanco literal (@s7).
   { rol: 'sobre-primario', fondo: 'primario', uso: 'texto normal' }, // `_api.scss:227-228` (mixin `boton-primario`)
   { rol: 'sobre-primario', fondo: 'primario-fuerte', uso: 'texto normal' }, // `_api.scss:238-239` (mismo botón con el puntero encima)
-  { rol: 'sobre-primario', fondo: 'urgencia', uso: 'texto normal' }, // `BarraUrgencias.module.scss:12-13`
+  { rol: 'sobre-primario', fondo: 'urgencia', uso: 'texto normal' }, // `Cabecera.module.scss:163-164` (CTA de urgencias)
 
   // Acento legible: nunca `--color-acento` a secas, siempre su tinta.
   { rol: 'acento-tinta', fondo: 'acento-suave', uso: 'texto normal' }, // `_api.scss:281-282` (mixin `pildora-etiqueta`)

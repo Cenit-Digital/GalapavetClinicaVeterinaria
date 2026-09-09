@@ -123,8 +123,12 @@ describe('@s14 el desplazamiento hasta un ancla reserva sitio para la cabecera f
   it('esa misma variable es la que la maquetación de la cabecera usa para su propia altura', () => {
     expect(declaracionesDeAlturaDeLaCabecera().length).toBeGreaterThan(0)
     expect(declaracionesDeAlturaDeLaCabecera().flatMap(variablesCssUsadas)).toContain('--altura-cabecera')
-    expect(hojaDeLaCabecera()).toContain('inset-block-start: var(--altura-barra-urgencias)')
-    expect(variablesDeLaAlturaVisible()).toEqual(expect.arrayContaining(['--altura-cabecera', '--altura-barra-urgencias']))
+    // La cabecera es la franja fija COMPLETA: arranca en el borde superior
+    // del área visible, sin nada anclado por encima. Si volviera a haberlo,
+    // `scroll-padding-top` tendría que sumarlo y esta lista dejaría de ser
+    // exactamente una variable.
+    expect(hojaDeLaCabecera()).toContain('inset-block-start: 0')
+    expect(variablesDeLaAlturaVisible()).toEqual(['--altura-cabecera'])
   })
 })
 
@@ -354,7 +358,7 @@ function cuerpoDelBloqueAnidado(texto: string, encabezado: string): string {
  * anillo (indicador a dos tonos): el par foco/fondo ya lo valida la matriz de
  * uso en las cinco variantes. El halo solo existe con foco: oculto, el enlace
  * asoma exactamente su altura por encima del área visible y un halo
- * permanente dejaría una franja visible sobre la barra de urgencias.
+ * permanente dejaría una franja visible pegada al borde superior.
  */
 describe('@s39 de accesibilidad: el enlace de salto enfocado lleva un halo opaco de "--color-fondo" bajo su anillo', () => {
   it('".salto-contenido" declara "&:focus::before" absoluto, por detrás, con "--color-fondo" y un sangrado negativo de la escala', () => {

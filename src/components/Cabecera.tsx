@@ -102,9 +102,9 @@ export function Cabecera({
   /**
    * El sitio del ancla de destino se calcula desde la altura REAL de la
    * franja fija en el momento del clic (@s28), nunca desde un número escrito
-   * a mano: `refCabecera` arranca justo debajo de `BarraUrgencias`
-   * (`App.tsx`), así que su propio `getBoundingClientRect().bottom` ya suma
-   * las dos alturas.
+   * a mano: `refCabecera` es la franja fija COMPLETA — arranca en el borde
+   * superior del área visible —, así que su propio
+   * `getBoundingClientRect().bottom` ya es toda la altura a descontar.
    */
   function desplazarAAncla(destino: string, evento: React.MouseEvent<HTMLAnchorElement>): void {
     if (!esAncla(destino)) {

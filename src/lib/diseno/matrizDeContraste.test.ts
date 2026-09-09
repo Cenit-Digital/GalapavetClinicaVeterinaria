@@ -577,7 +577,7 @@ describe('@s11 la matriz se reconcilia con el TEXTO REAL de las hojas de estilo'
   it('señala la pareja que un fichero de estilos pinta de verdad y la matriz no declara', () => {
     const estilos: readonly FicheroDeTexto[] = [
       {
-        ruta: 'src/components/BarraUrgencias.module.scss',
+        ruta: 'src/components/Inventado.module.scss',
         contenido: [
           '.barra {',
           '  background-color: var(--color-urgencia);',
@@ -599,7 +599,7 @@ describe('@s11 la matriz se reconcilia con el TEXTO REAL de las hojas de estilo'
       {
         tinta: 'acento',
         fondo: 'urgencia',
-        ruta: 'src/components/BarraUrgencias.module.scss',
+        ruta: 'src/components/Inventado.module.scss',
         linea: 6,
       },
     ])

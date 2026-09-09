@@ -18,28 +18,29 @@ async function cajaDe(page: Page, selector: string): Promise<Caja> {
   })
 }
 
-test.describe('@s1 de fidelidad_cabecera: barra y cabecera alineadas', () => {
-  test('a 1440px comparten la columna de 1220px y muestran solamente los datos reales', async ({ page }) => {
+test.describe('@s1 de fidelidad_cabecera: la cabecera alineada con el contenido', () => {
+  test('a 1440px comparte la columna de 1220px y muestra solamente los datos reales', async ({ page }) => {
     await page.setViewportSize({ width: ANCHO_ESCRITORIO, height: 900 })
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
-    const [barra, cabecera, servicios] = await Promise.all([
-      cajaDe(page, '[data-barra-urgencias-interior]'),
+    const [cabecera, servicios] = await Promise.all([
       cajaDe(page, '[data-cabecera-interior]'),
       cajaDe(page, '#servicios > *'),
     ])
 
-    for (const [nombre, caja] of [
-      ['barra', barra],
-      ['cabecera', cabecera],
-    ] as const) {
-      expect(caja.width, `${nombre}: ancho`).toBeCloseTo(ANCHO_CONTENEDOR, 0)
-      expect(Math.abs(caja.x - servicios.x), `${nombre}: alineación`).toBeLessThanOrEqual(TOLERANCIA)
-    }
+    expect(cabecera.width, 'cabecera: ancho').toBeCloseTo(ANCHO_CONTENEDOR, 0)
+    expect(Math.abs(cabecera.x - servicios.x), 'cabecera: alineación').toBeLessThanOrEqual(TOLERANCIA)
 
-    const aviso = page.locator('aside[aria-label="Urgencias fuera de horario"]')
-    await expect(aviso).toHaveText('Urgencias fuera de horario · 91 851 13 93')
-    await expect(aviso.getByRole('link')).toHaveAttribute('href', 'tel:+34918511393')
+    // La cabecera es la franja fija COMPLETA: arranca en el borde superior
+    // del área visible, sin ninguna franja anclada por encima.
+    const inicioDeLaCabecera = await page
+      .locator('header')
+      .evaluate((elemento) => elemento.getBoundingClientRect().top)
+    expect(inicioDeLaCabecera).toBeCloseTo(0, 0)
+
+    const aviso = page.locator('header a[href^="tel:"]').first()
+    await expect(aviso).toHaveAccessibleName(/Urgencias fuera de horario.*91 851 13 93/)
+    await expect(aviso).toHaveAttribute('href', 'tel:+34918511393')
     await expect(page.locator('[data-cabecera-interior] a[href="#inicio"] img')).toHaveAttribute('src', /\/img\/logo-galapavet\.webp$/)
     await expect(page.locator('[data-cabecera-interior] a[href="#inicio"]')).toContainText('Galapavet')
     await expect(page.locator('[data-cabecera-interior] a[href="#inicio"]')).toContainText('Centro integral veterinario')

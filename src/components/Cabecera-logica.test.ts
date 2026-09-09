@@ -125,7 +125,7 @@ describe('esDestinoTienda distingue el destino de la Tienda del resto del catál
 
 /**
  * @s28: "el sitio del ancla de destino al saltar a una sección se calcula
- * desde la altura real de la cabecera más la barra de urgencias, no desde un
+ * desde la altura real de la cabecera, no desde un
  * número escrito a mano". Función pura: los tres números de entrada son
  * SIEMPRE medidos en el momento del clic (`Cabecera.tsx`, con
  * `getBoundingClientRect()`/`window.scrollY`), nunca literales. Se prueba
@@ -135,14 +135,14 @@ describe('esDestinoTienda distingue el destino de la Tienda del resto del catál
 describe('posicionDeScrollParaAncla calcula el nuevo scroll desde alturas REALES, nunca desde un número escrito a mano (@s28)', () => {
   it('suma el scroll ya acumulado a la distancia del elemento y resta la altura fija real medida', () => {
     // 200px ya desplazados + el destino está a 500px del borde superior de la
-    // ventana - 96px de franja fija real (barra + cabecera) = 604.
+    // ventana - 96px de franja fija real medida = 604.
     expect(posicionDeScrollParaAncla(200, 500, 96)).toBe(604)
   })
 
   it('si la altura fija real medida cambia, el resultado cambia con ella: no es un número fijo', () => {
     // Misma distancia y mismo scroll que el caso anterior, pero con una
-    // franja fija real de 150px (p. ej. porque la barra de urgencias mide
-    // más en este momento): el resultado tiene que ser DISTINTO de 604.
+    // franja fija real de 150px (p. ej. porque la cabecera crece al envolver
+    // su contenido en dos líneas): el resultado tiene que ser DISTINTO de 604.
     const conFranjaMayor = posicionDeScrollParaAncla(200, 500, 150)
     expect(conFranjaMayor).toBe(550)
     expect(conFranjaMayor).not.toBe(604)

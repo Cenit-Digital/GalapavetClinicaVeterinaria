@@ -11,7 +11,7 @@
 .cabecera {
   position: fixed;
   min-height: var(--altura-cabecera);
-  inset-block-start: var(--altura-barra-urgencias);
+  inset-block-start: 0;
   inset-inline: 0;
   z-index: 10;
   background-color: var(--color-fondo);
@@ -247,7 +247,7 @@
 .panelMovil {
   position: fixed;
   inset-inline: 0;
-  inset-block-start: calc(var(--altura-cabecera) + var(--altura-barra-urgencias));
+  inset-block-start: var(--altura-cabecera);
   z-index: 9;
   max-height: 70vh;
   overflow-y: auto;

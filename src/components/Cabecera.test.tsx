@@ -384,8 +384,8 @@ function fijarPreferenciaDeMovimiento(prefiereMenos: boolean): void {
   )
 }
 
-describe('@s28 el salto a una sección desde la navegación de escritorio se calcula desde la altura real de la cabecera más la barra de urgencias, no desde un número escrito a mano', () => {
-  it('llama a window.scrollTo con el scroll ya acumulado más la distancia real al elemento menos la altura real de la cabecera (que arranca justo debajo de la barra de urgencias, así que su "bottom" ya incluye las dos)', async () => {
+describe('@s28 el salto a una sección desde la navegación de escritorio se calcula desde la altura real de la cabecera, no desde un número escrito a mano', () => {
+  it('llama a window.scrollTo con el scroll ya acumulado más la distancia real al elemento menos la altura real de la cabecera (la franja fija completa, medida con su propio "bottom")', async () => {
     const usuario = userEvent.setup()
     renderizarCabecera({ ancho: PUNTO_DE_CORTE_NAVEGACION_PX })
     const seccionServicios = crearElementoDeDestino('servicios')
@@ -398,7 +398,7 @@ describe('@s28 el salto a una sección desde la navegación de escritorio se cal
     await usuario.click(within(nav).getByRole('link', { name: 'Servicios' }))
 
     // 200 (ya desplazado) + 500 (distancia real al elemento) - 96 (altura
-    // real de la cabecera, franja fija completa) = 604. Literal calculado a
+    // real medida de la cabecera, la franja fija completa) = 604. Literal calculado a
     // mano (mismo patrón que `Cabecera-logica.test.ts`), nunca delegado en la
     // propia fórmula de producción.
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 604, behavior: 'smooth' })

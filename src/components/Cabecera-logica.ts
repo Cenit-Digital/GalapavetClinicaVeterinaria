@@ -88,7 +88,7 @@ export function esDestinoTienda(destino: string): boolean {
 
 /**
  * Nueva posición absoluta de scroll para que un elemento de destino quede
- * justo debajo de la franja fija (barra de urgencias + cabecera) al saltar a
+ * justo debajo de la franja fija (la cabecera) al saltar a
  * una sección (@s28 de `rediseno_visual.feature`). Los tres números SIEMPRE
  * se miden en el momento del clic (`Cabecera.tsx`, con
  * `getBoundingClientRect()`/`window.scrollY`): esta función nunca ve ni
@@ -97,9 +97,9 @@ export function esDestinoTienda(destino: string): boolean {
  * @param desplazamientoActual `window.scrollY` en el momento del clic.
  * @param distanciaAlElemento distancia del elemento de destino al borde
  *   superior de la ventana (`elemento.getBoundingClientRect().top`).
- * @param alturaFijaReal altura real de la franja fija —barra de urgencias
- *   más cabecera— medida con `getBoundingClientRect().bottom` de la propia
- *   cabecera, que arranca justo debajo de la barra.
+ * @param alturaFijaReal altura real de la franja fija medida con
+ *   `getBoundingClientRect().bottom` de la propia cabecera, que arranca en el
+ *   borde superior del área visible.
  */
 export function posicionDeScrollParaAncla(
   desplazamientoActual: number,

@@ -107,8 +107,8 @@ test.describe('@s14: el único rótulo de urgencias del sitio es el real, con el
       const menciones = await page.evaluate(recogerMenciones)
       rutasRecorridas += 1
 
-      // Cada ruta tiene que decir algo de urgencias: la barra superior y el
-      // pie viven en el shell común (`src/App.tsx:56` y `:69`). Cero menciones
+      // Cada ruta tiene que decir algo de urgencias: el CTA de la cabecera y
+      // el pie viven en el shell común (`src/App.tsx`). Cero menciones
       // significaría que este barrido no está mirando nada.
       expect(menciones.textos.length, `${pagina}: ninguna mención de urgencias`).toBeGreaterThan(0)
       mencionesTotales += menciones.textos.length

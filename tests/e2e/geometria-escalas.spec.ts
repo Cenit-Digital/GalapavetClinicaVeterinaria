@@ -275,7 +275,9 @@ test.describe('@s20 los dos pasos altos de la escala tipográfica son fluidos y 
   // localizado por estructura/ARIA (nunca por className, que es un hash
   // impredecible del build de CSS Modules):
   //   -2 → `Cabecera.module.scss:47`  (descriptor bajo el logotipo)
-  //   -1 → `BarraUrgencias.module.scss:14` (aviso fijo superior)
+  //   -1 → `PieDePagina.module.scss:14` (el propio pie de página)
+  //        NO el CTA de urgencias de la cabecera: a 320px la cabecera está en
+  //        modo móvil y ese control solo existe dentro del panel plegado.
   //    0 → `Cabecera.module.scss:26`  (la propia cabecera)
   //    1 → `Cabecera.module.scss:40`  (enlace del logotipo)
   //    2 → `Servicios.module.scss:35` (h3 de la primera tarjeta)
@@ -298,7 +300,7 @@ test.describe('@s20 los dos pasos altos de la escala tipográfica son fluidos y 
       paso: -1,
       esperadoPx: 12.8,
       ruta: `${SUBPATH_DE_PRODUCCION}/`,
-      localizar: (paginaActual) => paginaActual.locator('aside').first(),
+      localizar: (paginaActual) => paginaActual.locator('footer'),
     },
     {
       paso: 0,

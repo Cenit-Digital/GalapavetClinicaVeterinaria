@@ -47,7 +47,6 @@
   // `scroll-padding-top` de la sección D (@s14). Escribirlo dos veces sería
   // permitir que los dos diverjan.
   --altura-cabecera: #{espaciado(64)};
-  --altura-barra-urgencias: #{espaciado(32)};
   --sangrado-lateral: clamp(#{espaciado(16)}, 5vw, #{espaciado(24)});
   --ritmo-seccion: clamp(72px, 7.2vw, 104px);
   --ritmo-seccion-compacto: clamp(56px, 6.2vw, 90px);
@@ -149,7 +148,7 @@ html {
   display: flex;
   flex-direction: column;
   min-height: 100svh;
-  padding-block-start: calc(var(--altura-cabecera) + var(--altura-barra-urgencias));
+  padding-block-start: var(--altura-cabecera);
 }
 
 // 9. `balance` reparte las líneas de un titular corto; `pretty` evita la línea
@@ -227,27 +226,24 @@ a {
 // módulo, porque no pertenece a ningún componente: es una parada de teclado
 // del documento entero.
 //
-// POR QUÉ ATERRIZA POR DEBAJO DE LA CABECERA. Medido en navegador real
-// (Chromium, viewport 1280x720, `reducedMotion: 'reduce'`, `dist/` servido con
-// `vite preview`): anclado a `--altura-barra-urgencias + espaciado(8)`, el
-// rectángulo del enlace ENFOCADO era `y = 40 … 80` y el de la cabecera fija
-// `y = 32 … 96`; es decir, el control enfocado caía ÍNTEGRAMENTE dentro de la
-// cabecera. Que se pinte por encima (z-index 100 frente al 10 de la cabecera)
-// no arregla nada: SC 2.4.11 Focus Not Obscured (Minimum), nivel AA, habla de
-// SOLAPE y no de orden de pintado, y su documento de entendimiento nombra
-// literalmente este caso — «sticky headers»
+// POR QUÉ ATERRIZA POR DEBAJO DE LA CABECERA. Un enlace anclado al borde
+// superior del área visible cae ÍNTEGRAMENTE dentro de la cabecera fija, que
+// ocupa `y = 0 … 64`. Que se pinte por encima (z-index 100 frente al 10 de la
+// cabecera) no arregla nada: SC 2.4.11 Focus Not Obscured (Minimum), nivel AA,
+// habla de SOLAPE y no de orden de pintado, y su documento de entendimiento
+// nombra literalmente este caso — «sticky headers»
 // (https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum).
 //
-// El desplazamiento del estado enfocado sale de las MISMAS dos variables que
-// dimensionan la franja fija del documento — nunca de un número repetido a
+// El desplazamiento del estado enfocado sale de la MISMA variable que
+// dimensiona la franja fija del documento — nunca de un número repetido a
 // mano, la misma disciplina que el `scroll-padding-top` de la sección D
 // (técnica C43 del W3C) y que el `padding-block-start` de `#root`:
-// 32px de barra + 64px de cabecera + 8px de hueco = 104px, justo por debajo de
-// los 96px en los que la cabecera termina. Medido tras el cambio: enlace
-// `y = 104 … 144`, cabecera `y = 32 … 96` — ya no hay solape, y sigue sin
-// tocar la barra de aviso superior.
+// 64px de cabecera + 8px de hueco = 72px. Medido en navegador real (Chromium,
+// viewport 1568x772, `dist/` servido con `vite preview --base`): el enlace
+// ENFOCADO ocupa `y = 72 … 112` y la cabecera fija `y = 0 … 65` (64 de altura
+// más su borde fino) — no hay solape.
 .salto-contenido {
-  --desplazamiento-al-enfocar: calc(var(--altura-barra-urgencias) + var(--altura-cabecera) + #{espaciado(8)});
+  --desplazamiento-al-enfocar: calc(var(--altura-cabecera) + #{espaciado(8)});
 
   position: fixed;
   z-index: 100;
@@ -285,7 +281,7 @@ a {
   // propio halo de `--color-fondo` (indicador a dos tonos): el par foco/fondo
   // lo valida la matriz de uso en las cinco variantes. Solo con foco: oculto,
   // el enlace asoma exactamente su altura por encima del área visible y un
-  // halo permanente dejaría una franja sobre la barra de urgencias. Por
+  // halo permanente dejaría una franja visible pegada al borde superior. Por
   // detrás del texto (`z-index: -1` dentro del contexto de apilamiento que
   // abre el propio enlace) y más ancho que el anillo y su hueco.
   &:focus::before {
@@ -314,7 +310,7 @@ a {
 // de la escala de espaciado. Repetir la altura a mano sería crear dos números
 // que pueden divergir (@s14).
 html {
-  scroll-padding-top: calc(var(--altura-barra-urgencias) + var(--altura-cabecera) + #{espaciado(24)});
+  scroll-padding-top: calc(var(--altura-cabecera) + #{espaciado(24)});
 }
 
 // El movimiento es OPT-IN: se declara SOLO dentro de "no-preference", nunca a

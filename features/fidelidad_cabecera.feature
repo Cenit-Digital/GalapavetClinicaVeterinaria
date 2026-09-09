@@ -1,13 +1,14 @@
-Feature: Fidelidad visual de la barra y la cabecera
+Feature: Fidelidad visual de la cabecera
   Como visitante quiero reconocer la marca y llegar a las acciones principales
   desde una cabecera alineada con la portada y fiel al diseño aprobado.
 
   @s1
-  Scenario: En escritorio la barra y la cabecera se alinean con el contenido de la portada
+  Scenario: En escritorio la cabecera se alinea con el contenido de la portada
     Given la portada renderizada a 1440 píxeles de ancho
-    When se visualizan la barra de urgencias y la cabecera
-    Then sus contenidos comparten la columna interior de 1220 píxeles
-    And la barra comunica exactamente el rótulo real de urgencias fuera de horario y su teléfono real
+    When se visualiza la cabecera
+    Then su contenido comparte la columna interior de 1220 píxeles con la portada
+    And la cabecera arranca en el borde superior del área visible, sin ninguna franja anclada por encima
+    And su acceso a urgencias comunica exactamente el rótulo real de urgencias fuera de horario y su teléfono real
     And la marca muestra el logotipo real, el nombre "Galapavet" y su descriptor en un bloque compacto
     And no se anuncia un servicio de urgencias "24 h", "24h" ni equivalente
 

@@ -243,7 +243,7 @@ describe('@s13 la puerta corre sobre el corpus real de "src" y sobre el artefact
         'src/lib/site.ts',
         'src/pages/Landing.tsx',
         'src/styles/_tokens.scss',
-        'src/components/BarraUrgencias.module.scss',
+        'src/components/Cabecera.module.scss',
       ]),
     )
     expect(rutas(ficherosDeSrc)).not.toEqual(expect.arrayContaining([expect.stringContaining('.test.')]))
@@ -280,12 +280,12 @@ describe('@s13 la puerta corre sobre el corpus real de "src" y sobre el artefact
 
 /**
  * Los ficheros de estilos con los que se compila cada módulo del inventario:
- * los 18 `<Modulo>.module.scss` (`src/lib/diseno/inventarioModulos.ts:34`) Y
+ * los 17 `<Modulo>.module.scss` (`src/lib/diseno/inventarioModulos.ts:33`) Y
  * las hojas compartidas de `src/styles`. Las compartidas NO son un añadido de
  * conveniencia: `vite.config.ts` → `css.preprocessorOptions.scss.additionalData`
  * inyecta literalmente `@use "api" as *;` en CADA `.module.scss`, así que
  * `_api.scss` forma parte del texto con el que TODOS ellos se compilan. Leer
- * solo los 18 daría un falso negativo con cualquier declaración que viva en
+ * solo los 17 daría un falso negativo con cualquier declaración que viva en
  * un `@mixin` compartido, que es justo como este repositorio escribe los
  * botones (`_api.scss` → `@mixin boton-primario`).
  */
@@ -348,7 +348,7 @@ describe('@s16 el primario fuerte está declarado en las cinco variantes y adem�
     const informe = ejecutarPuertaDePrimarioFuerte(tokensReales, VARIANTES_A_MANO, estilosReales)
 
     expect(informe.ficherosQueLoUsan).toContain('src/styles/_api.scss')
-    expect(informe.ficherosDeEstiloInspeccionados).toBe(20)
+    expect(informe.ficherosDeEstiloInspeccionados).toBe(19)
     expect(informe.ficherosDeEstiloInspeccionados).toBeGreaterThan(0)
     expect(informe.pasa).toBe(true)
   })

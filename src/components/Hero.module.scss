@@ -113,7 +113,8 @@
   // los fondos claros de página: sobre el velo de `--color-tinta` de esta
   // sección medía 1,98:1 (`accesibilidad` @s38/@s39, mínimo 3). El anillo
   // pasa a `--color-sobre-primario`, la tinta ya validada del propio hero
-  // (mismo recurso que `BarraUrgencias.module.scss` sobre su rojo). Se
+  // (mismo recurso que el CTA de urgencias de `Cabecera.module.scss` sobre su
+  // rojo). Se
   // declara en cada botón porque el `:focus-visible` del mixin lleva la
   // especificidad de `a:first-child` / `a:not(:first-child)`.
   a:first-child {

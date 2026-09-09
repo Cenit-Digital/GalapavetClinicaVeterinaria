@@ -159,7 +159,7 @@ export function InformacionContacto({
           <fieldset aria-label="Urgencias fuera de horario">
             <legend>
               {/* Punto pulsante decorativo del diseño (@s3 de `fidelidad_contacto`):
-                  sin texto ni papel semántico, igual que el de `BarraUrgencias`. */}
+                  sin texto ni papel semántico, igual que el del CTA de urgencias. */}
               <span className={styles.pulso} aria-hidden="true" />
               {datosNegocio.telefonoUrgencias.rotulo}
             </legend>

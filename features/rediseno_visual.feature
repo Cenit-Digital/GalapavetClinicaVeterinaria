@@ -440,21 +440,20 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     Then justo en el punto de corte la navegación horizontal es visible
     And un píxel por debajo lo que se ve es el botón de menú
     And el valor del punto de corte es el mismo en la lógica y en la hoja de estilos
-    And en el punto de corte ningún elemento de la cabecera se desborda ni se superpone con otro, con la barra de urgencias y los dos botones nuevos ya presentes
+    And en el punto de corte ningún elemento de la cabecera se desborda ni se superpone con otro, con los dos botones nuevos ya presentes
 
   # ---------------------------------------------------------------------------
   # D. ANATOMÍA DE LOS MÓDULOS DE LA PORTADA
   # ---------------------------------------------------------------------------
 
-  @s27
-  Scenario: La portada abre con una barra de urgencias fija, con el dato real
-    Given la portada construida y servida
-    When se carga la página
-    Then existe una barra por encima de la cabecera
-    And su fondo es el color de urgencia de la variante activa, resuelto desde el token
-    And su texto es el rótulo real de urgencias de la fuente única de datos
-    And contiene un enlace de llamada al teléfono real de urgencias
-    And su indicador pulsante deja de animarse cuando la preferencia de menos movimiento está activa
+  # @s27 ELIMINADO. Describía una barra de urgencias fija por encima de la
+  # cabecera. Decisión de diseño (Pablo con Rober, 09/09/2026): esa barra no
+  # forma parte del diseño acordado y se retira del sitio. El acceso a
+  # urgencias NO se pierde: vive en el CTA de la cabecera (@s28, más abajo),
+  # en el pie y en la tarjeta de contacto. La retirada ADEMÁS resuelve una
+  # contradicción que arrastraban los contratos: `accesibilidad.feature` @s17
+  # ya exigía que "no existe ninguna barra superior adicional que pueda
+  # taparlo", y su Decisión 2 declaraba que NO debía existir tal barra.
 
   @s28
   Scenario: La cabecera lleva la navegación, el acceso a urgencias y el acceso a la tienda
@@ -464,7 +463,7 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And muestra un control de urgencias con el color de urgencia de la variante activa
     And muestra un acceso a la tienda con borde y sin relleno
     And la cabecera se mantiene visible al desplazar la página
-    And el sitio del ancla de destino al saltar a una sección se calcula desde la altura real de la cabecera más la barra de urgencias, no desde un número escrito a mano
+    And el sitio del ancla de destino al saltar a una sección se calcula desde la altura real de la cabecera, no desde un número escrito a mano
 
   @s29
   Scenario: La sección de bienvenida se pinta sobre una fotografía a sangre

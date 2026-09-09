@@ -319,14 +319,14 @@ describe('@s15 la puerta corre sobre el texto real de los ficheros de estilos', 
 
     expect(rutas).toEqual(
       expect.arrayContaining([
-        'src/components/BarraUrgencias.module.scss',
+        'src/components/Cabecera.module.scss',
         'src/components/Hero.module.scss',
         'src/components/SelectorPaleta.module.scss',
         'src/pages/PaginaTienda.module.scss',
         'src/styles/_api.scss',
       ]),
     )
-    expect(rutas).toHaveLength(20)
+    expect(rutas).toHaveLength(19)
   })
 
   it('el acento no se pinta como texto ni como borde, y sí se pinta al menos una vez como relleno', () => {
@@ -336,7 +336,7 @@ describe('@s15 la puerta corre sobre el texto real de los ficheros de estilos', 
     expect(informe.comoBorde).toEqual([])
     expect(informe.sinClasificar).toEqual([])
     expect(informe.comoRelleno.length).toBeGreaterThan(0)
-    expect(informe.ficherosInspeccionados).toBe(20)
+    expect(informe.ficherosInspeccionados).toBe(19)
     expect(informe.ficherosInspeccionados).toBeGreaterThan(0)
     expect(informe.pasa).toBe(true)
   })
