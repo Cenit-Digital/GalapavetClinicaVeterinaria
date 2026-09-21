@@ -3,15 +3,7 @@ import { ENLACES_NAVEGACION, type EnlaceNavegacion } from '../data/navegacion'
 import { decidirComportamientoDesplazamiento } from '../lib/desplazamiento'
 import { hrefDeDestino } from '../lib/hrefDeDestino'
 import { datosNegocio } from '../lib/site'
-import {
-  construirControlDeUrgencias,
-  esAncla,
-  esDestinoTienda,
-  esMovil,
-  esPaginaActual,
-  posicionDeScrollParaAncla,
-  type ControlDeUrgencias,
-} from './Cabecera-logica'
+import { esAncla, esDestinoTienda, esMovil, esPaginaActual, posicionDeScrollParaAncla } from './Cabecera-logica'
 import styles from './Cabecera.module.scss'
 
 interface CabeceraProps {
@@ -42,30 +34,6 @@ interface ListaDeEnlacesProps {
 
 const NINGUNA_RUTA_ACTUAL = ''
 
-interface EnlaceUrgenciasProps {
-  readonly className: string | undefined
-  readonly control: ControlDeUrgencias
-  readonly compacto?: boolean
-  readonly alPulsar?: () => void
-}
-
-/** CTA reutilizable con el único rótulo y teléfono de urgencias publicados. */
-function EnlaceUrgencias({ className, control, compacto = false, alPulsar }: EnlaceUrgenciasProps): React.JSX.Element {
-  return (
-    <a className={className} href={control.enlace} onClick={alPulsar}>
-      <span className={styles.puntoUrgencias} aria-hidden="true" />
-      {compacto ? (
-        <>
-          <span className={styles.rotuloUrgencias}>{control.rotulo}</span>
-          <span className={styles.textoSoloLectores}>{` · ${control.textoVisible}`}</span>
-        </>
-      ) : (
-        <span>{control.textoCta}</span>
-      )}
-    </a>
-  )
-}
-
 /** La misma lista de enlaces sirve para la navegación de escritorio y el panel móvil (@s7). */
 function ListaDeEnlaces({ enlaces, rutaActual, alPulsar }: ListaDeEnlacesProps): React.JSX.Element {
   return (
@@ -93,7 +61,6 @@ export function Cabecera({
 }: CabeceraProps): React.JSX.Element {
   const movil = esMovil(ancho)
   const hayEnlaces = enlaces.length > 0
-  const controlDeUrgencias = construirControlDeUrgencias(datosNegocio.telefonoUrgencias)
   const [abierto, setAbierto] = useState(false)
   const idPanel = useId()
   const refBotonMenu = useRef<HTMLButtonElement>(null)
@@ -169,9 +136,6 @@ export function Cabecera({
             <ListaDeEnlaces enlaces={enlaces} rutaActual={rutaActual} alPulsar={desplazarAAncla} />
           </nav>
         )}
-        {hayEnlaces && !movil && controlDeUrgencias !== null && (
-          <EnlaceUrgencias className={styles.urgenciasEscritorio} control={controlDeUrgencias} compacto />
-        )}
         {hayEnlaces && movil && (
           <button
             type="button"
@@ -203,13 +167,6 @@ export function Cabecera({
                 setAbierto(false)
               }}
             />
-            {controlDeUrgencias !== null && (
-              <EnlaceUrgencias
-                className={styles.urgenciasMovil}
-                control={controlDeUrgencias}
-                alPulsar={() => setAbierto(false)}
-              />
-            )}
           </div>
         )}
       </div>

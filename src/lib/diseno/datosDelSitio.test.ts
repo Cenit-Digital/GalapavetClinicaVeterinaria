@@ -526,7 +526,18 @@ describe('@s52 el sitio no afirma en ningún sitio que preste un servicio que no
     expect(conOtroCompromiso.compromisosEncontrados).toEqual(['todos los días del año', 'todos los días'])
   })
 
-  it('falla cerrada si el sitio no menciona ni una sola vez el compromiso de urgencias', () => {
+  it('un sitio que no menciona ningún compromiso de urgencias APRUEBA: la cláusula es negativa desde el 20/09/2026', () => {
+    // ENMIENDA de @s52 (feature 39). La cláusula pasó de AFIRMATIVA —«el único
+    // que aparece es el declarado», que exigía exactamente uno y fallaba
+    // cerrada con la lista vacía— a NEGATIVA: «no aparece ninguno distinto del
+    // declarado». Tras retirar la cartelería de urgencias la palabra ya no
+    // sale en el texto inicial de ninguna ruta, y el sitio no afirma por ello
+    // nada falso. Lo que se pierde, sin maquillar: la garantía de que el
+    // compromiso real esté PUBLICADO. Lo que se conserva es lo que protege de
+    // verdad: que no se cuele «urgencias 24 h» ni ningún otro cualificador
+    // del prototipo. La anti-vacuidad NO se pierde: sigue fallando cerrada sin
+    // rutas y sin cualificadores, que es lo que distingue «no hay ninguno» de
+    // «no se ha buscado».
     const sinMenciones = ejecutarPuertaDeCompromisoDeUrgencias(CUALIFICADORES, 'fuera de horario', [
       { ruta: '/', textoVisible: 'Galapavet, centro integral veterinario' },
     ])
@@ -535,8 +546,11 @@ describe('@s52 el sitio no afirma en ningún sitio que preste un servicio que no
       { ruta: '/', textoVisible: 'Urgencias fuera de horario' },
     ])
 
-    expect(sinMenciones.pasa).toBe(false)
+    expect(sinMenciones.pasa).toBe(true)
     expect(sinMenciones.compromisosEncontrados).toEqual([])
+    expect(sinMenciones.rutasInspeccionadas).toBe(1)
+    expect(sinMenciones.cualificadoresBuscados).toBe(CUALIFICADORES.length)
+    expect(sinMenciones.motivo).toBeUndefined()
     expect(sinRutas.pasa).toBe(false)
     expect(sinRutas.rutasInspeccionadas).toBe(0)
     expect(sinRutas.cualificadoresBuscados).toBe(CUALIFICADORES.length)

@@ -77,7 +77,7 @@ describe('@s1 el listado es una página propia con un único contenido principal
 })
 
 describe('@s2 la página comparte cabecera y pie con la landing y se señala como página actual', () => {
-  it('banner y contentinfo únicos; "Blog" tiene aria-current="page" y la cabecera ofrece las urgencias reales', () => {
+  it('banner y contentinfo únicos; "Blog" tiene aria-current="page" y la cabecera no ofrece ningún acceso a urgencias', () => {
     renderizarApp()
 
     expect(screen.getAllByRole('banner')).toHaveLength(1)
@@ -95,10 +95,14 @@ describe('@s2 la página comparte cabecera y pie con la landing y se señala com
       expect(enlace).not.toHaveAttribute('aria-current')
     }
 
-    const urgencias = within(banner).getByRole('link', { name: /Urgencias fuera de horario.*91 851 13 93/ })
-    const botonesUrgencias = within(banner).queryAllByRole('button', { name: /Urgencias/ })
-    expect(urgencias).toHaveAttribute('href', 'tel:+34918511393')
-    expect(botonesUrgencias).toHaveLength(0)
+    // @s2 de `pagina_blog.feature`: «la cabecera de esta página no contiene
+    // ningún enlace ni botón cuyo nombre accesible contenga "Urgencias"».
+    // Hasta el 20/09/2026 este test exigía justo lo contrario que su propio
+    // Gherkin (D1, decisión de Pablo del 20/09/2026): se INVIERTE, no se
+    // borra. La guarda anti-vacuidad es el bucle de `otrosEnlaces`, arriba.
+    expect(within(banner).queryAllByRole('link', { name: /Urgencias/i })).toHaveLength(0)
+    expect(within(banner).queryAllByRole('button', { name: /Urgencias/i })).toHaveLength(0)
+    expect(within(banner).getAllByRole('link').filter((enlace) => enlace.getAttribute('href')?.startsWith('tel:'))).toHaveLength(0)
   })
 })
 

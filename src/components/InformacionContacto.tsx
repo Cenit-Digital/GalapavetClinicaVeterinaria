@@ -15,8 +15,10 @@ import styles from './InformacionContacto.module.scss'
  * Texto de interfaz de la cabecera de la sección (@s1 de
  * `fidelidad_contacto.feature`). No es un dato de negocio: describe lo que
  * hay en la sección, sin plazos de respuesta ni disponibilidad. NO menciona
- * urgencias a propósito: toda mención debe ir seguida del cualificador real
- * (`datos-reales.spec.ts` @s52) y ya lo hace la tarjeta de urgencias.
+ * urgencias a propósito: desde la retirada de la tarjeta roja (20/09/2026,
+ * `informacion_contacto.feature` @s6 invertido) este panel no habla de
+ * urgencias en ningún sitio, y toda mención que volviera tendría que ir
+ * seguida del cualificador real (`datos-reales.spec.ts` @s52).
  */
 const INTRODUCCION_DE_CONTACTO =
   'Aquí tienes la dirección, los teléfonos y el horario de la clínica, y un formulario para escribirnos.'
@@ -53,12 +55,6 @@ const ROTULO_HORARIO = 'Horario'
 interface InformacionContactoProps {
   /** Teléfono legible de la clínica. Por defecto, el de la fuente única (@s11). */
   telefonoClinica?: string
-  /**
-   * Teléfono legible de urgencias fuera de horario. Por defecto, el de la
-   * fuente única. `null`: la fuente única no lo declara (@s12) — el bloque
-   * no se renderiza, sin placeholder.
-   */
-  telefonoUrgencias?: string | null
   /** Franjas horarias publicadas. Por defecto, las de la fuente única. Sin tramos: el bloque no se renderiza (@s13). */
   horario?: readonly TramoHorario[]
   /**
@@ -69,10 +65,9 @@ interface InformacionContactoProps {
   direccion?: readonly [string, string] | null
 }
 
-/** Panel de información de contacto de la landing: tarjeta de urgencias + tarjeta con mapa local y bloques de datos. */
+/** Panel de información de contacto de la landing: una tarjeta con el mapa local y los bloques de datos. */
 export function InformacionContacto({
   telefonoClinica = datosNegocio.telefonoClinica.textoVisible,
-  telefonoUrgencias = datosNegocio.telefonoUrgencias.textoVisible,
   horario = datosNegocio.horario,
   direccion = datosNegocio.direccion.lineas,
 }: InformacionContactoProps = {}): React.JSX.Element {
@@ -80,17 +75,15 @@ export function InformacionContacto({
     construirEnlaceTelefono(telefonoClinica),
     construirEnlaceTelefono(datosNegocio.telefonoMovil.textoVisible),
   ]
-  const enlaceUrgencias = telefonoUrgencias !== null ? construirEnlaceTelefono(telefonoUrgencias) : null
   const pin = posicionDelPin(datosNegocio.coordenadas, MAPA_ESTATICO.encuadre)
   const descripcionDelMapa = describirMapa(datosNegocio.identidad.nombreComercial, datosNegocio.direccion.unaLinea)
 
   return (
     <section aria-label="Información de contacto" className={styles.informacionContacto}>
-      {/* La tarjeta "debajo" (@s36): el mapa y los bloques de datos que el
-          cliente SÍ publica. El orden de lectura del DOM es el mismo que ya
-          fijó `informacion_contacto.feature` @s1 (Dirección, Teléfonos,
-          Horario) — este contrato no lo reabre, solo añade el rótulo VISIBLE
-          de cada bloque y el envoltorio de tarjeta. */}
+      {/* La única tarjeta del panel (@s36, enmendado el 20/09/2026): el mapa y
+          los tres bloques de datos que el cliente SÍ publica. El orden de
+          lectura del DOM es el que fijó `informacion_contacto.feature` @s1
+          (Dirección, Teléfonos, Horario). */}
       <div data-tarjeta-de="datos">
         {direccion !== null && (
           <>
@@ -148,32 +141,6 @@ export function InformacionContacto({
           )}
         </div>
       </div>
-      {/* La tarjeta "a la derecha" (@s36): el color de urgencia, el rótulo
-          real (derivado de la fuente única, nunca retipeado) y un botón de
-          llamada. Sigue en último lugar en el DOM (igual que antes de este
-          contrato); la maquetación la sube visualmente por encima de la
-          tarjeta de datos con "order", sin tocar el orden de lectura ya
-          aprobado. */}
-      {enlaceUrgencias !== null && (
-        <div data-tarjeta-de="urgencia">
-          <fieldset aria-label="Urgencias fuera de horario">
-            <legend>
-              {/* Punto pulsante decorativo del diseño (@s3 de `fidelidad_contacto`):
-                  sin texto ni papel semántico, igual que el del CTA de urgencias. */}
-              <span className={styles.pulso} aria-hidden="true" />
-              {datosNegocio.telefonoUrgencias.rotulo}
-            </legend>
-            {/* El número real, visible y grande, debajo del rótulo; la píldora
-                blanca «Llamar ahora» es la única acción (informacion_contacto
-                @s5/@s6 enmendados el 03/09/2026, Enmienda 7 de
-                `progress/fidelidad/enmiendas_fidelidad_contacto.md`). Los dos
-                son hijos directos del fieldset porque son ítems de su rejilla
-                (`.module.scss`). Nada aquí implica atención 24 h. */}
-            <p>{enlaceUrgencias.textoVisible}</p>
-            <a href={enlaceUrgencias.href}>Llamar ahora</a>
-          </fieldset>
-        </div>
-      )}
     </section>
   )
 }

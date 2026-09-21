@@ -302,6 +302,9 @@ test.describe('@s40 al tabular por la página entera ningún control enfocado qu
         // `waitForTimeout` a ciegas: es la misma espera determinista que
         // `tests/e2e/movimiento.spec.ts` ya usa y justifica para @s42. No
         // debilita nada: las dos aserciones de abajo siguen exigiendo lo mismo.
+        // Desde el 20/09/2026 lo que espera son transiciones, no animaciones:
+        // la feature 39 dejó `src/` sin ninguna declaración `animation:`, y
+        // las transiciones sí entran en `document.getAnimations()`.
         await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
         const activo = page.locator(':focus')
         if ((await activo.count()) === 0) break
@@ -371,9 +374,17 @@ function seSuperponen(a: Rectangulo, b: Rectangulo): boolean {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
 }
 
-/** Hijos DIRECTOS y visibles de la cabecera (logo, y según el ancho, nav o botón de menú). */
+/**
+ * Hijos DIRECTOS y visibles de la FILA de la cabecera (logo, y según el ancho,
+ * nav o botón de menú).
+ *
+ * REAPUNTADO el 20/09/2026: hasta hoy leía `header > *:visible`, y `header`
+ * tiene UN SOLO HIJO desde que existe `.interior` — así que el bucle de pares
+ * de más abajo no comparaba nada y la puerta estaba inerte. Es justo la que
+ * detecta un aterrizaje malo de D2 en el salto 1023/1024.
+ */
 async function hijosVisiblesDe(cabecera: Locator): Promise<HijoDeCabeceraMedido[]> {
-  const hijos = cabecera.locator('> *:visible')
+  const hijos = cabecera.locator('[data-cabecera-interior] > *:visible')
   const cuenta = await hijos.count()
   const medidos: HijoDeCabeceraMedido[] = []
   for (let indice = 0; indice < cuenta; indice += 1) {
@@ -498,8 +509,13 @@ const RECUENTO_DE_COMBINACIONES = RECUENTO_DE_VARIANTES * RUTAS_DEL_INVENTARIO.l
  * deterministas: el atributo que `SelectorPaleta` escribe al montar el
  * efecto (`src/components/SelectorPaleta.tsx:22`) y que no quede ninguna
  * animación en curso (el `body` transiciona "background-color"/"color",
- * `src/styles/global.scss:290`) — sin esto, `AxeBuilder` podría analizar un
+ * `src/styles/global.scss:326`) — sin esto, `AxeBuilder` podría analizar un
  * fotograma a mitad de la interpolación de color.
+ *
+ * Desde el 20/09/2026 (feature 39) lo único que esa segunda espera puede
+ * encontrar son TRANSICIONES: el proyecto se quedó sin ninguna declaración
+ * `animation:`. Las transiciones entran igualmente en `getAnimations()`, así
+ * que la espera conserva su sujeto y no se retira.
  */
 async function aplicarVariante(page: Page, variante: { id: string; nombreAccesible: string }): Promise<void> {
   await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()

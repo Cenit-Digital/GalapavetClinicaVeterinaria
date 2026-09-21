@@ -34,25 +34,43 @@ describe('@s1 el bloque de marca identifica al cliente real sin afirmar nada que
   })
 })
 
-describe('@s2 el pie presenta tres columnas encabezadas, de cuatro enlaces cada una', () => {
-  it('hay 3 "heading" con los nombres "Clínica", "Contenido" y "Contacto" en ese orden, cada uno seguido de una lista de 4 listitems con 1 link cada uno', () => {
+// El recuento se declara COLUMNA A COLUMNA desde el 20/09/2026 (E2): un único
+// número para las tres sería falso para unas u otras. El total de `listitem`
+// del pie baja de 12 a 11.
+const LISTITEMS_POR_COLUMNA: readonly (readonly [string, number])[] = [
+  ['Clínica', 4],
+  ['Contenido', 4],
+  ['Contacto', 3],
+]
+
+const LISTITEMS_DEL_PIE = 11
+
+describe('@s2 el pie presenta tres columnas encabezadas, con cuatro, cuatro y tres enlaces', () => {
+  it('hay 3 "heading" con los nombres "Clínica", "Contenido" y "Contacto" en ese orden, seguidos de listas de 4, 4 y 3 listitems con 1 link cada uno', () => {
     renderizarPieDePagina()
     const pie = screen.getByRole('contentinfo')
 
     const encabezados = within(pie).getAllByRole('heading')
     expect(encabezados.map((encabezado) => encabezado.textContent)).toEqual(['Clínica', 'Contenido', 'Contacto'])
 
-    for (const encabezado of encabezados) {
-      const lista = encabezado.nextElementSibling
+    let listitemsContados = 0
+    for (const [indice, [nombre, listitemsEsperados]] of LISTITEMS_POR_COLUMNA.entries()) {
+      const encabezado = encabezados[indice]
+      expect(encabezado?.textContent).toBe(nombre)
+
+      const lista = encabezado?.nextElementSibling ?? null
       expect(lista).not.toBeNull()
       expect(lista?.tagName.toLowerCase()).toBe('ul')
 
       const items = within(lista as HTMLElement).getAllByRole('listitem')
-      expect(items).toHaveLength(4)
+      expect(items, `listitems de la columna "${nombre}"`).toHaveLength(listitemsEsperados)
       for (const item of items) {
         expect(within(item).getAllByRole('link')).toHaveLength(1)
       }
+      listitemsContados += items.length
     }
+
+    expect(listitemsContados).toBe(LISTITEMS_DEL_PIE)
   })
 })
 
@@ -95,8 +113,11 @@ function obtenerListaContacto(): HTMLElement {
   return encabezado.nextElementSibling as HTMLElement
 }
 
+/** Los 3 enlaces que el contrato deja en la columna "Contacto" (@s5/@s7), escritos a mano. */
+const NOMBRES_DE_CONTACTO = ['91 082 92 67', '685 34 31 49', 'Cómo llegar']
+
 describe('@s5 la columna "Contacto" muestra los teléfonos reales y su destino sale del mismo dato', () => {
-  it('contiene los tres teléfonos reales y "Cómo llegar", con destinos exactos y dígitos consistentes entre nombre y destino', () => {
+  it('contiene los dos teléfonos de la clínica y "Cómo llegar", son exactamente esos 3, y los dígitos del nombre coinciden con los del destino', () => {
     renderizarPieDePagina()
     const lista = obtenerListaContacto()
     const enlaces = within(lista).getAllByRole('link')
@@ -104,10 +125,12 @@ describe('@s5 la columna "Contacto" muestra los teléfonos reales y su destino s
     const porNombre = new Map(enlaces.map((enlace) => [enlace.textContent, enlace.getAttribute('href')]))
     expect(porNombre.get('91 082 92 67')).toBe('tel:+34910829267')
     expect(porNombre.get('685 34 31 49')).toBe('tel:+34685343149')
-    expect(porNombre.get('Urgencias fuera de horario · 91 851 13 93')).toBe('tel:+34918511393')
     expect(porNombre.get('Cómo llegar')).toBe('#contacto')
 
-    const nombresDeLlamada = ['91 082 92 67', '685 34 31 49', 'Urgencias fuera de horario · 91 851 13 93']
+    expect(enlaces).toHaveLength(3)
+    expect(enlaces.map((enlace) => enlace.textContent)).toEqual(NOMBRES_DE_CONTACTO)
+
+    const nombresDeLlamada = ['91 082 92 67', '685 34 31 49']
     for (const nombre of nombresDeLlamada) {
       const destino = porNombre.get(nombre) ?? ''
       const digitosNombre = (nombre.match(/\d/g) ?? []).join('')
@@ -117,29 +140,36 @@ describe('@s5 la columna "Contacto" muestra los teléfonos reales y su destino s
   })
 })
 
-describe('@s6 el enlace de urgencias del pie conserva el rótulo real del cliente y no anuncia 24 horas', () => {
-  it('el nombre empieza por "Urgencias fuera de horario", no contiene "24 h"/"24h"/"365"/"todos los días", y ningún heading ni banner menciona urgencias', () => {
+// @s6 ENMENDADO el 20/09/2026 (E2), NO borrado. Sus dos primeras cláusulas
+// vigilaban CÓMO se rotulaba el enlace de urgencias; ahora vigilan que NO
+// esté. La tercera —ningún heading ni banner del pie menciona urgencias— es
+// una afirmación de AUSENCIA que E2 no deroga y que impide reintroducir la
+// cartelería por la puerta de un encabezado: se conserva intacta.
+describe('@s6 el pie no ofrece ningún acceso a urgencias ni lo anuncia en ningún encabezado', () => {
+  it('ningún enlace apunta a "tel:+34918511393" ni menciona "Urgencias", ningún heading ni banner lo anuncia, y el número no aparece en el texto', () => {
     renderizarPieDePagina()
-    const lista = obtenerListaContacto()
-    const enlace = within(lista).getByRole('link', { name: /^Urgencias fuera de horario/ })
-    expect(enlace.getAttribute('href')).toBe('tel:+34918511393')
+    const pie = screen.getByRole('contentinfo')
 
-    const nombre = enlace.textContent ?? ''
-    expect(nombre.startsWith('Urgencias fuera de horario')).toBe(true)
-    for (const prohibida of ['24 h', '24h', '365', 'todos los días']) {
-      expect(nombre).not.toContain(prohibida)
+    const enlaces = within(pie).getAllByRole('link')
+    expect(enlaces.length).toBeGreaterThan(0)
+    for (const enlace of enlaces) {
+      expect(enlace.getAttribute('href')).not.toBe('tel:+34918511393')
+      expect(enlace.textContent ?? '').not.toContain('Urgencias')
     }
 
-    const pie = screen.getByRole('contentinfo')
-    for (const heading of within(pie).getAllByRole('heading')) {
+    const encabezados = within(pie).getAllByRole('heading')
+    expect(encabezados.length).toBeGreaterThan(0)
+    for (const heading of encabezados) {
       expect((heading.textContent ?? '').toLowerCase()).not.toContain('urgencias')
     }
     expect(screen.queryByRole('banner')).toBeNull()
+
+    expect(pie.textContent ?? '').not.toContain('91 851 13 93')
   })
 })
 
 describe('@s7 sin email publicado, el pie no ofrece ningún enlace de correo', () => {
-  it('la fuente única no declara email, no hay ningún "mailto:" ni "@" en el pie, y "Contacto" sigue con los 4 enlaces de @s5', () => {
+  it('la fuente única no declara email, no hay ningún "mailto:" ni "@" en el pie, y "Contacto" sigue con los 3 enlaces de @s5', () => {
     expect(datosNegocio.email).toBeUndefined()
 
     renderizarPieDePagina()
@@ -152,13 +182,8 @@ describe('@s7 sin email publicado, el pie no ofrece ningún enlace de correo', (
 
     const lista = obtenerListaContacto()
     const enlaces = within(lista).getAllByRole('link')
-    expect(enlaces).toHaveLength(4)
-    expect(enlaces.map((enlace) => enlace.textContent)).toEqual([
-      '91 082 92 67',
-      '685 34 31 49',
-      'Urgencias fuera de horario · 91 851 13 93',
-      'Cómo llegar',
-    ])
+    expect(enlaces).toHaveLength(3)
+    expect(enlaces.map((enlace) => enlace.textContent)).toEqual(NOMBRES_DE_CONTACTO)
   })
 })
 
@@ -317,9 +342,16 @@ describe('@s14 en el pie no sobrevive ningún dato del prototipo heredado', () =
   })
 })
 
+// @s15 REAPUNTADO el 20/09/2026 (E2). El punto de inyección era la prop
+// `telefonoUrgencias`, que la retirada del enlace se lleva. El contrato
+// reapunta el Given al teléfono de la CLÍNICA y deja elegir entre dar al
+// componente una prop equivalente o bajar el escenario a la lógica pura: se
+// elige la prop porque la última cláusula («no se renderiza ningún elemento
+// con rol "link" cuyo destino empiece por "tel:+34"») habla del DOM, y la
+// lógica pura no renderiza nada que se pueda comprobar.
 describe('@s15 un teléfono que no valida hace fallar al pie en vez de pintar un enlace a medias', () => {
-  it('renderizar con "91 851 13" (ocho dígitos) lanza con el valor recibido, y no llega a existir ningún enlace "tel:+34"', () => {
-    expect(() => renderizarPieDePagina({ telefonoUrgencias: '91 851 13' })).toThrow('91 851 13')
+  it('renderizar con "91 082 92" (siete dígitos) lanza con el valor recibido, y no llega a existir ningún enlace "tel:+34"', () => {
+    expect(() => renderizarPieDePagina({ telefonoClinica: '91 082 92' })).toThrow('91 082 92')
     expect(document.querySelector('a[href^="tel:+34"]')).toBeNull()
   })
 })

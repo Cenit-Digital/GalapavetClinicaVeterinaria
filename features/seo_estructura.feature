@@ -128,6 +128,10 @@
 #                       lista: hay que elegir uno). Ver @s10.
 #   urgencias ......... 91 851 13 93 (fuera de horario; NO       (§2)
 #                       alimenta la propiedad `telephone`)
+#                       ACTUALIZACIÓN (20/09/2026): este número sigue en la
+#                       fuente única y sigue SIN alimentar `telephone`, pero
+#                       desde E1 ya no se muestra en el panel de contacto de
+#                       esta página. Ver la nota de @s10.
 #   horario ........... L-V 11:00-14:00 y 16:30-20:00 ·
 #                       Sáb 11:00-14:00 · Dom CERRADO          (§3)
 #
@@ -284,6 +288,23 @@ Feature: SEO técnico y datos estructurados
   # ESCENARIOS CLAVE: máquina y persona no pueden divergir
   # ---------------------------------------------------------------------------
 
+  # CLÁUSULA ENMENDADA en @s10 (20/09/2026) — NADIE LA HABÍA CITADO Y SE PONÍA
+  # EN ROJO. Decía literalmente: «And ese teléfono declarado nunca coincide con
+  # el segundo enlace de teléfono visible ni con el enlace de teléfono de
+  # urgencias». Su implementación localizaba el enlace de urgencias entrando en
+  # el grupo «Urgencias fuera de horario» del panel de contacto y pidiendo
+  # dentro el enlace «Llamar ahora»: los dos desaparecen con E1
+  # (`features/informacion_contacto.feature`, decisión de Pablo del 20/09/2026,
+  # reunión con Roberto Alonso del 16/08/2026, minutos 06:52-07:00), y esa
+  # búsqueda LANZA en vez de fallar suavemente.
+  #
+  # QUÉ SE CONSERVA Y QUÉ SE PIERDE: se conserva la comparación contra el
+  # SEGUNDO enlace de teléfono visible, que es la que sigue demostrando lo que
+  # el escenario quiere —que `telephone` del bloque de datos estructurados es el
+  # PRIMER teléfono de la clínica y no otro cualquiera—. Se pierde la
+  # comprobación explícita contra el de urgencias; el dato sigue declarado en la
+  # fuente única y sigue sin alimentar `telephone`, pero eso ya no lo vigila
+  # ninguna puerta en esta página, porque el enlace ya no está en ella.
   @s10
   Scenario: Lo que lee la máquina coincide con lo que lee la persona
     Given la página de inicio con su panel de información de contacto visible
@@ -292,7 +313,7 @@ Feature: SEO técnico y datos estructurados
     And la calle declarada coincide carácter a carácter con la calle del texto visible de la dirección
     And el código postal y la localidad declarados coinciden con los del texto visible de la dirección
     And el teléfono declarado tiene exactamente los mismos dígitos, y en el mismo orden, que el nombre accesible del PRIMERO de los dos enlaces de teléfono visibles del panel de contacto —el de la clínica, "91 082 92 67"—, ignorando espacios y prefijo internacional
-    And ese teléfono declarado nunca coincide con el segundo enlace de teléfono visible ni con el enlace de teléfono de urgencias
+    And ese teléfono declarado nunca coincide con el segundo enlace de teléfono visible del panel de contacto
     And cada uno de los tres tramos declarados —lunes a viernes de 11:00 a 14:00, lunes a viernes de 16:30 a 20:00, y sábado de 11:00 a 14:00— aparece como subcadena dentro del texto visible del horario, aunque el texto visible junte los dos tramos de lunes a viernes en una sola línea
     And el texto visible del horario no muestra ningún horario de apertura que no esté respaldado por alguno de esos tres tramos declarados
 

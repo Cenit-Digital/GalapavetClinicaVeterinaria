@@ -1,0 +1,228 @@
+[00:01] Vale, ellos tienen cinco tipos de servicios, que son cirugía, anestesia, diagnóstico de imagen, medicina general, análisis y especialidades, vamos a utilizar esta tarjeta de aquí abajo, baja un poco.
+[00:16] Me lo voy a poner en la otra pantalla un momento.
+[00:19] Así no se puede.
+[00:21] Espérate un momento, tengo que tocar muchas cosas para eso un momento.
+[00:28] Ahí, vale.
+[00:30] lo que no alguien servicios vale este estilo va a permanecer vale la cosa es
+[00:37] tienen cinco tipos de servicio vale ellos no vale como te he dicho cirugía
+[00:45] anestesia diagnóstico de imagen medicina general análisis especialidades
+[00:49] alto por ejemplo abre cirugía vale en ese evidentemente le metemos un
+[00:56] textito con lo que sea vale como este texto me vale más o menos vale y luego
+[01:00] los checks, esos que hay check verde, es lo que ellos ponen, por ejemplo, que ponen
+[01:05] cirugía de tejidos blandos, esterizaciones, cirugía oncológica, cirugía
+[01:11] digestiva, ontología, anestesia natural y movilización. ¿Vale? ¿Esos checks, VAR? ¿Esos
+[01:15] checks? Sí. Los podemos poner ahí. Vale. Aparte de, bueno, el llama del
+[01:22] seguimiento y el control de dolor, esto me parece interesante. Vale. Es un
+[01:28] poco simplemente a esto tener que ver ellos y diciéndolo es para que vean un
+[01:33] poco lo que lo que puede ser vale que decir es decir cinco tarjetas de esas
+[01:38] cinco tarjetas pues cuando se expande el ver que incluye pues es por ahí lo
+[01:43] que tienen vale vale las puedes poner en modo de 2 1 2
+[01:50] que te apetece ir a seducción. ¿2-1 o 2? 2-1 o 2, sí. Ah, vale, sí, sí, sí, sí.
+[01:59] Vale, y la seducción lo puedes poner, ¿vale? O sea, 2 sería, por ejemplo, imaginante estaría
+[02:04] en consultaje en la cirugía. Sí. Y otras 2 que sería, por ejemplo,
+[02:08] ontología y periódico. Correcto. Que lo que quieras hacer, pues venga, te voy a dar permiso.
+[02:14] Sí. Sí, por el caso más distoso. Eso va a empezar, ¿vale? El tema del
+[02:19] servicios. ¿Qué es lo siguiente que me interesa más? Nuestro equipo. ¿Vale? Bájate a nuestro
+[02:23] equipo. Esto va a ser el orden, ¿eh? Servicio. Sí, o sea, pantalla main. Sí, pantalla main.
+[02:31] Evidentemente le pones, sube. Evidentemente arriba le quitas lo de urgencias, lo que
+[02:36] ya hemos hablado, urgencias. Todo esto fuera. Evidentemente el tema de la
+[02:42] veterinaria es el que es. Con el logo, pues lo he pasado y el reservar
+[02:47] servicios, campañas, equipo, blog, contacto, FAC, urgencia,
+[02:50] tienda, todo eso se va a moldar lo que realmente tienen ellos,
+[02:53] ¿vale?
+[02:54] Vale, perfecto.
+[02:55] Y esto, como hemos hablado, fuera.
+[02:57] Eso se va a fuera.
+[02:58] Eso va a la izquierda.
+[02:59] Estos dos botones se quedan.
+[03:00] Y tras el barcita se quedan urgencias, ¿no?
+[03:02] Vale, urgencia fuera y esto también fuera.
+[03:04] Y eso fuera, ¿vale?
+[03:05] Eso mueve lo más a la izquierda y lo que tú quieras.
+[03:07] Vamos, primero va a servicio, veamos lo de ellos,
+[03:09] ahora vamos a nuestro equipo.
+[03:11] Vale, ¿el orden este de campañas,
+[03:13] al final esto lo acabamos metiendo o ellos no tienen?
+[03:16] es que no sé si lo tienen porque no aparece, ¿vale?
+[03:18] ¿Vale?
+[03:19] Podemos dejarlo, ¿vale?
+[03:20] Si quieres, déjalo, como muestra de lo que se puede hacer.
+[03:23] Vamos a dejar campañas, venga, porque me parece interesante
+[03:25] el tema de la vacunación y demás,
+[03:27] bitchequeos y cosas por el estilo, venga.
+[03:28] OK.
+[03:29] Deja la campaña, pero deja lo que ya hablamos, ¿vale?
+[03:32] Vale.
+[03:32] Un poquito más bonito, no así.
+[03:35] Vale.
+[03:35] Lo que dijimos, venga, baja.
+[03:38] OK.
+[03:38] Nuestro equipo, evidentemente, son 2 personas, ¿vale?
+[03:41] Tiene el veterinario jefe y luego está un auxiliar.
+[03:44] Vale.
+[03:45] pon 2, el que te dé la gana, igual cirujano, cirujano jefe, lo que sea. Le metemos esas
+[03:52] etiquetas, en plan, bueno, medicina interna, como ellos tienen servicio de cirugía, diagnóstico
+[03:59] de imagen y demás, pues que tiene de todo, tío. Ya. Tiene un poco de todo, en verdad,
+[04:16] es que claro. Y ya me acabo de dar cuenta que medicina en general para ellos es vacunación,
+[04:21] es pagación, chequeo. Así que sí que hay que meter lo de las campañas, ¿vale?
+[04:26] Sí, esto de campañas sí. A eso de campañas hay que meter las
+[04:33] campañas que vienen medicina general.
+[04:37] ¿Medicina general? Vale, pero ahí dices en su página.
+[04:40] En su página que es vacunación, desparacitación, chequeo, microchip y
+[04:48] preventiva. Más o menos los tenemos todos, incluidos oriental. Habría que
+[04:52] meter simplemente preventiva, es para situación que no está y microchip, lo que hay aquí
+[05:01] más eso que te acabo de decir, el tema del equipo, vete una vez para abajo, vete dos
+[05:11] tarjetas, vetele... si, eso viene igual, que queden así esas dos, eso es lo de menos,
+[05:21] o al final lo tienen que decir ellos, coge las dos que quieres y que se quede así,
+[05:24] importa. No, al final no quieres que se quede de este rollo, como lo teníamos con lo de
+[05:32] las OY, no hace falta, no? No. Dejalo como está en el web, simplemente, no de cumbas
+[05:40] más lo que hay. Para que vean el más y las etiquetas, da de más y capaz aquí,
+[05:46] simplemente, pero dos tarjetas solamente. Vale, vale, vale, como aquí cien por cien.
+[05:50] Deja 3, 4, 3, ¿cuántas 6? ¿6? Sí, porque no sabemos si esta página está actualizada. Deja las 6 que hay, tal cual.
+[06:02] Simplemente, para que lo vean. Ya está, no te preocupes por eso. Deja esto, me puede dejar 6, ¿vale?
+[06:07] Vale. Vale, baja. Bajo. Esto...
+[06:14] Esto se queda, el ego de cambiar, evidentemente, vete y nada, es el ego de cambiarlo, ¿vale?
+[06:19] Sí.
+[06:21] Vale, no se queda como está, baja, no hay muchos cambios, hay nuestros peludos, es
+[06:28] lo que te digo, nuestros amiguetes, a menos estos peludos de nuestros amiguetes, está
+[06:31] perfecto, así me gusta, está perfecto.
+[06:34] Vale, simplemente que pase automáticamente.
+[06:37] Pase automáticamente y ya está.
+[06:38] Que tenga un par de animaciones, que si algo aquí se haga más grande, vale un
+[06:42] par de animaciones.
+[06:43] Sí, puedes agarrar nada, lo que tú quieras, no hay ningún problema con eso. Eso se queda al banco, vale.
+[06:48] Es que la guapa está ya hecha perfectamente. Baja.
+[06:52] La urgencia se va afuera.
+[06:53] Esto es fuera, sí, esto de urgencia se va.
+[06:55] Y el resto se queda como está.
+[06:58] Vale, tu nombre y esto de dirección que está guapo.
+[07:00] Que tienes aquí además el FAC.
+[07:03] Correcto, esto se ve como está. Está perfecto, sí.
+[07:06] Vale, baja.
+[07:09] Vale, bajo. El FAC.
+[07:11] Fax se queda, yo lo quiero tener, le guste a ellos, se va a quedar, luego el blog se
+[07:16] queda porque lo vamos a hablar, lo que quiero ver, sube, el tema de la tienda,
+[07:22] su tienda es una publicidad mierda, mete para arriba, que está en una landing,
+[07:26] va a seguir en una landing, que va a tener, pienso, se va a llamar
+[07:35] Alimentación, pienso que me parece una puta mierda.
+[07:39] Vale.
+[07:39] Ahora hay que meter.
+[07:41] Alimentación se queda, hay que meter.
+[07:44] Juegos, descansos.
+[07:47] Deja todo esto como está y hay que añadir.
+[07:52] ¿Qué tenemos en accesorios?
+[07:55] Esto.
+[08:00] Claro.
+[08:03] Es que no, es que me gusta más.
+[08:05] Es que él tiene descanso, juegos y paseos.
+[08:08] Yo lo dejaría, alimentación, dietas está bien,
+[08:11] está bien y quien está bien accesorios a ver que si no podemos poner sus
+[08:20] categorías y punto no es que son muy malas me gusta poner las que tenemos
+[08:24] nosotros más las suyas podemos poner pon el descanso y juegos también vale y
+[08:30] accesorios se deja accesorios déjalo pero pon un paseo descanso y juegos
+[08:37] deja lo que tenemos otros masas tres que es una serie de paseos aquí
+[08:40] ¿Paseo, descanso, juego?
+[08:42] Sí, recientemente. Más que nada porque sí. Quiero dejar las suyas y ya está, ¿vale?
+[08:47] Vale.
+[08:49] El blog lo dejamos como está porque a mí me gusta. Las campañas. ¿Abre campañas?
+[08:55] Vale.
+[08:56] Vale, las campañas es lo mismo que te he dicho. Hay que añadir las cuatro que te he dicho, ¿vale?
+[09:04] Sí.
+[09:06] Tanto el OnePage como la landing, el ambas se quedan igual.
+[09:09] Y nos quedamos. Nos quedamos también con las que tenemos.
+[09:11] Sí, sí, sí, por supuesto.
+[09:13] O sea, cuanto más cosas tenga y diga, hostia, que...
+[09:16] Lo que no sabemos realmente...
+[09:17] Yo creo que esta web no está actualizada hace mucho tiempo.
+[09:19] Y prefiero presentar algo muy sólido
+[09:22] y que me vayan diciendo cosas que quieren o cosas que no,
+[09:24] pero presentar algo y decir, mira, mira lo que hay y sabes.
+[09:26] Está mucho mejor que la mierda que tienes.
+[09:28] Cubro todas tus necesidades.
+[09:30] Y mantiendo que con la parte del blog,
+[09:33] bueno, como ellos no tienen blog, a mí lo que está aquí...
+[09:35] Bueno, déjalo.
+[09:36] Sí, es simplemente un ejemplo, ¿vale?
+[09:38] Dejalo.
+[09:39] Vale.
+[09:41] Vuelve a la página principal
+[09:44] Vale, hay que meter el logo allá arriba, que tiene la sierra
+[09:50] ¿Cómo jugamos con el morado?
+[09:52] ¿Cómo jugamos con el morado?
+[09:55] Hay que meter morado, ¿vale?
+[10:01] Sí o sí
+[10:02] Es que me gusta mucho el verde
+[10:04] ¿No es baja?
+[10:07] Bajo
+[10:08] Vale, habría que hacer
+[10:20] una mezcla de lo que tenemos y poner morado en algún sitio
+[10:23] Vale
+[10:25] La cosa es dónde?
+[10:26] Porque es que es horrible el color
+[10:29] Ya, mira, un morado que juegue por ejemplo en campañas, yo digo porque se ve un poco
+[10:38] más quizás...
+[10:39] Pero tiene que ser un morado más claro, no el morado intenso que tiene, ¿vale?
+[10:44] No, no, claro que el morado de este tono que tampoco desento de musico, con lo que
+[10:50] hay.
+[10:51] Pero por ejemplo yo siempre solamente iba a campañas y ahí hacía un poco de jugo
+[10:56] moradito, en vez de estas tarjetas tener el verde de activas...
+[11:01] No me había pensado en cambiarlas, en donde está un poco de verde, meter un poco de morado, no demasiado, pero algo, para que siga siendo su insignia.
+[11:08] Sí, pues te digo, en plan, el campaña es que está un poco de verde, venga, pues maldito, este color de fondo que es un morado claro que no desentone con el blanco ni con el otro verde, aquí donde hay un activo verde, pues en morado, en el 25, pues en morado.
+[11:26] Vale, ¿cuándo lo puedes tener?
+[11:28] Pues a ver, hoy la empezaré. Seguramente a finales de la semana que viene tendré...
+[11:38] Pero si, ¿qué dices tú?
+[11:40] Sí, sí, sí.
+[11:41] ¿Pero si antes queríamos verse esta semana?
+[11:43] ¿Eh?
+[11:44] ¿Que antes queríamos verse esta semana?
+[11:46] A ver, señores, me refiero al viernes 21 más o menos.
+[11:54] ¿Al viernes 21 está lista?
+[11:56] Sí, cogiendo este modelo, los retoques que le hemos dicho y teniendo la otra de Nails puesta para el 21.
+[12:09] No te hablo que esté picada en código, ¿no?
+[12:11] Bueno, claro que sí, vamos a ver.
+[12:15] No, no, no, yo te estoy diciendo que esté picada en código.
+[12:22] Hombre, sí, pero vamos a ver, independientemente de que esté picada en código, no.
+[12:27] Yo de esto toca hacer un sistema de diseño. Tengo que empezar a corregir todo lo que hemos
+[12:34] hablado y aunque yo por ejemplo, antes de que la tengo en el cloud de tal, de transporte tal y
+[12:39] a la vez de ese proceso, pues la tengo que poner como, he puesto la de las uñas, tiene que estar ahí
+[12:45] el código para que se quede desplegado en un sitio. A ver, a ver... a ver, a ver, a ver, a ver...
+[12:50] Tendré que verla primero antes de meterla en código. Eso es lo que me refiero. Ah bueno, ya sí, sí. Pues lo digo,
+[12:56] Quiero verla cuando la diseñe Claudio y antes de pasar la código habrá que verla.
+[13:01] Bueno sí, esto es como lo de siempre, yo te la iré enseñando, la ejecutará aquí en mi local
+[13:09] hasta que tomo esa versión definitiva, yo no la publicaré como la otra en páginas para que esté
+[13:15] publicada para vosotros y simplemente yo el día que me digas, oye ¿cuál era la URL?
+[13:21] vamos a pasar la wordl y se te enseña lo que pude, en el pgss
+[13:29] vale, ya que estamos ya me lo enseñarás, quiero que dejes esta
+[13:36] paleta de colores que tiene ahora mismo, cubre una versión con estos colores y otra
+[13:44] versión colocamos con el morado ese de mierda, vale, vale, pues eso es, ok
+[13:53] cuando la escena avísame lo voy viendo y a ver qué le cambiamos y qué dejamos
+[13:56] Vale, vale. Y ahora le damos a Andrés de Valle, Fabiola.
+[14:02] He sobreoblado porque la web que tenemos modelo me parece muy buena para cualquier otro tipa.
+[14:07] Tendríamos que cuando acabes con esto vamos a empezar a ver clínicas dentales, ¿vale?
+[14:19] A ver, ¿otras clínicas dices o qué? Dentales.
+[14:24] Ah, vale, perdón. De repente yo estaba haciendo tres kit. Vale, dentales.
+[14:30] ya tenemos un modelo que es muy bueno de btnl que es éste que está puesto aquí
+[14:33] vale cualquiera vamos para el resto de cosas y adaptamos tenemos que hacer un
+[14:38] modelo de clínicas btnl es lo siguiente
+[14:42] Si, mentales, eso es.
+[14:44] Vale.
+[14:45] Ok.
+[14:46] Vale, ahora Andrés se puede hacer cosas.
+[14:50] Si, si.
+[14:51] Se empieza a mover.
+[14:52] Vale, pues eso es.
+[14:54] Vale, pues eso.
+[14:55] Yo tengo algo para el viernes y cuando se acaban de hacer como hice con las otras,
+[15:00] lo voy metiendo hoy.
+[15:01] Yo estoy de vacaciones, voy a hacer cosas en mi casa, pero bueno, voy a irme a la
+[15:04] casa a ver si quieres.
+[15:05] Si, si, yo me han dado vídeos, o te digo un día, oye, shampoo, tengo esto, vamos
+[15:10] vamos ahora a mi, te lo comparto, te lo enseño, a ver qué...
+[15:13] Chau, si tú quieres pasar por mi casa, que me suena la ampolla, venga, va a tu casa, me da igual, vale?
+[15:18] Vale, vale, perfecto.
+[15:22] Pues me voy que tengo cosas que he quedado, que te le ganes.
+[15:25] Muy bien, pues nada, señor.
+[15:27] Adiós, caballero, gracias.
+[15:29] Un beso, un beso para ti.
+[15:31] Adiós.
+[15:33] Chau.

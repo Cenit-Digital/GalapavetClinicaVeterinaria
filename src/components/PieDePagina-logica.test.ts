@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { construirEnlacesContacto, construirEnlacesLegales, textoCopyright } from './PieDePagina-logica'
+import { construirEnlacesLegales, textoCopyright } from './PieDePagina-logica'
 
 describe('los enlaces legales separan el rótulo visible del aviso accesible', () => {
   it('conservan el nombre publicado y añaden el aviso de ventana nueva solo al nombre accesible', () => {
@@ -31,18 +31,5 @@ describe('@s13 el año del aviso de copyright se calcula de la fecha vigente y n
 
     expect(texto).toBe('© 2027 Galapavet')
     expect(texto).not.toContain('2026')
-  })
-})
-
-describe('refuerzo de cobertura (no ligado a un @s: la fuente real siempre declara el rótulo de urgencias)', () => {
-  it('sin rótulo declarado, el nombre del enlace de urgencias es solo el teléfono, sin separador "·"', () => {
-    const enlaces = construirEnlacesContacto({
-      telefonoClinica: '91 082 92 67',
-      telefonoMovil: '685 34 31 49',
-      telefonoUrgencias: '91 851 13 93',
-      rotuloUrgencias: undefined,
-    })
-
-    expect(enlaces[2]?.nombre).toBe('91 851 13 93')
   })
 })

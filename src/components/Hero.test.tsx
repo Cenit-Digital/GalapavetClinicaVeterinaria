@@ -327,8 +327,10 @@ describe('@s30 la píldora de ubicación, los dos botones y la banda de cuatro c
  * no son ancestros). El anillo global `--color-foco` está pensado para los
  * fondos claros de página; sobre el velo oscuro el anillo semántico correcto
  * es `--color-sobre-primario`, la misma tinta ya validada que pinta el texto
- * del hero (mismo recurso que el CTA de urgencias de `Cabecera.module.scss`
- * sobre su rojo).
+ * del hero. El precedente que se citaba aquí —el CTA de urgencias de
+ * `Cabecera.module.scss` sobre su rojo— dejó de existir el 20/09/2026 (D1 de
+ * `fidelidad_cabecera.feature`): el recurso sigue siendo el mismo, pero ya no
+ * tiene ese segundo caso en el proyecto.
  */
 describe('@s38/@s39 de accesibilidad: el anillo de foco de las acciones contrasta contra el velo de tinta, en las cinco variantes', () => {
   it('los dos botones (primario y contorno) cambian el color del anillo a "--color-sobre-primario" bajo ":focus-visible"', () => {

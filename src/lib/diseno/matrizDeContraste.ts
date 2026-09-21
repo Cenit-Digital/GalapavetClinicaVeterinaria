@@ -3,7 +3,11 @@
  * pinta, resuelta contra el texto real de `src/styles/_tokens.scss` y pasada
  * por la fórmula de contraste real del repositorio (`src/lib/contraste.ts`).
  *
- * Cubre @s6, @s7, @s8, @s9 y @s11 de `features/rediseno_visual.feature`.
+ * Cubre @s6, @s8, @s9 y @s11 de `features/rediseno_visual.feature`, y sigue
+ * sirviendo a @s7 con su MAQUINARIA (`evaluarParDeVariante` y la puerta de
+ * reconciliación) aunque desde el 20/09/2026 ya no DECLARE su pareja: la
+ * cartelíería roja de urgencias se retiró del sitio (feature 39) y la matriz
+ * solo lista lo que se pinta de verdad.
  *
  * Vive en `src/lib/**` y es PURO a propósito: `stryker.config.json` deja
  * escrito que StrykerJS no muta el texto ni los atributos de JSX, así que una
@@ -356,11 +360,12 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
   { rol: 'texto-suave', fondo: 'fondo-alterno', uso: 'texto normal' }, // `Faq.module.scss:47` dentro de `Landing.tsx:71`
   { rol: 'texto-suave', fondo: 'superficie', uso: 'texto normal' }, // `PieDePagina.module.scss:12` + `:75`
 
-  // Tinta sobre relleno saturado. El rojo de urgencia entra AQUÍ, nunca con
-  // blanco literal (@s7).
+  // Tinta sobre relleno saturado. Hasta el 20/09/2026 el rojo de urgencia
+  // entraba aquí (el CTA de la cabecera); tras la feature 39 ningún módulo lo
+  // pinta, así que su pareja sale de la matriz y @s7 la custodia sobre los
+  // TOKENS, no sobre esta lista.
   { rol: 'sobre-primario', fondo: 'primario', uso: 'texto normal' }, // `_api.scss:227-228` (mixin `boton-primario`)
   { rol: 'sobre-primario', fondo: 'primario-fuerte', uso: 'texto normal' }, // `_api.scss:238-239` (mismo botón con el puntero encima)
-  { rol: 'sobre-primario', fondo: 'urgencia', uso: 'texto normal' }, // `Cabecera.module.scss:163-164` (CTA de urgencias)
 
   // Acento legible: nunca `--color-acento` a secas, siempre su tinta.
   { rol: 'acento-tinta', fondo: 'acento-suave', uso: 'texto normal' }, // `_api.scss:281-282` (mixin `pildora-etiqueta`)
@@ -382,10 +387,6 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
   // reparación del 03/09/2026: `accesibilidad` @s38/@s39).
   { rol: 'sobre-primario', fondo: 'tinta', uso: 'componente de interfaz o borde de foco' }, // `Hero.module.scss` (`.acciones a … &:focus-visible`)
 
-  // La píldora del teléfono de urgencias de contacto (fidelidad_contacto @s3):
-  // la tinta de urgencia sobre el relleno "sobre-primario" — el par simétrico
-  // al de la barra, así que da el mismo ratio en las cinco variantes.
-  { rol: 'urgencia', fondo: 'sobre-primario', uso: 'texto normal' }, // `InformacionContacto.module.scss` (`[data-tarjeta-de='urgencia'] a`)
 ]
 
 /**

@@ -50,7 +50,14 @@ test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo s
     })
   }
 
-  test('la portada materializa hero, CTA de urgencias y fotografías locales de servicios', async ({ page }) => {
+  // NOMBRE Y ASERCIÓN REESCRITOS (20/09/2026, D1 de `fidelidad_cabecera`).
+  // Este test exigía `header a[href^="tel:"]`, y es el SEGUNDO reapuntado
+  // consecutivo de la misma aserción: en septiembre se movió de la barra de
+  // urgencias al CTA de la cabecera. Ahora se retira, porque el acceso a
+  // urgencias ya no vive en el armazón de cabecera — ni en escritorio ni en
+  // el panel móvil—; la cláusula de @s28 que lo pedía está eliminada con su
+  // nota en `features/rediseno_visual.feature`.
+  test('la portada materializa hero y fotografías locales de servicios', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 1000 })
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
@@ -58,7 +65,6 @@ test.describe('@s14, @s17, @s20, @s29 y @s50: la producción conserva el nuevo s
     await expect(hero.getByRole('heading', { level: 1 })).toHaveCSS('font-weight', '600')
     await expect(hero.locator('img')).toHaveCount(1)
     await expect(page.locator('#servicios img')).toHaveCount(5)
-    await expect(page.locator('header a[href^="tel:"]').first()).toHaveAttribute('href', /^tel:/)
 
     const rutasDeServicio = await page.locator('#servicios img').evaluateAll((imagenes) => imagenes.map((imagen) => imagen.getAttribute('src')))
     expect(rutasDeServicio).toHaveLength(5)

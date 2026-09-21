@@ -39,42 +39,32 @@ export function textoCopyright(fecha: Date, nombreComercial: string): string {
   return `© ${fecha.getFullYear()} ${nombreComercial}`
 }
 
-const SEPARADOR_ROTULO = ' · '
 const NOMBRE_COMO_LLEGAR = 'Cómo llegar'
 const DESTINO_COMO_LLEGAR = '#contacto'
-
-/** El nombre accesible del enlace de urgencias lleva el rótulo real del cliente, cuando la fuente lo declara (@s5/@s6). */
-function nombreEnlaceUrgencias(rotulo: string | undefined, textoVisible: string): string {
-  return rotulo !== undefined ? `${rotulo}${SEPARADOR_ROTULO}${textoVisible}` : textoVisible
-}
 
 export interface DatosContactoPie {
   readonly telefonoClinica: string
   readonly telefonoMovil: string
-  readonly telefonoUrgencias: string
-  readonly rotuloUrgencias: string | undefined
 }
 
 /**
- * Construye los 4 enlaces de la columna "Contacto" a partir de la fuente
- * única (@s5). `construirEnlaceTelefono` falla cerrado: un teléfono que no
- * normaliza revienta esta construcción en vez de producir un `tel:` a
- * medias (@s15).
+ * Construye los 3 enlaces de la columna "Contacto" a partir de la fuente
+ * única (@s5): los dos teléfonos de la clínica y el ancla de "Cómo llegar".
+ * El enlace de urgencias se retiró el 20/09/2026 (E2) y con él el rótulo
+ * compuesto, así que aquí ya no se separa nada (@s6).
+ * `construirEnlaceTelefono` falla cerrado: un teléfono que no normaliza
+ * revienta esta construcción en vez de producir un `tel:` a medias (@s15).
  */
 export function construirEnlacesContacto({
   telefonoClinica,
   telefonoMovil,
-  telefonoUrgencias,
-  rotuloUrgencias,
 }: DatosContactoPie): readonly EnlacePieDePagina[] {
   const enlaceClinica = construirEnlaceTelefono(telefonoClinica)
   const enlaceMovil = construirEnlaceTelefono(telefonoMovil)
-  const enlaceUrgencias = construirEnlaceTelefono(telefonoUrgencias)
 
   return [
     { nombre: enlaceClinica.textoVisible, destino: enlaceClinica.href },
     { nombre: enlaceMovil.textoVisible, destino: enlaceMovil.href },
-    { nombre: nombreEnlaceUrgencias(rotuloUrgencias, enlaceUrgencias.textoVisible), destino: enlaceUrgencias.href },
     { nombre: NOMBRE_COMO_LLEGAR, destino: DESTINO_COMO_LLEGAR },
   ]
 }

@@ -203,6 +203,22 @@ Feature: Cabecera con navegación principal y menú móvil
     And en la cabecera aparece el texto "Centro integral veterinario"
     And en la cabecera no aparece el texto "Veterinaria La Sierra"
 
+  # ESTE ESCENARIO SE IMPLEMENTA POR FIN (20/09/2026). No cambia ni una
+  # palabra: se deja constancia de dos hechos comprobados hoy, porque explican
+  # la tanda de cambios de `fidelidad_cabecera.feature` (D1) y porque el humano
+  # los necesita en la puerta de aprobación.
+  #   1. @s13 NO TIENE NINGÚN TEST desde que se aprobó, el 25/08/2026: no
+  #      aparece "@s13" ni en `Cabecera.test.tsx` ni en ningún spec de la
+  #      cabecera. Es una puerta inerte, escrita y nunca ejecutada.
+  #   2. Desde el 03/09/2026 estaba además INCUMPLIDO: `fidelidad_cabecera`
+  #      metió en la cabecera un CTA de urgencias con su `tel:`, y
+  #      `Cabecera.test.tsx` llegó a EXIGIR ese enlace mientras se presentaba
+  #      como el test de @s7 —que prohíbe exactamente eso—.
+  # La decisión de Pablo del 20/09/2026 (corroborada por Roberto Alonso en la
+  # grabación del 16/08/2026, minutos 02:31 y 03:02-03:05) no deroga nada de
+  # aquí: RESTAURA este escenario y el de @s7, y les da por primera vez
+  # cobertura ejecutable (`fidelidad_cabecera.feature` @s5, en navegador real,
+  # y el test de jsdom que el artesano escriba para @s13).
   @s13
   Scenario: La cabecera no anuncia urgencias ni contiene teléfonos
     Given el ancho de la ventana es igual o mayor que el valor declarado del punto de corte

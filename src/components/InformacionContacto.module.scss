@@ -1,7 +1,9 @@
 // El fondo/color de esta sección los pinta el wrapper de `Landing.module.scss`;
 // este fichero maqueta el contenido. La región es la columna derecha de la
 // rejilla de `[data-contacto-contenido]` (`fidelidad_contacto` @s1): una
-// columna con la banda de urgencias arriba y la tarjeta de datos debajo.
+// columna con una sola tarjeta, la de datos. La banda roja de urgencias que
+// la precedía se retiró el 20/09/2026 (`rediseno_visual` @s36 e
+// `informacion_contacto` @s5/@s6, decisión de Pablo).
 .informacionContacto {
   display: flex;
   flex-direction: column;
@@ -136,137 +138,6 @@
         margin: 0;
       }
     }
-  }
-
-  // La tarjeta "a la derecha" (@s36 de `rediseno_visual`, @s3 de
-  // `fidelidad_contacto`): banda roja sólida y compacta — fondo de urgencia,
-  // tinta `--color-sobre-primario` (nunca blanco literal, @s7), sin borde ni
-  // sombra de tarjeta. "order" la sube visualmente por encima de la tarjeta
-  // de datos SIN reordenar el DOM (el orden de lectura ya aprobado por
-  // `informacion_contacto.feature` @s1 se mantiene intacto).
-  //
-  // Anatomía del prototipo (`delta_contacto.md`, contacto-4) en UNA fila:
-  // rótulo y número apilados a la izquierda (columna 1, filas 1 y 2) y la
-  // píldora «Llamar ahora» a la derecha (columna 2, abarcando las dos filas).
-  // El `fieldset` es la rejilla; la tarjeta es un contenedor de consulta para
-  // que el plegado de la banda estrecha dependa de su propio ancho (abajo).
-  [data-tarjeta-de='urgencia'] {
-    container-type: inline-size;
-    order: -1;
-    padding: espaciado(24);
-    border-radius: $radio-grande;
-    background-color: var(--color-urgencia);
-    color: var(--color-sobre-primario);
-
-    fieldset {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: espaciado(4) espaciado(16);
-      min-width: 0;
-    }
-
-    // El `legend` solo participa como ítem de la rejilla si deja de ser la
-    // "leyenda renderizada" del fieldset; `float: left` lo consigue (la
-    // rejilla ignora el float para maquetar, pero el navegador ya no lo trata
-    // como leyenda) sin quitarle su papel semántico.
-    legend {
-      float: left;
-      grid-column: 1;
-      grid-row: 1;
-      display: flex;
-      align-items: center;
-      gap: espaciado(8);
-      padding: 0;
-      font-size: paso-tipografico(-1);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      line-height: 1.2;
-      text-transform: uppercase;
-    }
-  }
-
-  // El punto pulsante del rótulo: hereda la tinta de la banda (currentColor)
-  // y solo se anima sin "prefers-reduced-motion: reduce", como el de la barra.
-  .pulso {
-    flex: 0 0 auto;
-    width: espaciado(8);
-    height: espaciado(8);
-    border-radius: $radio-circulo;
-    background-color: currentColor;
-
-    @media (prefers-reduced-motion: no-preference) {
-      animation: pulso 1.6s ease-in-out infinite;
-    }
-  }
-
-  // El número real es el elemento grande de la banda (titulares, paso 2),
-  // debajo del rótulo y alineado con él; su interlineado corto mantiene la
-  // banda a la altura de la píldora.
-  [data-tarjeta-de='urgencia'] p {
-    grid-column: 1;
-    grid-row: 2;
-    margin: 0;
-    font-family: var(--fuente-titulares);
-    font-size: paso-tipografico(2);
-    font-weight: 600;
-    line-height: 1.1;
-  }
-
-  // La única acción de la banda es la píldora blanca «Llamar ahora» del
-  // diseño: pequeña y en negrita (lo grande es el número), altura de control
-  // media, a la derecha abarcando las dos filas. Conserva el contraste
-  // urgencia/sobre-primario validado en las cinco variantes
-  // (`matrizDeContraste.ts`) y llama al teléfono real derivado.
-  [data-tarjeta-de='urgencia'] a {
-    @include foco-visible;
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    display: inline-flex;
-    align-items: center;
-    min-height: $altura-control-media;
-    padding-inline: espaciado(24);
-    border-radius: $radio-completo;
-    background-color: var(--color-sobre-primario);
-    color: var(--color-urgencia);
-    font-size: paso-tipografico(0);
-    font-weight: 700;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    &:focus-visible {
-      // El anillo global no contrasta sobre la banda roja; la tinta sobre
-      // urgencia ya validada sí lo hace en las cinco variantes.
-      outline-color: var(--color-sobre-primario);
-    }
-  }
-
-  // Banda estrecha (por debajo de 28rem de contenido no caben rótulo, número
-  // y píldora en una fila): una sola columna y la píldora en la tercera fila,
-  // al borde izquierdo — el mismo plegado que hace el `flex-wrap` del
-  // prototipo, pero decidido por el ancho de la propia banda.
-  @container (max-width: 28rem) {
-    [data-tarjeta-de='urgencia'] {
-      fieldset {
-        grid-template-columns: 1fr;
-      }
-
-      a {
-        grid-column: 1;
-        grid-row: 3;
-        justify-self: start;
-        margin-block-start: espaciado(8);
-      }
-    }
-  }
-}
-
-@keyframes pulso {
-  50% {
-    opacity: 0.45;
   }
 }
 

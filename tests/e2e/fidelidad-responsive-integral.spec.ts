@@ -37,7 +37,10 @@ test.describe('@s3 de fidelidad_responsive_integral: regímenes del pie', () => 
         getComputedStyle(elemento).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length,
       )
       expect(pistas, `pistas a ${ancho}px`).toBe(pistasEsperadas)
-      await expect(pie.getByRole('link')).toHaveCount(15)
+      // 14 = 4 ("Clínica") + 4 ("Contenido") + 3 ("Contacto") + 3 legales.
+      // Eran 15 hasta el 20/09/2026: E2 retira el enlace de urgencias de la
+      // columna "Contacto" (`features/pie_de_pagina.feature` @s2/@s5/@s6).
+      await expect(pie.getByRole('link')).toHaveCount(14)
     }
   })
 })

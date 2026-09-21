@@ -985,7 +985,9 @@ pasaron en verde estos defectos de producción:
    compilan como `#_inicio_…` y `#_contacto_…`: el hero hereda el contenedor
    de 1220 px con relleno lateral (no va a sangre) y la rejilla de dos columnas
    de contacto no se aplica (formulario a todo el ancho, tarjeta de urgencias
-   gigante y vacía).
+   gigante y vacía). NOTA (20/09/2026): este párrafo describe un DEFECTO
+   histórico ya reparado, no el estado actual; desde la feature 39 esa
+   tarjeta ya no existe.
 2. **`espaciado(20)` no existe en la escala**: Sass descarta la declaración en
    silencio y ningún botón fantasma del sitio tiene relleno lateral (el texto
    desborda la píldora en hero, reserva, galería y campañas; 16 usos).
@@ -1052,9 +1054,14 @@ esas respuestas y del análisis de `progress/fidelidad/`.
   sangre» para la galería; `espaciado(20)` sustituido por un paso real en toda
   la escala; techo de CSS (Decisión 62). Puerta nueva: ningún `.module.scss`
   declara un selector de id.
-- **27 `fidelidad_cabecera`** — barra de urgencias y cabecera con marca gráfica
-  (logotipo real), navegación, botón rojo de urgencias con el rótulo real y
-  botón «Tienda», alineados a la columna de 1220 px.
+- **27 `fidelidad_cabecera`** — cabecera con marca gráfica (logotipo real),
+  navegación y acceso «Tienda», alineados a la columna de 1220 px.
+  ACTUALIZACIÓN (20/09/2026, feature 39): esta línea decía «barra de
+  urgencias y cabecera... botón rojo de urgencias con el rótulo real». La
+  barra se retiró el 09/09/2026 y el botón rojo el 20/09/2026 (decisión de
+  Pablo, corroborada por Roberto Alonso en la grabación del 16/08/2026,
+  minutos 02:31 y 03:02-03:05). Hoy la cabecera no ofrece ningún acceso a
+  urgencias: ver «Retirada de la cartelería de urgencias», feature 39.
 - **28 `fidelidad_hero`** — a sangre, centrado, píldora de localidad con fondo
   translúcido, titular, subtítulo, dos botones (primario + contorno con relleno
   correcto), banda inferior íntegra (nunca cortada) con las cifras derivadas de
@@ -1078,10 +1085,14 @@ esas respuestas y del análisis de `progress/fidelidad/`.
   con anclaje que sangra por la derecha; aviso de demostración conservado.
 - **34 `fidelidad_contacto`** — cintillo + titular + párrafo; tarjeta
   «Escríbenos» (nombre/teléfono en dos columnas, email, motivo, mensaje,
-  casilla, botón a todo el ancho) a la izquierda; a la derecha tarjeta roja de
-  urgencias con el rótulo real, teléfono grande y «Llamar ahora», y tarjeta con
-  mapa estático (Decisión 63) y bloques DIRECCIÓN / TELÉFONOS / HORARIO (el
-  cuarto bloque, EMAIL, se omite porque el cliente no publica email).
+  casilla, botón a todo el ancho) a la izquierda; a la derecha, tarjeta con
+  mapa estático (Decisión 63) y bloques DIRECCIÓN / TELÉFONOS /
+  HORARIO (el cuarto bloque, EMAIL, se omite porque el cliente no publica
+  email). ACTUALIZACIÓN (20/09/2026, feature 39): esta línea decía «a la
+  derecha tarjeta roja de urgencias con el rótulo real, teléfono grande y
+  Llamar ahora». Esa tarjeta se retiró (minuto 06:52-07:00 de la grabación:
+  «la urgencia se va afuera... y el resto se queda como está»). El
+  formulario, el mapa y los tres bloques de datos se conservan.
 - **35 `fidelidad_faq`** — cintillo y titular centrados; lista de 860 px
   centrada de verdad; línea superior y divisorias por entrada; «+» redondo
   decorativo a la derecha; pregunta en Outfit 500.
@@ -1196,3 +1207,86 @@ la comparación en pantalla; la mutación se corre fichero a fichero sobre los
 - La feature se cierra solo con Playwright de matriz y barrido, comprobación
   visual de 320/768/1023/1024/1440 contra la jerarquía aprobada, suite del
   harness, build y mutación sobre toda lógica nueva (si la hubiera).
+
+## Retirada de la cartelería de urgencias — feature 39
+
+### Decisiones
+
+72. **La cartelería se retira; el dato no.** Desaparece toda la señalización
+    roja de urgencias —el CTA de la cabecera en escritorio y en el panel móvil,
+    la tarjeta de `InformacionContacto` y el enlace del pie—, pero
+    `datosNegocio.telefonoUrgencias` sigue declarado en la fuente única y el
+    teléfono sigue siendo alcanzable: la pregunta del FAQ lo ofrece como enlace
+    de llamada, el chat de reserva deriva a él y la confirmación del formulario
+    lo publica con su rótulo completo. Decisión de Pablo del 20/09/2026,
+    corroborada en la grabación de la reunión con Roberto Alonso del 16/08/2026
+    (minutos 02:31, 03:02-03:05 y 06:52-07:00). **No es un contrato nuevo: es
+    una restauración.** `cabecera_y_navegacion.feature` @s13 y @s7, aprobados el
+    25/08/2026 y nunca derogados, ya prohibían las urgencias en la cabecera; el
+    03/09/2026 se incumplieron y los contratos llevaban 17 días contradiciéndose
+    entre sí.
+
+73. **El teléfono deja de estar publicado sin interactuar, y se declara con un
+    número.** Medido en las seis rutas: tras la retirada, el texto inicial no
+    contiene la palabra «urgencias» ni una sola vez. Pablo lo ratificó por
+    escrito tras ver las mediciones y las capturas. `rediseno_visual` @s14 pasa
+    de exigir PRESENCIA por ruta a exigir CORRECCIÓN de lo que aparezca, y fija
+    ese recuento en 0 como DISPARADOR: si alguien vuelve a publicarlo de forma
+    estática, la puerta se pone roja y el cambio pasa por la puerta humana.
+
+74. **El objetivo de pulsación y la superficie visible son cosas distintas.** El
+    acceso «Tienda» adopta la píldora baja del prototipo sin perder sus 44×44 px.
+    El patrón habitual de SC 2.5.8 —un pseudo-elemento que SALE del control— no
+    sirve aquí, porque la puerta mide el rectángulo del propio enlace: se
+    invierte, el enlace conserva su altura de control y la píldora se dibuja
+    DENTRO. El borde se suaviza con una mezcla local sobre tokens que ya
+    existen, nunca con un rol nuevo: el inventario de color está congelado por
+    contrato humano.
+
+75. **La franja fija mide exactamente el hueco que el documento reserva.** Se
+    descubrió un solape real de 1 px: `.interior` repetía el `min-height` del
+    token dentro de su caja de contenido y le sumaba el borde inferior, así que
+    la cabecera renderizaba 65 px donde `#root` reservaba 64. El mismo píxel
+    descuadraba otras tres cosas que nadie medía: el salto a un ancla dejaba
+    23 px en vez de 24, el enlace «Saltar al contenido» 7 en vez de 8, y el panel
+    móvil arrancaba bajo el borde. Una línea las cuadra las cuatro. El escenario
+    que lo vigila (@s4) exige igualdad EXACTA: una tolerancia de 1 px habría
+    absorbido justamente el defecto que existe para cazar.
+
+76. **La matriz de uso de color declara lo que el sitio pinta.** Al retirarse los
+    dos únicos módulos que pintaban tinta sobre el rojo de urgencia, sus dos
+    filas se borran (25 → 23 filas, 125 → 115 parejas). El escenario que las
+    cubría no muere: pivota a «el par sigue siendo APTO aunque ya no se pinte»,
+    con dos puertas que leen los tokens y no la matriz. Y el sitio se queda sin
+    ninguna declaración `animation:` —eran los dos pulsos de urgencias—;
+    conserva 13 transiciones y el desplazamiento suave. Las animaciones de la
+    galería que pidió Roberto (minutos 06:38-06:42) quedan como feature 40, con
+    su propio contrato.
+
+### Alcance y evidencia
+
+- **Línea base previa, medida y en verde** (`progress/linea_base_20260920.md`):
+  lint y typecheck en exit 0, 1415 tests de Vitest, 167 de Playwright y 5/5 de
+  configuración. Sin ella, «0 fallos» al cerrar no sería demostrable: no habría
+  forma de distinguir lo que rompe esta feature de lo que ya venía roto.
+- **Preflight de los cuatro cambios de cabecera simulados a la vez**
+  (`progress/preflight_cabecera_20260920.md`): 51 comprobaciones en siete
+  anchos, 0 fallos, antes de escribir una línea de código.
+- El contrato se escribió en **tres tandas** sobre 8 ficheros de `features/`
+  (27 escenarios tocados, 4 nuevos) y se **auditó** después: la auditoría del
+  `craftsman_lead` encontró cuatro defectos en lo que los subagentes habían
+  escrito, uno de ellos un error de hecho que solo se veía midiendo en el
+  navegador.
+- El TDD fue en **cuatro oleadas secuenciales** con listas de ficheros cerradas.
+  Dos de ellas tuvieron que FABRICAR el rojo —una rebobinando la producción con
+  `git stash`, otra perturbando el SCSS en dos pasadas— porque sus puertas
+  pasaban a la primera, y pasar a la primera no demuestra nada.
+- **El judge RECHAZÓ la primera ronda** por cinco bloqueantes: tres eran errores
+  de proceso del propio orquestador (esta feature sin su fichero de contrato, el
+  salto del estado `in_progress`, y esta misma sección sin escribir) y dos eran
+  huecos de cobertura causados por acotar mal una oleada. La segunda ronda los
+  cierra.
+- La feature se cierra solo con: `harness init` sin un solo `[FAIL]`, Vitest y
+  los 27 specs de Playwright en verde, build con la puerta de terceros, mutación
+  al 100 % sobre mutantes no equivalentes con `# timeout` = 0 leído ANTES que el
+  score, y verificación en Chrome real contra la línea base.

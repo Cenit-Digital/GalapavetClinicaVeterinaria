@@ -50,9 +50,14 @@ const RECUENTO_DE_RUTAS = 6
  * que `SelectorPaleta` escribe al montar el efecto
  * (`src/components/SelectorPaleta.tsx:22`), después que no quede ninguna
  * animación en curso — el `body` transiciona "background-color" y "color"
- * (`src/styles/global.scss:290`), así que leer justo tras el `click` puede
+ * (`src/styles/global.scss:326`), así que leer justo tras el `click` puede
  * capturar un valor a mitad de la interpolación. Es la misma espera que
- * `tests/e2e/accesibilidad.spec.ts:305` ya usa y justifica.
+ * `tests/e2e/accesibilidad.spec.ts` ya usa y justifica.
+ *
+ * Desde el 20/09/2026 el sujeto de esa segunda espera son SOLO transiciones:
+ * la feature 39 dejó el proyecto sin ninguna declaración `animation:`. Las
+ * transiciones entran igualmente en `document.getAnimations()`, así que la
+ * espera sigue teniendo algo que esperar y no se ha retirado.
  */
 async function aplicarVariante(page: Page, variante: { id: string; nombreAccesible: string }): Promise<void> {
   await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()
@@ -145,10 +150,17 @@ test.describe('@s42 los tokens que el navegador resuelve coinciden con los que e
     page,
   }) => {
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
-    // La animación infinita del punto del CTA de urgencias
-    // (`Cabecera.module.scss:188`, `pulso-urgencias`) nunca deja quieto a
-    // `document.getAnimations()`: con "reduce", `global.scss:301` la limita a
-    // una iteración de 0.01ms y la espera de `aplicarVariante` sí converge.
+    // POR QUÉ SE CONSERVA EL "reduce" AUNQUE YA NO HAYA NINGUNA ANIMACIÓN.
+    // Hasta el 20/09/2026 esta línea estaba aquí por la animación infinita del
+    // punto del CTA de urgencias (`Cabecera.module.scss`, `pulso-urgencias`),
+    // que nunca dejaba quieto a `document.getAnimations()`. La feature 39
+    // retiró esa animación y la de la tarjeta de contacto: en `src/` no queda
+    // ninguna declaración `animation:`. La emulación SIGUE HACIENDO FALTA
+    // porque `getAnimations()` también devuelve las TRANSICIONES, y el `body`
+    // transiciona "background-color" y "color" (`global.scss:326`) justo al
+    // cambiar de variante; con "reduce", `global.scss:337-343` las deja en
+    // 0.01ms y la espera de `aplicarVariante` converge en vez de leer un valor
+    // a mitad de la interpolación.
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
 

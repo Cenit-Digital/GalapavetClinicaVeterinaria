@@ -337,42 +337,233 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # ---------------------------------------------------------------------------
   # D. MOVIMIENTO — SC 2.3.3 y técnica C39 (`prefers-reduced-motion`)
   # ---------------------------------------------------------------------------
+  #
+  # ===========================================================================
+  # CAMBIO DE POLÍTICA DE MOVIMIENTO (20/09/2026) — EL SITIO SE QUEDA SIN
+  # NINGUNA ANIMACIÓN POR FOTOGRAMAS CLAVE. ESTA ES LA ÚNICA NOTA DEL
+  # REPOSITORIO QUE LO CUENTA; EL RESTO APUNTAN AQUÍ.
+  # ===========================================================================
+  #
+  # QUÉ SE VA, con nombre y apellidos. Las ÚNICAS dos declaraciones `animation:`
+  # de todo `src/` son dos pulsos decorativos de urgencias:
+  #   · `Cabecera.module.scss:188` — `.puntoUrgencias`, `animation:
+  #     pulso-urgencias 1.6s ease-in-out infinite` dentro de
+  #     `@media (prefers-reduced-motion: no-preference)`, más su `@keyframes` de
+  #     `:294`. La borra D1 (fuera el CTA de urgencias de la cabecera).
+  #   · `InformacionContacto.module.scss:199` — `.pulso`, `animation: pulso 1.6s
+  #     ease-in-out infinite`, más su `@keyframes` de `:267`. La borra E1 (fuera
+  #     la tarjeta roja de urgencias de contacto).
+  # `global.scss:341-342` NO cuenta: es el ANULADOR de
+  # `prefers-reduced-motion: reduce` (`animation-duration: 0.01ms`), clavado por
+  # `src/styles/hoja-global.test.ts:161` y por `identidad_visual.feature:526`.
+  #
+  # QUIÉN LO DECIDIÓ: Pablo, 20/09/2026. No decidió «quitar el movimiento»:
+  # decidió quitar la CARTELERÍA de urgencias, y las dos únicas animaciones del
+  # sitio vivían dentro de ella. La consecuencia sobre el movimiento es un efecto
+  # colateral, no un objetivo, y por eso se escribe aquí en vez de dejarse pasar.
+  #
+  # QUEDA REGISTRADO QUE ESTO DEJA AL SITIO AL OTRO LADO DE LO QUE EL SOCIO PIDIÓ.
+  # En la grabación de la reunión del 16/08/2026 con Roberto Alonso
+  # (`2026-08-16 16-14-50.mkv`; transcripción literal en
+  # `progress/transcripcion_reunion_rober_20260816.txt`), hablando de la galería
+  # «nuestros amiguetes», minutos 06:34-06:42:
+  #     [06:34] «Vale, simplemente que pase automáticamente.»
+  #     [06:37] «Pase automáticamente y ya está.»
+  #     [06:38] «Que tenga un par de animaciones, que si algo aquí se haga más
+  #             grande, vale un par de animaciones.»
+  #     [06:42] «...par de animaciones.»
+  # AVISO SOBRE ESTA CITA, para que nadie la repita mal: la frase de las
+  # animaciones está en [06:38]-[06:42], NO en [06:37] —en [06:37] lo que se dice
+  # es «Pase automáticamente y ya está»—. El rango honesto es 06:34-06:42; la
+  # tabla de decisiones lo registra como punto 8, 06:21-06:43. Y la transcripción
+  # NO etiqueta al hablante en esas líneas: la atribución a Roberto Alonso viene
+  # de `progress/decisiones_reunion_rober_20260816.md`, no del audio transcrito.
+  #
+  # LAS ANIMACIONES DE LA GALERÍA SON TAREA APARTE, CON SU PROPIO CONTRATO, Y NO
+  # SON DE ESTA TANDA. Nunca se han implementado: el punto 8 de la reunión está
+  # en la tabla como trabajo pendiente identificado, no hecho. Lo que esta nota
+  # registra es que el sitio pasa de «dos animaciones que el socio no pidió» a
+  # «cero animaciones, con dos que el socio sí pidió todavía sin escribir».
+  #
+  # EL SITIO NO SE QUEDA QUIETO, Y AFIRMAR LO CONTRARIO SERÍA PASARSE DE FRENADA.
+  # MEDIDO fichero a fichero, tras D1 y E1: quedan 13 declaraciones `transition:`
+  # en todo `src/` —8 en 6 módulos (Cabecera:127 · Equipo:149 · Faq:58 y :80 ·
+  # Galeria:67 · ReservaChat:294 · Servicios:50 y :181) y 5 en las hojas
+  # compartidas (global.scss:326 · _api.scss:181, :235, :265, :308)—, más el
+  # desplazamiento suave (`scroll-behavior: smooth` de `global.scss`, dentro de
+  # `no-preference`). Cero en `src/pages/*.module.scss`. Lo que el sitio pierde
+  # son las animaciones por fotogramas clave, no el movimiento.
+  #
+  # CORRECCIÓN DE UN NÚMERO PUBLICADO EN ESTE MISMO FICHERO. La nota que la
+  # segunda tanda dejó escrita unas líneas más abajo decía «Solo quedan 10
+  # `transition` repartidas en 7 módulos». Es FALSO en los dos números: son 8 en
+  # 6 módulos (13 contando las hojas compartidas). El error venía de no advertir
+  # que `InformacionContacto.module.scss` no tiene NINGUNA `transition`: al
+  # perder su `animation` cae ENTERO del censo de `movimientoRespetuoso`, así que
+  # el número de módulos BAJA de 7 a 6, no se queda en 7.
+  #
+  # QUÉ PUERTAS SE PONEN ROJAS Y CUÁLES SIGUEN MORDIENDO (medido):
+  #   · ROJO, y no suavemente: `src/components/InformacionContacto.test.tsx:496-511`
+  #     es el ÚNICO test del repositorio que afirma que existe una declaración
+  #     `animation:`, y su ayudante LANZA cuando el bloque desaparece. Hay que
+  #     borrarlo en el MISMO commit que el SCSS.
+  #   · SIGUEN MORDIENDO, y son lo que salva este contrato:
+  #     `tests/e2e/movimiento.spec.ts:117-120` (@s43: sin preferencia,
+  #     `scroll-behavior` computa 'smooth' — la ÚNICA puerta automática viva que
+  #     afirma EN POSITIVO que el sitio real se mueve),
+  #     `src/lib/accesibilidad-movimiento.test.ts:113-134` (sin preferencia el
+  #     desplazamiento SÍ se suaviza) y `src/components/Equipo.test.tsx:498-507`
+  #     (un módulo concreto declara su `transition` dentro de `no-preference`).
+  #     También `movimientoRespetuoso.test.ts` (censo 7 → 6 ficheros, sigue con
+  #     margen sobre su anti-vacuidad) y `movimiento-global.test.ts` (intacto).
+  #
+  # VACUIDADES QUE ESTO DEJA AL DESCUBIERTO — SON SEIS CLÁUSULAS EN CUATRO
+  # ESCENARIOS, no las dos que se habían señalado. @s19 (cláusulas 1 y 4), @s20
+  # (las tres primeras), @s21 (cláusula 1) y @s22 entero pasaban a cumplirse
+  # sobre el conjunto vacío. TODAS se enmiendan aquí abajo, en su sitio: ninguna
+  # se deja en pie recorriendo una lista vacía.
+  #
+  # Y DOS VACUIDADES QUE SON DEL REPOSITORIO, NO DE ESTA TANDA, Y QUE HAY QUE
+  # ARREGLAR AL IMPLEMENTAR:
+  #   1. `tests/e2e/movimiento.spec.ts:79-94`: el contador
+  #      `elementosConTransicionDeclarada` que presume de ser la anti-vacuidad de
+  #      @s19 se mide BAJO `emulateMedia({reducedMotion:'reduce'})`, y bajo
+  #      `reduce` el anulador global aplica `transition-duration: 0.01ms` a `*`.
+  #      Cuenta TODOS los elementos del documento, siempre, hubiera o no
+  #      transiciones de módulo. Su propio comentario (`:73-78`) presume de evitar
+  #      el verde-por-vacuidad; no lo evita. Igual `transicionesFueraDeEscala`.
+  #   2. `src/lib/accesibilidad-movimiento.test.ts:41-53`: la única puerta del
+  #      «recuento de bloques animados > 0» de @s20 la alimenta un literal
+  #      sintético de dos entradas del propio test («Tarjeta de campaña 1/2»).
+  #      Ninguna tarjeta de campaña ha tenido jamás una `animation:` en `src/`:
+  #      esa cláusula no podía ponerse roja ni antes ni después. Lo que cambia hoy
+  #      no es el hecho, es que alguien lo ha mirado.
+  #   Además, las cinco esperas `getAnimations().every(a => a.playState !==
+  #   'running')` (`movimiento.spec.ts:21` y `:54`, `accesibilidad.spec.ts:305` y
+  #   `:510`, `fidelidad.spec.ts:63`) son `every` sobre array vacío: tras esta
+  #   tanda, al cargar sin interactuar resuelven al instante. Como esperas son
+  #   inofensivas y HAY QUE CONSERVARLAS —`fidelidad.spec.ts:152` depende del
+  #   `reduce` para que `aplicarVariante` converja—, pero sus comentarios ya no
+  #   dicen la verdad y hay que reescribirlos (varios citan `global.scss:290` y
+  #   `:301`, que hoy son `:326` y `:339`).
+  #
+  # DÓNDE VIVE ESTE ESTADO PARA EL RESTO DEL REPOSITORIO. Estos otros escenarios
+  # pierden el sujeto de ANIMACIÓN pero conservan el de TRANSICIÓN, así que NO se
+  # vuelven falsos y NO se enmiendan; apuntan aquí para que el estado esté en un
+  # único sitio y no en cinco versiones distintas: `identidad_visual.feature` @s42
+  # («el recuento de animaciones en curso es exactamente 0 en las 6 rutas»,
+  # acompañada de la cláusula de transiciones, que sí tiene sujeto) y @s43, y
+  # `sistema_de_diseno_visual.feature` @s33 y @s34.
+  # ===========================================================================
 
+  # @s19, CLÁUSULAS 1 Y 4 ENMENDADAS (20/09/2026, TERCERA TANDA). Decían
+  # literalmente: «Then ningún elemento de la página tiene una animación en
+  # curso» / «And ninguna transición de aparición se ejecuta» / «And el recuento
+  # de elementos comprobados es mayor que 0». La primera y la segunda pasaban a
+  # cumplirse sobre el conjunto vacío de animaciones; la cuarta la satisfacía el
+  # anulador global, no ninguna transición de módulo (ver el punto 1 de las
+  # vacuidades del repositorio, arriba). Se reescriben para que el sujeto sea el
+  # que de verdad queda —las 13 transiciones y el desplazamiento suave— y para
+  # que el recuento no pueda salir de contar el documento entero.
   @s19
   Scenario: Con la preferencia de menos movimiento ninguna animación se reproduce
     Given un visitante que ha pedido menos movimiento en su sistema
     And esta verificación se ejecuta con navegador real (Claude in Chrome / skill browser-automation), fuera del gate de Vitest/Stryker, según la Decisión 11 de project-spec.md, porque exige interrogar el motor de animaciones CSS con las hojas de estilo aplicadas
     When se carga cualquiera de las seis páginas del inventario
     Then ningún elemento de la página tiene una animación en curso
-    And ninguna transición de aparición se ejecuta
+    And ninguna transición se ejecuta con una duración efectiva perceptible: el techo es 0,01 milisegundos
     And ningún desplazamiento solicitado por la página es suavizado
     And el recuento de elementos comprobados es mayor que 0
+    And ese recuento se obtiene de los elementos que declaran movimiento en los módulos que lo declaran de verdad, y no de contar los elementos a los que la propia consulta de movimiento reducido les anula la duración, que son todos los del documento
 
+  # @s20, TRES CLÁUSULAS ENMENDADAS Y UNA RETIRADA (20/09/2026, TERCERA TANDA).
+  # Texto literal de lo que se va:
+  #     Then todo el contenido que en condiciones normales aparece mediante una
+  #     animación está visible desde el primer momento
+  #     And ningún bloque queda invisible por no haberse ejecutado su animación
+  #     And el recuento de bloques que en condiciones normales aparecen mediante
+  #     una animación es mayor que 0
+  # Las dos primeras eran cuantificadores universales («todo...», «ningún...»)
+  # sobre un conjunto que tras esta tanda queda vacío: se amplían a las
+  # transiciones, que sí tienen sujeto. La tercera se retira porque NO PODÍA
+  # PONERSE ROJA NUNCA —su única puerta la alimenta un literal sintético del
+  # propio test, ver el punto 2 de las vacuidades del repositorio— y se sustituye
+  # por un recuento medido con disparador, que es lo que de verdad vigila la
+  # política nueva. Lo que se pierde: nada ejecutable; lo que había no se
+  # ejecutaba sobre el sitio.
   @s20
-  Scenario: Con la preferencia de menos movimiento el contenido que se revelaba animándose está visible
+  Scenario: Con la preferencia de menos movimiento el contenido que se revelaba con movimiento está visible
     Given un visitante que ha pedido menos movimiento en su sistema
     When se carga cualquiera de las seis páginas del inventario
-    Then todo el contenido que en condiciones normales aparece mediante una animación está visible desde el primer momento
-    And ningún bloque queda invisible por no haberse ejecutado su animación
+    Then todo el contenido que en condiciones normales aparece con movimiento —animación o transición— está visible desde el primer momento
+    And ningún bloque queda invisible por no haberse ejecutado su animación ni su transición
     And el análisis automático de accesibilidad de esa página sigue devolviendo 0 violaciones
-    And el recuento de bloques que en condiciones normales aparecen mediante una animación es mayor que 0
+    And el inventario de bloques que se recorre se lee del sitio real, nunca de una lista escrita en el propio test
+    And desde el 20/09/2026 el recuento de bloques que aparecen mediante una animación es exactamente 0, y la puerta lo declara por escrito en vez de aprobar en silencio sobre una lista vacía
+    And si ese recuento vuelve a ser mayor que 0, esta puerta lo caza: reintroducir una animación de entrada exige pasar por la puerta humana
 
+  # @s21, PRIMERA CLÁUSULA ENMENDADA (20/09/2026, TERCERA TANDA). Decía
+  # literalmente: «Then ninguna animación se reproduce». Pasaba a cumplirse sobre
+  # el conjunto vacío; se amplía a las transiciones, que son las que quedan. Su
+  # parte con puerta real —que sin poder consultar la preferencia se actúe como
+  # si se hubiera pedido menos movimiento,
+  # `src/lib/accesibilidad-movimiento.test.ts:102-104`— sobrevive intacta y no se
+  # toca. Nadie había señalado esta cláusula: los avisos anteriores solo
+  # mencionaban @s20 y @s22.
   @s21
   Scenario: Si la preferencia de movimiento no se puede consultar se actúa como si se hubiera pedido menos movimiento
     Given un entorno en el que la consulta de la preferencia de movimiento no está disponible
     When se carga cualquiera de las seis páginas del inventario
-    Then ninguna animación se reproduce
+    Then no se reproduce ninguna animación ni ninguna transición con una duración perceptible
     And todo el contenido está visible desde el primer momento
     And no se produce ningún error en la consola
     And el recuento de elementos comprobados es mayor que 0
 
+  # @s22 REESCRITO ENTERO (20/09/2026, TERCERA TANDA). El aviso que la segunda
+  # tanda dejó aquí decía que este escenario «deja de ser cierto sobre el sitio,
+  # y NO LO DECIDE ESTA TANDA», y lo remitía a una puerta humana propia. Pablo la
+  # resolvió el mismo día: ver la nota canónica de la sección D, arriba. Ese
+  # aviso queda derogado, y con él su número falso («10 transition en 7 módulos»,
+  # que son 8 en 6).
+  #
+  # TEXTO LITERAL RETIRADO:
+  #     Scenario: Sin la preferencia de menos movimiento la animación sí se
+  #     reproduce
+  #       When se carga la página del inventario que contiene un elemento animado
+  #       Then ese elemento tiene una animación en curso
+  #       And el recuento de elementos con animación en curso es mayor que 0
+  #       And ese contenido queda igualmente visible al terminar la animación
+  #
+  # POR QUÉ SE RETIRA: ya no existe «la página del inventario que contiene un
+  # elemento animado». Las dos únicas `animation:` del proyecto eran los dos
+  # pulsos de urgencias, y se van con D1 y E1.
+  #
+  # POR QUÉ NO SE RETIRA EL ESCENARIO ENTERO, Y ESTE ES EL PUNTO: @s22 NO se
+  # queda sin sujeto. Su mitad «parcial, pura»
+  # (`src/lib/accesibilidad-movimiento.test.ts:113-134`: sin la preferencia, el
+  # desplazamiento SÍ se suaviza) sigue viva y verde, igual que
+  # `tests/e2e/movimiento.spec.ts:117-120` en navegador real y
+  # `src/components/Equipo.test.tsx:498-507` sobre el texto de un módulo. El
+  # escenario PIVOTA de «hay una animación en curso» a «sin la preferencia el
+  # sitio sí se mueve», que es verdad, es lo que Pablo ha decidido y tiene TRES
+  # puertas existentes. Dejarlo como estaba sería aprobar por vacuidad;
+  # retirarlo entero sería afirmar que el sitio se queda quieto, que es falso.
+  #
+  # COBERTURA QUE SE PIERDE, SIN MAQUILLAR: la comprobación de que una animación
+  # por fotogramas clave llega a estar EN CURSO en el navegador, y la de que el
+  # contenido sigue visible cuando esa animación termina. A partir de hoy nadie
+  # comprueba eso, porque no hay ninguna animación que comprobar. Si el punto 8
+  # de la reunión del 16/08/2026 (las animaciones de la galería) llega a
+  # implementarse, este escenario es el sitio donde vuelve.
   @s22
-  Scenario: Sin la preferencia de menos movimiento la animación sí se reproduce
+  Scenario: Sin la preferencia de menos movimiento el sitio sí se mueve
     Given un visitante que no ha pedido menos movimiento en su sistema
-    When se carga la página del inventario que contiene un elemento animado
-    Then ese elemento tiene una animación en curso
-    And el recuento de elementos con animación en curso es mayor que 0
-    And ese contenido queda igualmente visible al terminar la animación
+    When se carga la portada y se solicita un desplazamiento hasta una sección
+    Then el valor computado de "scroll-behavior" del elemento raíz es exactamente "smooth"
+    And la decisión de desplazamiento que toma la lógica del sitio para ese visitante es suave
+    And al menos un módulo del inventario declara una transición dentro de un bloque "prefers-reduced-motion: no-preference"
+    And el recuento de módulos que declaran movimiento dentro de ese bloque es mayor que 0 y se lee del texto real de las hojas de estilo, nunca de una lista escrita en el test
+    And ningún contenido queda oculto ni a medio aparecer cuando ese movimiento termina
 
   # ---------------------------------------------------------------------------
   # E. OPERACIÓN CON TECLADO

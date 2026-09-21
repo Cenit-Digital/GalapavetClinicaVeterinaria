@@ -233,15 +233,90 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And el valor declarado en el sistema alcanza al menos 4.5
     And ese mismo valor sigue aprobando sobre el fondo y sobre la superficie de su variante
 
+  # ---------------------------------------------------------------------------
+  # @s7 REESCRITO (20/09/2026, TERCERA TANDA) — LA PUERTA HUMANA QUE EL AVISO DE
+  # ESTA MISMA TARDE PLANTEABA YA ESTÁ RESUELTA, Y EN SENTIDO «BORRAR».
+  #
+  # QUÉ DECÍA EL AVISO DE LA SEGUNDA TANDA, literal, porque aquí nada se borra en
+  # silencio:
+  #
+  #     «POR QUÉ NO SE RETIRA EL ESCENARIO AQUÍ Y AHORA: su puerta
+  #     (`matrizDeContraste.test.ts`) no lee las hojas de estilo, lee la MATRIZ
+  #     DECLARADA, y la matriz conserva dos filas de urgencia
+  #     (`matrizDeContraste.ts:363` y `:388`). Mientras esas filas existan, @s7
+  #     sigue en verde. Borrarlas es enmendar un contrato humano aprobado y mueve
+  #     cuatro recuentos: 25 filas → 23, 25 claves únicas → 23, y 125 parejas →
+  #     115 en DOS sitios. Esa disyuntiva es PUERTA HUMANA PROPIA [...]. El
+  #     artesano NO la decide.»
+  #
+  # Y la cláusula que ese aviso añadió al escenario, también literal, porque
+  # también se retira: «And desde el 20/09/2026 el recuento de ficheros de
+  # estilos del inventario que pintan alguna tinta sobre ese fondo es exactamente
+  # 0, así que las cláusulas anteriores se comprueban sobre la pareja DECLARADA
+  # en la matriz y no sobre lo que hay en pantalla». Su segunda mitad se vuelve
+  # falsa: ya no hay pareja declarada en la matriz sobre la que comprobar. El
+  # recuento 0 SE CONSERVA, reescrito y ampliado, porque es lo que impide que el
+  # rojo de urgencia vuelva a pintarse sin pasar por la puerta humana.
+  #
+  # QUIÉN LO DECIDIÓ Y POR QUÉ: Pablo, 20/09/2026, tras ver las mediciones.
+  # BORRAR las dos filas, para que la matriz vuelva a ser exactamente lo que el
+  # sitio pinta. Corroborado en origen por Roberto Alonso en la grabación del
+  # 16/08/2026 (minutos 02:31 y 03:02-03:05 para la cabecera, 06:52-07:00 para
+  # contacto), que es lo que dejó ambas filas sin módulo. `SelectorPaleta` NO las
+  # salva: pinta el rojo como relleno decorativo, sin ninguna tinta encima, y
+  # esta matriz es una lista de parejas (tinta, fondo).
+  #
+  # EL COSTE, MEDIDO EJECUTANDO LA SUITE COMPLETA CON LAS FILAS BORRADAS —no
+  # estimado—: 6 tests rojos de 1415, TODOS en UN solo fichero,
+  # `src/lib/diseno/matrizDeContraste.test.ts`. La previsión de «cuatro recuentos
+  # en cuatro sitios» que publicaba el aviso anterior se queda corta y se corrige
+  # aquí: son CINCO aserciones rojas —`:114`, `:446`, `:509`, `:531`, `:738`— más
+  # un `it` que se queda sin sujeto (`:743`, «expected +0 to be 5»), todo en el
+  # mismo fichero. Y `:463` (25 claves únicas) también está mal, pero queda
+  # ENMASCARADO porque `:446` aborta el `it` antes de llegar: quien enmiende solo
+  # lo que le enseñe el informe de fallos volverá a pasar por aquí.
+  #
+  # POR QUÉ @s7 NO MUERE, Y ESTE ES EL HALLAZGO: existe una puerta VIVA de @s7
+  # que ninguna de las dos tandas anteriores citó —`src/lib/diseno/tokensColor.test.ts:229-235`,
+  # un `it` rotulado @s7 que lee `sobre-primario` y `urgencia` del texto REAL de
+  # `_tokens.scss` y exige ratio >= 4,5 en las cinco variantes, SIN pasar por la
+  # matriz— y sobrevive intacta a F1. Con ella y con el segundo `it` de @s7
+  # (`matrizDeContraste.test.ts:133-159`, que construye la pareja A MANO y la
+  # compara con el 2,77 del blanco del prototipo), @s7 pivota de «qué se pinta» a
+  # «qué sigue siendo APTO aunque ya no se pinte» y sigue mordiendo con DOS
+  # puertas que ya existen y ya están en verde. No hace falta retirarlo, y no
+  # queda aprobando por vacuidad.
+  #
+  # TRAMPAS DE REPARACIÓN PEREZOSA, medidas, que el artesano NO debe tomar:
+  #   · cambiar `matrizDeContraste.test.ts:114` a `.toEqual([])` — el `it` dejaría
+  #     de afirmar nada sobre contraste;
+  #   · cambiar `:745` a 0 / 'suspenso' — duplicaría la guarda de fallo cerrado
+  #     que ya prueban `:481-500` y dejaría de comprobar nada nuevo. Ese `it`
+  #     (`:743`) se BORRA con nota, no se reescribe.
+  #
+  # CLÁUSULA RETIRADA ADEMÁS, literal: «And ningún fichero de estilos escribe
+  # blanco literal sobre el color de urgencia». No se pierde cobertura: la
+  # cláusula nueva del recuento 0 la SUBSUME —si ningún fichero pinta tinta
+  # alguna sobre ese fondo, tampoco pinta blanco literal— y, a diferencia de
+  # aquella, no puede cumplirse en silencio sobre un conjunto vacío sin que el
+  # recuento lo diga.
+  #
+  # QUÉ COBERTURA SE PIERDE, SIN MAQUILLAR: la comprobación de que la pareja está
+  # DECLARADA en la matriz de uso y se resuelve contra las cinco variantes por la
+  # misma maquinaria que las demás. Lo que queda es el contraste de los dos
+  # TOKENS, que es lo que de verdad protegerá al visitante el día que el rojo
+  # vuelva a usarse.
+  # ---------------------------------------------------------------------------
   @s7
-  Scenario: La tinta que va encima del color de urgencia nunca es blanca por defecto
+  Scenario: El par de tinta sobre el color de urgencia sigue siendo apto aunque ya no se pinte
     Given el texto real de "src/styles/_tokens.scss" y el de los ficheros de estilos del inventario de módulos
     And la fórmula de contraste real del repositorio
-    When se busca qué color se pinta sobre "--color-urgencia" en cada variante
-    Then el color de encima es siempre "--color-sobre-primario" de esa misma variante
-    And el ratio resultante alcanza al menos 4.5 en las cinco variantes
+    When se resuelve el par ("--color-sobre-primario", "--color-urgencia") en cada una de las cinco variantes
+    Then el ratio resultante alcanza al menos 4.5 en las cinco
     And en la variante "tech" ese par da al menos 6, frente al 2.77 que daría el blanco del prototipo
-    And ningún fichero de estilos escribe blanco literal sobre el color de urgencia
+    And los dos colores se leen del texto real del fichero de tokens, variante a variante, y la comprobación recorre las cinco, nunca una lista vacía
+    And el recuento de ficheros de estilos del inventario que pintan alguna tinta sobre el color de urgencia es exactamente 0, y el de filas de la matriz de uso que lo declaran como fondo también es exactamente 0
+    And si cualquiera de esos dos recuentos deja de ser 0, esta puerta se pone roja: volver a usar el rojo de urgencia como señal exige pasar otra vez por la puerta humana
 
   # ---------------------------------------------------------------------------
   # ENMIENDA 3, aprobada por el humano el 28/08/2026. Antes y después literal en
@@ -300,6 +375,39 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And el identificador aparece declarado una sola vez en todo el proyecto
     And los otros dos puntos que hoy lo repiten lo consumen de esa única declaración
 
+  # NOTA DE @s11 — TERCERA Y ÚLTIMA REDACCIÓN (20/09/2026). Las dos anteriores
+  # son del mismo día y quedan derogadas; su texto se conserva aquí.
+  #
+  # DECÍA la segunda tanda: «Su Given dice "la matriz de pares (rol, fondo, uso)
+  # que el sistema efectivamente PINTA". Desde hoy eso es cierto en 23 de sus 25
+  # filas: las dos de urgencia (`matrizDeContraste.ts:363` y `:388`) quedan
+  # DECLARADAS y ya no pintadas por ningún módulo, tras D1 y E1. [...] Que 25/125
+  # siga en verde NO es una aprobación: es un hueco de la puerta. La decisión
+  # —conservar las dos filas con una cita honesta, o borrarlas y enmendar los
+  # recuentos a 23/115— es PUERTA HUMANA PROPIA.»
+  #
+  # RESUELTO: Pablo, 20/09/2026, eligió BORRARLAS (F1). El Given vuelve a ser
+  # cierto en las 23 de 23 filas, y los recuentos quedan en 23 filas, 23 claves
+  # únicas y 115 parejas (23 x 5 variantes). El histórico del recuento que el
+  # propio test narra en `matrizDeContraste.test.ts:436` —22 desde
+  # fidelidad_galeria, 24 desde fidelidad_campanas, 25 desde la reparación de la
+  # oleada B— tiene que recibir su entrada del 20/09/2026: 25 → 23, con la
+  # decisión de Pablo y su motivo. Un recuento sin historia es el que nadie sabe
+  # por qué cambió.
+  #
+  # LO QUE F1 NO ARREGLA Y SIGUE ABIERTO, y por eso se conserva el aviso: la
+  # puerta de reconciliación (`ejecutarPuertaDeReconciliacionDeMatriz`) sigue
+  # buscando SOLO el caso contrario —parejas pintadas y no declaradas— y sus OCHO
+  # invocaciones se hacen sobre ficheros SINTÉTICOS, nunca sobre los
+  # `.module.scss` reales. NINGUNA puerta detecta hoy una fila declarada y ya no
+  # pintada: F1 no cierra ese agujero, solo retira lo que había caído dentro. El
+  # verde de 23/115 tampoco se puede leer como cobertura de eso.
+  #
+  # EL TEXTO EJECUTABLE DE @s11 NO SE TOCA: verificado, sus cláusulas nunca
+  # escribieron 25 ni 125 —esos números viven solo en el test—, así que F1 no
+  # obliga a enmendar ni una palabra del escenario. Su última cláusula («con una
+  # matriz vacía el veredicto sería suspenso, no aprobado por vacuidad») es la
+  # que impide que los borrados de esta tanda puedan vaciar la matriz en silencio.
   @s11
   Scenario: Ninguna de las cinco variantes suspende su matriz de uso de color
     Given el texto real de "src/styles/_tokens.scss"
@@ -331,13 +439,100 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And el recuento de ficheros efectivamente inspeccionados es mayor que 0
     And con la lista de afirmaciones vacía la puerta falla cerrada, en vez de dar cero hallazgos por bueno
 
+  # ---------------------------------------------------------------------------
+  # @s14 ENMENDADO (20/09/2026) — DE «PRESENCIA» A «CORRECCIÓN». ESTA ES LA
+  # ENMIENDA QUE MÁS COBERTURA QUITA DE TODA LA TANDA, Y VA SIN MAQUILLAR.
+  #
+  # QUÉ EXIGÍA HASTA HOY SU PUERTA (`tests/e2e/urgencias.spec.ts`), además de lo
+  # que este Gherkin dice: que CADA UNA de las seis rutas tuviera al menos una
+  # mención textual de urgencias (`:113`) y al menos un enlace de llamada de
+  # urgencias (`:128`), más los dos agregados globales de `:140-141`. Eso pasaba
+  # gracias a que el CTA de la cabecera y el enlace del pie vivían en el armazón
+  # común de las seis rutas.
+  #
+  # QUÉ PASA TRAS D1 + E1 + E2. MEDIDO, ruta por ruta, no supuesto: las seis se
+  # quedan a CERO menciones en su texto visible inicial. Las cinco que no son la
+  # portada montan solo cabecera + contenido + pie + selector de paleta. Y la
+  # PORTADA tampoco sobrevive, al contrario de lo que el encargo daba por hecho:
+  #   · el FAQ dice «atención fuera del horario de la clínica», SIN la palabra
+  #     «urgencias», y además el acordeón arranca cerrado;
+  #   · el chat ofrece «Es una urgencia» —SINGULAR, que el patrón no casa— y solo
+  #     dice «urgencias fuera de horario» DESPUÉS de pulsar;
+  #   · la confirmación del formulario solo existe DESPUÉS de enviar.
+  #
+  # LO QUE SE PIERDE, EXACTAMENTE: la garantía de que el teléfono de urgencias
+  # está PUBLICADO y alcanzable sin interactuar. Eso ya no lo vigila nadie. Lo
+  # que se conserva íntegro es la CORRECCIÓN: toda mención que exista lleva el
+  # rótulo real y su `tel:` derivado del número real, ningún rótulo accesible
+  # añade palabras al rótulo, y ninguna mención usa el teléfono de la clínica ni
+  # el móvil. Se conservan además las DOS anti-vacuidades que siguen siendo
+  # ciertas: el recorrido de las seis rutas y la distinción de los tres números
+  # en la fuente única (sin ella, «no es el de la clínica ni el móvil» se
+  # cumpliría sola si los tres coincidieran).
+  #
+  # LA DECISIÓN DE FONDO ES DE PABLO, Y ESTE CONTRATO ESCRIBE LA QUE TOMÓ. Había
+  # tres caminos:
+  #   (i)  retirar la anti-vacuidad global y dejar la puerta puramente
+  #        condicional —con el riesgo de quedar vacua y no avisar—;
+  #   (ii) llevar el barrido a los estados interactivos (abrir el FAQ, enviar el
+  #        formulario, pulsar «Es una urgencia») para que la anti-vacuidad siga
+  #        mordiendo. MEDIDO: este camino NO es gratis. El texto del chat es
+  #        «Llamar a urgencias fuera de horario · 91 851 13 93», con «urgencias»
+  #        en MINÚSCULA, y la comprobación del rótulo compara con
+  #        distinción de mayúsculas: habría que enmendar también esa
+  #        comparación o el texto del chat;
+  #   (iii) aceptar que el dato deja de publicarse estáticamente y DECIRLO con
+  #        un número, en vez de dejar la puerta sin morder.
+  # Se escribe (iii): la última cláusula fija el recuento en 0 y la convierte en
+  # un disparador. Si mañana alguien vuelve a publicar el rótulo en el armazón
+  # común, esta puerta se pone roja y obliga a volver a la puerta humana en vez
+  # de dejar que el sitio cambie de política en silencio.
+  #
+  # ÚLTIMA CLÁUSULA CORREGIDA (20/09/2026, TANDA DE CORRECCIONES; hallazgo A-3
+  # de `progress/auditoria_orquestador_20260920.md`). Decía literalmente: «And
+  # desde el 20/09/2026 el recuento total de menciones en el texto inicial de
+  # las seis rutas es exactamente 0, porque el rótulo solo aparece tras abrir la
+  # pregunta del FAQ, enviar el formulario de contacto o elegir la urgencia en
+  # el chat de reserva». DOS DE ESAS TRES AFIRMACIONES ERAN FALSAS. Medido por
+  # el orquestador en Chromium sobre `dist/` servido, simulando el estado final
+  # (D1+E1+E2) y contando sobre `document.body.innerText`:
+  #
+  #   | Estado                             | «urgencias» | rótulo «Urgencias fuera de horario» | enlaces `tel:+34918511393` |
+  #   | ---------------------------------- | ----------- | ----------------------------------- | -------------------------- |
+  #   | Sin interactuar                    |      0      |                  0                  |             0              |
+  #   | Tras abrir la pregunta del FAQ     |      0      |                  0                  |             1              |
+  #   | Tras elegir la urgencia en el chat |      2      |                  0                  |             2              |
+  #   | Tras enviar el formulario          |      1      |                  1                  |             1              |
+  #
+  # Esa tabla es lo que el `tdd_craftsman` tiene que MEDIR; no la deduzca del
+  # código. El porqué de cada fila:
+  #   · El FAQ no muestra ni la palabra: su respuesta es «Si tu animal necesita
+  #     atención fuera del horario de la clínica, llama al …»
+  #     (`Faq-logica.ts:66-67`). Lo que sí aporta es el teléfono como enlace de
+  #     llamada.
+  #   · El chat dice «urgencias» dos veces (`ReservaChat.tsx:24` y `:273`), pero
+  #     nunca el rótulo exacto.
+  #   · SOLO la confirmación del formulario (`FormularioContacto.tsx:72`) pinta
+  #     el rótulo completo, porque lo compone desde
+  #     `datosNegocio.telefonoUrgencias.rotulo`.
+  #
+  # Se conserva intacto el disparador —el recuento 0 en el texto INICIAL de las
+  # seis rutas, que es lo único que este escenario comprueba, porque su When
+  # prohíbe interactuar— y la fecha SALE del cuerpo de la aserción: una fecha no
+  # se puede medir dentro de un Then, su sitio es esta nota.
+  # ---------------------------------------------------------------------------
   @s14
-  Scenario: El único rótulo de urgencias del sitio es el real, con el teléfono real
+  Scenario: Toda mención de urgencias del sitio es la real, con el teléfono real
     Given el sitio construido y servido
-    When se recorre el texto de las seis rutas buscando la palabra "urgencias"
-    Then el rótulo que aparece es exactamente el que declara la fuente única de datos de negocio
-    And el teléfono que lo acompaña es el de urgencias de la fuente única, no el de la clínica ni el móvil
+    And los tres teléfonos que declara la fuente única —clínica, móvil y urgencias— son distintos entre sí
+    When se recorre el texto de las seis rutas buscando la palabra "urgencias", sin interactuar con ninguna página
+    Then una ruta sin ninguna mención de urgencias NO hace fallar la comprobación: este escenario ya no exige presencia por ruta, solo corrección de lo que aparezca
+    And el rótulo que aparezca es exactamente el que declara la fuente única de datos de negocio
+    And todo rótulo accesible que mencione urgencias es exactamente ese mismo rótulo, sin ninguna palabra añadida
+    And el teléfono que lo acompañe es el de urgencias de la fuente única, no el de la clínica ni el móvil
     And el enlace de llamada se deriva de ese mismo número, sin retipearlo
+    And el recorrido recorre exactamente las seis rutas del inventario, nunca una lista vacía
+    And el recuento total de menciones en el texto inicial de las seis rutas es exactamente 0, porque tras la retirada el teléfono de urgencias solo reaparece de tres formas distintas y ninguna coincide con las otras: como enlace de llamada al abrir la pregunta del FAQ, SIN el rótulo ni la palabra; como la palabra "urgencias" al elegir la urgencia en el chat de reserva, SIN el rótulo; y como rótulo completo únicamente en la confirmación del formulario de contacto
 
   @s15
   Scenario: El acento saturado solo se usa como relleno, nunca como texto ni como borde
@@ -433,6 +628,11 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And la casilla de consentimiento queda alineada con la primera línea de su etiqueta
     And todos siguen cumpliendo el mínimo de área táctil que ya exigía el contrato anterior
 
+  # CLÁUSULA REESCRITA en @s26 (20/09/2026, Pablo; reunión con Roberto Alonso
+  # del 16/08/2026, minutos 02:31 y 03:02). Decía «con los dos botones nuevos
+  # ya presentes»: eran el acceso a la tienda y el CTA de urgencias. El de
+  # urgencias se retira de la cabecera (D1, `fidelidad_cabecera.feature`), así
+  # que solo queda uno y el contrato deja de prometer dos.
   @s26
   Scenario: El punto de corte de la navegación sube y sigue coincidiendo en JavaScript y en CSS
     Given el sitio construido y servido
@@ -440,7 +640,7 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     Then justo en el punto de corte la navegación horizontal es visible
     And un píxel por debajo lo que se ve es el botón de menú
     And el valor del punto de corte es el mismo en la lógica y en la hoja de estilos
-    And en el punto de corte ningún elemento de la cabecera se desborda ni se superpone con otro, con los dos botones nuevos ya presentes
+    And en el punto de corte ningún elemento de la cabecera se desborda ni se superpone con otro, con el acceso a la tienda ya presente
 
   # ---------------------------------------------------------------------------
   # D. ANATOMÍA DE LOS MÓDULOS DE LA PORTADA
@@ -449,18 +649,126 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # @s27 ELIMINADO. Describía una barra de urgencias fija por encima de la
   # cabecera. Decisión de diseño (Pablo con Rober, 09/09/2026): esa barra no
   # forma parte del diseño acordado y se retira del sitio. El acceso a
-  # urgencias NO se pierde: vive en el CTA de la cabecera (@s28, más abajo),
-  # en el pie y en la tarjeta de contacto. La retirada ADEMÁS resuelve una
-  # contradicción que arrastraban los contratos: `accesibilidad.feature` @s17
-  # ya exigía que "no existe ninguna barra superior adicional que pueda
-  # taparlo", y su Decisión 2 declaraba que NO debía existir tal barra.
+  # urgencias NO se perdía ENTONCES: vivía en el pie y en la tarjeta de
+  # contacto —ver la segunda ACTUALIZACIÓN, más abajo: hoy ya no vive en
+  # ninguno de los dos—. La
+  # retirada ADEMÁS resuelve una contradicción que arrastraban los contratos:
+  # `accesibilidad.feature` @s17 ya exigía que "no existe ninguna barra
+  # superior adicional que pueda taparlo", y su Decisión 2 declaraba que NO
+  # debía existir tal barra.
+  #
+  # ACTUALIZACIÓN (20/09/2026): esta nota decía hasta hoy que el acceso a
+  # urgencias «vive en el CTA de la cabecera (@s28), en el pie y en la tarjeta
+  # de contacto». Esa frase ha dejado de ser cierta: Pablo retiró también el
+  # CTA de la cabecera (D1 de `fidelidad_cabecera.feature`, corroborado por
+  # Roberto Alonso en la grabación del 16/08/2026, minutos 02:31 y 03:02), de
+  # modo que en el armazón común de las seis rutas el acceso a urgencias vive
+  # ya SOLO en el pie; en la portada, además, en la tarjeta de contacto. Se
+  # corrige el texto en vez de dejarlo: una nota de eliminación que documenta
+  # algo falso es justo el defecto que estas notas existen para evitar.
+  #
+  # SEGUNDA ACTUALIZACIÓN (20/09/2026, mismo día, segunda tanda): la frase de
+  # arriba TAMBIÉN ha dejado de ser cierta, y en el mismo día. Pablo retira
+  # además la tarjeta de urgencias de la sección de contacto (E1,
+  # `features/informacion_contacto.feature` y `features/fidelidad_contacto.feature`)
+  # y el enlace de urgencias del pie (E2, `features/pie_de_pagina.feature`),
+  # con la misma grabación del 16/08/2026 como respaldo, minutos 06:52-07:00:
+  # «La urgencia se va afuera... y el resto se queda como está».
+  #
+  # DÓNDE VIVE HOY EL ACCESO A URGENCIAS, dicho de una vez y sin rodeos: en
+  # NINGÚN punto del armazón común, y en ningún punto visible sin interactuar.
+  # El DATO sigue publicado en tres sitios que esta tanda NO toca, y los tres
+  # exigen una acción previa del visitante: la respuesta del FAQ (hay que abrir
+  # el acordeón), la confirmación del formulario (hay que enviarlo) y la
+  # derivación del chat de reserva (hay que elegir la urgencia). La fuente
+  # única lo sigue declarando intacto. La consecuencia sobre @s14 y @s52 está
+  # escrita en sus propias notas, con números.
 
+  # TÍTULO REESCRITO y CLÁUSULA ELIMINADA de @s28 (20/09/2026, Pablo;
+  # corroborado por Roberto Alonso en la grabación del 16/08/2026, minutos
+  # 02:31 y 03:02-03:05: «arriba le quitas lo de urgencias... todo esto
+  # fuera»). El título decía «La cabecera lleva la navegación, el acceso a
+  # urgencias y el acceso a la tienda». La cláusula eliminada decía
+  # literalmente: «And muestra un control de urgencias con el color de
+  # urgencia de la variante activa». Se retiran porque la cabecera deja de
+  # tener control de urgencias (D1 de `fidelidad_cabecera.feature`), lo que
+  # además RESTAURA lo que `cabecera_y_navegacion.feature` @s13 y @s7 ya
+  # exigían desde el 25/08/2026 y este escenario contradecía.
+  #
+  # El rol de color `--color-urgencia` NO desaparece del sistema: lo sigue
+  # pintando la tarjeta de urgencias de `InformacionContacto`, así que la
+  # matriz de uso conserva su fila `sobre-primario` sobre `urgencia` y sus
+  # recuentos (25 filas, 125 parejas) no se tocan; lo único que caduca es la
+  # CITA de procedencia de esa fila, que apunta a la hoja de la cabecera.
+  #
+  # CORRECCIÓN DEL MISMO DÍA (20/09/2026, segunda tanda) — EL PÁRRAFO DE ARRIBA
+  # ES FALSO DESDE QUE E1 RETIRA LA TARJETA. Redacción medida que sí es cierta:
+  #   · `--color-urgencia` sigue vivo, declarado en las cinco variantes y
+  #     PINTADO, pero solo como muestra DECORATIVA del selector de paleta
+  #     (`SelectorPaleta.module.scss`: el disco tricolor y la tercera muestra,
+  #     congelados por `fidelidad_selector_paleta` @s1). Lo que muere es su uso
+  #     SEMÁNTICO —el rojo como señal de urgencia—, no el token.
+  #   · Ningún módulo pinta ya TINTA sobre ese fondo, ni ese fondo bajo tinta.
+  #     El selector no salva la pareja: pinta el rojo como relleno, sin nada
+  #     encima, y la matriz es una lista de parejas (tinta, fondo).
+  #   · Por tanto las DOS filas de urgencia de la matriz quedan sin módulo que
+  #     las respalde, no una: `{sobre-primario, urgencia}` y también
+  #     `{urgencia, sobre-primario}` —la píldora «Llamar ahora»—, que la tanda
+  #     anterior no vio.
+  #   · Las filas NO se tocan en esta tanda. [FRASE DEROGADA horas después: ver
+  #     la TERCERA ACTUALIZACIÓN, justo debajo.] Decía entero: «Conservarlas
+  #     mantiene 25 filas y 125 parejas en verde; borrarlas las bajaría a 23 y
+  #     115, en cuatro sitios a la vez, y dejaría vacuos @s7 y una guarda sobre
+  #     `urgencia-suave`. Es PUERTA HUMANA PROPIA.»
+  #
+  # TERCERA ACTUALIZACIÓN (20/09/2026, TERCERA TANDA) — LAS FILAS SÍ SE TOCAN, Y
+  # DOS DE LOS NÚMEROS DE ARRIBA ERAN FALSOS.
+  #   · Pablo resolvió la puerta humana el mismo día, y en sentido BORRAR (F1),
+  #     para que la matriz vuelva a ser exactamente lo que el sitio pinta. Salen
+  #     de `src/lib/diseno/matrizDeContraste.ts` las dos filas de urgencia
+  #     (`:363` y `:388`) con sus comentarios de procedencia (`:385-387`), y hay
+  #     que reescribir el comentario de sección de `:359` —«Tinta sobre relleno
+  #     saturado. El rojo de urgencia entra AQUÍ, nunca con blanco literal
+  #     (@s7).»—, porque si se deja, el fichero afirma por escrito lo contrario
+  #     de lo que declara. Lo mismo con el docblock del módulo (`:6`), que dice
+  #     cubrir @s7: tras F1 el sujeto de @s7 pasa a `tokensColor.test.ts:229` y
+  #     al segundo `it` de @s7, que no leen la matriz.
+  #   · NO son «cuatro sitios a la vez». MEDIDO ejecutando la suite completa con
+  #     las filas borradas: 6 tests rojos de 1415, todos en UN solo fichero
+  #     (`src/lib/diseno/matrizDeContraste.test.ts`), que son CINCO aserciones
+  #     —`:446` (25 → 23 filas), `:463` (25 → 23 claves únicas, hoy enmascarada
+  #     porque `:446` aborta el `it` antes), `:509` y `:531` (125 → 115 parejas,
+  #     el segundo dentro del test de sabotaje) y `:738` (la fila
+  #     `{urgencia, sobre-primario}` que ya no existe)— más un `it` que se queda
+  #     sin sujeto (`:743`). La lista de suspensos esperada del test de sabotaje
+  #     NO cambia: ninguna de las dos filas borradas suspendía.
+  #   · NO es cierto que @s7 quede vacuo: pivota a los TOKENS y conserva dos
+  #     puertas vivas y verdes (`tokensColor.test.ts:229-235` y
+  #     `matrizDeContraste.test.ts:133-159`). Ver su nota en este mismo fichero.
+  #   · La guarda «ninguna fila sobre `urgencia-suave`»
+  #     (`matrizDeContraste.test.ts:739`) NO se pierde: sigue en verde. Lo que
+  #     hay que escribir es que es una ANTIRREGRESIÓN TRIVIAL y no una
+  #     comprobación — `--color-urgencia-suave` no tiene ni ha tenido nunca fila
+  #     en esta matriz, ni como rol ni como fondo (recorridas las 25), así que ya
+  #     era trivial antes de F1; lo único que cambia es que desaparece la fila
+  #     viva con la que contrastaba.
+  #   · HILO QUE ESTA TANDA NO ABRE, pero deja anotado para que no lo descubra
+  #     otra dentro de tres semanas: tras E1 NINGÚN fichero de `src/` pinta
+  #     `var(--color-urgencia-suave)`. Sigue declarado en las cinco variantes y
+  #     congelado por @s1/@s2 de este mismo fichero, por `contratoRedisenho.ts`
+  #     y por el mapeo `--urg-soft` de `fidelidadPrototipo.ts`. Por la misma
+  #     lógica de Pablo —que lo declarado sea lo que el sitio pinta— es el
+  #     siguiente hilo, y NO se toca aquí.
+  #
+  # El resto de @s28 se conserva íntegro: el acceso a la tienda con borde y
+  # sin relleno (que `fidelidad_cabecera` @s6/@s7 afinan sin quitarle ni el
+  # borde ni la ausencia de relleno), la cabecera visible al desplazar y el
+  # ancla calculada desde la altura REAL de la cabecera.
   @s28
-  Scenario: La cabecera lleva la navegación, el acceso a urgencias y el acceso a la tienda
+  Scenario: La cabecera lleva la navegación y el acceso a la tienda
     Given la portada construida y servida, en una ventana más ancha que el punto de corte
     When se inspecciona la cabecera
     Then muestra los enlaces de navegación del catálogo
-    And muestra un control de urgencias con el color de urgencia de la variante activa
     And muestra un acceso a la tienda con borde y sin relleno
     And la cabecera se mantiene visible al desplazar la página
     And el sitio del ancla de destino al saltar a una sección se calcula desde la altura real de la cabecera, no desde un número escrito a mano
@@ -560,13 +868,29 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And cada ficha muestra su imagen, su nombre y su pie
     And el aviso de contenido de demostración sigue presente
 
+  # TÍTULO REESCRITO y CLÁUSULA ELIMINADA de @s36 (20/09/2026, E1; Pablo,
+  # corroborado por Roberto Alonso en la grabación del 16/08/2026, minutos
+  # 06:52-07:00). El título decía «La sección de contacto lleva el formulario,
+  # la tarjeta de urgencias y el mapa con los cuatro bloques de datos». La
+  # cláusula eliminada decía literalmente: «And a la derecha hay una tarjeta con
+  # el color de urgencia, el rótulo real y un botón de llamada».
+  #
+  # Los bloques de datos bajan de CUATRO a TRES —«Dirección», «Teléfonos» y
+  # «Horario»—, porque el cuarto ERA esa tarjeta. Las otras cuatro cláusulas se
+  # conservan íntegras: formulario a la izquierda, tarjeta con mapa y bloques,
+  # sin bloque de correo, y rótulos en versalitas con el acento tinta.
+  #
+  # OJO AL LEER EL CÓDIGO: este panel nunca tuvo un bloque «cómo llegar». Sus
+  # bloques son y han sido tres fieldsets —Dirección, Teléfonos y Horario—
+  # dentro de la tarjeta de datos. «Cómo llegar» es un enlace del PIE, y ese se
+  # queda.
   @s36
-  Scenario: La sección de contacto lleva el formulario, la tarjeta de urgencias y el mapa con los cuatro bloques de datos
+  Scenario: La sección de contacto lleva el formulario y el mapa con los tres bloques de datos
     Given la portada construida y servida, en una ventana más ancha que el punto de corte
     When se inspecciona la sección de contacto
     Then a la izquierda hay una tarjeta con el formulario
-    And a la derecha hay una tarjeta con el color de urgencia, el rótulo real y un botón de llamada
-    And debajo hay una tarjeta con el mapa y los bloques de datos que el cliente sí publica
+    And a la derecha hay una tarjeta con el mapa y los tres bloques de datos que el cliente sí publica
+    And no aparece ninguna tarjeta ni banda con el color de urgencia
     And no aparece ningún bloque de correo electrónico, porque el cliente no publica ninguno
     And cada rótulo de bloque va en versalitas con el color de acento tinta
 
@@ -713,10 +1037,36 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And cambiar un dato en la fuente única cambia la cifra correspondiente
     And ninguna cifra está escrita a mano en el componente
 
+  # CLÁUSULA ENMENDADA en @s52 (20/09/2026) — NO LA MENCIONABA EL ENCARGO Y SE
+  # PONÍA EN ROJO. Decía literalmente: «And el único compromiso de urgencias que
+  # aparece es el que declara la fuente única de datos».
+  #
+  # POR QUÉ HAY QUE ENMENDARLA: su puerta falla CERRADA cuando no encuentra
+  # NINGÚN compromiso —«un sitio en el que la palabra nunca aparece no ha
+  # demostrado nada»— y exige exactamente uno. Hoy pasa gracias al enlace del
+  # pie, que aparece en las seis rutas. Tras E1 + E2 el barrido devuelve la
+  # lista VACÍA y la puerta se pone roja por partida doble. MEDIDO: la búsqueda
+  # parte el texto por la palabra literal «urgencias», y tras E1 + E2 esa
+  # palabra no aparece en el texto visible inicial de ninguna de las seis rutas
+  # (el FAQ dice «fuera del horario de la clínica» sin la palabra y arranca
+  # cerrado; el chat dice «Es una urgencia», en singular, y solo dice
+  # «urgencias fuera de horario» tras pulsar; la confirmación del formulario
+  # solo tras enviar).
+  #
+  # QUÉ SE ESCRIBE EN SU LUGAR, y qué cuesta: la cláusula pasa de AFIRMATIVA
+  # («el único que aparece es el declarado») a NEGATIVA («ninguno distinto del
+  # declarado aparece»). Se conserva lo que protege de verdad —que no se cuele
+  # «urgencias 24 h», «urgencias todos los días» o cualquier otro cualificador
+  # del prototipo— y se pierde la garantía de que el compromiso real esté
+  # publicado. ATENCIÓN, ARTESANO: `informe.pasa` sale de LÓGICA PURA que
+  # StrykerJS muta con umbral 100. Relajar la condición NO es tocar solo el
+  # spec: hay que tocar la función y sus tests unitarios en el mismo paso, y
+  # volver a correr la mutación.
   @s52
   Scenario: El sitio no afirma en ningún sitio que preste un servicio que no presta
     Given el sitio construido y servido
     When se recorre el texto visible de las seis rutas
     Then ninguna frase afirma atención continuada las veinticuatro horas
     And ninguna frase afirma atención todos los días del año
-    And el único compromiso de urgencias que aparece es el que declara la fuente única de datos
+    And no aparece ningún compromiso de urgencias distinto del que declara la fuente única de datos
+    And el recuento de rutas inspeccionadas es exactamente 6 y el de cualificadores buscados es mayor que 0, para que "no aparece ninguno" no se cumpla por no haber buscado

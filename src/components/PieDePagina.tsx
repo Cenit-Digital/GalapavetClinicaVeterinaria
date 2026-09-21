@@ -21,8 +21,8 @@ interface ColumnaEnlacesProps {
  * Resuelve el "href" de ruta de cada enlace bajo la base de despliegue
  * vigente (Decisión 48). Solo se aplica a columnas de destino interno de
  * tipo ruta o ancla ("Clínica", "Contenido"): la columna "Contacto" mezcla
- * "tel:" ya resueltos con un ancla, y esos "tel:" no son un destino de tipo
- * ruta — no pasan por aquí (@s7).
+ * los dos "tel:" ya resueltos con un ancla, y esos "tel:" no son un destino
+ * de tipo ruta — no pasan por aquí (@s7).
  */
 function resolverDestinos(enlaces: readonly EnlacePieDePagina[]): readonly EnlacePieDePagina[] {
   return enlaces.map((enlace) => ({ ...enlace, destino: hrefDeDestino(enlace.destino) }))
@@ -50,24 +50,22 @@ interface PieDePaginaProps {
   /** Fecha usada para calcular el año del aviso de copyright. Por defecto, la fecha actual (@s12/@s13). */
   fecha?: Date
   /**
-   * Teléfono legible de urgencias fuera de horario. Por defecto, el de la
-   * fuente única. Un teléfono que no normaliza revienta el render entero,
-   * sin `tel:` a medias (@s15).
+   * Teléfono legible de la clínica. Por defecto, el de la fuente única. Un
+   * teléfono que no normaliza revienta el render entero, sin `tel:` a medias
+   * (@s15).
    */
-  telefonoUrgencias?: string
+  telefonoClinica?: string
 }
 
 /** Pie de página de la landing: bloque de marca, columnas de enlaces y barra legal. */
 export function PieDePagina({
   paginasLegales = PAGINAS_LEGALES,
   fecha,
-  telefonoUrgencias = datosNegocio.telefonoUrgencias.textoVisible,
+  telefonoClinica = datosNegocio.telefonoClinica.textoVisible,
 }: PieDePaginaProps = {}): React.JSX.Element {
   const enlacesContacto = construirEnlacesContacto({
-    telefonoClinica: datosNegocio.telefonoClinica.textoVisible,
+    telefonoClinica,
     telefonoMovil: datosNegocio.telefonoMovil.textoVisible,
-    telefonoUrgencias,
-    rotuloUrgencias: datosNegocio.telefonoUrgencias.rotulo,
   })
   const enlacesLegales = construirEnlacesLegales(paginasLegales)
   const copyright = textoCopyright(fecha ?? new Date(), datosNegocio.identidad.nombreComercial)

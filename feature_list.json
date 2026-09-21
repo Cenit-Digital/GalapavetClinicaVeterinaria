@@ -470,7 +470,7 @@
     },
     {
       "id": 30,
-        "name": "fidelidad_campanas",
+      "name": "fidelidad_campanas",
       "title": "Fidelidad visual: campañas en portada",
       "description": "Dos columnas: a la izquierda cintillo, titular real, aviso de demostración íntegro y CTA primario relleno «Ver campañas»; a la derecha rejilla compacta 2×2 de tarjetas con foto 16/9, píldora «Demostración», título y línea de detalle derivada del bloque de servicios; sin precio ni vigencia; la sección sigue siendo hermana inmediata de #servicios.",
       "acceptance": [
@@ -481,7 +481,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-        "status": "done",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -497,7 +497,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-        "status": "done",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -551,7 +551,7 @@
     },
     {
       "id": 35,
-        "name": "fidelidad_faq",
+      "name": "fidelidad_faq",
       "title": "Fidelidad visual: preguntas frecuentes",
       "description": "Cintillo y titular centrados; lista acotada a 860 px y centrada de verdad (hoy la regla está muerta); línea superior y divisorias por entrada; pregunta en la tipografía de titulares con peso 500; círculo «+» decorativo de 30 px a la derecha que rota al abrir; acordeón excluyente y ARIA intactos.",
       "acceptance": [
@@ -561,12 +561,12 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-        "status": "done",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
       "id": 36,
-        "name": "fidelidad_pie",
+      "name": "fidelidad_pie",
       "title": "Fidelidad visual: pie de página",
       "description": "Cuatro columnas flexibles (marca con logotipo real de 36 px y nombre en la misma fila más el descriptor; Clínica, Contenido y Contacto con rótulos en versalitas y enlaces sin subrayado en reposo) y barra inferior en una sola fila con © a la izquierda y los tres enlaces legales reales en línea a la derecha, conservando su nombre accesible completo con el aviso de ventana nueva oculto solo visualmente.",
       "acceptance": [
@@ -576,12 +576,12 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-        "status": "done",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
       "id": 37,
-        "name": "fidelidad_selector_paleta",
+      "name": "fidelidad_selector_paleta",
       "title": "Fidelidad visual: selector de paleta flotante",
       "description": "Botón circular flotante con disco cónico tricolor de la variante activa y nombre accesible «Cambiar paleta de color» sin texto visible; panel de 268 px con rótulo «Paleta de color», cinco filas con contorno, nombre en negrita y tres muestras leídas de los tokens; estado activo en aria-pressed con fondo de acento suave; matriz de contraste ampliada con los pares nuevos.",
       "acceptance": [
@@ -591,7 +591,7 @@
         "Tests, lint, typecheck, build, Playwright y mutación en verde; comparación en pantalla con el prototipo documentada"
       ],
       "sdd": true,
-        "status": "done",
+      "status": "done",
       "notas": "Registrada el 03/09/2026 por craftsman_lead tras la conversación de spec con Pablo (project-spec.md, sección «Fidelidad visual de la portada»). Análisis de partida: progress/fidelidad/delta_*.md y progress/rediseno/HANDOFF_CONVERGENCIA_V2.md."
     },
     {
@@ -610,6 +610,145 @@
       "sdd": true,
       "status": "done",
       "notas": "Contrato aprobado explícitamente por Pablo el 03/09/2026. Cierre: Playwright completo 167/167 (incluye barrido cada 16 px entre 320 y 1600), bin/harness init 89/89 ficheros y 1.416/1.416 tests, lint, TypeScript y build verdes. Mutación dirigida al bloque lógico añadido: 1/1 eliminado, 100 %. Capturas y veredictos en progress/."
+    },
+    {
+      "id": 39,
+      "name": "retirada_carteleria_urgencias",
+      "title": "Retirada de la cartelería de urgencias y afinado de la cabecera",
+      "description": "Decisión de Pablo del 20/09/2026, corroborada en la grabación de la reunión con Roberto Alonso del 16/08/2026 (minutos 02:31, 03:02-03:05 y 06:52-07:00; ver progress/decisiones_reunion_rober_20260816.md). Desaparece TODA la cartelería roja de urgencias —el CTA de la cabecera en escritorio y en el panel móvil, la tarjeta de InformacionContacto y el enlace del pie— y se afina la cabecera contra el prototipo. El DATO no se retira: telefonoUrgencias sigue vivo en la fuente única y el FAQ, la confirmación del formulario y el paso 'urgencia' del chat de reserva se conservan intactos. D1 no es un contrato nuevo: RESTAURA lo que cabecera_y_navegacion.feature @s13/@s7 ya exigían desde el 25/08/2026 y que fidelidad_cabecera incumplió el 03/09/2026.",
+      "acceptance": [
+        "Ninguna cabecera de las seis rutas tiene un enlace tel: ni un nombre accesible o texto con 'Urgencias'",
+        "La navegación de escritorio termina en el mismo borde derecho en que termina el contenido de las secciones, y la marca arranca en el mismo borde izquierdo",
+        "Entre el nombre 'Galapavet' y su descriptor hay exactamente un paso de la escala de espaciado, nunca cero ni un número escrito a mano",
+        "El acceso 'Tienda' conserva un objetivo de pulsación de 44 por 44 píxeles mientras su píldora visible baja a la del prototipo, con la tinta fuerte y un borde más suave que no baja de 3 a 1 en ninguna de las cinco variantes",
+        "El alto renderizado de la cabecera es exactamente igual al hueco que el documento reserva bajo ella, sin tolerancia que pueda absorber un borde",
+        "La sección de contacto conserva formulario, mapa y sus tres bloques de datos, sin la tarjeta de urgencias",
+        "El pie conserva sus tres columnas encabezadas con la misma rejilla, el mismo espaciado y el mismo estilo entre hermanos, aunque una tenga un enlace menos",
+        "Toda mención de urgencias que exista sigue llevando el rótulo real y su tel: derivado del número real, y el recuento de menciones estáticas queda fijado como disparador",
+        "La matriz de uso de color vuelve a declarar solo lo que el sitio pinta de verdad",
+        "Tests, lint, typecheck, build, verificación en navegador real y mutación de la lógica tocada están en verde"
+      ],
+      "sdd": true,
+      "status": "done",
+      "notas": "EN CURSO desde el 20/09/2026. PUERTA HUMANA SUPERADA: Pablo aprobó los 8 contratos el 20/09/2026 y ratificó por escrito, en la misma puerta, que el teléfono de urgencias deja de estar publicado de forma ESTÁTICA en las seis rutas (queda fijado con el recuento en 0 como disparador). Decidió sobre mediciones y capturas, no sobre descripciones. Contratos: 8 ficheros de features/, 27 escenarios tocados, 4 nuevos (@s4-@s7 de fidelidad_cabecera), 1551 líneas añadidas de las que 1419 son notas de justificación. Informes: progress/cabecera_contrato_20260920.md, progress/contacto_pie_contrato_20260920.md, progress/reconciliacion_contratos_20260920.md, progress/auditoria_orquestador_20260920.md y progress/correcciones_auditoria_20260920.md. Línea base previa EN VERDE: progress/linea_base_20260920.md (lint, typecheck, 1415 unitarias, 167 de Playwright, test:config 5/5). Preflight de los cuatro cambios de cabecera simulados juntos en 7 anchos, 51/51: progress/preflight_cabecera_20260920.md. AVISO AL ARTESANO: @s4 nace EN ROJO a propósito (solape real de 1 px, Cabecera.module.scss:33). Y los literales del preflight (1px, 4px, 35px, 15px) NO se copian: salen de $ancho-borde-fino, espaciado() y la escala. | 21/09/2026 — El judge RECHAZÓ la primera ronda (progress/judge_39.md) con 5 bloqueantes, TRES de ellos errores de proceso del craftsman_lead: (1) esta feature es `sdd` y el arnés deriva features/<name>.feature del `name`, que no existía — único [FAIL] de `harness init` y rompía el CI; (2) se hizo el TDD entero sin pasar por `in_progress`; (3) project-spec.md y progress/current.md quedaron desactualizados. Los otros DOS son huecos de cobertura que el propio orquestador causó al acotar la oleada 4 a «movimiento.spec.ts: solo comentarios»: la puerta de @s19 es inerte (el contador se mide bajo reducedMotion:reduce, donde el anulador global aplica transition-duration a TODO el documento) y las tres cláusulas nuevas de @s20 no tienen ninguna puerta. Ronda 2 en curso. | 21/09/2026 — SEGUNDA PUERTA HUMANA: el judge de la ronda 2 cazó que `features/retirada_carteleria_urgencias.feature` (creado el 21/09 para satisfacer al arnés) traía un escenario VINCULANTE NUEVO, @s1 (el censo de rótulos accesibles de las seis rutas, fijado en 0 como disparador), escrito por un gherkin_author, implementado por un tdd_craftsman y a punto de ser bendecido por el propio judge: los tres, agentes. Pablo había aprobado OCHO contratos el 20/09; este era el noveno. Pablo lo aprobó expresamente el 21/09/2026, tras ver el escenario y el hueco que tapa (@s5 prohíbe el rótulo accesible solo DENTRO de la cabecera y @s14 solo exige corrección de los que aparezcan, así que un aria-label en el cuerpo de la página pasaba las dos sin salir en ningún recuento). No cambia el producto: nació en verde, `src/` intacto, medido 0 sobre 84 aria-label reales. MUTACIÓN RONDA 2: 98,95 % bruto, 100 % sobre no equivalentes, `# timeout` = 0 leído antes que el score; único superviviente, el equivalente de `esMovil` ya catalogado. | 21/09/2026, tarde — RONDA 3 DEL JUDGE: RECHAZADA por UNA sola cosa (progress/judge_39_ronda3.md). El propio judge abre el informe diciendo que los dos bloqueantes de la ronda 2 estan «de verdad y bien cerrados». El motivo del rechazo es un error de hecho del craftsman_lead, el sexto de esta feature: el encargo al mutation_tester decia «los TRES modulos de logica que esta feature toca» y son CINCO. src/lib/diseno/datosDelSitio.ts (174 mutantes) y src/lib/diseno/matrizDeContraste.ts (307) no se mutaron ni en la ronda 1 ni en la ronda 2, y la frase falsa se propago a mutation_39_ronda2.md:166-167 como hecho comprobado: era justo la frase que impedia ver el hueco. Ya corregida. El riesgo no es formal: datosDelSitio.ts cambio una decision booleana pura por un .every(), y .every() sobre lista vacia devuelve true sobre la MISMA lista que esta feature dejo vacia en las seis rutas (verde-por-vacuidad). Mutacion de los dos modulos EN CURSO. Cerrado en esta vuelta por el orquestador: el noveno contrato metido en el indice de git (era el unico de los nueve sin trackear, y el unico congelado por puerta humana, o sea que la congelacion era inverificable); las dos notas que volvieron a nacer caducadas en el .feature (tercera vez); la fila 10 de su tabla de trazabilidad, que acreditaba la feature con judge_39.md, QUE ES UN RECHAZO; y progress/tdd_retirada_carteleria_urgencias.md, que faltaba (unica de las 39 features sdd sin el; CHECKPOINTS.md C6 lo nombra). Los nueve avisos no bloqueantes del judge, dos rondas sin tocarse, quedan REGISTRADOS como features 42-45. PENDIENTE: terminar la mutacion, judge ronda 4 y verificacion en navegador real contra el prototipo, que no ha hecho nadie: lo unico que Pablo ha visto de este trabajo es una maqueta con CSS inyectado. | 21/09/2026 — CERRADA. `judge` APROBADO en la RONDA 5: progress/judge_39_ronda5.md. Mutacion: progress/mutation_39_ronda3.md, la corrida de los dos modulos que faltaban (487 mutantes, 485 muertos, 2 supervivientes y los dos equivalentes ya catalogados en mutation_rediseno_visual.md §4.6, corridos +4 lineas porque esta feature agrando la cabecera del fichero; # timeout = 0 leido antes que el score; datosDelSitio.ts 172/172). Consolidado de la feature: 582 mutantes, 579 muertos, 3 equivalentes con justificacion ESCRITA Y PREVIA = 579/579 no equivalentes = 100 % = umbral. Verificacion en NAVEGADOR REAL, la primera de esta feature: progress/verificacion_navegador_20260921.md — urgencias 0 textos y 0 rotulos accesibles en el documento entero de las seis rutas y 0 de 8 enlaces en el panel movil; nav a 0,00 px del borde derecho del contenido; 4,00 px entre la marca y su descriptor; los dos botones del hero a 56 px; contacto con sus tres bloques; pie 4/4/3. Indice de TDD: progress/tdd_retirada_carteleria_urgencias.md. CINCO rondas de review, y NINGUNA de las cinco rechazo por el codigo: el tdd_craftsman no volvio a src/ desde la ronda 1. Los cinco rechazos fueron del entorno de la feature —un contrato que no existia, una puerta humana saltada, una medicion que nadie habia corrido y, dos veces, frases que decian que algo estaba bien cuando no lo estaba—, y los cinco son atribuibles al craftsman_lead. De mirar la pagina renderizada salieron dos cosas que NO son de esta feature y quedaron registradas en vez de arregladas: features 46 (ritmo del nav, PUERTA HUMANA) y 47 (la igualdad de los botones del hero es hoy un efecto lateral del stretch, no una decision escrita). Hallazgo transversal documentado en docs/mutation-testing.md: @stryker-mutator/vitest-runner v10 trae vitest.related en true por defecto, asi que cada mutante se enfrenta a los tests RELACIONADOS y no a la suite entera; cambia como se leen los 39 informes de mutacion del repositorio."
+    },
+    {
+      "id": 40,
+      "name": "animaciones_galeria",
+      "title": "Animaciones de la galería 'nuestros amiguetes'",
+      "description": "Punto 8 de la reunión del 16/08/2026 (06:21-06:43), nunca implementado: que la galería pase automáticamente y «que tenga un par de animaciones, que si algo aquí se haga más grande». Queda registrado aquí porque la feature 39 retira las dos únicas declaraciones 'animation:' del proyecto —los dos pulsos de urgencias— y deja el sitio sin ninguna animación por fotogramas clave. El sitio conserva movimiento (13 transiciones y el desplazamiento suave), pero pierde los efectos.",
+      "acceptance": [
+        "La galería avanza sola y el avance respeta la preferencia de menos movimiento",
+        "Al menos un elemento crece al recibir el puntero o el foco, con su equivalente accesible",
+        "@s22 de accesibilidad vuelve a tener sujeto: hay una animación en curso sin la preferencia de menos movimiento",
+        "El contenido queda igualmente visible al terminar cualquier animación"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 20/09/2026 por decisión de Pablo («enmendar el contrato ahora, y las animaciones aparte»). Sin contrato Gherkin todavía."
+    },
+    {
+      "id": 41,
+      "name": "panel_movil_hacia_el_prototipo",
+      "title": "Acercar el acceso 'Tienda' del panel móvil al prototipo",
+      "description": "Pablo NO lo ha pedido; queda registrado para que no se pierda. En el prototipo (docs/diseno-claude-design/Veterinaria La Sierra.dc.html) el enlace 'Tienda' del panel móvil es una FILA NORMAL, idéntica carácter a carácter a la de sus siete hermanas: sin borde, radio 12, peso 500, relleno 13px 12px, alto mínimo 46. La implementación actual le puso una píldora con borde que el diseño no tiene. Cinco divergencias medidas: borde donde no lo hay, radio 999 contra 12, peso 600 contra 500, relleno lateral 24 contra 12 y tinta #3C4C66 contra #0B1B33; el alto (48 contra 46) es lo único que hoy está bien.",
+      "acceptance": [
+        "El enlace 'Tienda' del panel móvil se dibuja como sus hermanas, sin borde ni píldora",
+        "Conserva su objetivo de pulsación y su nombre accesible",
+        "La navegación de escritorio no cambia"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 20/09/2026 durante la feature 39, al verificar contra el prototipo una cláusula que un subagente había añadido por su cuenta y que iba en dirección contraria. Cabecera.test.tsx:331 congela hoy esa píldora bajo el rótulo @s28, cuyo Given solo habla de escritorio: retirarla no abre una segunda puerta humana."
+    },
+    {
+      "id": 42,
+      "name": "deuda_de_notas_caducadas",
+      "title": "Deuda de notas y comentarios que mienten sobre el estado actual",
+      "description": "Avisos 1, 2 y 9 de progress/judge_39_ronda3.md §6, abiertos desde la ronda 1 del judge de la feature 39 y sin tocar en 24 horas. Son comentarios y notas que describen en presente cosas que ya no existen: la errata «cartelíería» en src/lib/diseno/matrizDeContraste.ts:9; el comentario de tests/e2e/geometria-escalas.spec.ts:279-280 que razona sobre «el CTA de urgencias de la cabecera» y «ese control solo existe dentro del panel plegado», cuando ese control no existe HOY en ninguna parte; features/accesibilidad.feature:348-349, que sigue afirmando en presente que «las ÚNICAS dos declaraciones animation: de todo src/ SON…» y cita Cabecera.module.scss:188, línea que ya no existe; y las citas de línea corridas de tests/e2e/fidelidad.spec.ts. Se agrupan porque son el MISMO defecto —la nota que envejece sin avisar— y porque es el defecto recurrente de la feature 39: nació una nota caducada dentro del bloque escrito para descaducar notas, tres veces. | AÑADIDO EL 21/09/2026, TARDE, al verificar en navegador real: dos comentarios mas del mismo defecto, en ficheros que la feature 39 NO toco y que por eso nadie miro. (a) src/components/Hero.module.scss:116 justifica el anillo de foco del hero diciendo «mismo recurso que el CTA de urgencias de Cabecera.module.scss sobre su rojo»: ese CTA ya no existe, asi que la justificacion remite a un precedente borrado. (b) src/data/navegacion.ts:7-9 afirma en presente que «el contrato posterior rediseno_visual.feature @s28 SI anade un CONTROL de urgencias (sin texto visible, ver Cabecera.tsx)»: ese control se retiro en la feature 39, y el comentario esta en la cabecera del fichero que define la navegacion, o sea en el primer sitio donde mira quien llega nuevo. Suben a nueve los avisos de este grupo.",
+      "acceptance": [
+        "Ninguna nota ni comentario de los señalados describe en presente algo que el repositorio ya no contiene",
+        "Cada cita de fichero y línea que quede apunta a lo que dice apuntar, verificado sobre el fichero y no sobre el informe",
+        "La corrección cuenta que la nota estuvo caducada, no finge que nunca lo dijo",
+        "Existe una puerta que muerde: una nota que vuelva a caducar hace fallar algo"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 21/09/2026 por el judge de la ronda 3 de la feature 39 (progress/judge_39_ronda3.md §9). NO tiene contrato Gherkin todavía: se queda en `pending` a propósito, porque el arnés solo exige features/<name>.feature a partir de `spec_ready` (.harness/harness.mjs:69). El reto de esta feature es la última cláusula: una pasada de corrección a mano vuelve a caducar en una semana; lo que no caduca es una puerta."
+    },
+    {
+      "id": 43,
+      "name": "endurecer_guardas_de_recuento",
+      "title": "Sustituir las guardas de existencia por recuentos explícitos",
+      "description": "Avisos 4, 5, 7 y 8 de progress/judge_39_ronda3.md §6. Los cuatro son la misma debilidad —`> 0` donde el repositorio tiene precedente de recuento explícito—, que es la forma local del verde-por-vacuidad: una puerta que parece morder y no puede ponerse roja. (a) tests/e2e/fidelidad-cabecera.spec.ts:408-411 usa toBeGreaterThan(0) donde la cláusula del contrato dice «sin cambiar ni un dígito». (b) features/accesibilidad.feature:565 escribe «el recuento de módulos… es mayor que 0» y su test lo satisface con un solo módulo: la cláusula afirma un recuento y la puerta comprueba una existencia. (c) src/lib/accesibilidad-movimiento.test.ts:240 deja el corpus sin fijar. (d) tests/e2e/urgencias.spec.ts declara, tipa y calcula `enlacesTelefonicos` (:63, :91) y NUNCA lo lee (:100): es, literalmente, la guarda de universo que le falta a @s1 de retirada_carteleria_urgencias, ya escrita y sin cablear.",
+      "acceptance": [
+        "Ninguna de las cuatro guardas se satisface con un solo elemento cuando su cláusula habla de un recuento",
+        "Cada recuento sale del documento o del módulo real, nunca de una lista escrita en el propio test",
+        "Cada número nuevo se acredita con su rojo: invertido el número, la puerta falla",
+        "`enlacesTelefonicos` queda leído como guarda de universo de @s1, o borrado"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 21/09/2026 por el judge de la ronda 3 de la feature 39 (progress/judge_39_ronda3.md §9). ATENCIÓN — PUERTA HUMANA: el punto (b) toca un contrato ya aprobado (features/accesibilidad.feature:565), así que la redacción nueva de esa cláusula la aprueba Pablo antes de que nadie escriba un test. Los otros tres son tests y no la necesitan."
+    },
+    {
+      "id": 44,
+      "name": "token_urgencia_suave_huerfano",
+      "title": "Decidir sobre --color-urgencia-suave, declarado en seis variantes y pintado por ninguna",
+      "description": "Aviso 3 de progress/judge_39_ronda3.md §6, levantado por el judge en las rondas 1, 2 y 3 de la feature 39: tres veces sin respuesta. Al retirar la cartelería roja, el token --color-urgencia-suave quedó declarado en las seis variantes de src/estilos/_tokens.scss y pintado por CERO módulos. Es exactamente el mismo hilo que Pablo ya tiró en la feature 39 cuando mandó que la matriz de uso de color declarase solo lo que el sitio pinta de verdad (criterio 9, y las dos filas huérfanas borradas de matrizDeContraste.ts): la diferencia es que aquello era una tabla de documentación y esto es el sistema de diseño. El dato --color-urgencia (el fuerte) sigue en uso; el suave no.",
+      "acceptance": [
+        "O el token desaparece de las seis variantes, o existe un módulo que lo pinta y una puerta que lo comprueba",
+        "La decisión queda escrita con su motivo, no deducida del diff",
+        "Ninguna de las seis variantes queda a medias"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 21/09/2026. PUERTA HUMANA: NO es decisión de artesano ni de orquestador. Borrar un token del sistema de diseño cierra una puerta futura (la del morado y el logo que Roberto pidió el 16/08/2026 y que sigue pendiente); conservarlo mantiene declarado algo que nadie pinta, que es contra lo que Pablo legisló en la feature 39. Las dos lecturas son defendibles y la elección es suya. Pendiente de preguntárselo por TERCERA vez."
+    },
+    {
+      "id": 45,
+      "name": "limpieza_informacion_contacto",
+      "title": "El gap de InformacionContacto sobre un contenedor con un solo hijo",
+      "description": "Aviso 6 de progress/judge_39_ronda3.md §6. Al retirar la tarjeta de urgencias de la sección de contacto, src/components/InformacionContacto.module.scss:7-10 quedó con `gap: espaciado(16)` sobre un contenedor que hoy tiene UN solo hijo: una declaración que no puede tener efecto visible. No se tocó dentro de la feature 39 a propósito, porque borrar una declaración de maquetación sin una puerta que fije lo que debe verse es como se rompen las cosas que están bien (Ley 1 del repositorio).",
+      "acceptance": [
+        "O la declaración desaparece, o existe una puerta que justifica por qué se queda",
+        "La sección de contacto se ve igual antes y después, medido en el navegador y no en el código",
+        "El número de hijos del contenedor queda fijado, para que un segundo hijo futuro no herede en silencio un gap que nadie decidió"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 21/09/2026 por el judge de la ronda 3 de la feature 39 (progress/judge_39_ronda3.md §9). Feature pequeña; candidata a ir junto con la 41, que también es maquetación de un componente concreto contra el prototipo."
+    },
+    {
+      "id": 46,
+      "name": "ritmo_del_nav_y_objetivo_de_pulsacion",
+      "title": "Los dos enlaces cortos del nav rompen el ritmo por el minimo de pulsacion",
+      "description": "Hallazgo del craftsman_lead el 21/09/2026 verificando en NAVEGADOR REAL el dist/ construido (no deducido del codigo, no de un informe). Los ocho enlaces de la navegacion de escritorio tienen min-width 48px, que es el minimo de objetivo de pulsacion (WCAG 2.2 SC 2.5.8) y esta bien. Pero dos palabras son mas estrechas que los 32px de contenido que quedan tras el relleno: 'Blog' (25,53px) y 'FAQ' (24,13px). Sus cajas se estiran hasta 48 y, como el enlace es inline-flex con justify-content en 'normal' (= flex-start), TODO el sobrante cae al lado derecho: 6,47px tras 'Blog' y 7,88px tras 'FAQ'. Medido entre glifos con Range.getBoundingClientRect() a 1440: seis huecos valen 20,00px exactos y dos valen 26,47 y 35,88. El de 35,88 suma ademas el relleno propio de la pildora 'Tienda' (16 contra 8), que si es de diseno. Resultado: un ritmo regular con dos saltos visibles a simple vista; se ve en la captura antes de medir nada. Rompe la Ley de Semejanza y la de Conectividad Uniforme sobre una fila que el resto del tiempo es perfectamente regular. El enlace 'Tienda' ya lleva justify-content: center, asi que el patron correcto YA existe en el mismo fichero.",
+      "acceptance": [
+        "El blanco entre las letras de dos enlaces consecutivos es el mismo para todos los pares de la misma clase, medido entre glifos y no entre cajas",
+        "Ningun enlace baja de 48 por 48 pixeles de objetivo de pulsacion: la regularidad no se compra rompiendo la accesibilidad",
+        "El sobrante de un enlace mas estrecho que el minimo se reparte, no se acumula en un solo lado",
+        "La diferencia de la pildora 'Tienda' queda declarada como intencionada, no confundida con el defecto",
+        "La puerta muerde: cambiado el reparto, el test falla"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "PUERTA HUMANA: es una decision visual de Pablo, no de artesano. El arreglo mas corto es una linea (justify-content: center en los enlaces del nav), que deja los huecos en 23,24 y 23,24 en vez de 20 y 26,47: simetrico, pero entonces NINGUN hueco vale ya 20 y cambia el ritmo de los seis que hoy estan bien. La alternativa es bajar el relleno lateral de los dos cortos, que mantiene los 20 pero los aparta del patron de sus hermanos. Las dos son defendibles y ninguna es obviamente mejor; por eso no la decide un agente. NO es culpa de la feature 39: el min-width de 48 es anterior y la 39 no toco estos enlaces. Se descubrio ahora porque es la PRIMERA vez que alguien mira esta cabecera renderizada, que es justo lo que la regla de memoria del proyecto manda hacer antes de decir que algo esta hecho."
+    },
+    {
+      "id": 47,
+      "name": "igualdad_declarada_de_los_botones_del_hero",
+      "title": "Los dos botones del hero miden igual por accidente, no por decision",
+      "description": "Hallazgo del craftsman_lead el 21/09/2026 verificando en navegador real, y confirmado por el judge de la ronda 4 (progress/judge_39_ronda4.md §5.2). El punto 4 del encargo de Pablo era que los botones no se ven iguales. HOY SE VEN IGUALES: los dos del hero miden 56 px de alto, con el mismo relleno, el mismo radio y el mismo cuerpo, y eso esta medido en el navegador. Pero esa igualdad NO esta declarada en ninguna parte: sale de que su contenedor .acciones es un flex con align-items en 'normal' (= stretch), que los estira al mismo alto. Medidos por separado: el contenido de cada uno son 24 px, y su min-height propio es 56 en el primario (Hero.module.scss, .acciones a) y 48 en el fantasma (el mixin boton-fantasma de _api.scss, que gana por especificidad a .acciones a porque se aplica bajo a:not(:first-child)). Fuera de esa fila serian 56 y 48: ocho pixeles de diferencia. Un cambio inocente en el contenedor -poner align-items: center, envolver un boton, reusar la pareja en otra seccion- devuelve el defecto que Pablo pidio corregir, y ninguna puerta lo cazaria.",
+      "acceptance": [
+        "Los dos botones del hero miden lo mismo porque una declaracion lo dice, no porque su contenedor los estire",
+        "La puerta mide el alto de los dos y los compara entre si, no contra un numero escrito a mano",
+        "La puerta muerde: cambiado el align-items del contenedor, el test sigue en verde porque la igualdad ya no depende de el; cambiado el min-height de uno de los dos, el test falla",
+        "La jerarquia visual se conserva: el primario sigue distinguiendose del fantasma por peso, relleno y borde, no por alto"
+      ],
+      "sdd": true,
+      "status": "pending",
+      "notas": "Abierta el 21/09/2026. NO es un fallo visible hoy y por eso NO se arreglo dentro de la feature 39: el criterio de Pablo se cumple en pantalla y esta medido. Lo que se registra es la fragilidad, para que no se quede viviendo dentro de un informe -que es el defecto que esta misma tanda arreglo para los otros nueve avisos-. El judge de la ronda 4 lo dijo asi: correcto no arreglarlo, mal no registrarlo. Evidencia: progress/verificacion_navegador_20260921.md §1.1."
     }
   ]
 }

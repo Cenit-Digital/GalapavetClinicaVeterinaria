@@ -353,8 +353,6 @@ export function ejecutarPuertaDeAfirmacionesProhibidas(
 /** La palabra en plural con la que se enuncia un COMPROMISO de urgencias («Urgencias fuera de horario»). */
 const PALABRA_DE_COMPROMISO = 'urgencias'
 const SEPARADOR_DEL_CUALIFICADOR = ' '
-const UN_UNICO_COMPROMISO = 1
-const PRIMER_COMPROMISO = 0
 const MOTIVO_SIN_CUALIFICADORES = 'no se buscó ningún cualificador de urgencias: 0 cualificadores buscados'
 
 /**
@@ -394,10 +392,18 @@ export interface InformeDeCompromisoDeUrgencias {
 }
 
 /**
- * El ÚNICO compromiso de urgencias que puede aparecer en las seis rutas es el
- * que declara la fuente única. Falla cerrada sin rutas, sin cualificadores, y
- * también cuando no aparece ningún compromiso: un sitio en el que la palabra
- * nunca aparece no ha demostrado nada.
+ * NINGÚN compromiso de urgencias distinto del que declara la fuente única
+ * puede aparecer en las seis rutas.
+ *
+ * La condición es NEGATIVA desde el 20/09/2026 (feature 39, @s52): antes
+ * exigía exactamente un compromiso y fallaba cerrada cuando no aparecía
+ * ninguno. Tras retirar la cartelería de urgencias la palabra ya no sale en el
+ * texto inicial de ninguna ruta, y no publicarla no es afirmar nada falso: lo
+ * que este escenario protege es que el sitio no prometa un servicio que no
+ * presta, no que lo prometa.
+ *
+ * Sigue fallando cerrada sin rutas y sin cualificadores, que es lo que
+ * distingue «no hay ninguno» de «no se ha buscado».
  */
 export function ejecutarPuertaDeCompromisoDeUrgencias(
   cualificadores: readonly string[],
@@ -428,9 +434,7 @@ export function ejecutarPuertaDeCompromisoDeUrgencias(
   ]
 
   return {
-    pasa:
-      compromisosEncontrados.length === UN_UNICO_COMPROMISO &&
-      compromisosEncontrados[PRIMER_COMPROMISO] === cualificadorDeclarado,
+    pasa: compromisosEncontrados.every((compromiso) => compromiso === cualificadorDeclarado),
     rutasInspeccionadas: textos.length,
     cualificadoresBuscados: cualificadores.length,
     compromisosEncontrados,

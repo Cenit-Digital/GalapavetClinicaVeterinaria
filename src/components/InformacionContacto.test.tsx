@@ -10,21 +10,17 @@ function renderizarInformacionContacto(
   return render(<InformacionContacto {...props} />)
 }
 
-describe('@s1 el panel muestra exactamente los cuatro bloques de datos reales, en orden', () => {
-  it('la región tiene 4 grupos con estos nombres accesibles, en este orden, y ninguno se llama "Email"', () => {
+describe('@s1 el panel muestra exactamente los tres bloques de datos reales, en orden', () => {
+  it('la región tiene 3 grupos con estos nombres, en este orden, y ninguno se llama "Email" ni "Urgencias fuera de horario"', () => {
     renderizarInformacionContacto()
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
     const grupos = within(region).getAllByRole('group')
 
-    expect(grupos).toHaveLength(4)
-    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual([
-      'Dirección',
-      'Teléfonos',
-      'Horario',
-      'Urgencias fuera de horario',
-    ])
+    expect(grupos).toHaveLength(3)
+    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual(['Dirección', 'Teléfonos', 'Horario'])
     expect(within(region).queryByRole('group', { name: 'Email' })).not.toBeInTheDocument()
+    expect(within(region).queryByRole('group', { name: 'Urgencias fuera de horario' })).not.toBeInTheDocument()
   })
 })
 
@@ -79,29 +75,11 @@ describe('@s4 el bloque de horario muestra los tres tramos publicados y declara 
   })
 })
 
-describe('@s5 el teléfono de urgencias aparece con el rótulo real de fuera de horario', () => {
-  it('hay exactamente 1 enlace, con nombre y destino exactos, sin reclamo de 24 h, y el grupo se llama exactamente así', () => {
-    renderizarInformacionContacto()
-
-    const grupo = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
-    expect(grupo.getAttribute('aria-label')).toBe('Urgencias fuera de horario')
-
-    const enlaces = within(grupo).getAllByRole('link')
-    expect(enlaces).toHaveLength(1)
-    expect(enlaces[0]).toHaveAccessibleName('Llamar ahora')
-    expect(enlaces[0]).toHaveAttribute('href', 'tel:+34918511393')
-    expect(within(grupo).getByText('91 851 13 93')).toBeVisible()
-
-    expect(grupo.textContent).not.toContain('24')
-    expect(grupo.textContent).not.toContain('todos los días')
-  })
-})
-
 describe('@s6 no existe ningún bloque ni reclamo que anuncie urgencias 24 h', () => {
-  it('hay una única acción «Llamar ahora», sin "24 h/24h/24 horas" ni guardia falso, y el teléfono aparece 1 sola vez', () => {
+  it('no hay ninguna acción «Llamar ahora», ni "24 h/24h/24 horas" ni guardia falso, y el teléfono de urgencias no aparece', () => {
     const { container } = renderizarInformacionContacto()
 
-    expect(screen.getByRole('link', { name: 'Llamar ahora' })).toHaveAttribute('href', 'tel:+34918511393')
+    expect(screen.queryByRole('link', { name: 'Llamar ahora' })).not.toBeInTheDocument()
 
     const texto = container.textContent ?? ''
     expect(texto).not.toContain('24 h')
@@ -111,7 +89,12 @@ describe('@s6 no existe ningún bloque ni reclamo que anuncie urgencias 24 h', (
     expect(texto).not.toContain('siempre hay alguien de guardia')
 
     const ocurrencias = texto.split('91 851 13 93').length - 1
-    expect(ocurrencias).toBe(1)
+    expect(ocurrencias).toBe(0)
+
+    // `getAllByRole` lanza con la lista vacía: el bucle no puede pasar por vacuidad.
+    for (const enlace of screen.getAllByRole('link')) {
+      expect(enlace.getAttribute('href')).not.toBe('tel:+34918511393')
+    }
   })
 })
 
@@ -231,16 +214,25 @@ describe('@s11 el panel no reescribe a mano ningún teléfono, lo deriva de la f
   })
 })
 
-describe('@s12 un dato de contacto ausente hace desaparecer su bloque, sin rellenarlo con nada', () => {
-  it('sin teléfono de urgencias en la fuente, el bloque desaparece y quedan los otros 3 en orden, sin placeholder', () => {
-    renderizarInformacionContacto({ telefonoUrgencias: null })
+// ---------------------------------------------------------------------------
+// @s12 ELIMINADO el 20/09/2026 (E1): su Given inyectaba `telefonoUrgencias:
+// null`, el único dato anulable que el panel declaraba, y la prop se va con la
+// tarjeta. Sus DOS cláusulas exclusivas —«sin placeholder» y «sin `tel:` a
+// medias»— NO se pierden: viven aquí abajo, en @s13, sobre el dato opcional
+// que sí sobrevive (`horario` sin tramos).
+// ---------------------------------------------------------------------------
+describe('@s13 un horario sin ningún tramo hace desaparecer el bloque de horario', () => {
+  it('sin tramos, el grupo "Horario" no existe, quedan 2 grupos en orden, sin lista vacía, sin placeholder ni "tel:" a medias', () => {
+    renderizarInformacionContacto({ horario: [] })
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
 
-    expect(within(region).queryByRole('group', { name: 'Urgencias fuera de horario' })).not.toBeInTheDocument()
+    expect(within(region).queryByRole('group', { name: 'Horario' })).not.toBeInTheDocument()
 
     const grupos = within(region).getAllByRole('group')
-    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual(['Dirección', 'Teléfonos', 'Horario'])
+    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual(['Dirección', 'Teléfonos'])
+
+    expect(region.querySelectorAll('dl')).toHaveLength(0)
 
     const texto = region.textContent ?? ''
     for (const marcador of ['—', 'Próximamente', 'Consultar', 'Pendiente']) {
@@ -251,28 +243,10 @@ describe('@s12 un dato de contacto ausente hace desaparecer su bloque, sin relle
       .getAllByRole('link')
       .map((enlace) => enlace.getAttribute('href') ?? '')
       .filter((destino) => destino.startsWith('tel:'))
+    expect(destinosTelefono.length).toBeGreaterThan(0)
     for (const destino of destinosTelefono) {
       expect(destino).toMatch(/^tel:\+34\d{9}$/)
     }
-  })
-})
-
-describe('@s13 un horario sin ningún tramo hace desaparecer el bloque de horario', () => {
-  it('sin tramos, el grupo "Horario" no existe, los demás conservan nombre y orden, y no queda ninguna lista vacía', () => {
-    renderizarInformacionContacto({ horario: [] })
-
-    const region = screen.getByRole('region', { name: 'Información de contacto' })
-
-    expect(within(region).queryByRole('group', { name: 'Horario' })).not.toBeInTheDocument()
-
-    const grupos = within(region).getAllByRole('group')
-    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual([
-      'Dirección',
-      'Teléfonos',
-      'Urgencias fuera de horario',
-    ])
-
-    expect(region.querySelectorAll('dl')).toHaveLength(0)
   })
 })
 
@@ -364,7 +338,7 @@ function cuerpoDelBloque(texto: string, encabezadoDelBloque: string): string {
   return texto.slice(indiceDeAperturaLlave + 1, indice - 1)
 }
 
-describe('@s36 la sección de contacto reparte su contenido en la tarjeta de datos (con el mapa) y la tarjeta de urgencias', () => {
+describe('@s36 la sección de contacto lleva el formulario y el mapa con los tres bloques de datos', () => {
   it('los tres bloques que el cliente sí publica muestran su rótulo real y visible, en un <legend> (no solo en el aria-label)', () => {
     renderizarInformacionContacto()
 
@@ -382,28 +356,17 @@ describe('@s36 la sección de contacto reparte su contenido en la tarjeta de dat
     }
   })
 
-  it('la tarjeta de urgencias muestra el rótulo real derivado de la fuente única, no un literal retipeado', () => {
-    renderizarInformacionContacto()
-
-    const grupo = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
-    // Literal escrito a mano —el mismo que ya usa @s5 de
-    // `informacion_contacto.feature` para el "aria-label"—, nunca contra el
-    // símbolo importado de producción: doble anclaje.
-    const rotulo = within(grupo).getByText('Urgencias fuera de horario')
-    expect(rotulo.tagName).toBe('LEGEND')
-  })
-
-  it('el orden de lectura del DOM sigue siendo el que ya fijó "informacion_contacto.feature" @s1: los tres bloques de datos antes que urgencias', () => {
+  it('el orden de lectura del DOM es el que fijó "informacion_contacto.feature" @s1 y no queda ninguna tarjeta de urgencia', () => {
     renderizarInformacionContacto()
 
     const region = screen.getByRole('region', { name: 'Información de contacto' })
     const grupos = within(region).getAllByRole('group')
-    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual([
-      'Dirección',
-      'Teléfonos',
-      'Horario',
-      'Urgencias fuera de horario',
-    ])
+    expect(grupos.map((grupo) => grupo.getAttribute('aria-label'))).toEqual(['Dirección', 'Teléfonos', 'Horario'])
+
+    // «no aparece ninguna tarjeta ni banda con el color de urgencia» (@s36,
+    // enmendado el 20/09/2026): la única tarjeta que queda es la de datos.
+    expect(region.querySelector('[data-tarjeta-de="urgencia"]')).toBeNull()
+    expect(region.querySelectorAll('[data-tarjeta-de]')).toHaveLength(1)
   })
 
   it('sigue sin aparecer ningún bloque de correo (ya cubierto por @s7 de "informacion_contacto.feature"; se repite por trazabilidad de @s36)', () => {
@@ -422,98 +385,31 @@ describe('@s36 la sección de contacto reparte su contenido en la tarjeta de dat
     expect(cuerpoLegendDeDatos).toContain('@include eyebrow')
   })
 
-  // ENMIENDA (03/09/2026, `fidelidad_contacto` @s3, `progress/fidelidad/enmiendas_fidelidad_contacto.md`):
-  // @s36 de `rediseno_visual.feature` pide "una tarjeta con el color de
-  // urgencia"; estas dos aserciones habían sobre-especificado ese color como
-  // fondo SUAVE + franja lateral y el teléfono como "boton-fantasma". El
-  // diseño aprobado pinta la banda roja sólida (fondo `--color-urgencia`,
-  // tinta `--color-sobre-primario`, sin borde ni sombra de tarjeta) y el
-  // teléfono como píldora blanca con la tinta de urgencia.
-  it('la tarjeta de urgencias es una banda roja sólida: fondo de urgencia, tinta sobre-primario, sin franja lateral ni patrón tarjeta', () => {
-    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
+  // «no aparece ninguna tarjeta ni banda con el color de urgencia» (@s36,
+  // enmendado el 20/09/2026, E1), afirmado sobre el TEXTO REAL del módulo. La
+  // puerta del DOM no basta: sin esta, el SCSS podría conservar la banda
+  // entera y volver a pintarla en cuanto alguien devolviera el marcado.
+  //
+  // Recoge además, REUBICADAS, las DOS guardas que viajaban de polizón dentro
+  // de los `it` de la banda y que no dependían de ella.
+  it('el módulo no declara tarjeta ni banda de urgencia, ni animación, y sigue sin maquetar por anchura de ventana', () => {
+    // Anti-vacuidad: se afirma sobre el módulo real, no sobre una cadena vacía.
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).toContain("[data-tarjeta-de='datos'] {")
 
-    expect(cuerpoTarjetaUrgencia).toContain('background-color: var(--color-urgencia);')
-    expect(cuerpoTarjetaUrgencia).toContain('color: var(--color-sobre-primario);')
-    expect(cuerpoTarjetaUrgencia).not.toContain('urgencia-suave')
-    expect(cuerpoTarjetaUrgencia).not.toContain('border-inline-start')
-    expect(cuerpoTarjetaUrgencia).not.toContain('@include tarjeta')
-  })
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain("[data-tarjeta-de='urgencia']")
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('--color-urgencia')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('.pulso')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('@keyframes')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('animation:')
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('@container')
 
-  // Ronda de reparación 1 (judge, 03/09/2026): la píldora ya no es el número.
-  // Anatomía del prototipo (`delta_contacto.md`, contacto-4): rótulo y número
-  // apilados a la izquierda, píldora «Llamar ahora» pequeña a la derecha, en una
-  // sola fila. El `fieldset` es una rejilla de dos columnas (1fr auto): rótulo y
-  // número en la primera (filas 1 y 2), la píldora en la segunda abarcando ambas.
-  it('la banda apila rótulo y número a la izquierda (rejilla 1fr auto) y el número es el elemento grande: titulares, paso 2', () => {
-    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
-    const cuerpoFieldset = cuerpoDelBloque(cuerpoTarjetaUrgencia, 'fieldset {')
-    const cuerpoLegend = cuerpoDelBloque(cuerpoTarjetaUrgencia, 'legend {')
-    const cuerpoNumero = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] p {")
-
-    expect(cuerpoFieldset).toContain('display: grid;')
-    expect(cuerpoFieldset).toMatch(/grid-template-columns:\s*1fr auto;/)
-    expect(cuerpoLegend).toMatch(/grid-column:\s*1;/)
-    expect(cuerpoLegend).toMatch(/grid-row:\s*1;/)
-    expect(cuerpoNumero).toMatch(/grid-column:\s*1;/)
-    expect(cuerpoNumero).toMatch(/grid-row:\s*2;/)
-    expect(cuerpoNumero).toContain('font-family: var(--fuente-titulares);')
-    expect(cuerpoNumero).toContain('font-size: paso-tipografico(2);')
-    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('accionesUrgencia')
-  })
-
-  it('la píldora «Llamar ahora» es blanca, pequeña y en negrita, con altura de control media, a la derecha abarcando las dos filas', () => {
-    const cuerpoEnlaceDeUrgencia = cuerpoDelBloque(
-      TEXTO_INFORMACION_CONTACTO_SCSS,
-      "[data-tarjeta-de='urgencia'] a {",
-    )
-
-    expect(cuerpoEnlaceDeUrgencia).toContain('background-color: var(--color-sobre-primario);')
-    expect(cuerpoEnlaceDeUrgencia).toContain('color: var(--color-urgencia);')
-    expect(cuerpoEnlaceDeUrgencia).toContain('border-radius: $radio-completo;')
-    expect(cuerpoEnlaceDeUrgencia).toContain('min-height: $altura-control-media;')
-    expect(cuerpoEnlaceDeUrgencia).toContain('font-size: paso-tipografico(0);')
-    expect(cuerpoEnlaceDeUrgencia).toContain('font-weight: 700;')
-    expect(cuerpoEnlaceDeUrgencia).not.toContain('--fuente-titulares')
-    expect(cuerpoEnlaceDeUrgencia).toMatch(/grid-column:\s*2;/)
-    expect(cuerpoEnlaceDeUrgencia).toMatch(/grid-row:\s*1 \/ span 2;/)
-    expect(cuerpoEnlaceDeUrgencia).not.toContain('boton-fantasma')
-  })
-
-  // El prototipo pliega la banda con `flex-wrap` cuando no caben rótulo y
-  // píldora en una fila. Aquí el plegado depende del ancho de la PROPIA banda
-  // (consulta de contenedor), no de la ventana: la banda es estrecha tanto a
-  // 320 px como en las columnas intermedias del escritorio.
-  it('la banda estrecha se pliega por consulta de contenedor: una columna y la píldora en la tercera fila, sin @media de anchura', () => {
-    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
-    const cuerpoPlegado = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '@container (max-width: 28rem) {')
-
-    expect(cuerpoTarjetaUrgencia).toContain('container-type: inline-size;')
-    expect(cuerpoDelBloque(cuerpoPlegado, 'fieldset {')).toMatch(/grid-template-columns:\s*1fr;/)
-    expect(cuerpoDelBloque(cuerpoPlegado, 'a {')).toMatch(/grid-row:\s*3;/)
+    // REUBICADA desde el `it` de la banda estrecha: es la ÚNICA guarda de
+    // «este módulo no maqueta por anchura de VENTANA», y no tenía nada que
+    // ver con la tarjeta — se afirma sobre el módulo entero.
     expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('@media (max-width')
-  })
-
-  it('el rótulo de urgencias lleva un punto decorativo pulsante que no cambia su texto, y su animación solo corre sin "reduce"', () => {
-    renderizarInformacionContacto()
-
-    const grupo = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
-    const rotulo = within(grupo).getByText('Urgencias fuera de horario')
-    expect(rotulo.tagName).toBe('LEGEND')
-    const punto = rotulo.querySelector('[aria-hidden="true"]')
-    expect(punto).not.toBeNull()
-    expect(punto?.textContent).toBe('')
-    expect(rotulo.textContent).toBe('Urgencias fuera de horario')
-
-    const cuerpoPulso = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, '.pulso {')
-    const cuerpoSinReduce = cuerpoDelBloque(cuerpoPulso, '@media (prefers-reduced-motion: no-preference) {')
-    expect(cuerpoSinReduce).toMatch(/animation:\s*pulso\b/)
-    expect(cuerpoPulso.replace(cuerpoSinReduce, '')).not.toContain('animation')
-  })
-
-  it('la tarjeta de urgencias sube visualmente por encima de la de datos con "order", sin reordenar el DOM ya aprobado', () => {
-    const cuerpoTarjetaUrgencia = cuerpoDelBloque(TEXTO_INFORMACION_CONTACTO_SCSS, "[data-tarjeta-de='urgencia'] {")
-
-    expect(cuerpoTarjetaUrgencia).toMatch(/order:\s*-1\s*;/)
+    // REUBICADA desde el `it` de la rejilla de la banda: antirregresión del
+    // nombre de clase retirado el 03/09/2026.
+    expect(TEXTO_INFORMACION_CONTACTO_SCSS).not.toContain('accionesUrgencia')
   })
 
   it('el wrapper de contacto de Landing.tsx se convierte en una rejilla de dos columnas sin depender de un id hasheado', () => {

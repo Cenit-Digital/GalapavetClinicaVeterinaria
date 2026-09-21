@@ -251,7 +251,15 @@ test.describe('@s52 el sitio no afirma en ningún sitio que preste un servicio q
     }
   })
 
-  test('el único compromiso de urgencias que aparece es el que declara la fuente única', async ({ page }) => {
+  // CLÁUSULA ENMENDADA el 20/09/2026 (feature 39, @s52): de AFIRMATIVA —«el
+  // único compromiso que aparece es el declarado»— a NEGATIVA —«no aparece
+  // ninguno distinto del declarado»—. Tras retirar la cartelería de urgencias
+  // la palabra ya no sale en el texto inicial de ninguna de las seis rutas, y
+  // la versión afirmativa fallaba CERRADA sobre la lista vacía. Lo que se
+  // pierde, sin maquillar: la garantía de que el compromiso real esté
+  // publicado. Lo que se conserva es lo que de verdad protege al visitante:
+  // que no se cuele «urgencias 24 h» ni ningún otro cualificador del prototipo.
+  test('no aparece ningún compromiso de urgencias distinto del que declara la fuente única', async ({ page }) => {
     const rotuloDeclarado = datosNegocio.telefonoUrgencias.rotulo
     expect(rotuloDeclarado).toBeDefined()
     const cualificadorDeclarado = cualificadorDeclaradoDe(rotuloDeclarado as string)
@@ -265,9 +273,14 @@ test.describe('@s52 el sitio no afirma en ningún sitio que preste un servicio q
       textos,
     )
 
-    expect(informe.compromisosEncontrados).toEqual([cualificadorDeclarado])
+    // La lista puede venir vacía y eso APRUEBA; lo que no puede traer es un
+    // cualificador que Galapavet no declara.
+    expect(informe.compromisosEncontrados.filter((compromiso) => compromiso !== cualificadorDeclarado)).toEqual([])
     expect(informe.pasa).toBe(true)
+    // Anti-vacuidad, y es lo que impide que «no aparece ninguno» se cumpla por
+    // no haber buscado: seis rutas recorridas y un catálogo no vacío.
     expect(informe.rutasInspeccionadas).toBe(RECUENTO_DE_RUTAS)
     expect(informe.cualificadoresBuscados).toBe(CUALIFICADORES_DE_URGENCIAS.length)
+    expect(informe.cualificadoresBuscados).toBeGreaterThan(0)
   })
 })

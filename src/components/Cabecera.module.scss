@@ -8,6 +8,14 @@
 // "padding-block-start: var(--altura-cabecera)" (`global.scss`), la MISMA
 // variable que dimensiona esta regla — nunca un número repetido a mano.
 
+// D4 (@s6, 20/09/2026): alto VISIBLE de la píldora del acceso "Tienda". @s6
+// pone el techo en "el mínimo de área táctil más un paso de espaciado"
+// ($area-tactil-minima + espaciado(12) = 36px) y el suelo en el propio mínimo
+// de área táctil (24px). El borde fino del sistema es el escalón más pequeño
+// que lo deja ESTRICTAMENTE por debajo del techo, y aterriza en los ~35px del
+// prototipo sin escribir ningún número a mano.
+$alto-visible-del-acceso-a-tienda: $area-tactil-minima + espaciado(12) - $ancho-borde-fino;
+
 .cabecera {
   position: fixed;
   min-height: var(--altura-cabecera);
@@ -30,7 +38,11 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    min-height: var(--altura-cabecera);
+    // G1 (@s4, 20/09/2026): la caja de CONTENIDO deja sitio al borde inferior
+    // de `.cabecera`, que está declarado con este mismo token de grosor. Sin
+    // el descuento, la franja renderizaba 65 px donde `#root` reserva 64 y su
+    // borde se apoyaba sobre el primer píxel de `#inicio`.
+    min-height: calc(var(--altura-cabecera) - #{$ancho-borde-fino});
     max-width: $ancho-maximo-contenedor;
     gap: espaciado(8);
     margin-inline: auto;
@@ -59,9 +71,14 @@
     border-radius: $radio-medio;
   }
 
+  // D3 (@s1, 20/09/2026): el nombre y el descriptor se TOCABAN (0,00 px
+  // medidos). El hueco sale del primer paso de la escala de espaciado, nunca
+  // de un `margin` escrito a mano; la altura del bloque la sigue mandando el
+  // logotipo ($altura-control-pequena), así que la cabecera no crece (@s4).
   > span {
     display: flex;
     flex-direction: column;
+    gap: espaciado(4);
     min-width: 0;
     line-height: 1.05;
   }
@@ -139,62 +156,54 @@
 
   // El acceso a la Tienda (@s28 de `rediseno_visual.feature`): "borde y sin
   // relleno", distinto del resto del catálogo. El hueco lo abre el propio
-  // dato (`esDestinoTienda`, `Cabecera-logica.ts`), nunca una clase CSS
-  // opaca — el mismo mixin compartido que ya usa la tarjeta de urgencias de
-  // `InformacionContacto.module.scss`.
+  // dato (`esDestinoTienda`, `Cabecera-logica.ts`), nunca una clase CSS opaca.
+  //
+  // D4 (@s6/@s7, 20/09/2026) — PATRÓN INVERTIDO. El prototipo dibuja aquí una
+  // píldora más baja que el objetivo de pulsación de 44×44 que @s2 exige, y
+  // ese objetivo se mide sobre el rect del PROPIO enlace: un pseudo-elemento
+  // que SALIERA del enlace para agrandarlo no cambiaría ese rect. Así que se
+  // invierte: el <a> conserva su caja de control (48px, la misma que sus siete
+  // hermanas) y la píldora visible se dibuja DENTRO, con un `::before`.
+  //
+  // El `@include` NO se abandona y los overrides van DESPUÉS (mismo precedente
+  // en verde que `PaginaTienda.module.scss`): el mixin sigue aportando el foco
+  // visible, el área táctil mínima, el radio de píldora, la ausencia de relleno
+  // que @s28 exige y la transición de color de borde.
   a[data-enlace-tienda] {
     @include boton-fantasma;
+    position: relative;
+    isolation: isolate;
     min-height: $altura-control-media;
     padding-inline: espaciado(16);
+    border: none;
+    color: var(--color-tinta);
     font-size: paso-tipografico(-1);
-  }
-}
 
-.urgenciasEscritorio,
-.urgenciasMovil {
-  @include foco-visible;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: espaciado(8);
-  min-height: $altura-control-media;
-  padding-inline: espaciado(16);
-  border-radius: $radio-completo;
-  background-color: var(--color-urgencia);
-  color: var(--color-sobre-primario);
-  font-size: paso-tipografico(-1);
-  font-weight: 700;
-  text-decoration: none;
-  text-wrap: nowrap;
+    // La píldora visible: centrada dentro del enlace y por DEBAJO de su texto
+    // (`z-index: -1` dentro del contexto de apilamiento propio que abre
+    // `isolation: isolate`, para que no tape ni al texto ni al fondo de la
+    // franja). Su borde es la ÚNICA mezcla de D4: el borde de control del
+    // sistema suavizado con un 12 % del fondo de la variante — la suavidad
+    // máxima que sigue cumpliendo 3:1 en las cinco (@s7). No es un color
+    // literal y no toca `--color-borde-control`, congelado por contrato.
+    &::before {
+      content: '';
+      position: absolute;
+      z-index: -1;
+      inset-inline: 0;
+      inset-block-start: 50%;
+      height: $alto-visible-del-acceso-a-tienda;
+      border: $ancho-borde-control solid color-mix(in srgb, var(--color-borde-control) 88%, var(--color-fondo));
+      border-radius: $radio-completo;
+      transform: translateY(-50%);
+    }
 
-  @media (prefers-reduced-motion: no-preference) {
-    transition: box-shadow 150ms ease-out, text-decoration-color 150ms ease-out;
-  }
-
-  &:hover {
-    box-shadow: var(--sombra-reposo);
-    text-decoration: underline;
-  }
-}
-
-.puntoUrgencias {
-  flex: 0 0 auto;
-  width: espaciado(8);
-  height: espaciado(8);
-  border-radius: $radio-completo;
-  background-color: currentColor;
-
-  @media (prefers-reduced-motion: no-preference) {
-    animation: pulso-urgencias 1.6s ease-in-out infinite;
-  }
-}
-
-.rotuloUrgencias {
-  font-size: 0;
-
-  &::after {
-    content: 'Urgencias';
-    font-size: paso-tipografico(-1);
+    // El estado con el puntero encima lo declara `boton-fantasma`, pero sobre
+    // un borde que aquí ya no existe: se reapunta a la píldora para que el
+    // `@include` siga teniendo efecto en vez de quedarse decorativo.
+    &:hover::before {
+      border-color: var(--color-primario);
+    }
   }
 }
 
@@ -277,22 +286,10 @@
   }
 
   // Mismo estilo de "botón fantasma" que la navegación de escritorio (@s28).
+  // G2 (20/09/2026): el panel móvil se queda EXACTAMENTE como está — los
+  // overrides de D4 son SOLO de escritorio, porque el Given de @s6 acota a
+  // "una ventana más ancha que el punto de corte".
   a[data-enlace-tienda] {
     @include boton-fantasma;
-  }
-
-  .urgenciasMovil {
-    width: calc(100% - #{espaciado(48)});
-    min-height: $altura-control-media;
-    margin: espaciado(8) espaciado(24) espaciado(24);
-    padding: espaciado(12) espaciado(16);
-    text-align: center;
-    text-wrap: balance;
-  }
-}
-
-@keyframes pulso-urgencias {
-  50% {
-    opacity: 0.45;
   }
 }

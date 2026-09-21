@@ -85,21 +85,16 @@ describe('@s10 lo que lee la máquina coincide con lo que lee la persona', () =>
     const digitosDeclarados = String(bloque.telephone).replace(/\D/g, '')
     const digitosPrimerEnlace = (primerEnlace?.textContent ?? '').replace(/\D/g, '')
     const digitosSegundoEnlace = (segundoEnlace?.textContent ?? '').replace(/\D/g, '')
-    // ENMENDADO el 03/09/2026 con `fidelidad_contacto` (34), Enmienda 7 de
-    // `progress/fidelidad/enmiendas_fidelidad_contacto.md` (informacion_contacto
-    // @s5/@s6): el único enlace del grupo de urgencias se llama «Llamar ahora»
-    // y el número visible va en un párrafo, así que los dígitos del enlace se
-    // leen de su destino `tel:` (derivado de la fuente única), no de su texto.
-    const grupoUrgencias = screen.getByRole('group', { name: 'Urgencias fuera de horario' })
-    const enlaceUrgencias = within(grupoUrgencias).getByRole('link', { name: 'Llamar ahora' })
-    const digitosUrgencias = (enlaceUrgencias.getAttribute('href') ?? '').replace(/\D/g, '')
-    const digitosVisiblesDeUrgencias = (within(grupoUrgencias).getByText(/\d{2} \d{3} \d{2} \d{2}/).textContent ?? '').replace(/\D/g, '')
-    expect(digitosUrgencias).not.toBe('')
-    expect(digitosUrgencias.endsWith(digitosVisiblesDeUrgencias)).toBe(true)
-
+    // ENMENDADO el 20/09/2026 (E1, `features/seo_estructura.feature` @s10): la
+    // comparación contra el enlace de urgencias localizaba el grupo «Urgencias
+    // fuera de horario» y su píldora «Llamar ahora», que la retirada de la
+    // tarjeta roja se lleva por delante — y esa búsqueda LANZA, no falla
+    // suavemente. Se conserva la comparación contra el SEGUNDO enlace visible,
+    // que es la que sigue demostrando que `telephone` es el PRIMER teléfono de
+    // la clínica y no otro cualquiera.
+    expect(digitosPrimerEnlace).not.toBe(digitosSegundoEnlace)
     expect(digitosDeclarados.endsWith(digitosPrimerEnlace)).toBe(true)
     expect(digitosDeclarados.endsWith(digitosSegundoEnlace)).toBe(false)
-    expect(digitosDeclarados.endsWith(digitosUrgencias)).toBe(false)
 
     const tramos = bloque.openingHoursSpecification as ReadonlyArray<{ opens: string; closes: string }>
     for (const tramo of tramos) {

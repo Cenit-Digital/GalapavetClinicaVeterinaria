@@ -44,6 +44,29 @@ const TEXTO_PROTOTIPO = Object.values(
   }) as Record<string, string>,
 )[0] as string
 
+/**
+ * El TEXTO REAL de los ficheros de estilos del inventario de módulos, más las
+ * dos hojas compartidas. Es el Given de @s7 desde el 20/09/2026: la puerta ya
+ * no puede preguntarle a la matriz quién pinta sobre el rojo de urgencia
+ * —porque la matriz ya no lo declara—, así que se lo pregunta a las hojas.
+ *
+ * `_api.scss` y `global.scss` entran a propósito, con el mismo criterio que
+ * `usoDelAcento.test.ts:285-295`: pueden AÑADIR hallazgos, nunca ocultarlos.
+ * `_tokens.scss` se queda fuera porque ahí el rojo se DECLARA, no se usa.
+ */
+const ESTILOS_REALES_DEL_INVENTARIO: readonly FicheroDeTexto[] = Object.entries({
+  ...import.meta.glob('../../components/*.module.scss', { eager: true, query: '?raw', import: 'default' }),
+  ...import.meta.glob('../../pages/*.module.scss', { eager: true, query: '?raw', import: 'default' }),
+  ...import.meta.glob('../../styles/{_api,global}.scss', { eager: true, query: '?raw', import: 'default' }),
+} as Record<string, string>).map(([clave, contenido]) => ({ ruta: clave, contenido }))
+
+/**
+ * La matriz vacía con la que se barre el inventario: sin ninguna pareja
+ * declarada, la puerta de reconciliación informa de TODAS las que las hojas
+ * pintan de verdad, y no solo de las que a la matriz le faltan.
+ */
+const SIN_NINGUNA_PAREJA_DECLARADA: readonly EntradaDeMatrizDeUso[] = []
+
 describe('las dos lecturas en crudo traen contenido real, nunca una cadena vacía', () => {
   it('los dos ficheros llegan con su texto y con sus anclas, así que ninguna puerta puede aprobar sobre el vacío', () => {
     expect(TEXTO_TOKENS.length).toBeGreaterThan(0)
@@ -105,15 +128,25 @@ describe('@s6 la variante cálida corrige el único suspenso de contraste que tr
   })
 })
 
-describe('@s7 la tinta que va encima del color de urgencia nunca es blanca por defecto', () => {
+/**
+ * El par (tinta, fondo) de urgencia, ESCRITO A MANO. Desde el 20/09/2026 la
+ * matriz de uso ya no lo declara —el sitio no lo pinta en ningún sitio—, así
+ * que filtrarlo de `MATRIZ_DE_USO_DEL_SISTEMA` dejaría este escenario
+ * recorriendo una lista vacía. Los dos colores siguen saliendo del TEXTO REAL
+ * de `_tokens.scss`, variante a variante: lo que @s7 protege es que el par
+ * SIGA SIENDO APTO el día que el rojo vuelva a usarse.
+ */
+const PAR_DE_TINTA_SOBRE_URGENCIA: EntradaDeMatrizDeUso = {
+  rol: 'sobre-primario',
+  fondo: 'urgencia',
+  uso: 'texto normal',
+}
+
+describe('@s7 el par de tinta sobre el color de urgencia sigue siendo apto aunque ya no se pinte', () => {
   it('el color de encima es "--color-sobre-primario" de esa misma variante y alcanza 4.5 en las cinco', () => {
-    const tintasSobreUrgencia = MATRIZ_DE_USO_DEL_SISTEMA.filter((entrada) => entrada.fondo === 'urgencia')
-
-    // Literal escrito a mano: la matriz no puede declarar NINGUNA otra tinta
-    // sobre el fondo de urgencia, y la que declara es la del propio tema.
-    expect(tintasSobreUrgencia.map((entrada) => entrada.rol)).toEqual(['sobre-primario'])
-
-    const informe = ejecutarMatrizDeContrasteDeVariantes(TEXTO_TOKENS, VARIANTES_REDISENO, tintasSobreUrgencia)
+    const informe = ejecutarMatrizDeContrasteDeVariantes(TEXTO_TOKENS, VARIANTES_REDISENO, [
+      PAR_DE_TINTA_SOBRE_URGENCIA,
+    ])
     expect(informe.variantesComprobadas).toBe(5)
     expect(informe.parejasComprobadas).toBe(5)
     expect(informe.suspensos).toEqual([])
@@ -121,13 +154,19 @@ describe('@s7 la tinta que va encima del color de urgencia nunca es blanca por d
 
     const resueltos = VARIANTES_REDISENO.map((variante) => ({
       variante,
-      veredicto: evaluarParDeVariante(TEXTO_TOKENS, variante, tintasSobreUrgencia[0] as EntradaDeMatrizDeUso),
+      veredicto: evaluarParDeVariante(TEXTO_TOKENS, variante, PAR_DE_TINTA_SOBRE_URGENCIA),
     }))
+    // La comprobación recorre las CINCO variantes, nunca una lista vacía.
+    expect(VARIANTES_REDISENO).toHaveLength(5)
     expect(resueltos).toHaveLength(5)
     for (const { variante, veredicto } of resueltos) {
+      // Los dos colores se leen del texto real del fichero de tokens, variante
+      // a variante: ninguno está retipeado aquí.
       expect(veredicto.color).toBe(leerTokenDeVariante(TEXTO_TOKENS, variante, 'sobre-primario'))
+      expect(veredicto.fondo).toBe(leerTokenDeVariante(TEXTO_TOKENS, variante, 'urgencia'))
       expect(veredicto.umbral).toBe(4.5)
       expect(veredicto.ratio).toBeGreaterThanOrEqual(4.5)
+      expect(veredicto.veredicto).toBe('aprobado')
     }
   })
 
@@ -179,6 +218,33 @@ describe('@s7 la tinta que va encima del color de urgencia nunca es blanca por d
     // sintético con la tinta en primer lugar ejercita la rama "^".
     const tintaAlPrincipio = `<div style="color:#abc;background:var(--urg)">x</div>`
     expect(leerTintasLiteralesSobreRolDelPrototipo(tintaAlPrincipio, 'urg')).toEqual(['#AABBCC'])
+  })
+
+  // DISPARADOR de @s7 (20/09/2026). El rojo de urgencia dejó de ser una señal
+  // del sitio: ni una hoja de estilos escribe tinta encima, ni la matriz de uso
+  // lo declara como fondo. Los DOS recuentos tienen que ser exactamente 0, y si
+  // cualquiera deja de serlo esta puerta se pone roja: volver a usarlo exige
+  // pasar otra vez por la puerta humana.
+  it('ninguna hoja de estilos pinta tinta sobre el rojo de urgencia y la matriz no lo declara como fondo', () => {
+    const pintado = ejecutarPuertaDeReconciliacionDeMatriz(
+      ESTILOS_REALES_DEL_INVENTARIO,
+      SIN_NINGUNA_PAREJA_DECLARADA,
+    )
+
+    // Anti-vacuidad, y es lo que impide que este `it` apruebe sobre la nada:
+    // el barrido lee ficheros de verdad y encuentra en ellos parejas de
+    // verdad. Sin estas dos líneas, "0 sobre urgencia" también se cumpliría
+    // con el corpus vacío o con un barrido que no mirara nada.
+    expect(ESTILOS_REALES_DEL_INVENTARIO.length).toBeGreaterThan(0)
+    expect(pintado.paresSinRepresentar.length).toBeGreaterThan(0)
+
+    const ficherosQuePintanSobreUrgencia = [
+      ...new Set(pintado.paresSinRepresentar.filter((par) => par.fondo === 'urgencia').map((par) => par.ruta)),
+    ]
+    expect(ficherosQuePintanSobreUrgencia).toEqual([])
+
+    const filasConUrgenciaDeFondo = MATRIZ_DE_USO_DEL_SISTEMA.filter((entrada) => entrada.fondo === 'urgencia')
+    expect(filasConUrgenciaDeFondo).toEqual([])
   })
 })
 
@@ -433,7 +499,7 @@ describe('@s9 el anillo de foco existe en las cinco variantes y se distingue de 
 })
 
 describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color', () => {
-  it('la matriz declara los veinticinco pares (rol, fondo, uso) que el sistema pinta de verdad', () => {
+  it('la matriz declara los veintitrés pares (rol, fondo, uso) que el sistema pinta de verdad', () => {
     // 22 desde fidelidad_galeria (03/09/2026): los controles circulares de
     // la galería llevan el borde de control sobre `--color-superficie`, par
     // que ningún módulo pintaba antes (`Galeria.module.scss`, `.controles button`).
@@ -443,7 +509,13 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
     // 25 desde la reparación de la oleada B (03/09/2026): el anillo de foco
     // de las acciones del hero pasa a `--color-sobre-primario` sobre el velo
     // de `--color-tinta` (`Hero.module.scss`, `accesibilidad` @s38/@s39).
-    expect(MATRIZ_DE_USO_DEL_SISTEMA).toHaveLength(25)
+    // 23 desde la feature 39 (20/09/2026, decisión de Pablo): se retira TODA
+    // la cartelería roja de urgencias, así que salen las dos filas que se
+    // quedan sin módulo que las pinte —`sobre-primario` sobre `urgencia` (el
+    // CTA de la cabecera) y `urgencia` sobre `sobre-primario` (la tarjeta de
+    // contacto)—. La matriz vuelve a ser exactamente lo que el sitio pinta;
+    // el par sigue siendo APTO y lo custodia @s7 sobre los tokens.
+    expect(MATRIZ_DE_USO_DEL_SISTEMA).toHaveLength(23)
     expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({
       rol: 'borde-control',
       fondo: 'superficie',
@@ -460,7 +532,7 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
     // Ningún par repetido: una fila duplicada inflaría el recuento sin
     // comprobar nada nuevo.
     const claves = MATRIZ_DE_USO_DEL_SISTEMA.map((entrada) => `${entrada.rol} sobre ${entrada.fondo}`)
-    expect(new Set(claves).size).toBe(25)
+    expect(new Set(claves).size).toBe(23)
 
     // Todo rol citado existe en el inventario del sistema.
     for (const entrada of MATRIZ_DE_USO_DEL_SISTEMA) {
@@ -506,7 +578,7 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
     )
 
     expect(informe.variantesComprobadas).toBe(5)
-    expect(informe.parejasComprobadas).toBe(125) // 25 pares × 5 variantes
+    expect(informe.parejasComprobadas).toBe(115) // 23 pares × 5 variantes
     expect(informe.suspensos).toEqual([])
     expect(informe.veredicto).toBe('aprobado')
   })
@@ -528,7 +600,7 @@ describe('@s11 ninguna de las cinco variantes suspende su matriz de uso de color
       MATRIZ_DE_USO_DEL_SISTEMA,
     )
 
-    expect(informe.parejasComprobadas).toBe(125) // 25 pares × 5 variantes
+    expect(informe.parejasComprobadas).toBe(115) // 23 pares × 5 variantes
     expect(informe.veredicto).toBe('suspenso')
     expect(informe.suspensos.map(({ variante, rol, fondo }) => `${variante}: ${rol} sobre ${fondo}`)).toEqual([
       'marca: borde-control sobre fondo',
@@ -573,6 +645,12 @@ describe('el lector del prototipo falla ruidosamente, nunca en silencio', () => 
   })
 })
 
+// AVISO SOBRE LOS DOS PRIMEROS CASOS DE ESTE BLOQUE (20/09/2026): sus ficheros
+// sintéticos ilustran la reconciliación con `--color-sobre-primario` sobre
+// `--color-urgencia`, una pareja que el sistema ya NO declara desde la feature
+// 39. Siguen verdes y siguen probando lo que tienen que probar —la matriz que
+// se les pasa se escribe A MANO en cada `it`, no se importa de producción—,
+// pero el ejemplo ya no retrata ninguna decisión viva del sitio.
 describe('@s11 la matriz se reconcilia con el TEXTO REAL de las hojas de estilo', () => {
   it('señala la pareja que un fichero de estilos pinta de verdad y la matriz no declara', () => {
     const estilos: readonly FicheroDeTexto[] = [
@@ -727,24 +805,28 @@ describe('@s11 la matriz se reconcilia con el TEXTO REAL de las hojas de estilo'
   })
 })
 
-// `fidelidad_contacto` @s3 (03/09/2026): la píldora del teléfono de urgencias
-// pinta la tinta de urgencia sobre `--color-sobre-primario`
-// (`InformacionContacto.module.scss`), y la franja `urgencia` sobre
-// `urgencia-suave` que citaba la matriz ya no se pinta en ningún sitio. La
-// matriz es "lo que se pinta de verdad" (@s11): entra la fila nueva y sale la
-// muerta.
-describe('la matriz refleja la píldora de urgencias de contacto y retira la franja suave que ya no se pinta', () => {
-  it('declara urgencia sobre sobre-primario como texto normal y no declara urgencia sobre urgencia-suave', () => {
-    expect(MATRIZ_DE_USO_DEL_SISTEMA).toContainEqual({ rol: 'urgencia', fondo: 'sobre-primario', uso: 'texto normal' })
+// HISTORIA DE ESTE BLOQUE, porque su título ha cambiado dos veces y conviene
+// que se sepa por qué:
+//   · `fidelidad_contacto` @s3 (03/09/2026): entró la fila `urgencia` sobre
+//     `sobre-primario` (la píldora del teléfono de contacto) y salió la franja
+//     `urgencia` sobre `urgencia-suave`, que ya no se pintaba.
+//   · Feature 39 (20/09/2026): se retira TODA la cartelería roja, así que la
+//     píldora de contacto desaparece con ella y su fila también. La primera
+//     mitad del título anterior («la matriz refleja la píldora de urgencias de
+//     contacto») dejó de ser cierta y por eso el título se reescribe entero.
+//
+// El `it` que comprobaba que ESA fila aprobaba 4.5 en las cinco variantes se
+// BORRA aquí, en el mismo paso que la fila: sin sujeto, «expected +0 to be 5».
+// No se "repara" a 0 ni a 'suspenso', que solo duplicaría la guarda de fallo
+// cerrado sobre la matriz vacía que ya prueban los dos `it` de @s11.
+describe('la matriz no declara ningún fondo de urgencia, ni el rojo fuerte ni su variante suave', () => {
+  it('ninguna fila declara "urgencia" ni "urgencia-suave" como fondo', () => {
+    // Estas dos aserciones no cuestan lo mismo. La primera es la que muerde:
+    // la fila `urgencia` sobre `sobre-primario` existió hasta el 20/09/2026.
+    // La segunda es una antirregresión TRIVIAL —`urgencia-suave` no tiene ni
+    // ha tenido nunca fila— y se conserva porque el rol sigue declarado en las
+    // cinco variantes de `_tokens.scss` y podría volver por la puerta de atrás.
+    expect(MATRIZ_DE_USO_DEL_SISTEMA.some((entrada) => entrada.fondo === 'urgencia')).toBe(false)
     expect(MATRIZ_DE_USO_DEL_SISTEMA.some((entrada) => entrada.fondo === 'urgencia-suave')).toBe(false)
-  })
-
-  it('esa fila aprueba 4.5 en las cinco variantes', () => {
-    const fila = MATRIZ_DE_USO_DEL_SISTEMA.filter((entrada) => entrada.rol === 'urgencia' && entrada.fondo === 'sobre-primario')
-    const informe = ejecutarMatrizDeContrasteDeVariantes(TEXTO_TOKENS, VARIANTES_REDISENO, fila)
-
-    expect(informe.parejasComprobadas).toBe(5)
-    expect(informe.suspensos).toEqual([])
-    expect(informe.veredicto).toBe('aprobado')
   })
 })
