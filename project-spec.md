@@ -61,6 +61,12 @@ implementarse.
 5. **El estado condicional de un componente vive en un atributo ARIA
    consultable**, nunca en un `className` ternario. Patrón
    `estado-condicional-en-atributo-aria-no-en-clase-css`.
+   *Enmienda propuesta el 13/10/2026 por la feature 49 (`cabecera_sobre_el_hero`),
+   **pendiente de la firma de Pablo**:* cuando el estado es **puramente visual** y no
+   existe ningún atributo ARIA con esa semántica (p. ej. «la cabecera está sobre la
+   foto» o «sólida»), el estado vive en un atributo `data-*` consultable. Un
+   `aria-*` inventado para esto no es válido (axe: `aria-valid-attr`, medido) y
+   `accesibilidad` @s36 lo pondría en rojo. Sigue prohibido el `className` ternario.
 6. **La lógica de decisión vive en módulos puros** (`*-logica.ts`), el `.tsx`
    solo cablea. Patrón `logica-de-decision-en-modulo-puro-no-en-el-jsx`.
 7. **Cero errores, cero warnings** en `tsc --noEmit`, `eslint --max-warnings 0`,
