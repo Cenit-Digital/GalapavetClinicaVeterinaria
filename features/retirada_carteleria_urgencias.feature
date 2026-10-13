@@ -75,12 +75,14 @@
 #   F3  El borde suave de "Tienda" se consigue mezclando tokens existentes; el
 #       camino del token nuevo queda CERRADO sin volver a la puerta humana.
 #       [ACTUALIZADO 13/10/2026 (feature 49, `cabecera_sobre_el_hero`): el camino
-#       del token nuevo SIGUE CERRADO, pero la suavidad respecto del borde de
-#       control pierde su referencia sobre una cabecera de tinta o transparente:
-#       `fidelidad_cabecera` @s7 pasa a exigir solo el 3 a 1 contra lo que hay
-#       detrás de verdad. Valor por defecto del craftsman_lead (13/10/2026), que
-#       Pablo puede vetar: el borde SIGUE siendo suave (F3) mientras cumpla ese 3 a 1;
-#       la mezcla la elige el artesano.]
+#       del token nuevo SIGUE CERRADO, pero la suavidad F3 SE RETIRA en la cabecera
+#       sobre la foto y en la sólida de tinta: la mezcla aprobada el 20/09/2026
+#       da de 2,1 a 2,5:1 contra lo que hay detrás sobre la foto en cuatro paletas
+#       y 1,12:1 en `tech`, y no cumple el 3 a 1 de SC 1.4.11 en ninguna. Valor por
+#       defecto del craftsman_lead (13/10/2026), que Pablo puede vetar: el borde de
+#       «Tienda» es del color de su texto (`currentColor`), como en la maqueta que
+#       vio y eligió, y `fidelidad_cabecera` @s7 exige el 3 a 1 contra los píxeles
+#       reales. La decisión de retirar F3 vuelve a Pablo (resumen de la feature 49).]
 #   G1  El alto renderizado de la cabecera pasa a ser exactamente el hueco que el
 #       documento reserva bajo ella: el 20/09/2026 había 1,00 px de solape real.
 #       [ACTUALIZADO 13/10/2026 (feature 49): G1 SIGUE EN PIE. El alto de la
@@ -196,7 +198,8 @@
 # de los ocho enlaces pasa de 44 a 48 px y su tamaño de letra de 12,8 a 16 px. @s4
 # (G1): UNA cláusula enmendada, la del primer contenido de la portada; el resto sigue.
 # @s6 y @s7 (D4 + F3): reescritos, el texto de «Tienda» pasa a
-# `--color-sobre-primario` y su borde se mide contra lo que hay detrás. @s3 y @s5:
+# `--color-sobre-primario` y su borde, del color de su texto, se mide contra lo que
+# hay detrás (la suavidad F3 se retira). @s3 y @s5:
 # INTACTOS. De `rediseno_visual.feature`, @s26 queda REVISADO y @s28 cambia una
 # cláusula y gana otra; `cabecera_y_navegacion.feature` @s13 y @s7 siguen
 # INTACTOS.]

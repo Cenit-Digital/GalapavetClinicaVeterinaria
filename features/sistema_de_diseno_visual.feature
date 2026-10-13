@@ -432,7 +432,7 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
   # SECCIÓN REVISADA (13/10/2026, feature 49 `cabecera_sobre_el_hero`).
   #   @s14 (sección B), @s25 y @s26: REVISADOS, SIN CAMBIO DE LETRA. Los ocho
   #   enlaces pasan de 12,8 a 16 px (P3) y el corte se queda en 1024: la fila cabe
-  #   a 1024 con 78 px de holgura medidos el 13/10/2026. El literal, su
+  #   a 1024 (la holgura medida depende del entorno: ver la nota de @s27). El literal, su
   #   coincidencia entre JS y CSS y el viewport máximo de la escala no se mueven.
   #   @s25 lee SOLO la hoja de la cabecera: que ninguna OTRA hoja gane una
   #   condición de anchura nueva lo fija `cabecera_sobre_el_hero` @s15.
@@ -457,26 +457,51 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
     And ese punto de corte de CSS hipotético seguiría aplicando la maquetación de móvil a ese mismo ancho de 1024 píxeles
     And esa divergencia es exactamente la «franja intermedia» que este proyecto evita fijando un único literal de 1024 para ambos
 
-  # @s27, TRES CLÁUSULAS AÑADIDAS (13/10/2026, feature 49). Nada de lo que decía se
-  # retira.
+  # @s27, CUATRO CLÁUSULAS AÑADIDAS (13/10/2026, feature 49; revisado tras el panel de
+  # revisión). Nada de lo que decía se retira.
   # POR QUÉ. «Ningún elemento se desborda ni se superpone» es verdad con una marca
-  # COMPRIMIDA y un descriptor TRUNCADO: a 19 y 20 px la marca se comprime a 244 y a
-  # 216 px, el descriptor pierde letras tras unos puntos suspensivos y nada solapa.
-  # El nav a 16 px de Pablo (P3) se midió a 1024 con 78 px de holgura (a 17 px, 52;
-  # a 18 px, 24), y desde 19 px el contrato de antes habría seguido en verde con la
-  # marca rota. Es el criterio 4 de la 49: «caben en una fila a 1024 px sin truncar
-  # el descriptor».
-  # LA TOLERANCIA de 1 px es la horizontal que ya usa `fidelidad_cabecera` @s1. La
-  # holgura se midió en `vite dev` con una barra de desplazamiento de 15 px: con la
-  # barra superpuesta de Playwright puede ser MÁS, nunca menos, así que el suelo de
-  # 78 menos 1 vale para las dos.
-  # SE MIDE TAMBIÉN EN "/blog", donde «Blog» es el enlace actual y pesa 600 con el
-  # ancho RESERVADO (cabecera_sobre_el_hero @s16): la fila no puede ser más larga que
-  # en la portada, así que allí vale la misma holgura de 77 px.
-  # PUERTA QUE MUERDE: el nav pasa a 18 px: la holgura baja a 24 y falla la cláusula
-  # de 77. A 19 px: el descriptor se trunca y la marca se comprime. El relleno
-  # lateral de los enlaces sube de 8 a 10 px: ocho enlaces por 4 px son 32 px menos
-  # de holgura, y quedan 46.
+  # COMPRIMIDA y un descriptor TRUNCADO: a 20 px la marca se comprime de 256,84 a
+  # 230,98 px, el descriptor pierde letras tras unos puntos suspensivos y nada solapa.
+  # El nav a 16 px de Pablo (P3) cabe a 1024, y a 17, 18 y 19 px el contrato de antes
+  # habría seguido en verde con la holgura casi agotada. Es el criterio 4 de la 49:
+  # «caben en una fila a 1024 px sin truncar el descriptor».
+  # LA CLÁUSULA PRINCIPAL es que el descriptor se vea entero y que la marca conserve su
+  # ancho natural (256,84 px). La distancia numérica es el suelo que avisa ANTES de que
+  # eso ocurra.
+  # LAS CIFRAS DEPENDEN DEL ENTORNO, y cada una lleva el suyo:
+  #   · En `vite dev` con barra de desplazamiento clásica de 15 px (la medida de las
+  #     decisiones §3 del 13/10/2026): 78 px a 16 px, 52 a 17, 24 a 18.
+  #   · En el entorno que ejecuta la puerta (Chromium de Playwright, barra superpuesta:
+  #     el ancho del documento es igual al de la ventana; medido por el panel de
+  #     revisión sobre `dist/`): 93,17 px a 16 px, 66,83 a 17, 38,59 a 18, 10,33 a 19 y 8
+  #     a 20. A 19 px la marca NO se comprime (256,84) y el descriptor sigue entero; solo
+  #     a 20 px la marca baja a 230,98 y el descriptor se trunca.
+  # La diferencia es de unos 15 px y es la de la barra. El suelo de la cláusula es el de
+  # la puerta menos 1 px de tolerancia: 92 px, no los 77 que salían de restar a los 78 de
+  # `vite dev`, porque con 77 una regresión de hasta 16 px pasaba sin que nada se
+  # pusiera en rojo.
+  # REMEDICIÓN PENDIENTE. Las dos series son SIN la reserva de ancho del enlace actual
+  # (cabecera_sobre_el_hero @s16): con peso 600 en todos los enlaces el panel midió una
+  # holgura de 84,30 a 16 px, unos 9 px menos. El artesano remide con la reserva
+  # implementada; si el suelo de 92 resultara imposible por esa reserva, el hallazgo
+  # vuelve a la puerta humana (no se rebaja por su cuenta) y la cifra se corrige aquí.
+  # LA TOLERANCIA de 1 px es la horizontal que ya usa `fidelidad_cabecera` @s1.
+  # SE MIDE TAMBIÉN EN "/blog", donde «Blog» es el enlace actual y pesa 600 con el ancho
+  # RESERVADO (cabecera_sobre_el_hero @s16): la fila no puede ser más larga que en la
+  # portada. La holgura de "/blog" no se midió por separado; se exige el mismo suelo y la
+  # remedición lo confirma.
+  # EL RELLENO LATERAL de los siete enlaces de texto es el de la escala (8 px), sin un
+  # número escrito a mano; «Tienda» lleva su propio relleno de 16 px.
+  # PUERTA QUE MUERDE (medido por el panel en el entorno de la puerta):
+  #   · El nav pasa a 17 px (66,83) o a 18 px (38,59): cae SOLO la cláusula numérica.
+  #   · El nav pasa a 19 px (10,33): cae SOLO la cláusula numérica; a 19 px la marca NO
+  #     se comprime y el descriptor sigue entero en ese entorno.
+  #   · El nav pasa a 20 px: la marca baja a 230,98 y el descriptor se trunca; caen las
+  #     tres cláusulas.
+  #   · El relleno lateral de los SIETE enlaces de texto sube de 8 a 10 px: la holgura
+  #     baja a unos 67 px (67,09 medidos) y caen la cláusula numérica y la del relleno
+  #     de la escala. Si se cambian los ocho enlaces, «Tienda» incluido, la holgura es de
+  #     79,09 y el suelo antiguo de 77 no la habría visto, pero el de 92 sí.
   @s27
   Scenario: En el ancho exacto del punto de corte la cabecera real muestra la maquetación de escritorio, y un píxel por debajo la de móvil
     Given el sitio de Galapavet construido ("vite build && vite preview")
@@ -486,8 +511,9 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
     And a 1023 píxeles la fila de navegación horizontal no está presente y el botón de menú sí lo está
     And ningún elemento de la cabecera se desborda ni se superpone con otro en ninguno de los dos anchos
     And a 1024 píxeles, tanto en la portada como en "/blog", donde "Blog" es el enlace actual y pesa 600 con el ancho reservado, los ocho enlaces ocupan una sola fila: sus cajas arrancan a la misma altura, con una tolerancia de 1 píxel
-    And a 1024 píxeles el descriptor "Centro integral veterinario" se ve entero, sin puntos suspensivos, y la marca conserva el ancho natural de su contenido, sin comprimirse
-    And a 1024 píxeles en la portada la distancia entre el borde derecho de la marca y el borde izquierdo de la navegación es de 77 píxeles o más (78 medidos el 13/10/2026, menos la tolerancia de 1 píxel), y en "/blog", donde el enlace actual reserva su ancho, es también de 77 píxeles o más
+    And a 1024 píxeles el descriptor "Centro integral veterinario" se ve entero, sin puntos suspensivos, y la marca conserva el ancho natural de su contenido, 256,84 píxeles, sin comprimirse
+    And a 1024 píxeles, con la barra de desplazamiento superpuesta (el ancho del documento es igual al de la ventana; si no lo es, el veredicto es «no se midió» y la puerta suspende), la distancia entre el borde derecho de la marca y el borde izquierdo de la navegación es de 92 píxeles o más en la portada y también en "/blog", donde el enlace actual reserva su ancho (93,17 medidos el 13/10/2026 sin la reserva, menos la tolerancia de 1 píxel; remedición pendiente)
+    And el relleno lateral computado de los siete enlaces de texto de la navegación de escritorio es el que declara la escala, 8 píxeles, sin ningún número escrito a mano
 
   # ---------------------------------------------------------------------------
   # F. ÁREA TÁCTIL MÍNIMA EN EL SITIO REAL (cierra accesibilidad.feature @s2/@s7)

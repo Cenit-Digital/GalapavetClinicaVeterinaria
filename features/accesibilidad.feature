@@ -319,8 +319,12 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # LETRA. Una cabecera transparente sigue siendo «la cabecera fija»: el criterio es
   # por RECTÁNGULO, no por opacidad. SC 2.4.11 habla de un componente «entirely
   # hidden due to author-created content», y que la cabecera sea transparente no
-  # reduce el solape (inferencia de la investigación del 13/10/2026; ninguna página
-  # Understanding leída trata cabeceras translúcidas). El hueco que lo hace cumplir,
+  # reduce el solape. Según el panel de revisión del 13/10/2026, el documento de
+  # entendimiento de SC 2.4.11
+  # (https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum) trata las
+  # superposiciones semitransparentes y remite a SC 1.4.11 para la legibilidad del
+  # indicador de foco bajo ellas, que mide @s18 con píxeles reales (el documento no
+  # se ha vuelto a leer en esta sesión). El hueco que lo hace cumplir,
   # `scroll-padding-top`, y el desplazamiento del enlace de salto al enfocar no
   # cambian: cabecera_sobre_el_hero @s8. Sigue sin existir «ninguna barra superior
   # adicional»: la cabecera mide 64 px en sus dos estados.
@@ -803,7 +807,7 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And el recuento de módulos que declaran movimiento dentro de ese bloque es mayor que 0 y se lee del texto real de las hojas de estilo, nunca de una lista escrita en el test
     And con el reloj de animaciones del navegador congelado ANTES de navegar, como en hero_reducido_con_animacion @s5, la portada tiene exactamente las 3 animaciones por fotogramas clave del hero, con los valores que fija ese escenario: sin congelar, una máquina lenta las daría ya terminadas y el recuento bajaría a 0 con el código correcto
     And con el reloj congelado antes de navegar en cada una de las 5 rutas, las otras 5 rutas del inventario no tienen ninguna animación por fotogramas clave (las transiciones no cuentan)
-    And al llevar esas 3 animaciones al último instante de su fase activa, su "endTime" menos 1 milisegundo, el titular, el párrafo y el botón tienen opacidad efectiva mayor o igual que 0,999 y un desplazamiento horizontal menor que 0,5 píxeles, y el último fotograma de cada una, el de desplazamiento 1 leído con "getKeyframes()", declara con exactitud opacidad "1" y transformación "none" o un desplazamiento horizontal de 0
+    And al llevar esas 3 animaciones al último instante de su fase activa, su "endTime" menos 1 milisegundo, el titular, el párrafo y el botón tienen opacidad efectiva mayor o igual que 0,999 y un desplazamiento horizontal menor que 0,5 píxeles, y el último fotograma de cada una, el fotograma cuyo offset es 1 leído con "getKeyframes()", declara con exactitud opacidad "1" y transformación "none" o un desplazamiento horizontal de 0
     And ningún contenido queda oculto ni a medio aparecer cuando ese movimiento termina
 
   # ---------------------------------------------------------------------------

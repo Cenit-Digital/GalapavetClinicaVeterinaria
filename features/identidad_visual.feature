@@ -625,22 +625,24 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And el veredicto de la puerta sobre cada una de estas declaraciones sintéticas es el de la tabla:
       | declaración sintética                                                                                                         | veredicto                                                      |
       | transition: color 150ms ease-out                                                                                              | dentro de la escala                                            |
-      | animation: entrada 700ms ease-out both                                                                                        | dentro de la escala                                            |
+      | animation: entrada 700ms ease-out backwards                                                                                        | dentro de la escala                                            |
       | animation: entrada 0.7s ease-out 120ms both                                                                                   | dentro de la escala                                            |
       | animation-duration: 0.7s                                                                                                      | dentro de la escala                                            |
       | animation-delay: 240ms                                                                                                        | dentro de la escala                                            |
       | animation-delay: 0s                                                                                                           | dentro de la escala                                            |
       | animation-duration: 0.01ms                                                                                                    | dentro de la escala: es el corte por menos movimiento          |
-      | animation: entrada 1.25s ease-out both                                                                                        | fuera de la escala: duración de 1250 milisegundos              |
+      | animation: entrada 1.25s ease-out backwards                                                                                        | fuera de la escala: duración de 1250 milisegundos              |
       | animation-duration: 1.25s                                                                                                     | fuera de la escala: duración de 1250 milisegundos              |
       | animation-delay: 200ms                                                                                                        | fuera de la escala: retardo de 200 milisegundos                |
       | animation-delay: 0.15s                                                                                                        | fuera de la escala: 150 es una duración de la escala, no un retardo |
       | animation: entrada 120ms ease-out 700ms both                                                                                  | fuera de la escala: duración de 120 y retardo de 700, los dos números en el papel cambiado |
       | animation-delay: -120ms                                                                                                       | fuera de la escala: retardo negativo                           |
       | transition: color 300ms ease-out 400ms                                                                                        | fuera de la escala: retardo de 400 milisegundos                |
-      | la propiedad "animation:" sola en una línea y "entrada 1.25s ease-out both" en la línea siguiente                             | fuera de la escala: duración de 1250 milisegundos              |
+      | la propiedad "animation:" sola en una línea y "entrada 1.25s ease-out backwards" en la línea siguiente                             | fuera de la escala: duración de 1250 milisegundos              |
       | la propiedad "transition:" sola en una línea, y "transform 300ms ease-out," y "color 150ms ease-out" en las dos líneas siguientes | dentro de la escala: es la forma en que escribe hoy el módulo del equipo |
       | transition: color 150ms ease-out, transform 300ms ease-out 400ms                                                              | fuera de la escala: retardo de 400 milisegundos en la SEGUNDA entrada de la lista |
+      | transition: color 150ms ease-out, transform 400ms ease-out                                                                    | fuera de la escala: duración de 400 milisegundos en la SEGUNDA entrada de la lista |
+      | la propiedad "transition:" sola en una línea y tres líneas de continuación donde la segunda o la tercera lleva un valor fuera de escala | fuera de la escala: se leen todas las líneas de continuación, no solo la primera |
       | transition-delay: 400ms                                                                                                       | fuera de la escala: retardo de 400 milisegundos                |
       | transition-delay: 120ms                                                                                                       | dentro de la escala                                            |
       | animation-delay: 0.24s                                                                                                        | dentro de la escala: 240 milisegundos escritos en segundos     |
@@ -648,8 +650,8 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
       | animation-duration: 120ms                                                                                                     | fuera de la escala: 120 es un retardo de la escala, no una duración |
       | animation-duration: .7s                                                                                                       | dentro de la escala: sin cero inicial es el mismo 700 milisegundos |
       | animation-duration: .25s                                                                                                      | fuera de la escala: duración de 250 milisegundos                     |
-      | animation: entrada var(--duracion) ease-out both                                                                              | fuera de la escala o no verificable: la puerta falla cerrado   |
-      | animation: entrada $duracion-entrada ease-out both                                                                            | fuera de la escala o no verificable: la puerta falla cerrado   |
+      | animation: entrada var(--duracion) ease-out backwards                                                                              | fuera de la escala o no verificable: la puerta falla cerrado   |
+      | animation: entrada $duracion-entrada ease-out backwards                                                                            | fuera de la escala o no verificable: la puerta falla cerrado   |
       | transition: color calc(100ms + 50ms) ease-out                                                                                 | fuera de la escala o no verificable: la puerta falla cerrado   |
       | transition: box-shadow 400ms ease-out, escrita dentro de un "@mixin" de "src/styles/_api.scss"                                | fuera de la escala: duración de 400 milisegundos en un mixin que usa el hero |
 
@@ -821,6 +823,15 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And el fichero servido es un PNG, no un WebP, porque la documentación oficial de Meta no declara qué formatos acepta y el WebP queda NO VERIFICADO en sus rastreadores
     And el fichero no procede del banco de imágenes: se compone con el logotipo real sobre el morado de marca
 
+  # @s30 REVISADO (13/10/2026, feature 49 y feature 48): SIN CAMBIO DE LETRA. Con el
+  # hero a pantalla completa (P5) la fotografía deja de ser el elemento de mayor
+  # contenido pintado: el candidato de LCP pasa al titular o al párrafo
+  # (hero_reducido_con_animacion @s11 y cabecera_sobre_el_hero @s20), y la razón que
+  # da la cláusula del <img> del hero («por ser el elemento de mayor contenido
+  # pintado») queda como razón histórica. La carga inmediata y la prioridad alta de
+  # esa imagen siguen valiendo: es la primera que el navegador debe pedir. Que la
+  # cabecera transparente y el hero a pantalla completa no desplazan nada lo mide
+  # además cabecera_sobre_el_hero @s8 y @s20 (CLS 0 medido en la portada).
   @s30
   Scenario: Cada imagen declara sus dimensiones y la carga no desplaza el contenido
     Given el sitio de Galapavet construido y servido desde "dist/"
@@ -919,7 +930,8 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And ese umbral 24 está escrito a mano en el escenario y no se obtiene del valor que comprueba
     And esto ejecuta @s29 de sistema_de_diseno_visual.feature, que esta feature no redefine
 
-  # @s38 Y @s39, UNA CLÁUSULA ENMENDADA CADA UNO (13/10/2026, feature 49). Texto
+  # @s38 Y @s39 ENMENDADOS (13/10/2026, feature 49): @s38 UNA CLÁUSULA ENMENDADA Y UNA
+  # AÑADIDA; @s39 EL «WHEN» ENMENDADO Y DOS CLÁUSULAS AÑADIDAS. Texto
   # literal retirado de @s38: «And el ratio de contraste calculado entre los mismos
   # píxeles en estado con foco y sin foco es mayor o igual que 3». De @s39, el
   # «When»: «cada control interactivo de cada una de las 6 rutas recibe el foco por
@@ -952,7 +964,7 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And el ratio de contraste calculado entre los mismos píxeles en estado con foco y sin foco es mayor o igual que 3, leídos de capturas del navegador y nunca del color computado del fondo de un ancestro: sobre la fotografía del hero, con la cabecera transparente, el valor de cada control es el del peor píxel de la zona de su anillo
     And ningún control declara la supresión del contorno de foco del navegador sin sustituirlo por un indicador propio
     And el recuento de controles efectivamente comprobados es mayor que 0
-    And entre los controles comprobados de la portada, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera, con la cabecera transparente
+    And entre los controles comprobados, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera de la portada con la cabecera transparente, y los de una subpágina con la cabecera sólida
     And esos umbrales 2 y 3 están escritos a mano en el escenario y no se obtienen de los valores que comprueban
     And esto ejecuta @s30 y @s31 de sistema_de_diseno_visual.feature y la primera mitad de @s18 de accesibilidad.feature
 
@@ -966,15 +978,19 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And ambos ratios se calculan con la fórmula real de src/lib/contraste.ts, la misma que ya aprobó tokens_marca.feature
     And sobre la fotografía del hero, con la cabecera transparente, «el fondo» de un control es el peor píxel de su zona y no un color único
     And el recuento de controles efectivamente comprobados es mayor que 0
-    And entre los controles comprobados de la portada, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera, con la cabecera transparente
+    And entre los controles comprobados, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera de la portada con la cabecera transparente, y los de una subpágina con la cabecera sólida
     And esto ejecuta la segunda mitad de @s18 de accesibilidad.feature
 
   # @s40 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Una cabecera
   # transparente sigue siendo la cabecera fija: el criterio es por RECTÁNGULO, no por
   # opacidad. SC 2.4.11 habla de un componente «entirely hidden due to
-  # author-created content» y que la cabecera sea transparente no reduce el solape
-  # (inferencia de la investigación del 13/10/2026: ninguna página Understanding
-  # leída trata cabeceras translúcidas). El hueco que lo hace cumplir
+  # author-created content» y que la cabecera sea transparente no reduce el solape.
+  # Según el panel de revisión del 13/10/2026, el documento de entendimiento de SC
+  # 2.4.11 (https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum)
+  # trata las superposiciones semitransparentes y remite a SC 1.4.11 para la
+  # legibilidad del indicador de foco bajo ellas, que es lo que miden @s38 y @s39 con
+  # píxeles reales (el documento no se ha vuelto a leer en esta sesión). El hueco que
+  # lo hace cumplir
   # (`scroll-padding-top`, 64 + 24 px) no cambia: cabecera_sobre_el_hero @s8.
   @s40
   Scenario: Al tabular por la página entera ningún control enfocado queda tapado por la cabecera fija

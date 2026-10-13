@@ -87,8 +87,13 @@
 #   —los ocho enlaces pasan de 12,8 a 16 px (P3 de Pablo)— y el 1024 se vuelve a
 #   medir con ella. Medido en navegador real el 13/10/2026, con la fila a 16 px
 #   inyectada en `vite dev` y la marca de 256,84 px: cabe en una sola línea a 1024
-#   px con 78 px de holgura (a 17 px, 52; a 18 px, 24; a 19 y 20 px la marca se
-#   comprime y el descriptor se trunca). El literal NO se mueve: @s1 sigue en 1024.
+#   px con 78 px de holgura, con una barra de desplazamiento clásica de 15 px (a 17
+#   px, 52; a 18 px, 24). En el entorno que ejecuta las puertas, Chromium de
+#   Playwright con la barra superpuesta, la holgura medida por el panel de revisión
+#   es de 93,17 px a 16 px, y a 19 px la marca todavía NO se comprime: solo a 20 px
+#   baja a 230,98 y el descriptor se trunca. Las cifras dependen del entorno y
+#   están SIN la reserva de ancho del enlace actual (remedición pendiente: ver
+#   `sistema_de_diseno_visual` @s27). El literal NO se mueve: @s1 sigue en 1024.
 #   Lo que se comprueba con el CSS definitivo, y no con una hoja inyectada, vive en
 #   `sistema_de_diseno_visual` @s27 (enmendado) y en `cabecera_sobre_el_hero` @s13
 #   y @s14.]

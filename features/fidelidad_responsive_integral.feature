@@ -31,10 +31,11 @@ Feature: Fidelidad responsive integral de la portada
 
   # @s4 REVISADO (13/10/2026, feature 49 `cabecera_sobre_el_hero`): SIN CAMBIO DE
   # LETRA. Con los ocho enlaces a 16 px (P3) la fila cabe a 1024 px, con 78 px de
-  # holgura medidos el 13/10/2026, así que «la marca y las acciones no se solapan
-  # ni desbordan» sigue siendo cierto. LO QUE ESTE ESCENARIO NO VE: una marca
+  # holgura con barra clásica y 93,17 px con la barra superpuesta de Playwright
+  # (medidos el 13/10/2026), así que «la marca y las acciones no se solapan ni
+  # desbordan» sigue siendo cierto. LO QUE ESTE ESCENARIO NO VE: una marca
   # comprimida con el descriptor truncado no solapa ni desborda nada, y es justo lo
-  # que pasaría a 19 o 20 px. Esa cláusula vive en `sistema_de_diseno_visual` @s27
+  # que pasaría a 20 px. Esa cláusula vive en `sistema_de_diseno_visual` @s27
   # (enmendado), no aquí, para no tener dos copias del mismo contrato.
   @s4
   Scenario: La cabecera cambia exactamente en el borde aprobado

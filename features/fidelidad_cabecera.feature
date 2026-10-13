@@ -111,6 +111,7 @@
 #       saber que era barato. Camino APROBADO: el (a) de la nota de @s7 —mezcla
 #       local sobre tokens que ya existen—. El camino (b), token nuevo, queda
 #       CERRADO: no se abre el inventario congelado.
+#       [SUPERADA el 13/10/2026 para la cabecera sobre la foto: ver la nota de @s7.]
 #   G1  El @s4 que esta misma mañana se escribió para cazar el defecto de altura
 #       de la cabecera NACÍA CIEGO: su «tolerancia de 1 píxel» absorbía
 #       exactamente el defecto de 1 píxel que el sitio tiene HOY. Reescrito sin
@@ -145,7 +146,9 @@
 #        ella a propósito. G1 sigue en pie en todo lo demás.
 #   @s5  INTACTO.
 #   @s6  REESCRITO en dos cláusulas: el color y el tamaño del texto de «Tienda».
-#   @s7  REESCRITO: el borde de «Tienda» se mide contra lo que hay detrás de verdad.
+#   @s7  REESCRITO: el borde de «Tienda» pasa a ser del color de su texto (se RETIRA la
+#        suavidad F3 del 20/09/2026, decisión que vuelve a Pablo) y se mide contra
+#        lo que hay detrás de verdad.
 #
 # La cabecera es TRANSPARENTE sobre la foto en la portada y SÓLIDA (tinta de la
 # paleta, texto `sobre-primario`) en las demás rutas y al salir del hero. Todo lo
@@ -533,6 +536,7 @@ Feature: Fidelidad visual de la cabecera
   # dentro del borde de control: peores casos 3,61 / 3,48 / 6,92 / 3,87 / 3,01,
   # y `marca` es la variante que manda (a un 16 % ya suspende, con 2,81).
   #
+  # [SUPERADO el 13/10/2026 para la cabecera sobre la foto: ver «@s7 REESCRITO», abajo.]
   # DECIDIDO (20/09/2026, TERCERA TANDA): EL BORDE SÍ SE SUAVIZA, Y POR EL
   # CAMINO (a). Esta nota nació ofreciendo dos caminos y dejando la elección
   # abierta; Pablo la cerró el mismo día, al saber que el (a) era barato. Queda
@@ -563,7 +567,8 @@ Feature: Fidelidad visual de la cabecera
   # `--color-borde-control` NO SE TOCA en ninguno de los dos caminos: está
   # congelado hexadecimal a hexadecimal por @s8 (Enmienda 3) y @s4 de
   # `rediseno_visual`, que lo recalculan desde el prototipo versionado.
-  # @s7 REESCRITO (13/10/2026, feature 49). Texto literal retirado:
+  # @s7 REESCRITO (13/10/2026, feature 49; revisado tras el panel de revisión).
+  # Texto literal retirado:
   #     Scenario: El borde del acceso "Tienda" se suaviza sin bajar del mínimo de contraste de componente
   #       When se compara el color de borde del acceso "Tienda" con el borde de control del resto de botones de contorno
   #       Then en cada variante el borde del acceso "Tienda" contrasta menos contra el fondo sobre el que se pinta que el borde de control
@@ -573,27 +578,61 @@ Feature: Fidelidad visual de la cabecera
   # borde de control de la variante, un tono oscuro, contra la cabecera clara. Con la
   # cabecera de tinta o transparente sobre la foto, el «fondo sobre el que se
   # pinta» es la tinta o la fotografía bajo el velo, y el borde de control (oscuro)
-  # casi no contrasta con ninguna de las dos; mezclarlo con `--color-fondo` al 88 %
-  # lo empeora. La cláusula «contrasta menos que el borde de control» pierde su
-  # referencia: ya no hay un borde de control que sea el más fuerte con el que
-  # compararse. La suavidad que Pablo aprobó el 20/09/2026 (F3) tampoco tiene ya un
-  # punto de partida medible: VALOR POR DEFECTO del craftsman_lead (13/10/2026), que
-  # Pablo puede vetar: el borde SIGUE siendo suave mientras cumpla el 3 a 1, y la
-  # mezcla la elige el artesano; deja de ser una cláusula comprobable.
+  # casi no contrasta con ninguna de las dos. La cláusula «contrasta menos que el borde
+  # de control» pierde su referencia, y la suavidad aprobada el 20/09/2026 (F3) deja de
+  # ser posible.
+  #
+  # LA SUAVIDAD F3 SE RETIRA, Y ES UNA DECISIÓN QUE VUELVE A PABLO. MEDIDO por el panel
+  # de revisión en Chromium (el borde se mide con una captura en la que él mismo está
+  # transparente): la mezcla de entonces, el 88 % del borde de control con
+  # `--color-fondo`, da contra lo que hay detrás de la píldora, con la cabecera
+  # TRANSPARENTE sobre la foto, de 2,1 a 2,5:1 en `clinica`, `calida`, `eco` y `marca`
+  # y 1,12:1 en `tech`; con la cabecera SÓLIDA da de 3,55 a 4,24 en cuatro paletas
+  # (aprueba) y 2,06 en `tech`. Suspende el 3:1 de SC 1.4.11 sobre la foto en las
+  # CINCO paletas y sobre la tinta solo en `tech`. No existe un borde «más suave» que
+  # cumpla 3:1 sobre la foto sin ser casi tan fuerte como el texto.
+  # VALOR POR DEFECTO del craftsman_lead (13/10/2026), que Pablo puede vetar: el borde
+  # de la píldora es del COLOR DE SU TEXTO (`currentColor`), que es lo que lleva la
+  # maqueta que Pablo vio y eligió (`border: 1px solid currentColor`). Si Pablo prefiere
+  # conservar un borde suave, tiene que decir qué contraste acepta sobre la foto (el
+  # 3:1 de SC 1.4.11 no se puede suavizar) o aceptar un borde de otro tono; la cláusula
+  # «el borde es del color de su texto» y la de 3:1 se reescriben entonces juntas.
   # QUÉ SE CONSERVA: el suelo de 3 a 1 (SC 1.4.11), la intocabilidad del borde de
   # control de los demás botones, la regla única derivada de tokens existentes y la
-  # ausencia de color literal en la hoja. QUÉ CAMBIA: el 3 a 1 se mide contra los
-  # PÍXELES reales detrás del borde (el peor), en los dos estados de la cabecera,
-  # con el método de cabecera_sobre_el_hero @s10. La mezcla concreta la elige el
-  # artesano: el camino (b) de la nota de arriba, el token nuevo, sigue CERRADO.
-  # PUERTA QUE MUERDE: el borde se queda en la mezcla de antes (88 % del borde de
-  # control con `--color-fondo`): sobre tinta no llega a 3. La píldora lleva un
-  # borde de color literal: la puerta de literales lo señala.
+  # ausencia de color literal en la hoja. El camino (b) de la nota de F3, el token
+  # nuevo, sigue CERRADO.
+  # QUÉ CAMBIA Y CÓMO SE MIDE. El borde se mide contra los PÍXELES reales que hay
+  # detrás de él, en los dos estados de la cabecera: se deja el borde con color
+  # transparente conservando su caja, se captura la banda que dibuja (la caja de la
+  # píldora visible que mide @s6, menos su interior) y se calcula el contraste del color
+  # del borde, compuesto con su opacidad efectiva, contra cada píxel de esa banda; la
+  # cifra es el MENOR. Con el borde pintado en la captura, su contraste contra sí mismo
+  # sería 1,00 y el escenario no podría aprobar nunca. El texto de «Tienda» NO se mide
+  # aquí: se mide en cabecera_sobre_el_hero @s10 sobre la caja de su nodo de texto, y el
+  # método de píxeles es el de esa nota. Con el borde del color del texto, el contraste
+  # del borde queda cerca del del texto, pero no es idéntico: la banda del borde cubre
+  # píxeles que la caja del texto no cubre (los de los bordes de la píldora, donde el
+  # velo es otro). Por eso se mide.
+  # PUERTA QUE MUERDE (las mutaciones que de verdad se ponen en rojo):
+  #   · El borde vuelve a la mezcla de antes (88 % del borde de control con
+  #     `--color-fondo`): suspende sobre la foto en las cinco paletas (2,1 a 2,5; 1,12 en
+  #     `tech`) y sobre la tinta solo en `tech` (2,06), y la cláusula «el borde es del
+  #     color del texto» suspende en las cinco.
+  #   · El borde pasa a un gris «#424242»: suspende la puerta de píxeles (≈ 2,1 sobre la
+  #     foto) y la de color literal.
+  #   · El borde se quita (ancho 0 o color transparente): la banda tiene ancho 0 o su
+  #     color es transparente; suspende la cláusula «el borde es del color del texto y se
+  #     ve» y la medida da «no se midió».
+  # La tabla de cabecera_sobre_el_hero @s12 trae las filas de escena que prueban que la
+  # propia puerta distingue (el borde en gris suspende; texto y borde blancos sobre
+  # negro aprueban con 21,00).
   @s7
-  Scenario: El borde del acceso "Tienda" alcanza el contraste mínimo de componente contra lo que hay realmente detrás, sobre la foto y sobre el estado sólido
+  Scenario: El borde del acceso "Tienda" es del color de su texto y alcanza el contraste mínimo de componente contra lo que hay realmente detrás, sobre la foto y sobre el estado sólido
     Given el sitio servido en cada una de las cinco variantes de paleta, con la fotografía del hero decodificada y la entrada del hero en estado estable (hero_reducido_con_animacion @s10)
-    When se mide el borde del acceso "Tienda" contra los píxeles que hay realmente detrás de él, con la cabecera transparente sobre la foto y con la cabecera sólida, con el método de píxeles de cabecera_sobre_el_hero @s10
-    Then en cada variante y en cada uno de los dos estados el contraste del borde contra el peor píxel que tiene detrás no baja de 3 a 1
+    When se mide el borde del acceso "Tienda" contra los píxeles que hay realmente detrás de él, con una captura en la que el propio borde está transparente, con la cabecera transparente sobre la foto y con la cabecera sólida, con el método de píxeles de cabecera_sobre_el_hero @s10
+    Then en cada variante y en cada uno de los dos estados el contraste del color del borde, compuesto con su opacidad efectiva, contra el peor píxel de la banda del borde no baja de 3 a 1
+    And en cada variante y en cada estado el color de borde computado de "Tienda" es el color de texto computado del propio enlace, "--color-sobre-primario" de la variante, y su ancho de borde computado es mayor que 0
     And los demás botones de contorno del sitio conservan su borde de control actual, sin cambiar ni un dígito
     And el valor del borde sale de una única regla, la misma para las cinco variantes y los dos estados, derivada de tokens que ya existen
     And en la hoja de estilos del módulo de la cabecera no aparece ningún color literal
+    And el número de píxeles muestreados en la banda del borde es mayor que 0 en cada variante y estado: no se aprueba por vacuidad

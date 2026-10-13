@@ -90,14 +90,14 @@ sin cambio (`rediseno_visual` @s29, `accesibilidad` @s21 y `fidelidad_lienzo` @s
 | @s2 | Teléfono, horario y localidad **siguen publicados** fuera del hero (Contacto, pie, preguntas frecuentes, chat de reserva), y dentro del hero hay 0. Las preguntas frecuentes se abren **una a una** y su horario se compara tramo a tramo («sábados de 11:00 a 14:00»), no con palabras sueltas |
 | @s3 | El código que solo servía para lo retirado **ya no existe** (`Hero-logica.ts`, props, estilos, dos funciones sin uso) |
 | @s4 | Revisión, tipos, compilación, pruebas, **pruebas de navegador** y mutación terminan limpios; el informe de cierre cita la salida de las pruebas de navegador y la Decisión 31 queda actualizada |
-| @s5 | Con movimiento permitido: **3 animaciones**, 0,7 s, retardos 0 / 0,12 / 0,24 s, `ease-out`, solo opacidad y desplazamiento, 40 px hacia la derecha, una sola vez, terminan a los 0,7 / 0,82 / 0,94 s; se comprueba también el último fotograma, con tolerancias escritas |
+| @s5 | Con movimiento permitido: **3 animaciones**, 0,7 s, retardos 0 / 0,12 / 0,24 s, `ease-out`, solo opacidad y desplazamiento, 40 px hacia la derecha, una sola vez, terminan a los 0,7 / 0,82 / 0,94 s, con el relleno `backwards` fijado (con otro, la medida del LCP saldría falsamente buena); se comprueba también el último fotograma, con tolerancias escritas |
 | @s6 | Con «reducir movimiento»: **nada** se anima y los tres se ven en el primer fotograma (incluye el retardo, que la regla global no apaga) |
 | @s7 | Si la animación **no se ejecuta**, el contenido **se ve** igualmente en su sitio (se comprueba cancelándola en el navegador) |
-| @s8 | Las declaraciones de animación y de retardo **solo** viven dentro de la opción «sin preferencia de reducir»; ninguna dentro de «reducir» (salvo `animation: none`) ni fuera. Tabla de 21 casos sobre 20 ficheros |
-| @s9 | Durante la entrada **no hay barra horizontal**, nada de debajo se mueve y el CLS (saltos de maquetación) no pasa de 0,1 en las 6 rutas, leído tras la entrada. Es una red de seguridad general, no un detector de un fallo concreto |
-| @s10 | Cada prueba de navegador que mide la portada recién cargada lo hace **con la animación ya terminada** (con un ayudante único, anclado y con tope, que se prueba aparte con cuatro páginas sintéticas) o con movimiento reducido, para que no den verde unas veces y rojo otras |
-| @s11 | El **tiempo de LCP** (cuándo se pinta lo más grande de la portada) se mide antes y después, con la mediana de 5 cargas y en el mismo entorno, y no pasa de 2,5 s; el «antes» ya está medido (en local 132 ms escritorio y 120 ms móvil; en la web desplegada 264 y 236 ms) y tú decides si el «después» es una regresión aceptable |
-| @s12 | **El hero es de pantalla completa**: al menos el alto de la ventana y exactamente ese alto cuando el contenido cabe, en todos los anchos, y su contenido está centrado en vertical bajo la cabecera de 64 px |
+| @s8 | Las declaraciones de animación y de retardo **solo** viven dentro de la opción «sin preferencia de reducir»; ninguna dentro de «reducir» (salvo `animation: none`) ni fuera. Tabla de 22 casos sobre 20 ficheros |
+| @s9 | Durante la entrada **no hay barra horizontal**, nada de debajo se mueve y el CLS (saltos de maquetación) no pasa de 0,1 en las 6 rutas, leído cuando la entrada ha terminado de verdad (o 1,5 s después de la carga): medido, la entrada acaba unos 1000 ms después de `load`, no a los 940. Es una red de seguridad general, no un detector de un fallo concreto |
+| @s10 | Cada prueba de navegador que mide la portada recién cargada lo hace **con la animación ya terminada** (con un ayudante único, anclado y con tope, que se prueba aparte con cuatro páginas sintéticas) o con movimiento reducido, para que no den verde unas veces y rojo otras. Afecta hoy a 4 ficheros de pruebas; la regla tiene su propia tabla de casos y exceptúa por etiqueta cuatro escenarios de la feature 49 |
+| @s11 | El **tiempo de LCP** (cuándo se pinta lo más grande de la portada) se mide antes y después, con la mediana de 5 cargas y en el mismo entorno, y no pasa de 2,5 s; el «antes» ya está medido (en local 132 ms escritorio y 120 ms móvil; en la web desplegada 264 y 236 ms), la medida solo vale con el relleno `backwards`, y tú decides si el «después» es una regresión aceptable |
+| @s12 | **El hero es de pantalla completa**: al menos el alto de la ventana y exactamente ese alto cuando el contenido cabe, en todos los anchos, y su contenido está centrado en vertical bajo la cabecera de 64 px; se prueba también a 812×300, donde el contenido no cabe y la sección debe crecer en vez de recortar |
 
 ## 4. Las dos «puertas» que se endurecen (qué falla hoy, dicho sin jerga)
 
@@ -193,6 +193,16 @@ alguna sobra y la quito.
     pasa a ser el animado. Se medirá antes de cerrar.
 14. **El LCP del titular animado cuenta al terminar el fundido, no al empezar**
     (@s11; medido en Chromium 151): ver el punto (a) de la sección 6.
+15. **El relleno de la animación es `backwards` y ningún otro** (@s5): con `both` o
+    `forwards` pasarían todas las demás comprobaciones, pero el texto con fundido no
+    llegaría a contar nunca como «lo más grande» y el LCP saldría ~7 veces mejor de lo
+    real (≈120 ms frente a ≈840-930 ms).
+16. **Lo que cuenta como «medir» en @s10 deja fuera `document.documentElement.scrollWidth`**
+    y los estilos tipográficos: un recorrido hacia la izquierda no puede cambiar el
+    ancho del documento (medido) y @s9 lo mide durante la entrada. Con esa acotación la
+    regla alcanza hoy a 4 de los 27 ficheros de pruebas de navegador; si se incluyera
+    esa lectura alcanzaría a 20 de 27. Es un desvío mío de lo que se pidió, dicho aquí
+    para que lo veas.
 
 ## 6. Valores por defecto que firmas si no los vetas
 
@@ -205,8 +215,9 @@ alguna sobra y la quito.
 - **Altura (tu decisión P5, con una concreción mía vetable):** pantalla completa:
   la sección mide **al menos** el alto de la ventana y **exactamente** ese alto
   cuando el contenido cabe. Tú dijiste «exactamente», pero en una ventana más baja
-  que el contenido (un móvil en horizontal, 812×375) «exactamente» obligaría a
-  recortar texto, y he elegido que la sección crezca en vez de recortar. Si
+  que el contenido (un móvil en horizontal) «exactamente» obligaría a
+  recortar texto (medido a 812×300: el contenido sobresale +29 px, o +12,8 px sin el
+  relleno actual; a 812×375 aún cabe y por eso el contrato prueba 812×300), y he elegido que la sección crezca en vez de recortar. Si
   prefieres recortar, dímelo. El punto anterior de este apartado («la del hero
   actual, `clamp(560px, 84svh, 784px)`») queda **sustituido**: esa cifra tampoco
   era la altura de hoy (hoy mide 837 px a 1440×900, 825 px a 1024×768 y 875 px a
@@ -216,14 +227,17 @@ alguna sobra y la quito.
   (escritorio) y 120 ms (móvil); en la web desplegada 264 y 236 ms. Medido en
   Chromium 151, un texto con **fundido de opacidad cuenta como «lo más grande» al
   TERMINAR el fundido**, no al empezar. Con la foto fuera de juego (cuando la
-  cabecera la cubra, feature 49) el LCP esperado es del orden de **860 ms** (el
-  párrafo a +120 ms, más 700 ms de fundido, más unos 40 ms) frente a los 132 ms de
-  hoy en local (unas 6,5 veces) o los 264 ms de la web desplegada (unas 3 veces):
-  muy por debajo del umbral «bueno» de 2,5 s, pero claramente más lento. En la 48
-  sola no cambia nada (la foto sigue contando). El contrato exige mediana de 5
-  cargas ≤ 2,5 s, informar del «antes» y del «después» en el mismo entorno, y que
-  **decidas tú** si la regresión es aceptable; ninguna fuente oficial da una
-  tolerancia y no me la he inventado. *Alternativa técnica:* animar solo el
+  cabecera la cubra, feature 49), y **según el tamaño**: en escritorio (1440×900 y
+  1024×768) lo más grande es el **titular, a unos 800-850 ms**; en móvil (390×844) es
+  el **párrafo, a unos 930 ms**. Comparado **solo** con la línea base LOCAL (132 y
+  120 ms), son unas **6,3 veces** en escritorio y unas **7,8 veces** en móvil, y muy
+  por debajo del umbral «bueno» de 2,5 s. El «3 veces» que se oye sale de comparar
+  esas cifras locales con la web desplegada, y el contrato lo prohíbe. **Son cifras
+  de una simulación sobre la web actual, no de la implementación real**: se remiden
+  con ella. En la 48 sola no cambia nada (la foto sigue contando). El contrato exige
+  mediana de 5 cargas ≤ 2,5 s, informar del «antes» y del «después» en el mismo
+  entorno, y que **decidas tú** si la regresión es aceptable; ninguna fuente oficial
+  da una tolerancia y no me la he inventado. *Alternativa técnica:* animar solo el
   desplazamiento y no el fundido (medido: 32-36 ms de LCP), a costa de una entrada
   menos suave.
 - **(b) El prototipo guardado en `docs/diseno-claude-design/`** conserva el hero
@@ -410,3 +424,58 @@ Tres revisores independientes más (aplicación, consistencia, mordiente y verda
 17. **Conflictos con la 49:** @s29 «sin cambio por la 48 (la 49 enmienda dos
     cláusulas)» y «el contraste lo reescribe la 49»; la nota F2 dice «tres notas de
     la feature 48» sin recuento absoluto; «@s29 (que la 48 no cambia)».
+
+### Tercera ronda
+
+Dos revisores independientes más midieron sobre la web real y sobre páginas de
+prueba: 0 bloqueantes, 12 importantes y 9 menores. Se aplicó esto (el cliente
+ordenó cerrar los contratos tras esta ronda: lo que quede imperfecto lo cazarán el
+juez y la mutación durante el desarrollo):
+
+1. **Lectura del CLS (@s9):** «carga + 940 ms» caía antes del fin de la entrada en
+   las 16 cargas medidas (el titular se monta después de la carga y la entrada acaba
+   unos 1000 ms después); ahora se ancla en el registro de @s10 o espera al menos
+   1,5 s; la espera fija queda para las 5 rutas sin hero. Corregida también la
+   premisa falsa sobre la foto y la carga (@s5) y marcado como medida sintética el
+   «2-9 ms» (@s10).
+2. **Tamaño bajo de @s12:** 812×375 no distinguía «alto fijo + recorte» de «alto
+   mínimo» (el contenido mide 301,5 px y cabe); pasa a 812×300, con «recortar»
+   definido y una cláusula de premisa que falla en voz alta si el contenido deja de
+   superar la ventana.
+3. **Relleno de la animación:** fijado `backwards` en @s5, con la razón (con `both` el
+   LCP saldría falsamente bueno); `identidad_visual` @s16 usa `backwards` en sus
+   ejemplos; @s11 exige candidatos observados y dice que la medida solo vale con ese
+   relleno.
+4. **Cifras del LCP:** por tamaño y elemento (titular ~800-850 ms en escritorio,
+   párrafo ~930 ms en móvil), solo contra la línea base local (≈6,3× y ≈7,8×), y
+   marcadas como simulación; retirado el «de 3 a 6,5 veces».
+5. **@s2, mayúsculas:** se lee con `textContent` o sin distinguir mayúsculas
+   (el rótulo de ubicación del hero actual sale en mayúsculas en `innerText`), con una
+   prueba de mordida sobre una portada que aún lleve la píldora; el horario de las
+   preguntas frecuentes se compara como pareja día + horas, con el ejemplo de lunes a
+   viernes.
+6. **@s8:** las guardas «mayor que 0» se aplican al conjunto de las 20 hojas y no a
+   cada hoja de la tabla; las filas de `@keyframes` llevan una animación legítima; fila
+   nueva `animation: none` en la raíz.
+7. **@s10, criterio de descubrimiento:** «medir» incluye las funciones locales que
+   miden, más llamadas (alturas, anchos, capturas), acotado a elementos del hero y a la
+   página entera; alcanza hoy a 4 de 27 ficheros; el registro se instala en toda
+   página abierta.
+8. **@s10, excepción por reloj congelado:** exige además colocar o cancelar las
+   animaciones antes de medir.
+9. **@s10, la comprobación estática tiene su tabla** de 16 bloques de prueba
+   sintéticos (módulo puro o ejecutada a mano por el juez).
+10. **@s10, páginas del ayudante:** con relleno `backwards` y retardos escalonados; el
+    ayudante afirma «titular presente y tres `animationend`»; los sabotajes los
+    ejecuta el juez.
+11. **Menores:** dos filas más en la tabla de `identidad_visual` @s16; «el fotograma
+    cuyo offset es 1» en vez de «desplazamiento 1» (@s5 y `accesibilidad` @s22);
+    `will-change` con las animaciones canceladas; cláusula documental de @s10 marcada
+    «lo verifica el judge»; la nota de @s29 dice «tres cláusulas (el When y dos Then)»
+    y la altura se escribe igual en todas las notas.
+12. **Añadido al final por la revisión de la 49:** `cabecera_sobre_el_hero` @s4, @s5,
+    @s8 y @s22 quedan exceptuados de @s10 por etiqueta (son registradores de primer
+    fotograma de la cabecera, no mediciones del hero), con la condición de que el
+    registrador viva en una utilidad compartida y el spec espere antes de medir la
+    geometría del hero; @s14 y @s16 de la 49 **no** se exceptúan. Escrito como paso del
+    Given y en el índice.

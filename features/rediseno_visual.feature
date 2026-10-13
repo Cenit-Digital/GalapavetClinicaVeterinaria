@@ -667,8 +667,10 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # que solo queda uno y el contrato deja de prometer dos.
   # @s26 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Su última cláusula
   # (en el punto de corte ningún elemento de la cabecera se desborda ni se superpone,
-  # con el acceso a la tienda presente) sigue siendo cierta con el nav a 16 px y 78
-  # px de holgura medidos el 13/10/2026. No ve un descriptor truncado: eso lo fija
+  # con el acceso a la tienda presente) sigue siendo cierta con el nav a 16 px: 78 px
+  # de holgura con barra de desplazamiento clásica y 93,17 px con la barra superpuesta
+  # de Playwright, medidos el 13/10/2026 (la cifra depende del entorno). No ve un
+  # descriptor truncado ni una marca comprimida: eso lo fija
   # `sistema_de_diseno_visual` @s27 (enmendado).
   @s26
   Scenario: El punto de corte de la navegación sube y sigue coincidiendo en JavaScript y en CSS
@@ -833,13 +835,16 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # botón) no toca ninguna de sus cuatro cláusulas: la fotografía, el velo con
   # tokens, el contraste del texto contra el velo y el alto reservado siguen
   # siendo los mismos, porque la feature 48 NO toca el velo (el velo horizontal es
-  # la feature 49) y la altura pasa a `100svh` (hero_reducido_con_animacion @s12),
-  # que se fija con CSS y por tanto sigue «reservándose antes de que la imagen
-  # decodifique». Una precisión para quien mida: el contraste se mide con el texto
+  # la feature 49) y la altura pasa a «al menos el alto de la ventana
+  # (`min-height: 100svh`) y exactamente ese alto cuando el contenido cabe»
+  # (hero_reducido_con_animacion @s12), que se fija con CSS y por tanto sigue
+  # «reservándose antes de que la imagen decodifique». Una precisión para quien mida: el contraste se mide con el texto
   # en su estado FINAL, no a media entrada (hero_reducido_con_animacion @s10).
-  # @s29, DOS CLÁUSULAS ENMENDADAS (13/10/2026, feature 49). La nota de la 48 de
+  # @s29, TRES CLÁUSULAS ENMENDADAS (13/10/2026, feature 49; revisado tras el panel de
+  # revisión). La nota de la 48 de
   # arriba sigue siendo cierta para la 48, que NO toca el velo: la letra cambia por la
   # 49. Texto literal retirado:
+  #     When se inspecciona la sección de bienvenida
   #     And la imagen queda cubierta por un velo cuyos colores salen de tokens, nunca de un hexadecimal escrito a mano
   #     And el texto que va encima alcanza el mínimo de contraste de texto normal contra el velo
   # QUÉ CAMBIA. (1) El velo deja de ser vertical (0,88 / 0,76 / 0,92) y pasa a ser el
@@ -851,6 +856,10 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # velo suben además hasta y = 0 (punto 1 del encargo de Pablo): cabecera_sobre_el_hero
   # @s6. (2) El contraste se mide sobre píxeles reales, con el titular a 3 a 1 (texto
   # grande, 33 px como mínimo) y el párrafo a 4,5 a 1, y no «texto normal» para todo.
+  # (3) El «When» declara que la comprobación se hace en un navegador real, fuera del
+  # gate de Vitest/Stryker, con la entrada del hero en su estado final: el velo y el
+  # contraste exigen píxeles pintados, y a media entrada el texto aún no es el que se
+  # mide.
   # LA GARANTÍA CAMBIA, y hay que decirlo. Hasta hoy `Hero.test.tsx` calculaba el
   # contraste en jsdom contra una parada del velo con fotografías EXTREMAS, la más
   # clara y la más oscura posibles, así que valía «para cualquier foto». Con el velo
@@ -860,10 +869,18 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # volver a medir, y la puerta lo hace sola porque lee lo pintado. Es el precio de
   # que el velo sea el que Pablo eligió; la alternativa, oscurecerlo hasta que sirva
   # para cualquier foto, no es lo que eligió.
-  # NO MEDIDO: los 5,27:1 del titular y los 6,06:1 del párrafo (decisiones §3) con el
-  # velo B no dicen a qué ancho ni en qué paleta se tomaron. Las otras cuatro paletas
-  # y los anchos de 1024 y 375 px no se han medido: ver «LO MEDIDO Y LO NO MEDIDO» de
-  # cabecera_sobre_el_hero.feature. Si nace en rojo, vuelve a la puerta humana.
+  # NO MEDIDO, Y EN ROJO EN LA PREVISIÓN. Los 5,27:1 del titular y los 6,06:1 del
+  # párrafo (decisiones §3) se tomaron A 1440 PX Y EN `clinica`. A 1024 y a 375 px y en
+  # las otras cuatro paletas NO estaban medidos, y la emulación del panel de revisión
+  # los da en ROJO: a 375 px el párrafo, de 3,2 a 4,1:1 en `clinica` y de 2,9 a 3,9 en
+  # `calida` y `marca`; a 1024 px, `calida` y `marca` de 4,2 a 4,6. Por eso la 49
+  # autoriza UNA condición de anchura nueva, `(max-width: 1023px)`, en
+  # `Hero.module.scss` (cabecera_sobre_el_hero @s15): un velo más oscuro en pantallas
+  # estrechas, el mínimo necesario para llegar a 4,5:1 el párrafo y a 3:1 el titular a
+  # 375 y a 1024 px en las cinco paletas. El valor lo mide el artesano y no se fija
+  # aquí. LIMITACIÓN: a 1024 px EXACTOS rige la rama de escritorio y esa condición no
+  # actúa; si ahí queda por debajo de 4,5, el hallazgo vuelve a la puerta humana. Ver
+  # «LO MEDIDO Y LO NO MEDIDO» de cabecera_sobre_el_hero.feature.
   # PUERTA QUE MUERDE: el velo vuelve a ser vertical: falla el perfil horizontal. Se
   # quita la franja superior: falla el perfil de cabecera_sobre_el_hero @s9, que es la
   # puerta que lo ve con certeza. El contraste por sí solo cae únicamente si el velo se
@@ -952,8 +969,8 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   #     And "--color-sobre-primario" sobre ese mismo velo da 17.60 · 14.43 · 12.73 · 15.15 · 13.63 con la fotografía más oscura y 13.86 · 10.76 · 15.37 · 11.39 · 10.28 con la más clara, y aprueba el 4.5 en las cinco por los dos extremos
   # Las medidas se conservan aquí como HISTORIA, no como contrato: describen un
   # rótulo que ya no existe. El contraste del texto que SÍ queda sobre el velo
-  # sigue fijado por @s29 (que la 48 no cambia; la feature 49 enmienda dos de sus
-  # cláusulas).
+  # sigue fijado por @s29 (que la 48 no cambia; la feature 49 enmienda tres de sus
+  # cláusulas: el When y dos Then).
   #
   # QUÉ SE CONSERVA: el cintillo en versalitas de las secciones con fondo de color,
   # con acento tinta; el reparto en dos grupos; que el rótulo no es un encabezado;
