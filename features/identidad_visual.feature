@@ -291,6 +291,14 @@
 #    `interpolate-size: allow-keywords`. **Debe fijarlo el humano** antes de que
 #    el `tdd_craftsman` los use; mientras no esté fijado, cada uno lleva su
 #    respaldo sólido. Ningún escenario de este fichero depende de ellos.
+#    [ACTUALIZADO 13/10/2026 (feature 49 `cabecera_sobre_el_hero`): «la cabecera
+#    translúcida» ya no describe ningún estado. En la portada la cabecera es
+#    TRANSPARENTE sobre la foto y SIN `backdrop-filter` (cabecera_sobre_el_hero @s6),
+#    y en el resto es SÓLIDA, de tinta (@s7): un navegador sin soporte de
+#    `backdrop-filter` ya no la deja «translúcida e ilegible». La pregunta sigue
+#    abierta para `color-mix`, que el velo del hero y el borde de «Tienda» ya usan
+#    en producción: los escenarios de la 49 miden lo PINTADO, así que un navegador
+#    sin soporte pondría en rojo la medición en vez de dejarla pasar en silencio.]
 # 6. **`-webkit-font-smoothing: antialiased`** (PREGUNTA ABIERTA 3). No está
 #    estandarizada, solo funciona en macOS y adelgaza el texto. Se decide **con
 #    la fuente ya instalada y mirándolo**; por defecto, no se pone.
@@ -525,16 +533,125 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And "scroll-behavior" se declara sobre "html" y no sobre "body", porque sobre "body" no se propaga al viewport
     And el bloque "@media (prefers-reduced-motion: reduce)" anula la duración de animación y de transición con "0.01ms" y no con "0", para que "transitionend" y "animationend" sigan disparándose
 
+  # @s16 REESCRITO (13/10/2026, feature 48). Texto literal retirado:
+  #     Scenario: La escala de movimiento declara exactamente dos duraciones y una curva de salida
+  #       Given un literal escrito a mano con los dos pasos de la Decisión 31: 150 milisegundos para cambios de color, borde y fondo, y 300 milisegundos para transformaciones y sombras, con curva "ease-out"
+  #       And esta verificación se ejecuta como MÓDULO PURO en Vitest, mordible por StrykerJS, contrastado contra el texto real de los ficheros de estilos
+  #       When se consulta la escala de movimiento declarada y se leen todas las duraciones de transición escritas en los ficheros de estilos del inventario
+  #       Then la escala contiene exactamente los valores 150 y 300 milisegundos
+  #       And la curva declarada es exactamente "ease-out"
+  #       And ninguna declaración de transición de ningún fichero del inventario usa una duración que no sea uno de esos dos valores o el "0.01ms" del corte por menos movimiento
+  #       And ninguna declaración anima la palabra clave "all"
+  #       And ese literal está escrito a mano y no se obtiene de la escala que comprueba
+  #
+  # QUIÉN LO AMPLÍA Y POR QUÉ. Pablo, 13/10/2026, respuesta P1: «se amplía la escala
+  # de movimiento con un paso de 0,7 s». La entrada del hero (0,7 s y retardos de 120
+  # y 240 ms) no cabía en la escala de 150 y 300 ms, cuyo techo era de 300 ms
+  # (Decisión 31 de `project-spec.md`). Se amplía de forma ESCRITA, en este contrato
+  # y en el literal de la prueba, y no con una excepción en el hero: una excepción
+  # se queda fuera de la puerta. Los pasos de 150 y 300 ms y la curva `ease-out`
+  # NO cambian. Los valores de la referencia (1,25 s, retardos de 150 y 200 ms) NO se
+  # adoptan.
+  #
+  # LOS DOS AGUJEROS DE LA PUERTA QUE EL ACCEPTANCE EXIGE CERRAR, medidos leyendo
+  # `escalaMovimiento.ts` y su prueba, sin ejecutar nada:
+  #   1. SOLO LEE MILISEGUNDOS. Su patrón de duración es `(\d+(?:\.\d+)?)ms`: un
+  #      `1.25s` no se detecta y pasa. Es exactamente la duración de la referencia, así
+  #      que la excepción que este contrato prohíbe sería la única que la puerta no
+  #      vería.
+  #   2. IGNORA `animation-delay`. Su patrón de línea solo admite `animation:`,
+  #      `animation-duration:`, `transition:` y `transition-duration:`, y su prueba
+  #      FIJA que un `animation-delay: 500ms` queda fuera del análisis. Con retardos
+  #      en la escala, un retardo de 500 ms pasaría.
+  # Y UNO MÁS QUE SALE DE LA MISMA LECTURA, sin el cual los dos anteriores se
+  # sortean con un salto de línea: solo se analizan las líneas que EMPIEZAN por la
+  # propiedad. Una declaración repartida en varias líneas (la forma en que
+  # `Equipo.module.scss` ya escribe su `transition`) no se lee más allá de la
+  # primera; un `1.25s` en una línea de continuación pasa. Prettier reparte así las
+  # declaraciones largas, así que no es un caso de laboratorio.
+  #
+  # POR QUÉ LA PUERTA DISTINGUE EL PAPEL DE CADA TIEMPO. En una declaración corta el
+  # primer tiempo es la duración y el segundo el retardo. Con duraciones {150, 300,
+  # 700} y retardos {0, 120, 240}, una comprobación que mire «¿está el número en la
+  # unión de las dos escalas?» daría verde a `animation: x 120ms ease-out 700ms`
+  # (duración de 120, retardo de 700: los dos números están en la escala, los dos
+  # en el papel cambiado). La tabla lo pide expresamente.
+  #
+  # LA PRUEBA QUE HOY FIJA QUE `animation-delay` QUEDA FUERA DEL ANÁLISIS SE
+  # INVIERTE, no se borra: ese caso pasa a afirmar que un retardo fuera de escala se
+  # señala.
+  #
+  # EL INVENTARIO, FIJADO. Son 20 ficheros: los 3 de `src/styles/*.scss`
+  # (`_api.scss`, `_tokens.scss`, `global.scss`), los 12 de
+  # `src/components/*.module.scss` y los 5 de `src/pages/*.module.scss`. Hoy la
+  # prueba lee solo 18 (`global.scss` más los 17 módulos): `_api.scss` y
+  # `_tokens.scss` NO entran (20 = 18 + 2). `_api.scss` declara 4 `transition`
+  # —entre ellas la del mixin `boton-primario`, que usa el
+  # botón del hero, y una repartida en varias líneas—. Un `1.25s` o un retardo
+  # escritos allí no los vería esta puerta, pese a que el `acceptance` 7 dice que «un
+  # 1.25s o un retardo fuera de escala ponen la puerta en rojo». El recuento exacto
+  # impide que el inventario vuelva a encogerse sin que nadie lo diga.
+  #
+  # LOS VALORES QUE NO SE PUEDEN LEER. Hoy la puerta solo ve números escritos con
+  # dígitos (`400ms`): una duración dada por `var(--x)`, por una variable de Sass o
+  # por `calc()` no produce ninguna lectura y PASA EN SILENCIO, lo contrario del
+  # estilo «falla cerrado» del proyecto. Y `.7s` (sin cero inicial) se leería como
+  # `7s`. La tabla lo cubre.
+  #
+  # PUERTA QUE MUERDE (módulo puro, StrykerJS: 100 % sobre los mutantes no
+  # equivalentes): cada fila de la tabla es una mutación o una regresión. «Fuera» =
+  # la puerta tiene que ponerse roja; «dentro» = no puede dar un falso rojo contra lo
+  # que el hero declara de verdad. Las filas añadidas por la revisión cierran
+  # mutantes que ninguna hoja real mata (ninguna hoja real tiene retardos): mirar
+  # solo el retardo de la primera entrada de una lista, quitar `transition-delay` del
+  # patrón, validar la duración de las propiedades sueltas contra la unión de escalas
+  # y aceptar números sin cero inicial o valores no literales.
   @s16
-  Scenario: La escala de movimiento declara exactamente dos duraciones y una curva de salida
-    Given un literal escrito a mano con los dos pasos de la Decisión 31: 150 milisegundos para cambios de color, borde y fondo, y 300 milisegundos para transformaciones y sombras, con curva "ease-out"
-    And esta verificación se ejecuta como MÓDULO PURO en Vitest, mordible por StrykerJS, contrastado contra el texto real de los ficheros de estilos
-    When se consulta la escala de movimiento declarada y se leen todas las duraciones de transición escritas en los ficheros de estilos del inventario
-    Then la escala contiene exactamente los valores 150 y 300 milisegundos
+  Scenario: La escala de movimiento declara exactamente tres duraciones, tres retardos y una curva de salida
+    Given un literal escrito a mano con los tres pasos de duración de la escala —150 milisegundos para cambios de color, borde y fondo, 300 milisegundos para transformaciones y sombras y 700 milisegundos para la entrada del hero—, los tres retardos —0, 120 y 240 milisegundos— y la curva "ease-out"
+    And esta verificación se ejecuta como MÓDULO PURO en Vitest, mordible por StrykerJS, contrastado contra el texto real de los 20 ficheros de estilos del inventario: los 3 de "src/styles/*.scss", los 12 de "src/components/*.module.scss" y los 5 de "src/pages/*.module.scss"
+    When se consulta la escala de movimiento declarada y se leen todas las duraciones y todos los retardos de transición y de animación escritos en los ficheros de estilos del inventario
+    Then el recuento de ficheros leídos es exactamente 20
+    And la escala contiene exactamente las duraciones 150, 300 y 700 milisegundos y exactamente los retardos 0, 120 y 240 milisegundos
     And la curva declarada es exactamente "ease-out"
-    And ninguna declaración de transición de ningún fichero del inventario usa una duración que no sea uno de esos dos valores o el "0.01ms" del corte por menos movimiento
+    And ninguna declaración de transición ni de animación de ningún fichero del inventario usa una duración que no sea una de esas tres o el "0.01ms" del corte por menos movimiento
+    And ninguna declaración de transición ni de animación usa un retardo que no sea uno de esos tres
+    And la puerta lee los tiempos escritos en milisegundos y en segundos con el mismo resultado: "0.7s" y "700ms" son el mismo paso y "1.25s" está fuera de la escala
+    And la puerta distingue el papel de cada tiempo: en una declaración corta el primero es la duración y el segundo el retardo, y en las propiedades sueltas "animation-duration", "animation-delay", "transition-duration" y "transition-delay" lo dice el nombre
+    And la puerta lee también las declaraciones escritas en varias líneas, líneas de continuación incluidas
+    And ningún retardo negativo está dentro de la escala
     And ninguna declaración anima la palabra clave "all"
     And ese literal está escrito a mano y no se obtiene de la escala que comprueba
+    And el veredicto de la puerta sobre cada una de estas declaraciones sintéticas es el de la tabla:
+      | declaración sintética                                                                                                         | veredicto                                                      |
+      | transition: color 150ms ease-out                                                                                              | dentro de la escala                                            |
+      | animation: entrada 700ms ease-out both                                                                                        | dentro de la escala                                            |
+      | animation: entrada 0.7s ease-out 120ms both                                                                                   | dentro de la escala                                            |
+      | animation-duration: 0.7s                                                                                                      | dentro de la escala                                            |
+      | animation-delay: 240ms                                                                                                        | dentro de la escala                                            |
+      | animation-delay: 0s                                                                                                           | dentro de la escala                                            |
+      | animation-duration: 0.01ms                                                                                                    | dentro de la escala: es el corte por menos movimiento          |
+      | animation: entrada 1.25s ease-out both                                                                                        | fuera de la escala: duración de 1250 milisegundos              |
+      | animation-duration: 1.25s                                                                                                     | fuera de la escala: duración de 1250 milisegundos              |
+      | animation-delay: 200ms                                                                                                        | fuera de la escala: retardo de 200 milisegundos                |
+      | animation-delay: 0.15s                                                                                                        | fuera de la escala: 150 es una duración de la escala, no un retardo |
+      | animation: entrada 120ms ease-out 700ms both                                                                                  | fuera de la escala: duración de 120 y retardo de 700, los dos números en el papel cambiado |
+      | animation-delay: -120ms                                                                                                       | fuera de la escala: retardo negativo                           |
+      | transition: color 300ms ease-out 400ms                                                                                        | fuera de la escala: retardo de 400 milisegundos                |
+      | la propiedad "animation:" sola en una línea y "entrada 1.25s ease-out both" en la línea siguiente                             | fuera de la escala: duración de 1250 milisegundos              |
+      | la propiedad "transition:" sola en una línea, y "transform 300ms ease-out," y "color 150ms ease-out" en las dos líneas siguientes | dentro de la escala: es la forma en que escribe hoy el módulo del equipo |
+      | transition: color 150ms ease-out, transform 300ms ease-out 400ms                                                              | fuera de la escala: retardo de 400 milisegundos en la SEGUNDA entrada de la lista |
+      | transition-delay: 400ms                                                                                                       | fuera de la escala: retardo de 400 milisegundos                |
+      | transition-delay: 120ms                                                                                                       | dentro de la escala                                            |
+      | animation-delay: 0.24s                                                                                                        | dentro de la escala: 240 milisegundos escritos en segundos     |
+      | transition-delay: 0.12s                                                                                                       | dentro de la escala: 120 milisegundos escritos en segundos     |
+      | animation-duration: 120ms                                                                                                     | fuera de la escala: 120 es un retardo de la escala, no una duración |
+      | animation-duration: .7s                                                                                                       | dentro de la escala: sin cero inicial es el mismo 700 milisegundos |
+      | animation-duration: .25s                                                                                                      | fuera de la escala: duración de 250 milisegundos                     |
+      | animation: entrada var(--duracion) ease-out both                                                                              | fuera de la escala o no verificable: la puerta falla cerrado   |
+      | animation: entrada $duracion-entrada ease-out both                                                                            | fuera de la escala o no verificable: la puerta falla cerrado   |
+      | transition: color calc(100ms + 50ms) ease-out                                                                                 | fuera de la escala o no verificable: la puerta falla cerrado   |
+      | transition: box-shadow 400ms ease-out, escrita dentro de un "@mixin" de "src/styles/_api.scss"                                | fuera de la escala: duración de 400 milisegundos en un mixin que usa el hero |
 
   # ---------------------------------------------------------------------------
   # C. TIPOGRAFÍA AUTOALOJADA
@@ -605,13 +722,31 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And no se pide ningún fichero de fuente de un subconjunto distinto del latino ni ninguna cursiva
     And ese techo 69224 está escrito a mano en el escenario y no se obtiene de los ficheros que comprueba
 
+  # @s23 ENMENDADO (13/10/2026, feature 48). Texto literal de las dos líneas que
+  # cambian:
+  #     When se carga la portada con las fuentes de marca disponibles y, por separado, con sus peticiones bloqueadas, y se mide el rectángulo del encabezado de nivel 1 y el del primer párrafo en ambos casos
+  #     And el alto medido del primer párrafo es el mismo en ambos casos, con la misma tolerancia
+  # POR QUÉ: «el primer párrafo» de la portada era la píldora de ubicación del hero,
+  # de una sola línea. Al retirarla, el primer párrafo pasa a ser el del hero: de
+  # varias líneas (`max-width: 58ch`, tamaño con `clamp()`), con un salto de línea
+  # que con la fuente de respaldo puede superar la tolerancia de 1 px, y animado
+  # durante la entrada. La medida pasa al primer párrafo de la sección de Servicios,
+  # que no es del hero. SE CONSERVA lo demás: el titular, la tolerancia de 1 px y
+  # la visibilidad desde el primer pintado, que habla de la fuente (`swap`) y no de
+  # la animación: se mide con la entrada terminada o con movimiento reducido
+  # (hero_reducido_con_animacion @s10). SE MEDIRÁ ANTES DE CERRAR: si con la
+  # fuente de respaldo ese párrafo tampoco cabe en la tolerancia, el hallazgo vuelve
+  # a la puerta humana.
+  #
+  # PUERTA QUE MUERDE (`tests/e2e/tipografia.spec.ts`): el párrafo de Servicios cambia
+  # de alto más de 1 px al bloquear las fuentes de marca: la segunda cláusula falla.
   @s23
   Scenario: Si la fuente de marca no llega, el texto de respaldo ocupa el mismo alto y no salta nada
     Given el sitio de Galapavet construido y servido desde "dist/"
     And esta verificación se ejecuta en NAVEGADOR REAL con Playwright, bloqueando las peticiones a "/fuentes/", porque exige comparar dos renderizados reales del mismo texto
-    When se carga la portada con las fuentes de marca disponibles y, por separado, con sus peticiones bloqueadas, y se mide el rectángulo del encabezado de nivel 1 y el del primer párrafo en ambos casos
+    When se carga la portada con las fuentes de marca disponibles y, por separado, con sus peticiones bloqueadas, y se mide el rectángulo del encabezado de nivel 1 y el del primer párrafo de la sección de Servicios en ambos casos
     Then el alto medido del encabezado de nivel 1 es el mismo en ambos casos, con una tolerancia máxima de 1 píxel CSS
-    And el alto medido del primer párrafo es el mismo en ambos casos, con la misma tolerancia
+    And el alto medido del primer párrafo de la sección de Servicios es el mismo en ambos casos, con la misma tolerancia
     And con las fuentes bloqueadas el texto sigue siendo visible desde el primer pintado, porque la declaración usa intercambio y no bloqueo
 
   # ---------------------------------------------------------------------------
@@ -784,6 +919,29 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And ese umbral 24 está escrito a mano en el escenario y no se obtiene del valor que comprueba
     And esto ejecuta @s29 de sistema_de_diseno_visual.feature, que esta feature no redefine
 
+  # @s38 Y @s39, UNA CLÁUSULA ENMENDADA CADA UNO (13/10/2026, feature 49). Texto
+  # literal retirado de @s38: «And el ratio de contraste calculado entre los mismos
+  # píxeles en estado con foco y sin foco es mayor o igual que 3». De @s39, el
+  # «When»: «cada control interactivo de cada una de las 6 rutas recibe el foco por
+  # teclado y se leen los colores computados del propio control y de la superficie
+  # que lo contiene».
+  # POR QUÉ. El texto de los dos ya hablaba de píxeles renderizados («los mismos
+  # píxeles en estado con foco y sin foco», «el fondo adyacente real»), pero SU PUERTA
+  # (`tests/e2e/accesibilidad.spec.ts`) no: una función resuelve el fondo subiendo por
+  # los ancestros hasta el primer color no transparente (la de @s38) y otra hace lo
+  # mismo desde `elementFromPoint` (la de @s39). Con la cabecera transparente sobre la
+  # foto llegan a `body` y miden contra `--color-fondo`, el fondo de la PÁGINA y no el
+  # de la foto: verde por vacuidad con un anillo que no se ve, o falso rojo con un
+  # anillo claro sobre un fondo de página claro. Hasta esta feature la cabecera
+  # siempre tenía fondo propio y el defecto no se veía; los botones del hero medían
+  # contra la tinta opaca de `.hero` (inferido del código, no ejecutado), más oscura
+  # que el velo real. Además la puerta mira solo los 20 primeros controles de cada
+  # ruta: la cabecera cae dentro, pero el contrato no puede depender de eso, así que
+  # se exige su recuento.
+  # QUÉ CAMBIA: los píxeles se leen de CAPTURAS del navegador y el fondo de un control
+  # sobre una fotografía es el peor píxel de su zona. El método, las precondiciones y
+  # los sabotajes que demuestran que la puerta puede ponerse roja están en
+  # cabecera_sobre_el_hero @s10, @s11 y @s12.
   @s38
   Scenario: El indicador de foco del sitio real tiene perímetro y contraste suficientes entre sus dos estados
     Given el sitio de Galapavet construido y servido desde "dist/"
@@ -791,9 +949,10 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
     And esta verificación se ejecuta en NAVEGADOR REAL con Playwright, porque exige píxeles efectivamente renderizados en dos estados distintos
     When cada control interactivo de cada una de las 6 rutas recibe el foco por teclado
     Then el área del indicador de foco de cada control es al menos la de un perímetro de 2 píxeles CSS alrededor del control sin foco
-    And el ratio de contraste calculado entre los mismos píxeles en estado con foco y sin foco es mayor o igual que 3
+    And el ratio de contraste calculado entre los mismos píxeles en estado con foco y sin foco es mayor o igual que 3, leídos de capturas del navegador y nunca del color computado del fondo de un ancestro: sobre la fotografía del hero, con la cabecera transparente, el valor de cada control es el del peor píxel de la zona de su anillo
     And ningún control declara la supresión del contorno de foco del navegador sin sustituirlo por un indicador propio
     And el recuento de controles efectivamente comprobados es mayor que 0
+    And entre los controles comprobados de la portada, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera, con la cabecera transparente
     And esos umbrales 2 y 3 están escritos a mano en el escenario y no se obtienen de los valores que comprueban
     And esto ejecuta @s30 y @s31 de sistema_de_diseno_visual.feature y la primera mitad de @s18 de accesibilidad.feature
 
@@ -801,13 +960,22 @@ Feature: Identidad visual: que la web de Galapavet se vea, y que verse bien sea 
   Scenario: El anillo de foco contrasta con los dos fondos que tiene al lado, no solo con uno
     Given el sitio de Galapavet construido y servido desde "dist/"
     And esta verificación se ejecuta en NAVEGADOR REAL con Playwright, porque el fondo adyacente real de un control depende de sobre qué superficie esté maquetado
-    When cada control interactivo de cada una de las 6 rutas recibe el foco por teclado y se leen los colores computados del propio control y de la superficie que lo contiene
+    When cada control interactivo de cada una de las 6 rutas recibe el foco por teclado y se leen los colores de los píxeles realmente pintados en el hueco del propio control y en la superficie que lo contiene, a partir de capturas del navegador y nunca del fondo computado de un ancestro
     Then el ratio del color del anillo de foco contra el fondo del propio componente es mayor o igual que 3
     And el ratio del color del anillo de foco contra el fondo de la superficie que lo contiene es mayor o igual que 3
     And ambos ratios se calculan con la fórmula real de src/lib/contraste.ts, la misma que ya aprobó tokens_marca.feature
+    And sobre la fotografía del hero, con la cabecera transparente, «el fondo» de un control es el peor píxel de su zona y no un color único
     And el recuento de controles efectivamente comprobados es mayor que 0
+    And entre los controles comprobados de la portada, en una ventana de escritorio, están la marca y los ocho enlaces de la cabecera, con la cabecera transparente
     And esto ejecuta la segunda mitad de @s18 de accesibilidad.feature
 
+  # @s40 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Una cabecera
+  # transparente sigue siendo la cabecera fija: el criterio es por RECTÁNGULO, no por
+  # opacidad. SC 2.4.11 habla de un componente «entirely hidden due to
+  # author-created content» y que la cabecera sea transparente no reduce el solape
+  # (inferencia de la investigación del 13/10/2026: ninguna página Understanding
+  # leída trata cabeceras translúcidas). El hueco que lo hace cumplir
+  # (`scroll-padding-top`, 64 + 24 px) no cambia: cabecera_sobre_el_hero @s8.
   @s40
   Scenario: Al tabular por la página entera ningún control enfocado queda tapado por la cabecera fija
     Given el sitio de Galapavet construido y servido desde "dist/"

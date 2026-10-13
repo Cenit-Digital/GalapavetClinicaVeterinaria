@@ -564,12 +564,44 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And ese ancho es 1220 píxeles, el que declara el prototipo
     And el recuento de rutas efectivamente medidas es exactamente 6
 
+  # @s18 ENMENDADO (13/10/2026, feature 48). Texto literal retirado:
+  #     Scenario: Las dos secciones que el diseño estrecha a propósito lo siguen haciendo
+  #       Given la portada construida y servida, en una ventana de 1600 píxeles de ancho
+  #       When se mide el ancho del contenido de la sección de bienvenida y el de la sección de preguntas frecuentes
+  #       Then los dos son menores que el ancho general del contenedor
+  #       And cada uno declara su propio ancho máximo, distinto del general y distinto entre sí
+  # POR QUÉ: el prototipo estrechaba el hero (900 px, centrado). Pablo pidió el
+  # 13/10/2026 (punto 3 de su encargo) los tres elementos «desplazados a la
+  # izquierda», y el valor por defecto de las decisiones §6.2 (abierto a veto
+  # hasta la firma) los pone en el borde izquierdo de la columna de 1220 px, a ras
+  # de la marca. Un contenido que arranca en el borde de la columna ya no es un
+  # contenido «estrechado hacia el centro»: la mitad del escenario sobre el hero
+  # se vuelve falsa. La sección de preguntas frecuentes (860 px) NO cambia.
+  # QUÉ SE CONSERVA: toda la parte del FAQ. QUÉ SE VA: toda la parte del hero, y con
+  # ella «los dos» y «distinto entre sí», que solo tenían sentido con dos secciones
+  # estrechas.
+  #
+  # POR QUÉ NO SE SUSTITUYE POR OTRA CLÁUSULA DEL HERO AQUÍ. El borde izquierdo del
+  # hero lo mide en navegador real fidelidad_hero @s1, que además mide con la
+  # entrada animada ya terminada. Una segunda medida aquí, a 1600 px y sin esa
+  # espera, reintroduciría la carrera con la animación (el contenido parte 40 px a
+  # la izquierda de su sitio durante 940 ms). Una sola puerta por cláusula.
+  #
+  # LAS PUERTAS REALES de este escenario son dos pruebas unitarias, y las dos
+  # cambian: `Faq.test.tsx` compara el ancho del FAQ con un 900 escrito a mano que
+  # era el del hero (ese literal sale, y ya no puede ponerse rojo por nada que haga
+  # el hero) y `Hero.test.tsx` tiene la prueba «el hero declara un ancho propio menor
+  # que 1220», que lee del SCSS (`width: min(…, 900px)`) y se retira, porque ya no
+  # hay ancho propio que declarar.
+  #
+  # PUERTA QUE MUERDE: el FAQ pasa al ancho general de 1220 px o pierde su ancho
+  # máximo propio: la primera o la segunda cláusula fallan.
   @s18
-  Scenario: Las dos secciones que el diseño estrecha a propósito lo siguen haciendo
+  Scenario: La sección de preguntas frecuentes se estrecha a propósito
     Given la portada construida y servida, en una ventana de 1600 píxeles de ancho
-    When se mide el ancho del contenido de la sección de bienvenida y el de la sección de preguntas frecuentes
-    Then los dos son menores que el ancho general del contenedor
-    And cada uno declara su propio ancho máximo, distinto del general y distinto entre sí
+    When se mide el ancho del contenido de la sección de preguntas frecuentes
+    Then es menor que el ancho general del contenedor
+    And declara su propio ancho máximo, distinto del general
 
   @s19
   Scenario: El ritmo vertical de las secciones es fluido y alterna, en vez de ser plano
@@ -633,6 +665,11 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # ya presentes»: eran el acceso a la tienda y el CTA de urgencias. El de
   # urgencias se retira de la cabecera (D1, `fidelidad_cabecera.feature`), así
   # que solo queda uno y el contrato deja de prometer dos.
+  # @s26 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Su última cláusula
+  # (en el punto de corte ningún elemento de la cabecera se desborda ni se superpone,
+  # con el acceso a la tienda presente) sigue siendo cierta con el nav a 16 px y 78
+  # px de holgura medidos el 13/10/2026. No ve un descriptor truncado: eso lo fija
+  # `sistema_de_diseno_visual` @s27 (enmendado).
   @s26
   Scenario: El punto de corte de la navegación sube y sigue coincidiendo en JavaScript y en CSS
     Given el sitio construido y servido
@@ -764,33 +801,99 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # sin relleno (que `fidelidad_cabecera` @s6/@s7 afinan sin quitarle ni el
   # borde ni la ausencia de relleno), la cabecera visible al desplazar y el
   # ancla calculada desde la altura REAL de la cabecera.
+  # @s28, UNA CLÁUSULA REESCRITA Y UNA AÑADIDA (13/10/2026, feature 49). Texto
+  # literal retirado:
+  #     And la cabecera se mantiene visible al desplazar la página
+  # POR QUÉ. «Visible» era cierto de una franja con fondo. En la portada la cabecera
+  # es ahora TRANSPARENTE sobre la foto y SÓLIDA al salir del hero
+  # (cabecera_sobre_el_hero @s4). Lo que se contrata es lo que persiste en los dos
+  # estados: su caja sigue ocupando los 64 px superiores en cada posición de
+  # desplazamiento y sus enlaces siguen a la vista. AÑADIDA: que el cálculo del
+  # ancla dé el mismo resultado desde los dos estados, que es la prueba de que el
+  # salto descuenta la altura REAL de la cabecera (64 px en ambos) y no un número
+  # escrito a mano; la cláusula anterior lo afirmaba solo del texto de la función.
+  # Las otras tres cláusulas NO cambian: el acceso a la tienda sigue con borde y sin
+  # relleno en los dos estados (su borde lo mide fidelidad_cabecera @s7).
+  # PUERTA QUE MUERDE: se escribe un 64 a mano en el cálculo del salto y la cabecera
+  # sólida pasa a medir 72: el ancla queda tapada 8 px desde ese estado. El salto
+  # deja de descontar la cabecera con la portada transparente: la sección aterriza
+  # en y = 0.
   @s28
   Scenario: La cabecera lleva la navegación y el acceso a la tienda
     Given la portada construida y servida, en una ventana más ancha que el punto de corte
     When se inspecciona la cabecera
     Then muestra los enlaces de navegación del catálogo
     And muestra un acceso a la tienda con borde y sin relleno
-    And la cabecera se mantiene visible al desplazar la página
+    And la cabecera se mantiene a la vista al desplazar la página: su caja ocupa los 64 píxeles superiores de la ventana en cada posición de desplazamiento, sea cual sea su estado, y sus ocho enlaces siguen visibles
     And el sitio del ancla de destino al saltar a una sección se calcula desde la altura real de la cabecera, no desde un número escrito a mano
+    And ese cálculo da el mismo resultado desde la portada con la cabecera transparente y desde una posición con la cabecera sólida: tras pulsar "Servicios", con el desplazamiento terminado, el borde superior de la sección queda a la altura real de la cabecera, 64 píxeles, con una tolerancia de 1 píxel
 
+  # @s29 REVISADO (13/10/2026, feature 48): SIN CAMBIO DE LETRA. Lo que cambia en el
+  # hero (texto a la izquierda, sin píldora, sin banda de cifras y con un solo
+  # botón) no toca ninguna de sus cuatro cláusulas: la fotografía, el velo con
+  # tokens, el contraste del texto contra el velo y el alto reservado siguen
+  # siendo los mismos, porque la feature 48 NO toca el velo (el velo horizontal es
+  # la feature 49) y la altura pasa a `100svh` (hero_reducido_con_animacion @s12),
+  # que se fija con CSS y por tanto sigue «reservándose antes de que la imagen
+  # decodifique». Una precisión para quien mida: el contraste se mide con el texto
+  # en su estado FINAL, no a media entrada (hero_reducido_con_animacion @s10).
+  # @s29, DOS CLÁUSULAS ENMENDADAS (13/10/2026, feature 49). La nota de la 48 de
+  # arriba sigue siendo cierta para la 48, que NO toca el velo: la letra cambia por la
+  # 49. Texto literal retirado:
+  #     And la imagen queda cubierta por un velo cuyos colores salen de tokens, nunca de un hexadecimal escrito a mano
+  #     And el texto que va encima alcanza el mínimo de contraste de texto normal contra el velo
+  # QUÉ CAMBIA. (1) El velo deja de ser vertical (0,88 / 0,76 / 0,92) y pasa a ser el
+  # degradado horizontal B que Pablo eligió (P4: 0,80 / 0,68 / 0,30 / 0,22 al 0 / 45
+  # / 75 / 100 % de la anchura) MÁS la franja superior de la maqueta (0,55 de opacidad
+  # en el borde superior, 0 al 22 % de la altura); los tokens siguen siendo la única
+  # fuente de color.
+  # El perfil exacto, y cómo se mide, es de cabecera_sobre_el_hero @s9. La foto y el
+  # velo suben además hasta y = 0 (punto 1 del encargo de Pablo): cabecera_sobre_el_hero
+  # @s6. (2) El contraste se mide sobre píxeles reales, con el titular a 3 a 1 (texto
+  # grande, 33 px como mínimo) y el párrafo a 4,5 a 1, y no «texto normal» para todo.
+  # LA GARANTÍA CAMBIA, y hay que decirlo. Hasta hoy `Hero.test.tsx` calculaba el
+  # contraste en jsdom contra una parada del velo con fotografías EXTREMAS, la más
+  # clara y la más oscura posibles, así que valía «para cualquier foto». Con el velo
+  # horizontal ese cálculo ya no puede dar verde: contra la parada de 0,22 y una foto
+  # blanca el texto claro no llega a 4,5. Medir sobre los píxeles reales vale «para
+  # ESTA fotografía» (`clinica.webp`, la única del hero): si se cambia la foto hay que
+  # volver a medir, y la puerta lo hace sola porque lee lo pintado. Es el precio de
+  # que el velo sea el que Pablo eligió; la alternativa, oscurecerlo hasta que sirva
+  # para cualquier foto, no es lo que eligió.
+  # NO MEDIDO: los 5,27:1 del titular y los 6,06:1 del párrafo (decisiones §3) con el
+  # velo B no dicen a qué ancho ni en qué paleta se tomaron. Las otras cuatro paletas
+  # y los anchos de 1024 y 375 px no se han medido: ver «LO MEDIDO Y LO NO MEDIDO» de
+  # cabecera_sobre_el_hero.feature. Si nace en rojo, vuelve a la puerta humana.
+  # PUERTA QUE MUERDE: el velo vuelve a ser vertical: falla el perfil horizontal. Se
+  # quita la franja superior: falla el perfil de cabecera_sobre_el_hero @s9, que es la
+  # puerta que lo ve con certeza. El contraste por sí solo cae únicamente si el velo se
+  # aclara lo bastante bajo el texto: no detecta cada cambio fino, y por eso existe @s9.
   @s29
   Scenario: La sección de bienvenida se pinta sobre una fotografía a sangre
     Given la portada construida y servida
-    When se inspecciona la sección de bienvenida
+    When se inspecciona la sección de bienvenida en un navegador real con Playwright, fuera del gate de Vitest/Stryker según la Decisión 11 de project-spec.md, con la entrada del hero en estado estable (hero_reducido_con_animacion @s10)
     Then declara una imagen de fondo que responde con código 200 y no queda con anchura natural cero
-    And la imagen queda cubierta por un velo cuyos colores salen de tokens, nunca de un hexadecimal escrito a mano
-    And el texto que va encima alcanza el mínimo de contraste de texto normal contra el velo
+    And la imagen queda cubierta por un velo en degradado horizontal, con el perfil de opacidades y la franja superior de refuerzo que fija cabecera_sobre_el_hero @s9, cuyos colores salen de tokens, nunca de un hexadecimal escrito a mano
+    And el texto del hero que va encima alcanza su mínimo de contraste medido sobre los píxeles realmente pintados y no sobre un color calculado: 3 a 1 el titular, por ser texto grande, y 4,5 a 1 el párrafo, contra el peor píxel que tiene detrás, en cada una de las cinco paletas y a 1440, 1024 y 375 píxeles de ancho, con el método de cabecera_sobre_el_hero @s10
     And la sección reserva su alto antes de que la imagen decodifique, sin desplazar el contenido de debajo
 
-  @s30
-  Scenario: La bienvenida lleva la píldora de ubicación, los dos botones y la banda de cuatro cifras
-    Given la portada construida y servida
-    When se inspecciona el contenido de la sección de bienvenida
-    Then hay una píldora con la localidad y la provincia reales
-    And hay un botón principal de reserva y un botón secundario de llamada
-    And debajo hay una banda separada por una línea, con exactamente cuatro cifras
-    And cada una de las cuatro se deriva de la fuente única de datos o del catálogo de servicios, ninguna escrita a mano
-    And ninguna de las cuatro afirma nada que la fuente única no declare
+  # @s30 RETIRADO (13/10/2026, feature 48). Su @s30 NO se reutiliza. Texto literal
+  # retirado:
+  #     Scenario: La bienvenida lleva la píldora de ubicación, los dos botones y la banda de cuatro cifras
+  #       Given la portada construida y servida
+  #       When se inspecciona el contenido de la sección de bienvenida
+  #       Then hay una píldora con la localidad y la provincia reales
+  #       And hay un botón principal de reserva y un botón secundario de llamada
+  #       And debajo hay una banda separada por una línea, con exactamente cuatro cifras
+  #       And cada una de las cuatro se deriva de la fuente única de datos o del catálogo de servicios, ninguna escrita a mano
+  #       And ninguna de las cuatro afirma nada que la fuente única no declare
+  # POR QUÉ: las cuatro piezas que afirmaba (la píldora, el botón secundario de
+  # llamada, la banda y las cuatro cifras) son exactamente lo que Pablo pidió
+  # eliminar del hero el 13/10/2026 (punto 3 de su encargo). El escenario no puede
+  # reescribirse en positivo sin repetir hero_reducido_con_animacion @s1, que fija
+  # lo que SÍ hay y lo que NO. QUÉ NO SE PIERDE: la localidad y los datos siguen
+  # publicados (hero_reducido_con_animacion @s2); el botón principal de reserva
+  # sigue fijado por hero @s3.
 
   @s31
   Scenario: Cada tarjeta de servicio lleva su fotografía y su píldora de categoría
@@ -833,16 +936,49 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
   # —fondo de token frente a fondo de imagen, con los dos recuentos afirmados—,
   # no como nota al pie, para que no pueda crecer sin enmendar el contrato.
   # ---------------------------------------------------------------------------
+  # ENMIENDA 2 DEROGADA EN LO DEL HERO (13/10/2026, feature 48). La excepción de
+  # arriba —«la sección de bienvenida queda exceptuada y su cintillo usa
+  # `--color-sobre-primario`»— existía porque el hero TENÍA un cintillo: la píldora
+  # de ubicación (`uppercase`, `letter-spacing: 0.1em`), el único rótulo corto del
+  # hero. Los comentarios de `Equipo.test.tsx` y `Servicios.test.tsx` mencionan la
+  # excepción de la Enmienda 2 del Hero. Pablo pidió eliminarla el 13/10/2026 (punto 3 de su
+  # encargo). Sin cintillo no hay excepción de color que conceder.
+  #
+  # CLÁUSULAS LITERALES RETIRADAS (la primera, recortada: el «Then» ya no dice «cada
+  # una», sino «cada una de las que pintan su fondo con un rol de color del sistema»):
+  #     Then cada una lleva por delante un rótulo corto en mayúsculas con espaciado entre letras
+  #     And la sección de bienvenida queda exceptuada, y su cintillo usa "--color-sobre-primario", la misma tinta que esa sección ya declara para el resto de su texto
+  #     And el motivo de la excepción es medido y queda escrito: sobre la parada del 92 % del velo, "--color-acento-tinta" da 3.21 · 2.04 · 1.10 · 1.97 · 2.40 en "clinica", "calida", "tech", "eco" y "marca" con la fotografía más oscura, y 2.53 · 1.52 · 1.33 · 1.48 · 1.81 con la más clara, y suspende el mínimo de 4.5 de texto normal en las cinco
+  #     And "--color-sobre-primario" sobre ese mismo velo da 17.60 · 14.43 · 12.73 · 15.15 · 13.63 con la fotografía más oscura y 13.86 · 10.76 · 15.37 · 11.39 · 10.28 con la más clara, y aprueba el 4.5 en las cinco por los dos extremos
+  # Las medidas se conservan aquí como HISTORIA, no como contrato: describen un
+  # rótulo que ya no existe. El contraste del texto que SÍ queda sobre el velo
+  # sigue fijado por @s29 (que la 48 no cambia; la feature 49 enmienda dos de sus
+  # cláusulas).
+  #
+  # QUÉ SE CONSERVA: el cintillo en versalitas de las secciones con fondo de color,
+  # con acento tinta; el reparto en dos grupos; que el rótulo no es un encabezado;
+  # y el recuento de secciones sobre fotografía, que sigue siendo exactamente 1.
+  # QUÉ ENTRA: la ausencia, medida: dentro del hero no queda ningún elemento en
+  # mayúsculas con espaciado entre letras. Sin esa cláusula, volver a poner la
+  # píldora no pondría nada en rojo aquí.
+  # TÍTULO LITERAL RETIRADO: «Cada sección de la portada abre con su cintillo en
+  # versalitas».
+  #
+  # PUERTA QUE MUERDE: vuelve cualquier rótulo en mayúsculas al hero: el recuento
+  # dentro de la sección de bienvenida deja de ser 0. ESA PUERTA ES NUEVA: no existe
+  # hoy ninguna que mida estilos computados dentro del hero (los @s33 que viven en
+  # `Faq.test.tsx`, `Equipo.test.tsx`, `Servicios.test.tsx` y `CampanasPortada.test.tsx`
+  # son de jsdom y de otras secciones). Se crea en `tests/e2e/fidelidad-hero.spec.ts`,
+  # en navegador real. `Equipo.test.tsx` y `Servicios.test.tsx` solo necesitan que se
+  # corrijan los comentarios que mencionan la excepción de la Enmienda 2 del Hero.
   @s33
-  Scenario: Cada sección de la portada abre con su cintillo en versalitas
+  Scenario: Cada sección de la portada con fondo de color abre con su cintillo en versalitas, y la bienvenida no lleva ninguno
     Given la portada construida y servida
     When se recorren las secciones con titular propio
-    Then cada una lleva por delante un rótulo corto en mayúsculas con espaciado entre letras
+    Then cada una de las que pintan su fondo con un rol de color del sistema lleva por delante un rótulo corto en mayúsculas con espaciado entre letras
     And las secciones se reparten en dos grupos por un criterio medible: las que pintan su fondo con un rol de color del sistema y la que lo pinta con la fotografía a sangre de @s29
     And en toda sección cuyo fondo es un rol de color del sistema ese rótulo usa el color de acento tinta de la variante activa
-    And la sección de bienvenida queda exceptuada, y su cintillo usa "--color-sobre-primario", la misma tinta que esa sección ya declara para el resto de su texto
-    And el motivo de la excepción es medido y queda escrito: sobre la parada del 92 % del velo, "--color-acento-tinta" da 3.21 · 2.04 · 1.10 · 1.97 · 2.40 en "clinica", "calida", "tech", "eco" y "marca" con la fotografía más oscura, y 2.53 · 1.52 · 1.33 · 1.48 · 1.81 con la más clara, y suspende el mínimo de 4.5 de texto normal en las cinco
-    And "--color-sobre-primario" sobre ese mismo velo da 17.60 · 14.43 · 12.73 · 15.15 · 13.63 con la fotografía más oscura y 13.86 · 10.76 · 15.37 · 11.39 · 10.28 con la más clara, y aprueba el 4.5 en las cinco por los dos extremos
+    And la sección de bienvenida no lleva ningún rótulo corto en mayúsculas: el recuento de elementos con "text-transform: uppercase" y espaciado entre letras positivo dentro de ella es exactamente 0
     And el rótulo no es un encabezado, para no romper la jerarquía de niveles
     And el recuento de secciones con fondo de token efectivamente comprobadas es mayor que 0, y el de secciones sobre fotografía es exactamente 1
 
@@ -1029,13 +1165,22 @@ Feature: Rediseño visual: el sitio se parece al diseño aprobado, con los datos
     And el número de fotografías de galería es el del catálogo real, no las nueve del prototipo
     And ningún recuento se ha tomado de la pista de vista previa del editor de diseño
 
-  @s51
-  Scenario: Las cuatro cifras de la bienvenida se derivan de la fuente única, sin retipear
-    Given el catálogo de servicios y la fuente única de datos de negocio
-    When se construye el modelo de la banda de cifras
-    Then cada cifra se calcula a partir de esos datos
-    And cambiar un dato en la fuente única cambia la cifra correspondiente
-    And ninguna cifra está escrita a mano en el componente
+  # @s51 RETIRADO (13/10/2026, feature 48). Su @s51 NO se reutiliza. Texto literal
+  # retirado:
+  #     Scenario: Las cuatro cifras de la bienvenida se derivan de la fuente única, sin retipear
+  #       Given el catálogo de servicios y la fuente única de datos de negocio
+  #       When se construye el modelo de la banda de cifras
+  #       Then cada cifra se calcula a partir de esos datos
+  #       And cambiar un dato en la fuente única cambia la cifra correspondiente
+  #       And ninguna cifra está escrita a mano en el componente
+  # POR QUÉ: la banda de cifras es uno de los elementos que Pablo pidió eliminar del
+  # hero (punto 3 de su encargo del 13/10/2026), y con ella desaparece el módulo
+  # puro que construía el modelo (`Hero-logica.ts`, que se borra con su prueba).
+  # QUÉ NO SE PIERDE: la garantía de fondo —«ninguna cifra retecleada a mano en el
+  # hero»— queda fijada, y más fuerte, por hero_reducido_con_animacion @s1 y
+  # fidelidad_hero @s2: el hero ya no tiene NINGUNA cifra, ni un dígito. Los
+  # recuentos reales que el sitio sí muestra (servicios, equipo, galería) siguen en
+  # @s50 de este fichero, que no cambia.
 
   # CLÁUSULA ENMENDADA en @s52 (20/09/2026) — NO LA MENCIONABA EL ENCARGO Y SE
   # PONÍA EN ROJO. Decía literalmente: «And el único compromiso de urgencias que

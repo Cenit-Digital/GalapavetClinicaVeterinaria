@@ -127,6 +127,34 @@
 # al elegir el camino del borde.
 # =============================================================================
 
+# =============================================================================
+# CUARTA ACTUALIZACIÓN (13/10/2026, feature 49 `cabecera_sobre_el_hero`) — LA
+# CABECERA DEJA DE SER UNA FRANJA TRANSLÚCIDA Y SE PONE ENCIMA DE LA FOTO
+# =============================================================================
+# Lo que Pablo decidió el 13/10/2026 (respuestas P2, P3 y P4 y los puntos 1 y 2 de
+# su encargo; ver `progress/decisiones_cabecera_hero_20261013.md`) mueve cinco
+# escenarios de este fichero. Cada uno lleva su nota con el texto literal retirado.
+# El resto sigue como estaba:
+#
+#   @s1  REVISADO, sin cambio de letra.
+#   @s2  REESCRITO: el objetivo pasa de 44 a 48 px, y se añade el tamaño de letra
+#        de los ocho enlaces, que pasa de 12,8 a 16 px.
+#   @s3  INTACTO. G2: el panel móvil se queda EXACTAMENTE como está.
+#   @s4  UNA CLÁUSULA ENMENDADA: en la portada el primer contenido ya no arranca
+#        «justo en el borde inferior de la cabecera», porque el hero sube bajo
+#        ella a propósito. G1 sigue en pie en todo lo demás.
+#   @s5  INTACTO.
+#   @s6  REESCRITO en dos cláusulas: el color y el tamaño del texto de «Tienda».
+#   @s7  REESCRITO: el borde de «Tienda» se mide contra lo que hay detrás de verdad.
+#
+# La cabecera es TRANSPARENTE sobre la foto en la portada y SÓLIDA (tinta de la
+# paleta, texto `sobre-primario`) en las demás rutas y al salir del hero. Todo lo
+# nuevo vive en `cabecera_sobre_el_hero.feature`, que tiene el ÍNDICE DE
+# TRAZABILIDAD. Lo que esa feature NO toca de este fichero: D1 (sin urgencias), D2
+# (el borde derecho de la navegación), D3 (los 4 px entre nombre y descriptor), G2
+# (el panel móvil) y el inventario de tokens, que sigue CERRADO.
+# =============================================================================
+
 Feature: Fidelidad visual de la cabecera
   Como visitante quiero reconocer la marca y llegar a las acciones principales
   desde una cabecera alineada con la portada y fiel al diseño aprobado.
@@ -151,6 +179,15 @@ Feature: Fidelidad visual de la cabecera
   # descriptor en un bloque compacto», y "compacto" es prosa sin medida que hoy
   # se cumple con 0,00 px entre nombre y descriptor — es decir, el contrato
   # estaba bendiciendo el defecto que D3 viene a corregir.
+  # @s1 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Con el nav a 16 px y
+  # la cabecera transparente sobre la foto siguen siendo ciertas todas sus
+  # cláusulas: la cabecera arranca en el borde superior del área visible, la marca y
+  # la navegación coinciden con los bordes de la columna de 1220 px (la fila reparte
+  # con `space-between`, así que el borde derecho no depende del tamaño de letra) y
+  # hay 4 px entre el nombre y el descriptor. LO QUE ESTE ESCENARIO NO VE, y es la
+  # razón de que no baste: se mide a 1440 px, donde nada se comprime. Que a 1024 px
+  # el descriptor no se trunque y la fila quepa lo fija `sistema_de_diseno_visual`
+  # @s27 (enmendado el 13/10/2026).
   @s1
   Scenario: En escritorio la cabecera se alinea con el contenido de la portada
     Given la portada renderizada a 1440 píxeles de ancho
@@ -174,13 +211,29 @@ Feature: Fidelidad visual de la cabecera
   # habitual: el enlace conserva sus 44×44 px reales y la píldora se dibuja
   # DENTRO. Ojo, artesano: extender el objetivo con un pseudo-elemento saliente
   # NO vale, porque la caja del propio enlace seguiría midiendo 35.
+  # @s2, UNA CLÁUSULA REESCRITA Y UNA AÑADIDA (13/10/2026, feature 49). Texto literal
+  # retirado: «And el objetivo de pulsación de cada uno de esos ocho enlaces mide al
+  # menos 44 por 44 píxeles». Pasa a 48 por 48: es el criterio 4 de la feature 49 y
+  # el criterio 2 de la 46, y es lo que ya miden los ocho (el `min-width` y el
+  # `min-height` de los enlaces y de «Tienda» son la altura de control media del
+  # sistema, 48 px). La regularidad del nav no se compra rompiendo la
+  # accesibilidad. «Tienda» conserva además su suelo de 44 en @s6, que el 48
+  # subsume.
+  # AÑADIDA: el tamaño de letra computado de los ocho es de 16 px, el paso 0 de la
+  # escala (P3, 13/10/2026). Que ese valor SALGA de la escala y no sea un literal lo
+  # fija `cabecera_sobre_el_hero` @s13; que el blanco entre glifos sea uniforme, su
+  # @s14; que quepan en una fila a 1024 px, `sistema_de_diseno_visual` @s27.
+  # PUERTA QUE MUERDE: el nav vuelve a `paso-tipografico(-1)`: 12,8 px. El
+  # `min-height` baja a 44: el objetivo no llega a 48. «Tienda» se queda a 12,8 px
+  # mientras sus hermanos suben: el tamaño computado de uno de los ocho difiere.
   @s2
   Scenario: En escritorio se ven las acciones principales con destinos reales
     Given una ventana de escritorio y la cabecera sin el menú móvil
     When el visitante inspecciona sus controles visibles
     Then los ocho enlaces de navegación se muestran en una sola fila
     And existe un enlace "Tienda" hacia la página de tienda
-    And el objetivo de pulsación de cada uno de esos ocho enlaces mide al menos 44 por 44 píxeles
+    And el objetivo de pulsación de cada uno de esos ocho enlaces mide al menos 48 por 48 píxeles
+    And el tamaño de letra computado de cada uno de los ocho enlaces, "Tienda" incluido, es de 16 píxeles, el paso 0 de la escala tipográfica
     And la medición recorre los ocho enlaces, nunca una lista vacía
     And ningún control de la fila tiene un destino que empiece por "tel:"
 
@@ -361,13 +414,37 @@ Feature: Fidelidad visual de la cabecera
   # Pablo tiene que aprobar un escenario que hoy falla, y el arreglo que lo pone
   # en verde es una línea de SCSS ya verificada.
   # ---------------------------------------------------------------------------
+  #
+  # @s4, TERCERA CLÁUSULA ENMENDADA (13/10/2026, feature 49). Texto literal retirado:
+  #     And el borde superior del primer contenido de la portada coincide con el
+  #     borde inferior de la cabecera con esa misma exactitud: ni un píxel tapado,
+  #     ni un píxel de franja vacía
+  # POR QUÉ. Pablo pidió el 13/10/2026 (punto 1 de su encargo) que la foto del hero
+  # ocupe también la cabecera. En la portada el primer contenido es el propio hero,
+  # que ahora sube bajo la cabecera A PROPÓSITO: «ni un píxel tapado» pasa a ser
+  # falso por diseño. La cláusula se parte en dos. En las otras cinco rutas sigue
+  # EXACTAMENTE como estaba (el relleno de `#root` las separa de la cabecera). En la
+  # portada se exige el solape, medido, y que la sección de bienvenida cuente esa
+  # franja DENTRO de su altura (cabecera_sobre_el_hero @s6).
+  # G1 SIGUE EN PIE. Las cláusulas 1, 2, 4 y 5 NO cambian: el alto renderizado de la
+  # cabecera sigue siendo exactamente el relleno que `#root` reserva, sin tolerancia,
+  # y la igualdad se consigue sin mover ni el token ni ese relleno. De hecho son lo
+  # que obliga a hacer el solape con un margen negativo del hero y NO quitando el
+  # relleno de `#root` (decisiones §6.6): quitarlo rompería las subpáginas. La
+  # cabecera mide 64 px en sus DOS estados (cabecera_sobre_el_hero @s8); el borde
+  # inferior de 1 px de hoy tiene que seguir cabiendo DENTRO de esos 64 o no pintarse
+  # en el estado transparente, y el alto no puede cambiar.
+  # PUERTA QUE MUERDE: se quita el relleno de `#root` para subir el hero: las
+  # subpáginas pierden su hueco y la cláusula de las otras cinco rutas falla. El hero
+  # no sube: en la portada la sección arranca en y = 64 y falla la nueva.
   @s4
   Scenario: La franja fija mide exactamente el hueco que el documento reserva bajo ella
     Given la portada renderizada a 1440 píxeles de ancho y sin desplazamiento
     When se compara el alto real de la cabecera con el hueco que el documento reserva para ella
     Then el alto renderizado de la cabecera, con su borde inferior incluido, es exactamente igual al relleno superior que el contenedor de la página reserva
     And esa igualdad se comprueba sin tolerancia; si hiciera falta una red contra el redondeo subpíxel, es estrictamente menor que el grosor del borde fino del sistema y se deriva de ese mismo token, nunca del número 1 escrito a mano
-    And el borde superior del primer contenido de la portada coincide con el borde inferior de la cabecera con esa misma exactitud: ni un píxel tapado, ni un píxel de franja vacía
+    And en cada una de las otras cinco rutas del inventario, cargada a 1440 píxeles y sin desplazamiento, el borde superior del primer contenido coincide con el borde inferior de la cabecera con esa misma exactitud: ni un píxel tapado, ni un píxel de franja vacía
+    And en la portada la sección de bienvenida sube bajo la cabecera a propósito: su borde superior está en y = 0 y el solape con la cabecera es exactamente el alto renderizado de ésta, sin tolerancia
     And la igualdad se consigue sin mover el token de altura de cabecera ni el hueco que el contenedor de la página reserva: es la franja la que pasa a medir lo que el documento ya reservaba
     And el bloque de marca —logotipo, nombre y descriptor— no supera ese alto
 
@@ -413,6 +490,28 @@ Feature: Fidelidad visual de la cabecera
   # 8 px y tipo de 13,5 px; 13,5 px NO existe en la escala tipográfica de este
   # repositorio y NO se escribe a mano: el acceso "Tienda" ya usa el paso -1
   # (12,8 px) y lo conserva.
+  # @s6, DOS CLÁUSULAS REESCRITAS (13/10/2026, feature 49). Texto literal retirado:
+  #     And su texto se pinta con la tinta fuerte de la variante activa, no con el color de texto normal
+  #     And su tamaño de letra sigue siendo un paso existente de la escala tipográfica, sin ningún número escrito a mano
+  # POR QUÉ. La primera es de cuando la cabecera era clara: la «tinta fuerte»
+  # (`--color-tinta`) era el color más oscuro de la variante y daba el contraste.
+  # Con la cabecera sólida de tinta, o transparente bajo un velo de tinta,
+  # `--color-tinta` es el FONDO: el texto de «Tienda» daría de 1,0 a 2,2:1 sobre el
+  # velo (medido en la investigación del 13/10/2026) y no se vería. Pablo decidió
+  # (P2) «un solo juego de colores en todos los estados» y las decisiones §6.7 dicen
+  # que «Tienda» sigue la regla común, `--color-sobre-primario`, y no
+  # `--color-tinta`. La segunda: «Tienda» estaba en el paso -1 (12,8 px) igual que
+  # sus siete hermanos; todos pasan al paso 0 (P3, 16 px) y «Tienda» no es una
+  # excepción. La nota de arriba que dice que «ya usa el paso -1 y lo conserva»
+  # describe el estado del 20/09/2026.
+  # QUÉ SE CONSERVA: la píldora más baja que el objetivo (menos de 48, como mucho 36
+  # y al menos 24 px) y el objetivo de pulsación de 44 por 44, que @s2 sube a 48 para
+  # los ocho.
+  # PUERTA QUE MUERDE: el texto de «Tienda» vuelve a `--color-tinta`: su color
+  # computado no es el de sus hermanos. Su tamaño vuelve al paso -1 o se escribe a
+  # mano. Que el color sea el mismo en los dos estados lo fija
+  # cabecera_sobre_el_hero @s7, y que se lea sobre la foto, su @s10 (Tienda es uno de
+  # los ocho enlaces que mide).
   @s6
   Scenario: El acceso "Tienda" baja a la píldora del prototipo sin perder su objetivo de pulsación
     Given la portada servida en una ventana más ancha que el punto de corte
@@ -421,8 +520,8 @@ Feature: Fidelidad visual de la cabecera
     And ese alto visible no supera los 36 píxeles que produce la propia escala del proyecto al sumar el mínimo de área táctil y un paso de espaciado
     And ese alto visible no baja de los 24 píxeles del mínimo de área táctil
     And su objetivo de pulsación sigue midiendo al menos 44 por 44 píxeles
-    And su texto se pinta con la tinta fuerte de la variante activa, no con el color de texto normal
-    And su tamaño de letra sigue siendo un paso existente de la escala tipográfica, sin ningún número escrito a mano
+    And su texto sigue la misma regla de color que los otros siete enlaces: el color de texto de la cabecera, "--color-sobre-primario" de la variante activa, en los dos estados de la cabecera, y no "--color-tinta"
+    And su tamaño de letra computado es el mismo que el de los otros siete, 16 píxeles, un paso existente de la escala tipográfica, sin ningún número escrito a mano
 
   # @s7 NUEVO (20/09/2026, D4). MEDIDO, no supuesto, con la función de contraste
   # del propio repositorio: el borde de control actual da 4,94:1 contra el fondo
@@ -464,12 +563,37 @@ Feature: Fidelidad visual de la cabecera
   # `--color-borde-control` NO SE TOCA en ninguno de los dos caminos: está
   # congelado hexadecimal a hexadecimal por @s8 (Enmienda 3) y @s4 de
   # `rediseno_visual`, que lo recalculan desde el prototipo versionado.
+  # @s7 REESCRITO (13/10/2026, feature 49). Texto literal retirado:
+  #     Scenario: El borde del acceso "Tienda" se suaviza sin bajar del mínimo de contraste de componente
+  #       When se compara el color de borde del acceso "Tienda" con el borde de control del resto de botones de contorno
+  #       Then en cada variante el borde del acceso "Tienda" contrasta menos contra el fondo sobre el que se pinta que el borde de control
+  #       And aun así su ratio de contraste contra ese fondo no baja de 3 a 1 en ninguna de las cinco variantes
+  #       And el valor suavizado sale de una única regla, la misma para las cinco variantes, derivada de tokens que ya existen
+  # POR QUÉ. Todo el escenario se calibró sobre un fondo CLARO (`--color-fondo`): el
+  # borde de control de la variante, un tono oscuro, contra la cabecera clara. Con la
+  # cabecera de tinta o transparente sobre la foto, el «fondo sobre el que se
+  # pinta» es la tinta o la fotografía bajo el velo, y el borde de control (oscuro)
+  # casi no contrasta con ninguna de las dos; mezclarlo con `--color-fondo` al 88 %
+  # lo empeora. La cláusula «contrasta menos que el borde de control» pierde su
+  # referencia: ya no hay un borde de control que sea el más fuerte con el que
+  # compararse. La suavidad que Pablo aprobó el 20/09/2026 (F3) tampoco tiene ya un
+  # punto de partida medible: VALOR POR DEFECTO del craftsman_lead (13/10/2026), que
+  # Pablo puede vetar: el borde SIGUE siendo suave mientras cumpla el 3 a 1, y la
+  # mezcla la elige el artesano; deja de ser una cláusula comprobable.
+  # QUÉ SE CONSERVA: el suelo de 3 a 1 (SC 1.4.11), la intocabilidad del borde de
+  # control de los demás botones, la regla única derivada de tokens existentes y la
+  # ausencia de color literal en la hoja. QUÉ CAMBIA: el 3 a 1 se mide contra los
+  # PÍXELES reales detrás del borde (el peor), en los dos estados de la cabecera,
+  # con el método de cabecera_sobre_el_hero @s10. La mezcla concreta la elige el
+  # artesano: el camino (b) de la nota de arriba, el token nuevo, sigue CERRADO.
+  # PUERTA QUE MUERDE: el borde se queda en la mezcla de antes (88 % del borde de
+  # control con `--color-fondo`): sobre tinta no llega a 3. La píldora lleva un
+  # borde de color literal: la puerta de literales lo señala.
   @s7
-  Scenario: El borde del acceso "Tienda" se suaviza sin bajar del mínimo de contraste de componente
-    Given el sitio servido en cada una de las cinco variantes de paleta
-    When se compara el color de borde del acceso "Tienda" con el borde de control del resto de botones de contorno
-    Then en cada variante el borde del acceso "Tienda" contrasta menos contra el fondo sobre el que se pinta que el borde de control
-    And aun así su ratio de contraste contra ese fondo no baja de 3 a 1 en ninguna de las cinco variantes
+  Scenario: El borde del acceso "Tienda" alcanza el contraste mínimo de componente contra lo que hay realmente detrás, sobre la foto y sobre el estado sólido
+    Given el sitio servido en cada una de las cinco variantes de paleta, con la fotografía del hero decodificada y la entrada del hero en estado estable (hero_reducido_con_animacion @s10)
+    When se mide el borde del acceso "Tienda" contra los píxeles que hay realmente detrás de él, con la cabecera transparente sobre la foto y con la cabecera sólida, con el método de píxeles de cabecera_sobre_el_hero @s10
+    Then en cada variante y en cada uno de los dos estados el contraste del borde contra el peor píxel que tiene detrás no baja de 3 a 1
     And los demás botones de contorno del sitio conservan su borde de control actual, sin cambiar ni un dígito
-    And el valor suavizado sale de una única regla, la misma para las cinco variantes, derivada de tokens que ya existen
+    And el valor del borde sale de una única regla, la misma para las cinco variantes y los dos estados, derivada de tokens que ya existen
     And en la hoja de estilos del módulo de la cabecera no aparece ningún color literal

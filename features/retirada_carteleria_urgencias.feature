@@ -63,10 +63,32 @@
 #       `animation:` y cero `@keyframes` en `src/`. Quedan 13 `transition:`. El
 #       sitio no se queda quieto: pierde los fotogramas clave, no el movimiento.
 #       Recontado el 21/09/2026 sobre las hojas de `src/`: 0, 0 y 13, sin cambio.
+#       [ACTUALIZADO 13/10/2026 (feature 48, `hero_reducido_con_animacion`): ESTE
+#       ESTADO DEJA DE SER CIERTO. Pablo aprobó el 13/10/2026 (respuesta P1)
+#       reintroducir una animación de entrada, SOLO en el hero: desde la feature 48
+#       hay `animation:` y `@keyframes` en `src/` (los del hero, dentro de
+#       `no-preference`). F2 queda como HISTORIA del estado a 21/09/2026; el
+#       contrato vigente de movimiento es la nota de política de la sección D de
+#       `accesibilidad.feature`, enmendada el 13/10/2026. La feature 48 solo
+#       cambia en este fichero COMENTARIOS (tres notas suyas: ésta, una bajo la
+#       tabla (A) y una sobre las features 46 y 47): ni una cláusula de @s1 se toca.]
 #   F3  El borde suave de "Tienda" se consigue mezclando tokens existentes; el
 #       camino del token nuevo queda CERRADO sin volver a la puerta humana.
+#       [ACTUALIZADO 13/10/2026 (feature 49, `cabecera_sobre_el_hero`): el camino
+#       del token nuevo SIGUE CERRADO, pero la suavidad respecto del borde de
+#       control pierde su referencia sobre una cabecera de tinta o transparente:
+#       `fidelidad_cabecera` @s7 pasa a exigir solo el 3 a 1 contra lo que hay
+#       detrás de verdad. Valor por defecto del craftsman_lead (13/10/2026), que
+#       Pablo puede vetar: el borde SIGUE siendo suave (F3) mientras cumpla ese 3 a 1;
+#       la mezcla la elige el artesano.]
 #   G1  El alto renderizado de la cabecera pasa a ser exactamente el hueco que el
 #       documento reserva bajo ella: el 20/09/2026 había 1,00 px de solape real.
+#       [ACTUALIZADO 13/10/2026 (feature 49): G1 SIGUE EN PIE. El alto de la
+#       cabecera sigue siendo exactamente el relleno que `#root` reserva, y mide 64
+#       px en sus dos estados. Cambia una consecuencia: en la portada el hero sube
+#       bajo la cabecera a propósito (punto 1 del encargo de Pablo), así que ya no
+#       es cierto que el primer contenido arranque «justo en el borde inferior» de
+#       la cabecera; esa cláusula de `fidelidad_cabecera` @s4 se parte en dos.]
 #   G2  Retirada la cláusula de píldora del panel móvil que una de las tandas se
 #       había añadido por su cuenta: Pablo no la pidió.
 #
@@ -161,6 +183,24 @@
 # | seo_estructura.feature        | @s10                           | E1                 | paginasSeo.test.tsx                                         |
 # | accesibilidad.feature         | @s19, @s20, @s21, @s22         | F2                 | movimiento.spec.ts · accesibilidad-movimiento.test.ts · Equipo.test.tsx |
 #
+# [ACTUALIZADO 13/10/2026 (feature 48): la fila de arriba cita el estado de
+# @s19-@s22 del 21/09/2026. Esos cuatro escenarios se REESCRIBEN o se revisan el
+# 13/10/2026 (ver la nota de política de la sección D de `accesibilidad.feature`
+# y `hero_reducido_con_animacion.feature`): @s19, @s20 y @s22 cambian de letra,
+# @s21 no. Lo que la fila dice de la parte de TRANSICIONES de F2 sigue siendo
+# cierto.]
+#
+# [ACTUALIZADO 13/10/2026 (feature 49, `cabecera_sobre_el_hero`): las filas de
+# `fidelidad_cabecera.feature` de arriba cambian así. @s1: REVISADO, sin cambio de
+# letra. @s2 (D1 + D4 + G2 siguen cumpliéndose): reescrito, el objetivo de pulsación
+# de los ocho enlaces pasa de 44 a 48 px y su tamaño de letra de 12,8 a 16 px. @s4
+# (G1): UNA cláusula enmendada, la del primer contenido de la portada; el resto sigue.
+# @s6 y @s7 (D4 + F3): reescritos, el texto de «Tienda» pasa a
+# `--color-sobre-primario` y su borde se mide contra lo que hay detrás. @s3 y @s5:
+# INTACTOS. De `rediseno_visual.feature`, @s26 queda REVISADO y @s28 cambia una
+# cláusula y gana otra; `cabecera_y_navegacion.feature` @s13 y @s7 siguen
+# INTACTOS.]
+#
 # NOVENO FICHERO, que NO está en la lista porque su contrato no hizo falta
 # tocarlo: `features/pagina_blog.feature` @s2 ya prohibía las urgencias en la
 # cabecera del blog desde antes. Lo que estaba mal era su test, que exigía lo
@@ -212,6 +252,13 @@
 # |   |                                                    |      ni siquiera aparecía por su ruta. Lo cazó                   |
 # |   |                                                    |      `progress/judge_39_ronda4.md` §7.1: «se cambió un RECHAZO   |
 # |   |                                                    |      por otro RECHAZO».                                          |
+#
+# [ACTUALIZADO 13/10/2026 (feature 49): en la tabla de arriba, el criterio 4
+# («Tienda»: 44x44 con píldora del prototipo y borde más suave que no baja de 3:1)
+# lo mueven `fidelidad_cabecera` @s2 (48x48 para los ocho), @s6 (color y tamaño de
+# letra) y @s7 (borde medido contra lo que hay detrás). El criterio 5 (alto de
+# cabecera igual al hueco reservado, sin tolerancia) sigue cumpliéndose con @s4,
+# enmendado en UNA cláusula, la del primer contenido de la portada.]
 #
 # -----------------------------------------------------------------------------
 # ESTADO DE LAS PUERTAS — MEDIDO EL 21/09/2026, TARDE
@@ -306,6 +353,10 @@
 #     (`igualdad_declarada_de_los_botones_del_hero`). CORREGIDO EL 21/09/2026:
 #     esta línea dijo «46 y 45»; la 45 es `limpieza_informacion_contacto` y no
 #     tiene nada que ver con el hero. Lo cazó `progress/judge_39_ronda5.md` §3.
+#     [ACTUALIZADO 13/10/2026: la 47 queda ABSORBIDA por la feature 48 (el hero
+#     pasa a tener un solo botón: no hay pareja cuya igualdad declarar) y la 46
+#     por la feature 49 (`cabecera_sobre_el_hero`), según la nota de cada una en
+#     `feature_list.json`. Siguen sin cerrarse hasta que se cierren la 48 y la 49.]
 #
 # Dicho aquí para que nadie lea este bloque como un «todo verde» de la feature
 # entera.

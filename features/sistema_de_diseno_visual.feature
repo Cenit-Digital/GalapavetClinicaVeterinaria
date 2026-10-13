@@ -428,6 +428,18 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
   # ---------------------------------------------------------------------------
   # E. PUNTO DE CORTE DE LA CABECERA: SIN DIVERGENCIA ENTRE JS Y CSS
   # ---------------------------------------------------------------------------
+  #
+  # SECCIÓN REVISADA (13/10/2026, feature 49 `cabecera_sobre_el_hero`).
+  #   @s14 (sección B), @s25 y @s26: REVISADOS, SIN CAMBIO DE LETRA. Los ocho
+  #   enlaces pasan de 12,8 a 16 px (P3) y el corte se queda en 1024: la fila cabe
+  #   a 1024 con 78 px de holgura medidos el 13/10/2026. El literal, su
+  #   coincidencia entre JS y CSS y el viewport máximo de la escala no se mueven.
+  #   @s25 lee SOLO la hoja de la cabecera: que ninguna OTRA hoja gane una
+  #   condición de anchura nueva lo fija `cabecera_sobre_el_hero` @s15.
+  #   @s27: ENMENDADO, con su nota.
+  #   @s30 y @s31 (sección G) miden el foco sobre píxeles reales a través de
+  #   `accesibilidad` @s18, enmendado el 13/10/2026: con la cabecera transparente el
+  #   fondo de un control es la fotografía, no el de un ancestro.
 
   @s25
   Scenario: El punto de corte usado por la maquetación de la cabecera es exactamente el mismo que usa su lógica en JS
@@ -445,6 +457,26 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
     And ese punto de corte de CSS hipotético seguiría aplicando la maquetación de móvil a ese mismo ancho de 1024 píxeles
     And esa divergencia es exactamente la «franja intermedia» que este proyecto evita fijando un único literal de 1024 para ambos
 
+  # @s27, TRES CLÁUSULAS AÑADIDAS (13/10/2026, feature 49). Nada de lo que decía se
+  # retira.
+  # POR QUÉ. «Ningún elemento se desborda ni se superpone» es verdad con una marca
+  # COMPRIMIDA y un descriptor TRUNCADO: a 19 y 20 px la marca se comprime a 244 y a
+  # 216 px, el descriptor pierde letras tras unos puntos suspensivos y nada solapa.
+  # El nav a 16 px de Pablo (P3) se midió a 1024 con 78 px de holgura (a 17 px, 52;
+  # a 18 px, 24), y desde 19 px el contrato de antes habría seguido en verde con la
+  # marca rota. Es el criterio 4 de la 49: «caben en una fila a 1024 px sin truncar
+  # el descriptor».
+  # LA TOLERANCIA de 1 px es la horizontal que ya usa `fidelidad_cabecera` @s1. La
+  # holgura se midió en `vite dev` con una barra de desplazamiento de 15 px: con la
+  # barra superpuesta de Playwright puede ser MÁS, nunca menos, así que el suelo de
+  # 78 menos 1 vale para las dos.
+  # SE MIDE TAMBIÉN EN "/blog", donde «Blog» es el enlace actual y pesa 600 con el
+  # ancho RESERVADO (cabecera_sobre_el_hero @s16): la fila no puede ser más larga que
+  # en la portada, así que allí vale la misma holgura de 77 px.
+  # PUERTA QUE MUERDE: el nav pasa a 18 px: la holgura baja a 24 y falla la cláusula
+  # de 77. A 19 px: el descriptor se trunca y la marca se comprime. El relleno
+  # lateral de los enlaces sube de 8 a 10 px: ocho enlaces por 4 px son 32 px menos
+  # de holgura, y quedan 46.
   @s27
   Scenario: En el ancho exacto del punto de corte la cabecera real muestra la maquetación de escritorio, y un píxel por debajo la de móvil
     Given el sitio de Galapavet construido ("vite build && vite preview")
@@ -453,6 +485,9 @@ Feature: Sistema de diseño visual: tokens SCSS reales y maquetación de todos l
     Then a 1024 píxeles la fila de navegación horizontal está presente y ocupa un ancho mayor que 0
     And a 1023 píxeles la fila de navegación horizontal no está presente y el botón de menú sí lo está
     And ningún elemento de la cabecera se desborda ni se superpone con otro en ninguno de los dos anchos
+    And a 1024 píxeles, tanto en la portada como en "/blog", donde "Blog" es el enlace actual y pesa 600 con el ancho reservado, los ocho enlaces ocupan una sola fila: sus cajas arrancan a la misma altura, con una tolerancia de 1 píxel
+    And a 1024 píxeles el descriptor "Centro integral veterinario" se ve entero, sin puntos suspensivos, y la marca conserva el ancho natural de su contenido, sin comprimirse
+    And a 1024 píxeles en la portada la distancia entre el borde derecho de la marca y el borde izquierdo de la navegación es de 77 píxeles o más (78 medidos el 13/10/2026, menos la tolerancia de 1 píxel), y en "/blog", donde el enlace actual reserva su ancho, es también de 77 píxeles o más
 
   # ---------------------------------------------------------------------------
   # F. ÁREA TÁCTIL MÍNIMA EN EL SITIO REAL (cierra accesibilidad.feature @s2/@s7)

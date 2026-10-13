@@ -83,6 +83,15 @@
 #   con la tipografía de marca ya cargada, buscando el ancho mínimo al que la
 #   fila no se parte ni desborda. Si la medida no da 1024, se corrige el literal
 #   de @s1 y solo ese; ningún otro escenario repite la cifra.
+#   [ACTUALIZADO 13/10/2026 (feature 49 `cabecera_sobre_el_hero`): la fila cambia
+#   —los ocho enlaces pasan de 12,8 a 16 px (P3 de Pablo)— y el 1024 se vuelve a
+#   medir con ella. Medido en navegador real el 13/10/2026, con la fila a 16 px
+#   inyectada en `vite dev` y la marca de 256,84 px: cabe en una sola línea a 1024
+#   px con 78 px de holgura (a 17 px, 52; a 18 px, 24; a 19 y 20 px la marca se
+#   comprime y el descriptor se trunca). El literal NO se mueve: @s1 sigue en 1024.
+#   Lo que se comprueba con el CSS definitivo, y no con una hoja inyectada, vive en
+#   `sistema_de_diseno_visual` @s27 (enmendado) y en `cabecera_sobre_el_hero` @s13
+#   y @s14.]
 # - PENDIENTE: el nombre accesible exacto del enlace del logotipo depende de si
 #   el descriptor queda dentro del enlace o fuera. El contrato exige (@s12) que
 #   el nombre accesible contenga "Galapavet" y que el destino sea el inicio; el
@@ -99,6 +108,10 @@ Feature: Cabecera con navegación principal y menú móvil
   Background:
     Given el visitante está en cualquier punto de la landing de Galapavet
 
+  # @s1 REVISADO (13/10/2026, feature 49): SIN CAMBIO DE LETRA. Ver el PENDIENTE de
+  # arriba. @s14 queda INTACTO y es compatible con la feature 49: con el ancho sin
+  # medir el ÁRBOL del primer render sigue siendo la rama móvil; lo que
+  # `cabecera_sobre_el_hero` @s5 fija es lo que se PINTA, no ese árbol.
   @s1
   Scenario: Este proyecto declara su propio punto de corte y no hereda el ajeno
     Given que este proyecto declara un único punto de corte para la navegación

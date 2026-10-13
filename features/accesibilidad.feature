@@ -315,6 +315,15 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And el recuento de controles a los que se dio foco es mayor que 0
     And el control que tiene el foco es el mismo que el navegador declara como elemento activo
 
+  # @s17 REVISADO (13/10/2026, feature 49 `cabecera_sobre_el_hero`): SIN CAMBIO DE
+  # LETRA. Una cabecera transparente sigue siendo «la cabecera fija»: el criterio es
+  # por RECTÁNGULO, no por opacidad. SC 2.4.11 habla de un componente «entirely
+  # hidden due to author-created content», y que la cabecera sea transparente no
+  # reduce el solape (inferencia de la investigación del 13/10/2026; ninguna página
+  # Understanding leída trata cabeceras translúcidas). El hueco que lo hace cumplir,
+  # `scroll-padding-top`, y el desplazamiento del enlace de salto al enfocar no
+  # cambian: cabecera_sobre_el_hero @s8. Sigue sin existir «ninguna barra superior
+  # adicional»: la cabecera mide 64 px en sus dos estados.
   @s17
   Scenario: La cabecera fija no oculta por completo el control que recibe el foco
     Given una página desplazada de modo que el siguiente control enfocable quedaría bajo la cabecera fija
@@ -324,24 +333,105 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And al menos parte del control enfocado queda dentro del área visible
     And no existe ninguna barra superior adicional que pueda taparlo
 
+  # @s18, UNA CLÁUSULA ENMENDADA Y UNA AÑADIDA (13/10/2026, feature 49). Texto
+  # literal retirado de la segunda cláusula del «Then»: «And el ratio de contraste
+  # calculado entre los mismos píxeles en estado con foco y sin foco es mayor o
+  # igual que 3».
+  # POR QUÉ. El texto ya hablaba de «los mismos píxeles», pero la puerta que lo
+  # ejecuta (`tests/e2e/accesibilidad.spec.ts`, las dos funciones que resuelven el
+  # fondo subiendo por los ancestros hasta el primer color no transparente) mide
+  # contra el color COMPUTADO del primer ancestro con fondo. Con la cabecera
+  # transparente sobre la foto ese ancestro es `body`: se mide contra el fondo de la
+  # página y no contra la fotografía. Resultado: verde por vacuidad con un anillo que
+  # no se ve, o falso rojo con un anillo claro sobre una página clara. Es el defecto
+  # que la 39 llamó una puerta que «parece morder y no muerde». Se reescribe para que
+  # lea PÍXELES (capturas del navegador); el método y los sabotajes que demuestran
+  # que ahora puede ponerse roja son cabecera_sobre_el_hero @s10, @s11 y @s12.
+  # AÑADIDA: que la cabecera cuente entre los controles comprobados, porque la
+  # puerta solo mira los 20 primeros de cada ruta y un contrato no puede depender de
+  # que la cabecera caiga dentro.
+  # PUERTA QUE MUERDE: el anillo de los enlaces de la cabecera pasa a `--color-foco`
+  # (1,98:1 sobre el velo vertical de antes, medido): la medición sobre la marca, a la
+  # izquierda y bajo el tramo más oscuro del velo, lo suspende. La foto no carga:
+  # «no se midió» y suspende (cabecera_sobre_el_hero @s12).
   @s18
   Scenario: El indicador de foco alcanza el área y el contraste exigidos
     Given el inventario de controles interactivos de las seis páginas
     And esta verificación se ejecuta con navegador real (Claude in Chrome / skill browser-automation), fuera del gate de Vitest/Stryker, según la Decisión 11 de project-spec.md, porque exige píxeles efectivamente renderizados en dos estados
     When cada control interactivo recibe el foco por teclado
     Then el área del indicador de foco de cada control es al menos la de un perímetro de 2 píxeles CSS de grosor alrededor del control sin foco
-    And el ratio de contraste calculado entre los mismos píxeles en estado con foco y sin foco es mayor o igual que 3
+    And el ratio de contraste calculado entre los mismos píxeles en estado con foco y sin foco es mayor o igual que 3, leídos de capturas del navegador sobre lo que de verdad hay pintado: sobre la fotografía del hero, con la cabecera transparente, el valor es el del peor píxel de la zona del anillo, nunca el fondo computado de un ancestro, que en esa zona es el de la página
     And ese umbral 3 está escrito a mano en el escenario y no se obtiene del valor que comprueba
     And el recuento de controles a los que se comprobó el área y el contraste del indicador de foco es mayor que 0
+    And entre ellos están la marca y los ocho enlaces de la cabecera de la portada con la cabecera transparente, y los de una subpágina con la cabecera sólida
 
   # ---------------------------------------------------------------------------
   # D. MOVIMIENTO — SC 2.3.3 y técnica C39 (`prefers-reduced-motion`)
   # ---------------------------------------------------------------------------
   #
   # ===========================================================================
+  # SEGUNDO CAMBIO DE POLÍTICA DE MOVIMIENTO (13/10/2026) — VUELVE UNA ANIMACIÓN
+  # POR FOTOGRAMAS CLAVE, SOLO EN EL HERO. ESTA NOTA SUPERA A LA DE DEBAJO EN LO
+  # QUE LA CONTRADICE; LA DE DEBAJO SE CONSERVA COMO HISTORIA Y PARA LO QUE SIGUE
+  # SIENDO CIERTO.
+  # ===========================================================================
+  #
+  # QUIÉN LO DECIDIÓ Y CUÁNDO: Pablo, 13/10/2026, respuesta P1 a la pregunta
+  # «¿reabrir la política de cero animaciones del 20/09 para la entrada del
+  # hero?»: «Sí, 0,7 s escalonada: titular, párrafo (+120 ms) y botón (+240 ms),
+  # recorrido de 40 px, se amplía la escala de movimiento con un paso de 0,7 s, sin
+  # animación si el sistema pide reducir movimiento»
+  # (`progress/decisiones_cabecera_hero_20261013.md` §4). ESA APROBACIÓN ES LA
+  # PUERTA HUMANA que exigía @s20 de este fichero y la feature 39 (F2).
+  #
+  # LO QUE CAMBIA, con nombre y apellidos:
+  #   · El sitio vuelve a tener EXACTAMENTE UNA aparición animada: la entrada de
+  #     los tres elementos del hero. Sus valores y sus puertas viven en
+  #     hero_reducido_con_animacion @s5-@s9. Ya NO es cierto que haya cero
+  #     declaraciones `animation:` ni cero `@keyframes` en `src/`.
+  #   · La escala de movimiento (150 y 300 ms) se amplía con un paso de 700 ms y
+  #     los retardos 0/120/240 ms: identidad_visual @s16.
+  #   · @s19 gana un sujeto (los tres elementos del hero deben apagarse con
+  #     `reduce`); @s20 pasa de «el recuento es exactamente 0» a «el recuento es
+  #     mayor que 0 y todos son del hero»; @s21 conserva su letra; y @s22 recupera
+  #     lo que la feature 39 le quitó (la animación por fotogramas clave en curso y
+  #     el contenido visible al terminar), tal como esa feature anunciaba: «este
+  #     escenario es el sitio donde vuelve».
+  #
+  # LO QUE NO CAMBIA:
+  #   · Con la preferencia de menos movimiento NADA se anima: ni la entrada ni los
+  #     retardos. El anulador global de `reduce` NO es una red de seguridad: tiene
+  #     especificidad 0 y pierde ante cualquier regla del autor que declare
+  #     `animation` o `animation-duration` (medido en Chromium: con la animación
+  #     declarada fuera de `no-preference`, bajo `reduce` corre con sus 700 ms y no
+  #     con los 0,01 ms), y además no toca `animation-delay`. Por eso `animation`,
+  #     `animation-name` y los retardos viven SOLO dentro de `no-preference`
+  #     (hero_reducido_con_animacion @s6 y @s8).
+  #   · Las demás animaciones del sitio siguen necesitando SU puerta humana. La
+  #     aprobación de Pablo cubre la entrada del hero y nada más. Las de la galería
+  #     (feature 40) quedan desbloqueadas en la política pero no aprobadas, y @s20
+  #     las caza.
+  #   · El resto de la nota de debajo (las 13 `transition:` y el desplazamiento
+  #     suave) sigue siendo cierto.
+  #
+  # WCAG, para quien se pregunte si esto exige un control de pausa. SC 2.2.2 (nivel
+  # A) alcanza al movimiento que empieza solo, dura MÁS DE 5 SEGUNDOS y se presenta
+  # junto a otro contenido: la entrada entera dura 0,94 s. SC 2.3.3 (AAA) trata la
+  # animación disparada por una interacción y remite a 2.2.2 para la que inicia la
+  # página. La investigación lo concluye DEDUCIENDO de las tres condiciones, porque
+  # ninguna de las dos páginas trata expresamente una animación corta única al
+  # cargar: queda dicho así, como deducción y no como cita. De ahí que la
+  # obligación de respetar `reduce` venga de la política del proyecto y no de un
+  # criterio. Fuente: `progress/investigacion_cabecera_hero_20261013/docs-oficiales-accesibilidad.md`
+  # §3 y §4. Lo que SÍ aplica es la advertencia de MDN sobre el desplazamiento de
+  # objetos grandes: por eso el recorrido es de 40 px y no el 100 % de la referencia.
+  #
+  # ===========================================================================
   # CAMBIO DE POLÍTICA DE MOVIMIENTO (20/09/2026) — EL SITIO SE QUEDA SIN
-  # NINGUNA ANIMACIÓN POR FOTOGRAMAS CLAVE. ESTA ES LA ÚNICA NOTA DEL
-  # REPOSITORIO QUE LO CUENTA; EL RESTO APUNTAN AQUÍ.
+  # NINGUNA ANIMACIÓN POR FOTOGRAMAS CLAVE. [SUPERADO EN LO DEL HERO EL 13/10/2026:
+  # LEER ANTES LA NOTA DE ARRIBA. TODO LO QUE SIGUE SOBRE «CERO animation: Y CERO
+  # @keyframes» ES HISTORIA.] ESTA ES LA NOTA DEL REPOSITORIO QUE CUENTA EL
+  # ESTADO DEL 20/09/2026; EL RESTO APUNTAN AQUÍ.
   # ===========================================================================
   #
   # QUÉ SE VA, con nombre y apellidos. Las ÚNICAS dos declaraciones `animation:`
@@ -465,6 +555,36 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # vacuidades del repositorio, arriba). Se reescriben para que el sujeto sea el
   # que de verdad queda —las 13 transiciones y el desplazamiento suave— y para
   # que el recuento no pueda salir de contar el documento entero.
+  # @s19, DOS CLÁUSULAS AÑADIDAS (13/10/2026, feature 48). Las cinco anteriores
+  # conservan su letra, pero cambia lo que significan: «ningún elemento de la
+  # página tiene una animación en curso» se cumplía sobre el conjunto vacío desde
+  # el 20/09/2026, y desde hoy tiene sujeto —la entrada del hero— que `reduce`
+  # tiene que apagar. Los valores computados que lo garantizan (nombre de
+  # animación `none`, retardo 0 s, opacidad 1 en el primer fotograma) los fija
+  # hero_reducido_con_animacion @s6; aquí solo se añaden las dos cláusulas que
+  # impiden que este escenario vuelva a pasar por vacuidad.
+  #
+  # LO QUE ESTE ESCENARIO NO PROTEGE TAL COMO SE EJECUTA HOY. `movimiento.spec.ts`
+  # ESPERA a que no quede movimiento en curso y SOLO DESPUÉS cuenta las animaciones:
+  # el predicado de la espera es el de la aserción. Medido: con los fotogramas y la
+  # animación declarados fuera de `no-preference`, bajo `reduce`, tras esa espera el
+  # recuento sale 0 y el escenario queda VERDE con el defecto; lo que sí falla es
+  # el primer fotograma (opacidad 0, nombre de animación distinto de `none` y
+  # retardos computados de 0,12 y 0,24 s). Por eso la primera cláusula añadida mide
+  # en el PRIMER FOTOGRAMA, sin esperar. La protección completa de la entrada del hero es
+  # hero_reducido_con_animacion @s6 (primer fotograma) y @s8 (lectura de las hojas);
+  # identidad_visual @s42, que tiene la misma espera, NO la protege y no se
+  # presenta como si lo hiciera.
+  #
+  # PUERTA QUE MUERDE, cláusula por cláusula. La PRIMERA añadida (medida sin
+  # esperar): `animation` o fotogramas declarados fuera de `no-preference`: bajo
+  # `reduce`, en el primer fotograma, el nombre de animación computado deja de ser
+  # `none` o existe algún objeto de animación por fotogramas clave, aunque ya haya
+  # terminado. La SEGUNDA (la misma medida sin la preferencia): la consulta
+  # `prefers-reduced-motion` MUERTA —un `no-preference` que nunca se cumple, o un
+  # anulador que apaga todo con y sin preferencia—: sin la preferencia no se
+  # encuentran las 3 animaciones y la cláusula falla, de modo que la primera no puede
+  # pasar «porque no hay nada que apagar».
   @s19
   Scenario: Con la preferencia de menos movimiento ninguna animación se reproduce
     Given un visitante que ha pedido menos movimiento en su sistema
@@ -475,6 +595,8 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And ningún desplazamiento solicitado por la página es suavizado
     And el recuento de elementos comprobados es mayor que 0
     And ese recuento se obtiene de los elementos que declaran movimiento en los módulos que lo declaran de verdad, y no de contar los elementos a los que la propia consulta de movimiento reducido les anula la duración, que son todos los del documento
+    And entre esos elementos están los tres del hero y en ellos, medido en el PRIMER fotograma pintado y sin esperar a que cese el movimiento, el nombre de animación computado es "none" y no existe ningún objeto de animación por fotogramas clave en ningún estado de reproducción, tampoco los ya terminados
+    And la misma medida sin la preferencia, con el reloj de animaciones congelado antes de navegar, encuentra 3 animaciones por fotogramas clave (@s22), lo que demuestra que la consulta discrimina de verdad y no está muerta
 
   # @s20, TRES CLÁUSULAS ENMENDADAS Y UNA RETIRADA (20/09/2026, TERCERA TANDA).
   # Texto literal de lo que se va:
@@ -491,6 +613,52 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # por un recuento medido con disparador, que es lo que de verdad vigila la
   # política nueva. Lo que se pierde: nada ejecutable; lo que había no se
   # ejecutaba sobre el sitio.
+  # @s20, DOS CLÁUSULAS REEMPLAZADAS Y CINCO AÑADIDAS, LA ÚLTIMA CON SU TABLA
+  # (13/10/2026, feature 48).
+  # Texto literal de lo que se va:
+  #     And desde el 20/09/2026 el recuento de bloques que aparecen mediante una animación es exactamente 0, y la puerta lo declara por escrito en vez de aprobar en silencio sobre una lista vacía
+  #     And si ese recuento vuelve a ser mayor que 0, esta puerta lo caza: reintroducir una animación de entrada exige pasar por la puerta humana
+  #
+  # POR QUÉ SE VAN. La segunda decía que reintroducir una animación de entrada
+  # «exige pasar por la puerta humana». PABLO LA PASÓ EL 13/10/2026 (respuesta P1):
+  # el hero SÍ tendrá su entrada animada. El recuento deja de ser 0. Pero «exactamente
+  # 0» era un DISPARADOR, y el disparador sigue haciendo falta: cambia el umbral,
+  # no la función. Pasa de «ninguna animación» a «ninguna animación FUERA DEL HERO»,
+  # porque la aprobación cubre la entrada del hero y nada más (las de la galería, de la
+  # feature 40, tienen que pasar su propia puerta).
+  #
+  # LOS DOS AGUJEROS DE LA PUERTA, medidos leyendo `accesibilidad-movimiento.ts`
+  # sin ejecutar nada. La puerta decide «invisible sin su animación» así: si la HOJA
+  # contiene en alguna línea `opacity: 0` o `visibility: hidden`, marca como
+  # invisibles TODOS los bloques animados de esa hoja.
+  #   1. FALSO ROJO CONTRA LO LEGÍTIMO. Los fotogramas de una entrada parten de
+  #      opacidad 0: `from { opacity: 0 }` escrito en varias líneas contiene la línea
+  #      `opacity: 0`, y la puerta marcaría invisible una animación CORRECTA. La salida
+  #      fácil es relajar la puerta hasta que no muerda (ignorar `opacity: 0` sin más).
+  #      Eso es lo que este escenario impide con las filas de la tabla que dicen
+  #      «incumple»: hay que distinguir el estado de PARTIDA de la animación (dentro
+  #      de un `@keyframes`) del estado BASE del bloque (fuera de él).
+  #   2. FALSO VERDE CONTRA LO REALMENTE INVISIBLE. La puerta compara la línea
+  #      entera normalizada con `opacity:0`: un bloque escrito en una sola línea
+  #      (`.x { opacity: 0; animation: … }`) no coincide y no se detecta. Hoy no
+  #      existe ninguno, así que nadie lo ha visto; en cuanto exista una animación de
+  #      entrada, es el patrón clásico (ocultar en CSS y revelar con la animación).
+  #
+  # QUÉ SE CONSERVA: las cuatro primeras cláusulas, intactas, y el sesgo hacia el
+  # rojo de la puerta (una hoja que a la vez anima y oculta se marca para revisión
+  # humana, fila 6 de la tabla). QUÉ ENTRA: el sujeto de «todos son del hero» y la
+  # tabla, que es la lista de mutaciones que el módulo puro debe ver (se
+  # contrasta por StrykerJS: 100 % sobre los mutantes no equivalentes).
+  #
+  # LA PRUEBA QUE HOY FIJA `recuentoDeBloquesQueAparecenAnimando` = 0
+  # (`accesibilidad-movimiento.test.ts`) SE INVIERTE: no se «relaja a > 0», se
+  # reescribe contra las hojas reales con la lista de hojas autorizadas escrita a
+  # mano.
+  #
+  # PUERTA QUE MUERDE: una animación de entrada en cualquier hoja que no sea la del
+  # hero: el veredicto es «incumple». Se quita la animación del hero: el recuento
+  # baja a 0 y la cláusula del «mayor que 0» falla. `opacity: 0` en el estado base
+  # del hero: «incumple». La tabla cubre las dos direcciones del error.
   @s20
   Scenario: Con la preferencia de menos movimiento el contenido que se revelaba con movimiento está visible
     Given un visitante que ha pedido menos movimiento en su sistema
@@ -499,8 +667,22 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And ningún bloque queda invisible por no haberse ejecutado su animación ni su transición
     And el análisis automático de accesibilidad de esa página sigue devolviendo 0 violaciones
     And el inventario de bloques que se recorre se lee del sitio real, nunca de una lista escrita en el propio test
-    And desde el 20/09/2026 el recuento de bloques que aparecen mediante una animación es exactamente 0, y la puerta lo declara por escrito en vez de aprobar en silencio sobre una lista vacía
-    And si ese recuento vuelve a ser mayor que 0, esta puerta lo caza: reintroducir una animación de entrada exige pasar por la puerta humana
+    And desde el 13/10/2026 el recuento de bloques que aparecen mediante una animación es mayor que 0 y TODOS pertenecen a la hoja de estilos del hero, y la puerta lo declara por escrito en vez de aprobar en silencio
+    And la lista de hojas autorizadas a declarar una animación de entrada está escrita a mano en este escenario —solo la del hero— y no sale de las hojas que comprueba
+    And si el inventario contiene un bloque de cualquier otra hoja, esta puerta se pone roja: cualquier otra animación de entrada exige su propia puerta humana, y la aprobación del 13/10/2026 no la cubre
+    And la puerta distingue el estado de partida de una animación del estado base del bloque: una opacidad 0 o una visibilidad oculta DENTRO de un "@keyframes" no cuenta como bloque invisible sin su animación
+    And una opacidad 0 o una visibilidad oculta FUERA de todo "@keyframes", en una hoja que además anima ese bloque, sí lo señala como invisible sin su animación, esté repartida en las líneas que esté
+    And sobre las hojas reales del sitio el veredicto es "pasa": la animación del hero no queda invisible sin su animación y es la única que existe
+    And el veredicto de la puerta sobre cada una de estas hojas sintéticas es el de la tabla:
+      | hoja sintética                                                                                                                              | veredicto | bloques señalados como invisibles |
+      | hoja del hero con unos fotogramas cuyo "from" parte de opacidad 0, repartidos en varias líneas, y un bloque animado cuyo estado base no oculta nada | pasa      | 0                                 |
+      | la misma, con los bloques "from" y "to" de los fotogramas escritos cada uno en una sola línea                                                | pasa      | 0                                 |
+      | la primera, pero el bloque animado declara además opacidad 0 en su estado base                                                               | incumple  | 1                                 |
+      | la primera, pero el bloque animado declara además visibilidad oculta en su estado base                                                       | incumple  | 1                                 |
+      | un bloque animado cuyo estado base declara opacidad 0, todo escrito en una sola línea                                                        | incumple  | 1                                 |
+      | la primera, pero otro bloque de la misma hoja, sin animación, declara opacidad 0                                                             | incumple  | 1                                 |
+      | la primera, pero declarada en una hoja que no es la del hero                                                                                 | incumple  | 0                                 |
+      | hoja del hero con unos fotogramas cuyo "from" parte de visibilidad oculta, y un bloque animado cuyo estado base no oculta nada               | pasa      | 0                                 |
 
   # @s21, PRIMERA CLÁUSULA ENMENDADA (20/09/2026, TERCERA TANDA). Decía
   # literalmente: «Then ninguna animación se reproduce». Pasaba a cumplirse sobre
@@ -510,6 +692,18 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # `src/lib/accesibilidad-movimiento.test.ts:102-104`— sobrevive intacta y no se
   # toca. Nadie había señalado esta cláusula: los avisos anteriores solo
   # mencionaban @s20 y @s22.
+  # @s21 REVISADO (13/10/2026, feature 48): SIN CAMBIO DE LETRA. «No se reproduce
+  # ninguna animación ni ninguna transición con una duración perceptible» y «todo el
+  # contenido está visible desde el primer momento» siguen siendo ciertas, y ahora
+  # TIENEN SUJETO: la entrada del hero. En CSS, «la consulta no se puede hacer» es
+  # lo que le pasa a un navegador que no entiende `prefers-reduced-motion`: el
+  # bloque `@media (prefers-reduced-motion: no-preference)` evalúa a falso y la
+  # entrada del hero no se declara; es la razón por la que fotogramas y retardos
+  # viven solo ahí. Que el contenido se ve sin la animación lo mide
+  # hero_reducido_con_animacion @s7 (cancelar las animaciones y comprobar que todo
+  # queda visible). Su parte con puerta pura (`accesibilidad-movimiento.test.ts`:
+  # sin poder consultar la preferencia se actúa como si se hubiera pedido menos
+  # movimiento) sobrevive intacta.
   @s21
   Scenario: Si la preferencia de movimiento no se puede consultar se actúa como si se hubiera pedido menos movimiento
     Given un entorno en el que la consulta de la preferencia de movimiento no está disponible
@@ -555,6 +749,50 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
   # comprueba eso, porque no hay ninguna animación que comprobar. Si el punto 8
   # de la reunión del 16/08/2026 (las animaciones de la galería) llega a
   # implementarse, este escenario es el sitio donde vuelve.
+  # @s22, TRES CLÁUSULAS AÑADIDAS (13/10/2026, feature 48). La feature 39 retiró de
+  # este escenario tres cláusulas que decían, literalmente: «ese elemento tiene una
+  # animación en curso» / «el recuento de elementos con animación en curso es mayor
+  # que 0» / «ese contenido queda igualmente visible al terminar la animación», y
+  # dejó escrito el aviso, literal: «Si el punto 8 de la reunión del 16/08/2026 (las
+  # animaciones de la galería) llega a implementarse, este escenario es el sitio
+  # donde vuelve». VUELVE, con otro sujeto del que esperaba aquella nota: la entrada
+  # del hero, aprobada por Pablo el 13/10/2026 (P1), y no la galería.
+  #
+  # QUÉ NO DUPLICA: los valores exactos de esas animaciones (700 ms, 0/120/240 ms,
+  # 40 px, `ease-out`) viven en hero_reducido_con_animacion @s5. Aquí se afirma lo
+  # que ese escenario no puede afirmar sin repetirse: que sin la preferencia el
+  # sitio SÍ tiene animaciones por fotogramas clave, que solo están donde deben
+  # estar (la portada) y que terminan con el contenido visible.
+  #
+  # QUÉ ES «SU FINAL». El último instante de la FASE ACTIVA de cada animación (su
+  # `endTime` menos 1 ms), más la lectura de su último fotograma (offset 1) con
+  # `effect.getKeyframes()`. NO `currentTime = endTime`: con el relleno «hacia atrás»
+  # que necesita el escalonado, en `endTime` la animación ya no se aplica y se lee el
+  # estilo BASE, de modo que la cláusula pasaría aunque los fotogramas finales
+  # estuvieran mal (medido en Chromium). Ver hero_reducido_con_animacion @s5.
+  #
+  # TOLERANCIAS EXPLÍCITAS EN ESE INSTANTE. En `endTime − 1 ms` la curva `ease-out`
+  # aún no ha llegado a 1 (medido: opacidad 0,999996 y transform de −0,000154 px):
+  # una igualdad estricta daría rojo con el código correcto. Se pide opacidad efectiva
+  # mayor o igual que 0,999 y desplazamiento horizontal menor que 0,5 px. La
+  # EXACTITUD («1», `none` o desplazamiento 0) la fija EN EXCLUSIVA la lectura del
+  # fotograma de offset 1 con `getKeyframes()`: un desplazamiento residual de 0,3 px
+  # pasa la tolerancia de caja y solo lo caza esa lectura. Con un `to` implícito,
+  # `getKeyframes()` devuelve igualmente el offset 1: no obliga a escribir un `to`.
+  #
+  # LAS OTRAS 5 RUTAS, CON EL RELOJ CONGELADO TAMBIÉN. Una animación corta sin
+  # relleno habría terminado y habría desaparecido de `getAnimations()` antes de
+  # contarla: sin congelar el reloj ANTES de navegar en cada una de las 5 rutas, el
+  # «0» pasaría por vacuidad.
+  #
+  # PUERTA QUE MUERDE (`tests/e2e/movimiento.spec.ts`, navegador real): la entrada
+  # del hero pierde su `animation`: el recuento baja de 3 a 0. Una animación
+  # aparece en otra ruta: el recuento de las otras cinco deja de ser 0. Unos
+  # fotogramas cuyo último fotograma deja `opacity: 0` o un `transform` distinto de
+  # `none`: falla la lectura del fotograma de offset 1 de la última cláusula. La
+  # frase «unos fotogramas que terminan en `opacity: 0` hacen fallar la última
+  # cláusula», tal como estaba escrita antes de esta corrección, era FALSA con
+  # relleno hacia atrás si se leía en `endTime`.
   @s22
   Scenario: Sin la preferencia de menos movimiento el sitio sí se mueve
     Given un visitante que no ha pedido menos movimiento en su sistema
@@ -563,6 +801,9 @@ Feature: Puerta de accesibilidad WCAG 2.2 AA
     And la decisión de desplazamiento que toma la lógica del sitio para ese visitante es suave
     And al menos un módulo del inventario declara una transición dentro de un bloque "prefers-reduced-motion: no-preference"
     And el recuento de módulos que declaran movimiento dentro de ese bloque es mayor que 0 y se lee del texto real de las hojas de estilo, nunca de una lista escrita en el test
+    And con el reloj de animaciones del navegador congelado ANTES de navegar, como en hero_reducido_con_animacion @s5, la portada tiene exactamente las 3 animaciones por fotogramas clave del hero, con los valores que fija ese escenario: sin congelar, una máquina lenta las daría ya terminadas y el recuento bajaría a 0 con el código correcto
+    And con el reloj congelado antes de navegar en cada una de las 5 rutas, las otras 5 rutas del inventario no tienen ninguna animación por fotogramas clave (las transiciones no cuentan)
+    And al llevar esas 3 animaciones al último instante de su fase activa, su "endTime" menos 1 milisegundo, el titular, el párrafo y el botón tienen opacidad efectiva mayor o igual que 0,999 y un desplazamiento horizontal menor que 0,5 píxeles, y el último fotograma de cada una, el de desplazamiento 1 leído con "getKeyframes()", declara con exactitud opacidad "1" y transformación "none" o un desplazamiento horizontal de 0
     And ningún contenido queda oculto ni a medio aparecer cuando ese movimiento termina
 
   # ---------------------------------------------------------------------------

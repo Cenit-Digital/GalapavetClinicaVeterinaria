@@ -29,6 +29,13 @@ Feature: Fidelidad responsive integral de la portada
     And desde 1024 se presentan en cuatro columnas
     And todos los enlaces y sus nombres accesibles permanecen presentes
 
+  # @s4 REVISADO (13/10/2026, feature 49 `cabecera_sobre_el_hero`): SIN CAMBIO DE
+  # LETRA. Con los ocho enlaces a 16 px (P3) la fila cabe a 1024 px, con 78 px de
+  # holgura medidos el 13/10/2026, así que «la marca y las acciones no se solapan
+  # ni desbordan» sigue siendo cierto. LO QUE ESTE ESCENARIO NO VE: una marca
+  # comprimida con el descriptor truncado no solapa ni desborda nada, y es justo lo
+  # que pasaría a 19 o 20 px. Esa cláusula vive en `sistema_de_diseno_visual` @s27
+  # (enmendado), no aquí, para no tener dos copias del mismo contrato.
   @s4
   Scenario: La cabecera cambia exactamente en el borde aprobado
     Given la portada construida servida bajo su subpath real
@@ -45,6 +52,12 @@ Feature: Fidelidad responsive integral de la portada
     And los botones y campos conservan el mínimo táctil exigido por sus contratos
     And la pista de galería es el único desplazamiento horizontal intencional y focalizable
 
+  # @s6 REVISADO (13/10/2026, feature 49 `cabecera_sobre_el_hero`): SIN CAMBIO DE
+  # LETRA. Su segunda cláusula excluye los elementos fijos, así que NO VE la
+  # cabecera: ni el nav a 16 px ni su estado transparente pueden ponerla en rojo
+  # o en verde. Lo que sí cambia en la portada que barre es que el hero pasa a
+  # pantalla completa y sube bajo la cabecera (features 48 y 49); la entrada
+  # animada del hero se mide con `hero_reducido_con_animacion` @s10.
   @s6
   Scenario: Ningún ancho intermedio introduce una franja rota
     Given la portada construida servida bajo su subpath real
