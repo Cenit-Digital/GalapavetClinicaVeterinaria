@@ -13,7 +13,11 @@
  * con otro disfraz).
  */
 import { describe, expect, it } from 'vitest'
-import { ejecutarPuertaDeMovimientoRespetuoso, type FicheroEstilos } from '../lib/diseno/movimientoRespetuoso'
+import {
+  ejecutarPuertaDeEntradaSoloEnNoPreference,
+  ejecutarPuertaDeMovimientoRespetuoso,
+  type FicheroEstilos,
+} from '../lib/diseno/movimientoRespetuoso'
 
 const HOJAS_GLOBALES_REALES = {
   ...(import.meta.glob('./global.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>),
@@ -31,6 +35,35 @@ describe('(paso 5 del plan) @s33 ampliado: toda animación o transición de las 
     expect(informe.ficherosComprobados).toBeGreaterThan(0)
     expect(informe.incumplimientos).toHaveLength(0)
     expect(informe.pasa).toBe(true)
+  })
+
+  it('un mixin de ENTRADA escrito dentro de "reduce" en una hoja global pasa @s33 y lo señala la puerta de entrada de la feature 48 (@s8)', () => {
+    // @s33 solo mira que la declaración esté dentro de ALGUNA consulta de movimiento y, dentro de "reduce", da por
+    // buena cualquiera; un nombre de fotogramas o un retardo dentro de "reduce" es PELIGRO (la regla global de
+    // "reduce" pierde ante cualquier selector del autor).
+    const apiConUnMixinDeEntradaEnReduce: FicheroEstilos = {
+      ruta: '/prueba/_api.scss',
+      contenido: [
+        '@mixin entrada-del-titular {',
+        '  @media (prefers-reduced-motion: reduce) {',
+        '    animation: entrada 700ms ease-out backwards;',
+        '    animation-delay: 120ms;',
+        '  }',
+        '}',
+        '',
+      ].join('\n'),
+    }
+
+    const informeDeS33 = ejecutarPuertaDeMovimientoRespetuoso([apiConUnMixinDeEntradaEnReduce])
+    const informeDeEntrada = ejecutarPuertaDeEntradaSoloEnNoPreference([apiConUnMixinDeEntradaEnReduce])
+
+    expect(informeDeS33.incumplimientos).toEqual([])
+    expect(informeDeS33.pasa).toBe(true)
+    expect(informeDeEntrada.incumplimientos).toEqual([
+      { ruta: '/prueba/_api.scss', linea: 3, propiedad: 'animation' },
+      { ruta: '/prueba/_api.scss', linea: 4, propiedad: 'animation-delay' },
+    ])
+    expect(informeDeEntrada.pasa).toBe(false)
   })
 
   it('una transición sintética fuera de todo bloque "prefers-reduced-motion" en una hoja global se señala como incumplimiento', () => {

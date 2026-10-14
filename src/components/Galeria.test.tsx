@@ -361,8 +361,8 @@ describe('@s17 una entrada del catálogo con el nombre en blanco no se renderiza
  * módulo CSS: `rediseno_visual.feature` @s35 exige propiedades CSS concretas
  * ("scroll-snap-type"/"scroll-snap-align", "overflow-x"), que un CSS Module
  * transformado por jsdom no expone (jsdom no calcula layout ni resuelve
- * hojas de estilo). Mismo patrón que `Hero-logica.test.ts:9-16` y
- * `usoDelAcento.test.ts:152-156`.
+ * hojas de estilo). Mismo patrón que `Hero.test.tsx` (que lee en crudo
+ * `Hero.module.scss`) y `usoDelAcento.test.ts` (que lee en crudo todas las hojas).
  */
 const TEXTO_REAL_DEL_MODULO_SCSS = (
   import.meta.glob('/src/components/Galeria.module.scss', {

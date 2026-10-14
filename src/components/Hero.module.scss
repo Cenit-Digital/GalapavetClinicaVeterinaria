@@ -1,8 +1,20 @@
+// Hero de pantalla completa (hero_reducido_con_animacion @s12): la sección mide
+// AL MENOS el alto de la ventana, en todos los anchos. `svh` y no `vh`: es el
+// alto de la ventana pequeña, así que no salta cuando una barra de navegador
+// móvil aparece o desaparece. `min-height` y no `height`: en una ventana más
+// baja que el contenido (un móvil en horizontal) la sección crece en vez de
+// recortarlo.
+//
+// El relleno superior reserva el hueco de la cabecera fija: el contenido se
+// centra en el alto que queda BAJO ella, no en el de la sección entera. La foto y
+// el velo (`position: absolute; inset: 0`) siguen cubriendo la sección completa,
+// porque `inset` se mide contra el borde del relleno.
 .hero {
   position: relative;
   display: grid;
-  place-items: center;
-  min-height: clamp(560px, 84svh, 784px);
+  align-items: center;
+  min-height: 100svh;
+  padding-block-start: var(--altura-cabecera);
   overflow: hidden;
   background-color: var(--color-tinta);
   color: var(--color-sobre-primario);
@@ -33,45 +45,21 @@
   }
 }
 
+// El relleno lateral reproduce el borde izquierdo del resto de secciones (el
+// sangrado, o el margen que deja la columna de `$ancho-maximo-contenedor`
+// centrada): así los tres elementos arrancan a ras de la marca de la cabecera.
+// El relleno vertical es simétrico a propósito: el centrado en vertical que
+// mide @s12 se mide sobre la caja del titular al botón, no sobre este `div`.
 .contenido {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: min(100% - #{espaciado(48)}, 900px);
-  min-height: inherit;
-  margin-inline: auto;
-  padding: clamp(84px, 13vw, 140px) espaciado(32) clamp(60px, 9vw, 92px);
-  text-align: center;
-}
-
-.ubicacion {
-  display: inline-flex;
-  align-items: center;
-  gap: espaciado(8);
-  margin: 0;
-  padding: espaciado(8) espaciado(16);
-  border: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 28%, transparent);
-  border-radius: $radio-completo;
-  background-color: color-mix(in srgb, var(--color-sobre-primario) 14%, transparent);
-  color: inherit;
-  font-size: paso-tipografico(-1);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-
-  @supports (backdrop-filter: blur(1px)) {
-    backdrop-filter: blur(espaciado(8));
-  }
-}
-
-.puntoUbicacion {
-  flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: $radio-completo;
-  background-color: var(--color-acento);
+  align-items: flex-start;
+  width: 100%;
+  padding-block: espaciado(32);
+  padding-inline: max(var(--sangrado-lateral), calc((100% - #{$ancho-maximo-contenedor}) / 2));
+  text-align: start;
 }
 
 .contenido h1 {
@@ -80,7 +68,7 @@
   // dos a tres líneas. Este ancho físico conserva la misma composición del
   // diseño y evita el salto durante `font-display: swap`.
   width: min(100%, 720px);
-  margin: espaciado(24) 0 0;
+  margin: 0;
   color: inherit;
   font-family: var(--fuente-titulares);
   font-size: clamp(33px, 6.4vw, 68px);
@@ -99,25 +87,15 @@
 
 .acciones {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: espaciado(12);
   margin-top: espaciado(32);
-
-  a {
-    min-height: $altura-control-grande;
-    padding-inline: espaciado(24);
-  }
 
   // El anillo global (`--color-foco`, mixin `foco-visible`) está afinado para
   // los fondos claros de página: sobre el velo de `--color-tinta` de esta
   // sección medía 1,98:1 (`accesibilidad` @s38/@s39, mínimo 3). El anillo
-  // pasa a `--color-sobre-primario`, la tinta ya validada del propio hero
-  // (mismo recurso que el CTA de urgencias de `Cabecera.module.scss` sobre su
-  // rojo). Se
-  // declara en cada botón porque el `:focus-visible` del mixin lleva la
-  // especificidad de `a:first-child` / `a:not(:first-child)`.
-  a:first-child {
+  // pasa a `--color-sobre-primario`, la tinta ya validada del propio hero.
+  // Se declara en el botón porque el `:focus-visible` del mixin lleva la
+  // misma especificidad que este selector.
+  a {
     @include boton-primario;
     background-color: var(--color-primario);
     box-shadow: var(--sombra-elevada);
@@ -125,110 +103,5 @@
     &:focus-visible {
       outline-color: var(--color-sobre-primario);
     }
-  }
-
-  a:not(:first-child) {
-    @include boton-fantasma;
-    border-color: color-mix(in srgb, var(--color-sobre-primario) 55%, transparent);
-    background-color: color-mix(in srgb, var(--color-sobre-primario) 12%, transparent);
-    color: inherit;
-
-    @supports (backdrop-filter: blur(1px)) {
-      backdrop-filter: blur(espaciado(8));
-    }
-
-    &:focus-visible {
-      outline-color: var(--color-sobre-primario);
-    }
-  }
-}
-
-.contenido dl {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
-  width: 100%;
-  max-width: 720px;
-  gap: espaciado(12);
-  margin: espaciado(24) 0 0;
-
-  div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  dt {
-    font-size: paso-tipografico(-1);
-    font-weight: 700;
-  }
-
-  dd {
-    margin: 0;
-    color: color-mix(in srgb, var(--color-sobre-primario) 84%, transparent);
-    font-size: paso-tipografico(-1);
-  }
-}
-
-.cifras {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  width: 100%;
-  max-width: 720px;
-  gap: espaciado(16) espaciado(24);
-  list-style: none;
-  margin: clamp(38px, 6vw, 58px) 0 0;
-  padding: espaciado(24) 0 0;
-  border-block-start: $ancho-borde-fino solid color-mix(in srgb, var(--color-sobre-primario) 24%, transparent);
-
-  li {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  strong {
-    font-family: var(--fuente-titulares);
-    font-size: clamp(24px, 3.4vw, 32px);
-    font-weight: 600;
-    line-height: 1;
-  }
-
-  span {
-    margin-top: espaciado(4);
-    color: color-mix(in srgb, var(--color-sobre-primario) 78%, transparent);
-    font-size: paso-tipografico(-1);
-    letter-spacing: 0.02em;
-  }
-}
-
-@media (max-width: 560px) {
-  .hero {
-    min-height: 0;
-  }
-
-  .contenido {
-    width: min(100% - #{espaciado(32)}, 900px);
-    padding: espaciado(64) espaciado(16) espaciado(48);
-  }
-
-  .ubicacion {
-    font-size: paso-tipografico(-2);
-  }
-
-  .acciones a {
-    padding-inline: espaciado(16);
-  }
-
-  .cifras {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-// Cuatro cifras requieren su ancho mínimo más tres huecos. Entre el móvil
-// estrecho y 700 px, conservarlas en una fila forzaba el contenido del hero
-// fuera del viewport y quedaba oculto por su propio `overflow: hidden`.
-@media (min-width: 561px) and (max-width: 700px) {
-  .cifras {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

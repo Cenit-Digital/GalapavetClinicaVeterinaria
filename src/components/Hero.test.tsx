@@ -1,25 +1,18 @@
 import React from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { calcularRatioContraste } from '../lib/contraste'
 import { leerTokenDeVariante } from '../lib/diseno/tokensColor'
+import * as datosDelSitio from '../lib/diseno/datosDelSitio'
 import { mezclar } from '../lib/diseno/mezclaDeColor'
 import { Hero } from './Hero'
 
-/** Centraliza el render de `Hero` bajo test. */
-function renderizarHero(props: React.ComponentProps<typeof Hero> = {}): ReturnType<typeof render> {
-  return render(<Hero {...props} />)
+/** Centraliza el render de `Hero` bajo test: la portada lo monta sin ninguna prop (hero_reducido_con_animacion @s1). */
+function renderizarHero(): ReturnType<typeof render> {
+  return render(React.createElement(Hero))
 }
 
-/** El TEXTO REAL de `Hero.tsx`, leído en crudo (mismo patrón que `Hero-logica.test.ts`). */
-const TEXTO_REAL_DE_HERO = (
-  import.meta.glob('/src/components/Hero.tsx', { eager: true, query: '?raw', import: 'default' }) as Record<
-    string,
-    string
-  >
-)['/src/components/Hero.tsx'] as string
-
-/** El TEXTO REAL de `Hero.module.scss`, leído en crudo: @s18/@s29/@s30 verifican la HOJA, no el proxy de CSS Modules que Vitest sirve en su lugar. */
+/** El TEXTO REAL de `Hero.module.scss`, leído en crudo: @s29/@s38 verifican la HOJA, no el proxy de CSS Modules que Vitest sirve en su lugar. */
 const TEXTO_REAL_DEL_MODULO = (
   import.meta.glob('/src/components/Hero.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<
     string,
@@ -35,22 +28,413 @@ const TEXTO_REAL_DE_TOKENS = (
   >
 )['/src/styles/_tokens.scss'] as string
 
-/** El TEXTO REAL de `_api.scss`, para leer `$ancho-maximo-contenedor` (@s18). */
-const TEXTO_REAL_DE_LA_API = (
-  import.meta.glob('/src/styles/_api.scss', { eager: true, query: '?raw', import: 'default' }) as Record<
+/** El TEXTO REAL de `Hero.tsx`, leído en crudo. */
+const TEXTO_REAL_DE_HERO = (
+  import.meta.glob('/src/components/Hero.tsx', { eager: true, query: '?raw', import: 'default' }) as Record<
     string,
     string
   >
-)['/src/styles/_api.scss'] as string
+)['/src/components/Hero.tsx'] as string
 
-describe('@s1 se muestran la ubicación real y el titular principal', () => {
-  it('el h1 tiene el nombre accesible exacto, se ve "Galapagar · Madrid" y no aparece "Miraflores de la Sierra"', () => {
+/** La LISTA REAL de ficheros de `src` (solo sus rutas: ninguno se evalúa) y el texto de todas las hojas SCSS. */
+const RUTAS_REALES_DE_SRC = Object.keys(import.meta.glob('/src/**/*'))
+const HOJAS_SCSS_REALES = import.meta.glob('/src/**/*.scss', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>
+
+/** La configuración REAL de la prueba de mutación, de la que sale la superficie que muta. */
+const CONFIGURACION_REAL_DE_STRYKER = (
+  import.meta.glob('/stryker.config.json', { eager: true, query: '?raw', import: 'default' }) as Record<
+    string,
+    string
+  >
+)['/stryker.config.json'] as string
+
+/** Los elementos que cuentan como «interactivos» al recorrer la sección (hero_reducido_con_animacion @s1). */
+const SELECTOR_DE_INTERACTIVOS = 'a, button, input, select, textarea, summary, [tabindex], [contenteditable]'
+/** Los elementos de lista, de lista de definiciones, de término y de definición que la sección no puede contener. */
+const SELECTOR_DE_LISTAS = 'ul, ol, li, dl, dt, dd'
+const PALABRAS_QUE_NO_SON_DEL_HERO = ['galapagar', 'madrid', 'llamar', 'lunes', 'sábados', 'domingos'] as const
+
+/** Si el elemento tiene un nodo de texto propio, no vacío: lo que escribe él y no sus hijos. */
+function tieneTextoPropio(elemento: Element): boolean {
+  return [...elemento.childNodes].some(
+    (nodo) => nodo.nodeType === Node.TEXT_NODE && (nodo.textContent ?? '').trim() !== '',
+  )
+}
+
+/**
+ * Recorre TODA la sección y devuelve el nombre de cada cláusula de
+ * hero_reducido_con_animacion @s1 que incumple, más el recuento de elementos
+ * recorridos (la guarda contra el verde por vacuidad: una sección vacía no
+ * incumpliría nada). Lista vacía = la sección cumple el contrato.
+ */
+function auditarContenidoDelHero(seccion: Element): { incumplidas: readonly string[]; recorridos: number } {
+  const elementos = [...seccion.querySelectorAll('*')]
+  const conTextoOInteractivos = elementos.filter(
+    (elemento) => tieneTextoPropio(elemento) || elemento.matches(SELECTOR_DE_INTERACTIVOS),
+  )
+  const imagenes = [...seccion.querySelectorAll('img')]
+  const texto = (seccion.textContent ?? '').toLowerCase()
+  const incumplidas: string[] = []
+
+  if (conTextoOInteractivos.map((elemento) => elemento.tagName).join() !== 'H1,P,A') {
+    incumplidas.push('exactamente un titular, un párrafo y un enlace con texto o interactivos')
+  }
+  if (seccion.querySelectorAll('h1,h2,h3,h4,h5,h6').length !== 1) incumplidas.push('exactamente 1 encabezado')
+  if (seccion.querySelectorAll('p').length !== 1) incumplidas.push('exactamente 1 párrafo')
+  if (seccion.querySelectorAll('a').length !== 1) incumplidas.push('exactamente 1 enlace')
+  if (imagenes.length !== 1 || imagenes[0]?.getAttribute('alt') !== '') {
+    incumplidas.push('exactamente 1 imagen y decorativa')
+  }
+  if (seccion.querySelector(SELECTOR_DE_LISTAS) !== null) incumplidas.push('ningún elemento de lista')
+  if (/\d/.test(texto) || PALABRAS_QUE_NO_SON_DEL_HERO.some((palabra) => texto.includes(palabra))) {
+    incumplidas.push('ningún dígito ni palabra de ubicación, llamada u horario')
+  }
+
+  return { incumplidas, recorridos: elementos.length }
+}
+
+describe('@s1 de hero_reducido_con_animacion: la sección de bienvenida contiene exactamente un titular, un párrafo y un botón de reserva', () => {
+  /** La sección tal como la monta la portada, más lo que cada prueba de mordida le añade o le quita. */
+  function seccionRenderizada(): Element {
+    const { container } = renderizarHero()
+    return container.querySelector('section') as Element
+  }
+
+  function conAnadido(html: string): Element {
+    const seccion = seccionRenderizada()
+    ;(seccion.querySelector('[data-hero-contenido]') as Element).insertAdjacentHTML('afterbegin', html)
+    return seccion
+  }
+
+  it('la sección real cumple todas las cláusulas y se recorren elementos de verdad', () => {
+    const informe = auditarContenidoDelHero(seccionRenderizada())
+
+    expect(informe.incumplidas).toEqual([])
+    expect(informe.recorridos).toBeGreaterThan(0)
+  })
+
+  it('el encabezado, el párrafo y el enlace tienen el nombre, el texto y el destino exactos, y la imagen es decorativa', () => {
+    renderizarHero()
+
+    expect(screen.getAllByRole('heading')).toHaveLength(1)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(
+      'Cuidamos la salud y la felicidad de tu mascota',
+    )
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Reservar cita' })).toHaveAttribute('href', '#reservar')
+    expect(document.querySelectorAll('img')).toHaveLength(1)
+    expect(document.querySelector('img')).toHaveAttribute('alt', '')
+  })
+
+  it('vuelve la píldora de ubicación: el recuento de párrafos pasa a 2 y aparece "Galapagar"', () => {
+    const informe = auditarContenidoDelHero(conAnadido('<p>Galapagar · Madrid</p>'))
+
+    expect(informe.incumplidas).toContain('exactamente 1 párrafo')
+    expect(informe.incumplidas).toContain('ningún dígito ni palabra de ubicación, llamada u horario')
+  })
+
+  it('vuelve el botón «Llamar»: el recuento de enlaces pasa a 2', () => {
+    const informe = auditarContenidoDelHero(conAnadido('<a href="tel:+34910829267">Llamar</a>'))
+
+    expect(informe.incumplidas).toContain('exactamente 1 enlace')
+    expect(informe.incumplidas).toContain('exactamente un titular, un párrafo y un enlace con texto o interactivos')
+  })
+
+  it('vuelve la franja de horario: aparece una lista de definiciones y un dígito', () => {
+    const informe = auditarContenidoDelHero(
+      conAnadido('<dl><div><dt>Sábados</dt><dd>11:00 a 14:00</dd></div></dl>'),
+    )
+
+    expect(informe.incumplidas).toContain('ningún elemento de lista')
+    expect(informe.incumplidas).toContain('ningún dígito ni palabra de ubicación, llamada u horario')
+  })
+
+  it('vuelve la banda de cifras: aparece un elemento de lista y un dígito', () => {
+    const informe = auditarContenidoDelHero(conAnadido('<ul><li><strong>5</strong><span>Servicios</span></li></ul>'))
+
+    expect(informe.incumplidas).toContain('ningún elemento de lista')
+    expect(informe.incumplidas).toContain('ningún dígito ni palabra de ubicación, llamada u horario')
+  })
+
+  it('vuelve un dígito suelto en un párrafo: la cláusula del dígito lo caza sin enumerarlo', () => {
+    const informe = auditarContenidoDelHero(conAnadido('<span>+12 años</span>'))
+
+    expect(informe.incumplidas).toContain('ningún dígito ni palabra de ubicación, llamada u horario')
+  })
+
+  it('se quita el botón o el párrafo: el recuento de elementos con texto o interactivos baja de 3 a 2', () => {
+    const sinBoton = seccionRenderizada()
+    sinBoton.querySelector('a')?.remove()
+    const sinParrafo = seccionRenderizada()
+    sinParrafo.querySelector('p')?.remove()
+
+    expect(auditarContenidoDelHero(sinBoton).incumplidas).toContain('exactamente 1 enlace')
+    expect(auditarContenidoDelHero(sinParrafo).incumplidas).toContain('exactamente 1 párrafo')
+  })
+
+  it('una segunda imagen, o una imagen con texto alternativo, deja de ser "exactamente 1 imagen decorativa"', () => {
+    const conSegundaImagen = conAnadido('<img src="/x.webp" alt="" />')
+    const conAlternativo = seccionRenderizada()
+    conAlternativo.querySelector('img')?.setAttribute('alt', 'Clínica')
+
+    expect(auditarContenidoDelHero(conSegundaImagen).incumplidas).toContain('exactamente 1 imagen y decorativa')
+    expect(auditarContenidoDelHero(conAlternativo).incumplidas).toContain('exactamente 1 imagen y decorativa')
+  })
+})
+
+/**
+ * Extrae el bloque `{...}` que sigue a la primera aparición de `cabecera` en
+ * `texto`, siguiendo la profundidad de llaves (mismo mecanismo que
+ * `extraerBloqueDeVariante` de `tokensColor.ts`, necesario porque una regla
+ * anida sus propios selectores y una `[^}]*` se cortaría en la primera llave
+ * interior).
+ */
+function extraerBloqueCss(texto: string, cabecera: string): string {
+  const indiceCabecera = texto.indexOf(cabecera)
+  if (indiceCabecera === -1) {
+    throw new Error(`no se encontró "${cabecera}" en el texto real de Hero.module.scss`)
+  }
+  const indiceLlaveApertura = texto.indexOf('{', indiceCabecera)
+  let profundidad = 1
+  let cursor = indiceLlaveApertura + 1
+  while (cursor < texto.length && profundidad > 0) {
+    if (texto[cursor] === '{') profundidad += 1
+    if (texto[cursor] === '}') profundidad -= 1
+    cursor += 1
+  }
+  return texto.slice(indiceLlaveApertura + 1, cursor - 1)
+}
+
+/** Quita los comentarios de bloque y de línea: un comentario que cuenta POR QUÉ se retiró algo no es un resto. */
+function sinComentarios(texto: string): string {
+  return texto.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1')
+}
+
+/** Los restos de lo retirado que aún declara o importa el texto de `Hero.tsx` (hero_reducido_con_animacion @s3). */
+function restosEnElComponente(texto: string): readonly string[] {
+  const codigo = sinComentarios(texto)
+  const restos: Array<[string, RegExp]> = [
+    ['enlaceLlamada', /\benlaceLlamada\b/],
+    ['construirCifrasBienvenida', /\bconstruirCifrasBienvenida\b/],
+    ['FranjaHorario', /\bFranjaHorario\b/],
+    ['UBICACION', /\bUBICACION\b/],
+    ['importa un catálogo de servicios, de equipo o de galería', /from\s+['"][^'"]*\/data\/(servicios|equipo|galeria)['"]/],
+    ['importa el módulo puro de la bienvenida', /from\s+['"][^'"]*Hero-logica['"]/],
+    ['prop telefono', /\btelefono\b/],
+    ['prop horario', /\bhorario\b/],
+    ['data-hero-ubicacion', /data-hero-ubicacion/],
+    ['data-hero-cifras', /data-hero-cifras/],
+  ]
+  return restos.filter(([, patron]) => patron.test(codigo)).map(([nombre]) => nombre)
+}
+
+/** Los bloques `@media` de una hoja, con sus llaves balanceadas (la cabecera de cada uno incluida). */
+function bloquesMedia(codigo: string): readonly string[] {
+  const bloques: string[] = []
+  for (const coincidencia of codigo.matchAll(/@media[^{]*\{/g)) {
+    const inicio = coincidencia.index
+    let profundidad = 1
+    let cursor = inicio + coincidencia[0].length
+    while (cursor < codigo.length && profundidad > 0) {
+      if (codigo[cursor] === '{') profundidad += 1
+      if (codigo[cursor] === '}') profundidad -= 1
+      cursor += 1
+    }
+    bloques.push(codigo.slice(inicio, cursor))
+  }
+  return bloques
+}
+
+/** Los restos de lo retirado que aún declara la hoja `Hero.module.scss` (hero_reducido_con_animacion @s3). */
+function restosEnLaHoja(texto: string): readonly string[] {
+  const codigo = sinComentarios(texto)
+  const restos: Array<[string, RegExp]> = [
+    ['selector ubicacion', /\.ubicacion\b/],
+    ['selector puntoUbicacion', /\.puntoUbicacion\b/],
+    ['selector cifras', /\.cifras\b/],
+    ['regla para dl', /(^|[\s,>+~}{])dl\b/m],
+    ['regla para a:not(:first-child)', /a:not\(:first-child\)/],
+  ]
+  const delSelector = restos.filter(([, patron]) => patron.test(codigo)).map(([nombre]) => nombre)
+  const delMedia = bloquesMedia(codigo)
+    .filter((bloque) => /cifras|ubicacion|puntoUbicacion|\bdl\b/.test(bloque) || bloque.includes('561px'))
+    .map((bloque) => `@media con restos: ${bloque.split('{')[0]?.trim()}`)
+  return [...delSelector, ...delMedia]
+}
+
+/** La superficie que muta Stryker: las dos globs positivas de su configuración, aplicadas a la lista real de ficheros. */
+function ficherosQueMutaStryker(): readonly string[] {
+  const { mutate } = JSON.parse(CONFIGURACION_REAL_DE_STRYKER) as { mutate: readonly string[] }
+  expect(mutate.filter((patron) => !patron.startsWith('!'))).toEqual(['src/lib/**/*.ts', 'src/**/*-logica.ts'])
+  return RUTAS_REALES_DE_SRC.filter(
+    (ruta) =>
+      !ruta.endsWith('.test.ts') &&
+      !ruta.endsWith('.test.tsx') &&
+      ((ruta.startsWith('/src/lib/') && ruta.endsWith('.ts')) || ruta.endsWith('-logica.ts')),
+  )
+}
+
+describe('@s3 de hero_reducido_con_animacion: lo que solo existía para la píldora, el botón de llamada, la franja y las cifras desaparece del código', () => {
+  it('no existe ningún fichero cuyo nombre empiece por "Hero-logica" y la superficie de mutación no contiene ninguno', () => {
+    const ficheros = RUTAS_REALES_DE_SRC.filter((ruta) => (ruta.split('/').at(-1) ?? '').startsWith('Hero-logica'))
+    const superficie = ficherosQueMutaStryker()
+
+    expect(RUTAS_REALES_DE_SRC.length).toBeGreaterThan(0)
+    expect(superficie.length).toBeGreaterThan(0)
+    expect(ficheros).toEqual([])
+    expect(superficie.filter((ruta) => ruta.includes('Hero-logica'))).toEqual([])
+  })
+
+  it('"Hero.tsx" no conserva ningún identificador, importación, prop ni atributo de lo retirado', () => {
+    expect(TEXTO_REAL_DE_HERO.length).toBeGreaterThan(0)
+    expect(restosEnElComponente(TEXTO_REAL_DE_HERO)).toEqual([])
+  })
+
+  it('"Hero.module.scss" no conserva ningún selector, regla ni "@media" de lo retirado', () => {
+    expect(TEXTO_REAL_DEL_MODULO.length).toBeGreaterThan(0)
+    expect(restosEnLaHoja(TEXTO_REAL_DEL_MODULO)).toEqual([])
+  })
+
+  it('"digitosDe" y "extraerFragmento" ya no se exportan desde "datosDelSitio.ts"', () => {
+    const exportaciones = Object.keys(datosDelSitio)
+
+    expect(exportaciones.length).toBeGreaterThan(0)
+    expect(exportaciones).not.toContain('digitosDe')
+    expect(exportaciones).not.toContain('extraerFragmento')
+  })
+
+  it('el mixin "boton-fantasma" conserva al menos un consumidor fuera de "Hero.module.scss"', () => {
+    const consumidores = Object.entries(HOJAS_SCSS_REALES).filter(
+      ([ruta, texto]) => !ruta.endsWith('/Hero.module.scss') && sinComentarios(texto).includes('@include boton-fantasma'),
+    )
+
+    expect(Object.keys(HOJAS_SCSS_REALES).length).toBeGreaterThan(0)
+    expect(consumidores.length).toBeGreaterThan(0)
+  })
+
+  describe('la comprobación de restos muerde: cada resto sintético se detecta y un comentario no dispara nada', () => {
+    it.each([
+      ["import { enlaceLlamada } from '../lib/telefono'", 'enlaceLlamada'],
+      ["import { construirCifrasBienvenida } from './Hero-logica'", 'construirCifrasBienvenida'],
+      ["import { construirCifrasBienvenida } from './Hero-logica'", 'importa el módulo puro de la bienvenida'],
+      ['export interface FranjaHorario {}', 'FranjaHorario'],
+      ['const UBICACION = 1', 'UBICACION'],
+      ["import { SERVICIOS } from '../data/servicios'", 'importa un catálogo de servicios, de equipo o de galería'],
+      ["import { EQUIPO } from '../data/equipo'", 'importa un catálogo de servicios, de equipo o de galería'],
+      ["import { GALERIA } from '../data/galeria'", 'importa un catálogo de servicios, de equipo o de galería'],
+      ['telefono?: string | null', 'prop telefono'],
+      ['horario?: readonly unknown[]', 'prop horario'],
+      ['<p data-hero-ubicacion>', 'data-hero-ubicacion'],
+      ['<ul data-hero-cifras>', 'data-hero-cifras'],
+    ])('el componente con «%s» deja el resto «%s»', (linea, resto) => {
+      expect(restosEnElComponente(linea)).toContain(resto)
+    })
+
+    it.each([
+      ['.ubicacion { color: red }', 'selector ubicacion'],
+      ['.puntoUbicacion { width: 7px }', 'selector puntoUbicacion'],
+      ['.cifras { display: grid }', 'selector cifras'],
+      ['.contenido dl { margin: 0 }', 'regla para dl'],
+      ['dl { margin: 0 }', 'regla para dl'],
+      ['.acciones { a:not(:first-child) { color: red } }', 'regla para a:not(:first-child)'],
+      [
+        '@media (min-width: 561px) and (max-width: 700px) { .contenido { gap: 0 } }',
+        '@media con restos: @media (min-width: 561px) and (max-width: 700px)',
+      ],
+      ['@media (max-width: 560px) { .cifras { gap: 0 } }', '@media con restos: @media (max-width: 560px)'],
+      ['@media (max-width: 560px) { .contenido { dl { gap: 0 } } }', '@media con restos: @media (max-width: 560px)'],
+    ])('la hoja con «%s» deja el resto «%s»', (regla, resto) => {
+      expect(restosEnLaHoja(regla)).toContain(resto)
+    })
+
+    it('los comentarios que cuentan por qué se retiró algo no cuentan como restos, ni en el componente ni en la hoja', () => {
+      expect(restosEnElComponente('// se retiró enlaceLlamada y UBICACION\n/* data-hero-cifras */')).toEqual([])
+      expect(restosEnLaHoja('// .cifras y dl se retiraron\n/* a:not(:first-child) */\n.hero { color: red }')).toEqual([])
+    })
+
+    it('un "dl" dentro de otra palabra o de un valor no es una regla para "dl"', () => {
+      expect(restosEnLaHoja('.hero { background: model; width: 10px }')).toEqual([])
+    })
+  })
+})
+
+/** Solo las declaraciones que un bloque escribe directamente: descarta lo que contienen sus reglas anidadas. */
+function declaracionesPropias(bloque: string): string {
+  let profundidad = 0
+  let propias = ''
+  for (const caracter of bloque) {
+    if (caracter === '{') profundidad += 1
+    else if (caracter === '}') profundidad -= 1
+    else if (profundidad === 0) propias += caracter
+  }
+  return propias
+}
+
+/**
+ * Lo que la hoja incumple de hero_reducido_con_animacion @s12 en su parte de
+ * CSS: la altura de la sección es `min-height: 100svh` en TODOS los anchos
+ * (nunca un `height` fijo, que recortaría en una ventana baja, ni un `clamp`,
+ * ni una regla estrecha que la anule). La medición real es de navegador
+ * (`tests/e2e/hero-reducido.spec.ts`); esta es la parte que se lee de la hoja.
+ */
+function incumplimientosDeLaAlturaCompleta(hoja: string): readonly string[] {
+  const codigo = sinComentarios(hoja)
+  const propias = declaracionesPropias(extraerBloqueCss(codigo, '.hero {'))
+  const incumplidas: string[] = []
+
+  if (!/(^|[\s;])min-height:\s*100svh\s*;/.test(propias)) incumplidas.push('".hero" no declara "min-height: 100svh"')
+  if (/(^|[\s;])height\s*:/.test(propias)) incumplidas.push('".hero" declara un "height" fijo')
+  if (/aspect-ratio\s*:/.test(propias)) incumplidas.push('".hero" declara "aspect-ratio"')
+  if (/clamp\(\s*560px/.test(codigo)) incumplidas.push('queda el "clamp(560px, 84svh, 784px)"')
+  if (/min-height:\s*0\b/.test(codigo)) incumplidas.push('una regla anula "min-height" a "0"')
+  if (/max-width:\s*560px/.test(codigo)) incumplidas.push('queda la regla estrecha de 560 px')
+
+  return incumplidas
+}
+
+describe('@s12 de hero_reducido_con_animacion: la sección de bienvenida es de pantalla completa (lo que se lee de la hoja)', () => {
+  it('".hero" declara "min-height: 100svh", sin altura fija, sin "aspect-ratio", sin "clamp" y sin regla estrecha que la anule', () => {
+    expect(incumplimientosDeLaAlturaCompleta(TEXTO_REAL_DEL_MODULO)).toEqual([])
+  })
+
+  it.each([
+    ['.hero { min-height: clamp(560px, 84svh, 784px); }', '".hero" no declara "min-height: 100svh"'],
+    ['.hero { min-height: clamp(560px, 84svh, 784px); }', 'queda el "clamp(560px, 84svh, 784px)"'],
+    ['.hero { height: 100svh; overflow: hidden; }', '".hero" declara un "height" fijo'],
+    ['.hero { height: 100svh; }', '".hero" no declara "min-height: 100svh"'],
+    ['.hero { min-height: 100svh; aspect-ratio: 16 / 9; }', '".hero" declara "aspect-ratio"'],
+    [
+      '.hero { min-height: 100svh; }\n@media (max-width: 560px) { .hero { min-height: 0; } }',
+      'una regla anula "min-height" a "0"',
+    ],
+    ['.hero { min-height: 100svh; }\n@media (max-width: 560px) { .x { gap: 0 } }', 'queda la regla estrecha de 560 px'],
+    ['.hero { min-height: 100vh; }', '".hero" no declara "min-height: 100svh"'],
+  ])('la hoja «%s» incumple «%s»', (hoja, incumplimiento) => {
+    expect(incumplimientosDeLaAlturaCompleta(hoja)).toContain(incumplimiento)
+  })
+
+  it('un "height" dentro de una regla anidada de ".hero" (la foto a todo el alto) no cuenta como altura de la sección', () => {
+    expect(incumplimientosDeLaAlturaCompleta('.hero { min-height: 100svh; > img { height: 100%; } }')).toEqual([])
+  })
+
+  it('un comentario que cita lo retirado no cuenta', () => {
+    expect(
+      incumplimientosDeLaAlturaCompleta('// antes: clamp(560px, 84svh, 784px)\n.hero { min-height: 100svh; }'),
+    ).toEqual([])
+  })
+})
+
+describe('@s1 se muestra el titular principal', () => {
+  it('el h1 tiene el nombre accesible exacto y no aparece "Miraflores de la Sierra"', () => {
     const { container } = renderizarHero()
 
     expect(
       screen.getByRole('heading', { level: 1, name: 'Cuidamos la salud y la felicidad de tu mascota' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Galapagar · Madrid')).toBeInTheDocument()
     expect(container).not.toHaveTextContent('Miraflores de la Sierra')
   })
 })
@@ -81,42 +465,6 @@ describe('@s3 el botón principal lleva a la sección de reserva', () => {
   })
 })
 
-describe('@s4 el botón secundario inicia una llamada al teléfono real de la clínica', () => {
-  it('el enlace "Llamar 91 082 92 67" apunta exactamente a "tel:+34910829267"', () => {
-    renderizarHero()
-
-    expect(screen.getByRole('link', { name: 'Llamar 91 082 92 67' })).toHaveAttribute('href', 'tel:+34910829267')
-  })
-})
-
-describe('@s5 el número visible y el destino de la llamada no pueden divergir', () => {
-  it('los dígitos del nombre accesible y los del destino, sin el prefijo "34", son ambos "910829267"', () => {
-    renderizarHero()
-
-    const enlace = screen.getByRole('link', { name: /^Llamar/ })
-    const digitosDelNombre = (enlace.textContent ?? '').replace(/\D/g, '')
-    const digitosDelDestino = (enlace.getAttribute('href') ?? '').replace('tel:+34', '')
-
-    expect(digitosDelNombre).toBe('910829267')
-    expect(digitosDelDestino).toBe('910829267')
-  })
-})
-
-describe('@s6 la franja inferior muestra el horario real de atención', () => {
-  it('exactamente 3 entradas: "Lunes a viernes", "Sábados" y "Domingos" con sus horas', () => {
-    renderizarHero()
-
-    const rotulos = screen.getAllByRole('term')
-    expect(rotulos).toHaveLength(3)
-
-    expect(screen.getByText('Lunes a viernes').nextElementSibling).toHaveTextContent(
-      '11:00 a 14:00 y 16:30 a 20:00',
-    )
-    expect(screen.getByText('Sábados').nextElementSibling).toHaveTextContent('11:00 a 14:00')
-    expect(screen.getByText('Domingos').nextElementSibling).toHaveTextContent('Cerrado')
-  })
-})
-
 describe('@s7 no aparece ninguna cifra de reputación, antigüedad ni volumen', () => {
   it('el texto de la sección no contiene ninguna de las cifras inventadas del prototipo heredado', () => {
     const { container } = renderizarHero()
@@ -139,109 +487,24 @@ describe('@s8 la sección de bienvenida no anuncia urgencias', () => {
   })
 })
 
-describe('@s9 sin teléfono en la fuente única no se renderiza el botón de llamada', () => {
-  it('no existe ningún enlace "tel:" y sigue existiendo "Reservar cita"', () => {
-    renderizarHero({ telefono: null })
-
-    for (const enlace of screen.getAllByRole('link')) {
-      expect(enlace.getAttribute('href')).not.toMatch(/^tel:/)
-    }
-    expect(screen.getByRole('link', { name: 'Reservar cita' })).toBeInTheDocument()
-  })
-})
-
-describe('@s10 sin horario en la fuente única no se renderiza la franja inferior', () => {
-  it('se muestran exactamente 0 entradas de horario y siguen existiendo el h1 y "Reservar cita"', () => {
-    renderizarHero({ horario: null })
-
-    expect(screen.queryAllByRole('term')).toHaveLength(0)
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Cuidamos la salud y la felicidad de tu mascota' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Reservar cita' })).toBeInTheDocument()
-  })
-})
-
-describe('@s11 un teléfono que no normaliza falla cerrado, sin enlace a medias', () => {
-  it('renderizar con el teléfono "91 082 92" lanza y no llega a existir ningún enlace "tel:"', () => {
-    expect(() => renderizarHero({ telefono: '91 082 92' })).toThrow('91 082 92')
-    expect(document.querySelector('a[href^="tel:"]')).toBeNull()
-  })
-})
-
-describe('@s30 la píldora de ubicación se deriva de la fuente única, nunca escrita a mano', () => {
-  it('el texto real de Hero.tsx no contiene los literales "Galapagar" ni "Madrid": los toma de "datosNegocio.direccion"', () => {
-    // Doble anclaje: el fichero SOURCE (no el DOM ya renderizado) no puede
-    // contener los literales de localidad/provincia; si los contiene, es que
-    // se han retecleado en vez de derivarse de `src/lib/site.ts` (@s30).
-    expect(TEXTO_REAL_DE_HERO).not.toContain('Galapagar')
-    expect(TEXTO_REAL_DE_HERO).not.toContain('Madrid')
-    expect(TEXTO_REAL_DE_HERO).toContain('datosNegocio.direccion')
-  })
-})
-
 describe('@s13 la sección de bienvenida no carga recursos de terceros por atributos DOM', () => {
-  it('ningún elemento declara "src"/"srcset" que empiece por "http" y todo destino empieza por "#" o "tel:"', () => {
+  it('ningún elemento declara "src"/"srcset" que empiece por "http"', () => {
     const { container } = renderizarHero()
 
     for (const elemento of container.querySelectorAll('[src], [srcset]')) {
       expect(elemento.getAttribute('src') ?? '').not.toMatch(/^http/)
       expect(elemento.getAttribute('srcset') ?? '').not.toMatch(/^http/)
     }
-    for (const enlace of screen.getAllByRole('link')) {
-      const destino = enlace.getAttribute('href') ?? ''
-      expect(destino.startsWith('#') || destino.startsWith('tel:')).toBe(true)
+  })
+
+  it('el destino de cada enlace empieza por "#" (ya no queda ningún "tel:") y hay al menos uno', () => {
+    renderizarHero()
+
+    const enlaces = screen.queryAllByRole('link')
+    expect(enlaces.length).toBeGreaterThan(0)
+    for (const enlace of enlaces) {
+      expect((enlace.getAttribute('href') ?? '').startsWith('#')).toBe(true)
     }
-  })
-})
-
-/**
- * Extrae el bloque `{...}` que sigue a la primera aparición de `cabecera` en
- * `texto`, siguiendo la profundidad de llaves (mismo mecanismo que
- * `extraerBloqueDeVariante` de `tokensColor.ts`, necesario porque `.cifras`
- * anida sus propios selectores `li`/`strong`/`span` y una `[^}]*` se cortaría
- * en la primera llave interior).
- */
-function extraerBloqueCss(texto: string, cabecera: string): string {
-  const indiceCabecera = texto.indexOf(cabecera)
-  if (indiceCabecera === -1) {
-    throw new Error(`no se encontró "${cabecera}" en el texto real de Hero.module.scss`)
-  }
-  const indiceLlaveApertura = texto.indexOf('{', indiceCabecera)
-  let profundidad = 1
-  let cursor = indiceLlaveApertura + 1
-  while (cursor < texto.length && profundidad > 0) {
-    if (texto[cursor] === '{') profundidad += 1
-    if (texto[cursor] === '}') profundidad -= 1
-    cursor += 1
-  }
-  return texto.slice(indiceLlaveApertura + 1, cursor - 1)
-}
-
-describe('@s30 la banda de cuatro cifras queda separada por una línea, no pegada al bloque de encima', () => {
-  it('el bloque ".cifras" de Hero.module.scss declara su propio "border-block-start" con un token, nunca "none"', () => {
-    const bloqueCifras = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.cifras {')
-
-    expect(bloqueCifras).not.toContain('border-block-start: none')
-    expect(bloqueCifras).toMatch(
-      /border-block-start:\s*\$ancho-borde-fino solid color-mix\(in srgb, var\(--color-sobre-primario\) 24%, transparent\);/,
-    )
-  })
-})
-
-describe('@s18 la bienvenida declara su propio ancho máximo, menor que el general del contenedor', () => {
-  it('".contenido" fija un máximo en píxeles, leído del texto real, menor que "$ancho-maximo-contenedor" de la API', () => {
-    // Doble anclaje: el ancho general sale del TEXTO REAL de `_api.scss`
-    // (`$ancho-maximo-contenedor: 1220px;`, `_api.scss:133`), nunca de un
-    // "1220" retecleado a mano; el ancho propio sale del TEXTO REAL de
-    // Hero.module.scss, no del proxy de CSS Modules que Vitest sirve.
-    const anchoGeneralDeApi = Number(TEXTO_REAL_DE_LA_API.match(/\$ancho-maximo-contenedor:\s*(\d+)px;/)?.[1])
-    const bloqueContenido = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.contenido {')
-    const anchoPropioDeHero = Number(bloqueContenido.match(/width:\s*min\([^,]+,\s*(\d+)px\)/)?.[1])
-
-    expect(anchoGeneralDeApi).toBeGreaterThan(0)
-    expect(anchoPropioDeHero).toBeGreaterThan(0)
-    expect(anchoPropioDeHero).toBeLessThan(anchoGeneralDeApi)
   })
 })
 
@@ -263,8 +526,9 @@ describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de text
     // dos extremos posibles (negro y blanco puros, `mezclar` reproduce la
     // composición alfa canal a canal): si el texto cumple contra los dos,
     // cumple con cualquier fotografía real de por medio. El h1 y el párrafo
-    // heredan la tinta de ".hero" con "color: inherit" (`Hero.module.scss:7`),
-    // así que "--color-sobre-primario" es la pareja real, no una suposición.
+    // heredan la tinta de ".hero" con "color: inherit", así que
+    // "--color-sobre-primario" es la pareja real, no una suposición. La
+    // feature 49 reescribe este contraste con píxeles reales.
     const UMBRAL_TEXTO_NORMAL = 4.5 // Mínimo WCAG 2.2 AA para texto normal (Enmienda 2 del contrato).
     const PARADA_CENTRAL_DEL_VELO = 0.76
     const NEGRO = '#000000'
@@ -284,64 +548,24 @@ describe('@s29 el texto de la bienvenida alcanza el mínimo de contraste de text
   })
 })
 
-describe('@s2 de fidelidad_hero: la bienvenida reserva alto sin forzar un aspecto que pueda recortar contenido', () => {
-  it('".hero" usa un min-height fluido y no declara "aspect-ratio"', () => {
-    const bloqueHero = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.hero {')
-
-    expect(bloqueHero).not.toMatch(/aspect-ratio\s*:/)
-    expect(bloqueHero).toMatch(/min-height:\s*clamp\(560px,\s*84svh,\s*784px\);/)
-  })
-})
-
-describe('@s30 la píldora de ubicación, los dos botones y la banda de cuatro cifras conviven en el mismo render', () => {
-  it('hay una píldora de localidad, exactamente dos enlaces de acción y una lista de exactamente cuatro cifras', () => {
-    renderizarHero()
-
-    expect(screen.getByText('Galapagar · Madrid')).toBeInTheDocument()
-
-    const botones = screen.getAllByRole('link')
-    expect(botones).toHaveLength(2)
-    expect(botones[0]).toHaveAccessibleName('Reservar cita')
-    expect(botones[1]).toHaveAccessibleName(/^Llamar/)
-
-    // "within" acota la búsqueda de las cuatro cifras a la propia lista (por
-    // su nombre accesible), en vez de contar "listitem" en todo el documento.
-    const bandaDeCifras = screen.getByRole('list', { name: 'Resumen de Galapavet' })
-    const entradas = within(bandaDeCifras).getAllByRole('listitem')
-    expect(entradas).toHaveLength(4)
-    expect(entradas.map((entrada) => entrada.textContent)).toEqual([
-      '5Servicios',
-      '2Profesionales',
-      '6Fotos de galería',
-      '3Franjas horarias',
-    ])
-  })
-})
-
 /**
  * Reparación del 03/09/2026 (oleada B): `accesibilidad.spec.ts` @s38/@s39
- * midieron el anillo de foco de los dos botones de la bienvenida a 1,98:1
+ * midieron el anillo de foco de los botones de la bienvenida a 1,98:1
  * contra el fondo que hay bajo el anillo — `--color-tinta`, el `background-color`
  * de `.hero` (`Hero.module.scss`), que es lo que el navegador encuentra al
  * trepar desde el control (los píxeles de la fotografía y del velo `::after`
  * no son ancestros). El anillo global `--color-foco` está pensado para los
  * fondos claros de página; sobre el velo oscuro el anillo semántico correcto
  * es `--color-sobre-primario`, la misma tinta ya validada que pinta el texto
- * del hero. El precedente que se citaba aquí —el CTA de urgencias de
- * `Cabecera.module.scss` sobre su rojo— dejó de existir el 20/09/2026 (D1 de
- * `fidelidad_cabecera.feature`): el recurso sigue siendo el mismo, pero ya no
- * tiene ese segundo caso en el proyecto.
+ * del hero. Tras la feature 48 queda UN solo botón, «Reservar cita».
  */
-describe('@s38/@s39 de accesibilidad: el anillo de foco de las acciones contrasta contra el velo de tinta, en las cinco variantes', () => {
-  it('los dos botones (primario y contorno) cambian el color del anillo a "--color-sobre-primario" bajo ":focus-visible"', () => {
-    const bloqueAcciones = extraerBloqueCss(TEXTO_REAL_DEL_MODULO, '.acciones {')
-    const bloquePrimario = extraerBloqueCss(bloqueAcciones, 'a:first-child {')
-    const bloqueContorno = extraerBloqueCss(bloqueAcciones, 'a:not(:first-child) {')
+describe('@s38/@s39 de accesibilidad: el anillo de foco de la acción contrasta contra el velo de tinta, en las cinco variantes', () => {
+  it('el botón cambia el color del anillo a "--color-sobre-primario" bajo ":focus-visible"', () => {
+    const bloqueAcciones = extraerBloqueCss(sinComentarios(TEXTO_REAL_DEL_MODULO), '.acciones {')
+    const bloqueBoton = extraerBloqueCss(bloqueAcciones, 'a {')
+    const bloqueFoco = extraerBloqueCss(bloqueBoton, '&:focus-visible {')
 
-    for (const bloqueBoton of [bloquePrimario, bloqueContorno]) {
-      const bloqueFoco = extraerBloqueCss(bloqueBoton, '&:focus-visible {')
-      expect(bloqueFoco).toContain('outline-color: var(--color-sobre-primario);')
-    }
+    expect(bloqueFoco).toContain('outline-color: var(--color-sobre-primario);')
   })
 
   it('"--color-sobre-primario" alcanza 3 contra "--color-tinta" y contra el velo al 76 % sobre negro y sobre blanco', () => {

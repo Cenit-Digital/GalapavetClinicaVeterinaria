@@ -1,7 +1,7 @@
 // @s20-@s23 de `features/identidad_visual.feature` (Bloque C, tipografía
 // autoalojada en navegador real). NAVEGADOR REAL con Playwright, sobre
 // `dist/` servido por `vite preview` (playwright.config.ts → webServer).
-import { expect, test } from 'playwright/test'
+import { expect, test, type Page } from 'playwright/test'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 
 const FAMILIA_TEXTO = 'DM Sans'
@@ -97,18 +97,58 @@ test.describe('@s22 los dos ficheros de fuente se sirven en local, responden 200
   })
 })
 
+// Los párrafos que se miden son los de la sección de Servicios y no el primero
+// de la portada: ese pasó a ser el del hero, de varias líneas (`max-width: 58ch`,
+// tamaño con `clamp()`) y animado durante la entrada (`identidad_visual` @s23,
+// enmendado por la feature 48). El primer `p` de Servicios es su cintillo, de una
+// sola línea; el párrafo de apoyo, de varias, es el que de verdad puede saltar de
+// línea con la fuente de respaldo, y se mide también para que la puerta no sea
+// trivial.
+const SELECTOR_DEL_PRIMER_PARRAFO_DE_SERVICIOS = '#servicios p'
+const SELECTOR_DEL_PARRAFO_DE_APOYO_DE_SERVICIOS = '#servicios [data-servicios-apoyo]'
+
+interface AltosMedidos {
+  readonly titular: number
+  readonly primerParrafoDeServicios: number
+  readonly apoyoDeServicios: number
+}
+
+async function medirAltos(pagina: Page): Promise<AltosMedidos> {
+  const altoDe = async (selector: string): Promise<number> => {
+    const caja = await pagina.locator(selector).first().boundingBox()
+    if (caja === null) {
+      throw new Error(`no se pudo medir el rectángulo de "${selector}"`)
+    }
+    return caja.height
+  }
+  return {
+    titular: await altoDe('h1'),
+    primerParrafoDeServicios: await altoDe(SELECTOR_DEL_PRIMER_PARRAFO_DE_SERVICIOS),
+    apoyoDeServicios: await altoDe(SELECTOR_DEL_PARRAFO_DE_APOYO_DE_SERVICIOS),
+  }
+}
+
 test.describe('@s23 si la fuente de marca no llega, el texto de respaldo ocupa el mismo alto y no salta nada', () => {
-  test('el alto del h1 y del primer párrafo coincide con y sin las fuentes de marca (tolerancia 1px), y el texto es visible desde el primer pintado', async ({
+  test('el alto del h1 y de los párrafos de Servicios coincide con y sin las fuentes de marca (tolerancia 1px), y el texto es visible desde el primer pintado', async ({
     page,
     context,
   }) => {
+    // Movimiento reducido emulado ANTES de cada `goto` (@s10 de la feature 48, vía b): el
+    // titular se mide con la entrada del hero ya en su estado final, en las dos páginas.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
     await page.evaluate(() => document.fonts.ready)
-    const cajaH1ConFuente = await page.locator('h1').first().boundingBox()
-    const cajaParrafoConFuente = await page.locator('p').first().boundingBox()
+    const conFuente = await medirAltos(page)
 
     await context.route('**/fuentes/**', (ruta) => ruta.abort())
     const paginaSinFuente = await context.newPage()
+    const peticionesDeFuenteAbortadas: string[] = []
+    paginaSinFuente.on('requestfailed', (peticion) => {
+      if (/\.woff2(\?|$)/.test(peticion.url())) {
+        peticionesDeFuenteAbortadas.push(peticion.url())
+      }
+    })
+    await paginaSinFuente.emulateMedia({ reducedMotion: 'reduce' })
     await paginaSinFuente.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     // "font-display: swap" pinta con el respaldo desde el primer pintado, sin esperar a que
@@ -116,15 +156,27 @@ test.describe('@s23 si la fuente de marca no llega, el texto de respaldo ocupa e
     const h1Visible = await paginaSinFuente.locator('h1').first().isVisible()
     expect(h1Visible).toBe(true)
 
-    const cajaH1SinFuente = await paginaSinFuente.locator('h1').first().boundingBox()
-    const cajaParrafoSinFuente = await paginaSinFuente.locator('p').first().boundingBox()
+    // Se mide con las dos fuentes ya fallidas: así la medida es la del respaldo, no la de un estado intermedio.
+    await paginaSinFuente.evaluate(() => document.fonts.ready)
+    const sinFuente = await medirAltos(paginaSinFuente)
+    const estadosDeLasFuentes = await paginaSinFuente.evaluate(() =>
+      [...document.fonts].map((fuente) => `${fuente.family}:${fuente.status}`),
+    )
     await paginaSinFuente.close()
 
-    if (!cajaH1ConFuente || !cajaH1SinFuente || !cajaParrafoConFuente || !cajaParrafoSinFuente) {
-      throw new Error('no se pudo medir el rectángulo del h1 o del primer párrafo')
-    }
+    // El Given es un hecho comprobado y no una suposición: de verdad se abortaron las peticiones
+    // de fuente y las dos familias de marca quedaron en error. Sin esto, «misma altura» podría ser
+    // vacío (la página sin fuente habría cargado las de marca).
+    expect(peticionesDeFuenteAbortadas.length).toBeGreaterThan(0)
+    expect(estadosDeLasFuentes).toEqual(
+      expect.arrayContaining([`${FAMILIA_TITULARES}:error`, `${FAMILIA_TEXTO}:error`]),
+    )
 
-    expect(Math.abs(cajaH1ConFuente.height - cajaH1SinFuente.height)).toBeLessThanOrEqual(TOLERANCIA_PX)
-    expect(Math.abs(cajaParrafoConFuente.height - cajaParrafoSinFuente.height)).toBeLessThanOrEqual(TOLERANCIA_PX)
+    expect(Math.abs(conFuente.titular - sinFuente.titular)).toBeLessThanOrEqual(TOLERANCIA_PX)
+    expect(
+      Math.abs(conFuente.primerParrafoDeServicios - sinFuente.primerParrafoDeServicios),
+    ).toBeLessThanOrEqual(TOLERANCIA_PX)
+    expect(Math.abs(conFuente.apoyoDeServicios - sinFuente.apoyoDeServicios)).toBeLessThanOrEqual(TOLERANCIA_PX)
   })
 })
+

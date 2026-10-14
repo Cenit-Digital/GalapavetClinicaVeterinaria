@@ -245,35 +245,6 @@ export function ejecutarPuertaDeRecuentosReales(recuentos: readonly RecuentoDeLi
 }
 
 // ---------------------------------------------------------------------------
-// @s51 — ninguna de las cuatro cifras de la bienvenida está escrita a mano en
-// el componente.
-// ---------------------------------------------------------------------------
-
-const DIGITOS = '0123456789'
-
-/** Los dígitos que aparecen en un texto, en orden. Lista vacía = no hay ni un número escrito. */
-export function digitosDe(texto: string): readonly string[] {
-  return [...texto].filter((caracter) => DIGITOS.includes(caracter))
-}
-
-/**
- * El trozo de texto que hay entre dos marcas, sin incluirlas. `null` si falta
- * cualquiera de las dos: así una marca mal escrita no devuelve nunca un
- * fragmento vacío que pasaría por "aquí no hay nada prohibido".
- */
-export function extraerFragmento(texto: string, marcaDeInicio: string, marcaDeFin: string): string | null {
-  const [, trasLaMarca] = texto.split(marcaDeInicio)
-  if (trasLaMarca === undefined) {
-    return null
-  }
-  const [fragmento, trasElFinal] = trasLaMarca.split(marcaDeFin)
-  if (trasElFinal === undefined) {
-    return null
-  }
-  return fragmento as string
-}
-
-// ---------------------------------------------------------------------------
 // @s52 — el sitio no afirma que preste un servicio que no presta.
 // ---------------------------------------------------------------------------
 

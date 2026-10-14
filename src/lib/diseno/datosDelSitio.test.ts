@@ -3,12 +3,10 @@ import {
   compromisosDeUrgenciasEn,
   contarEntradasDelCatalogoDelPrototipo,
   cualificadorDeclaradoDe,
-  digitosDe,
   ejecutarPuertaDeLiteralesFicticios,
   ejecutarPuertaDeAfirmacionesProhibidas,
   ejecutarPuertaDeCompromisoDeUrgencias,
   ejecutarPuertaDeRecuentosReales,
-  extraerFragmento,
   leerPistaDeVistaPrevia,
   type LiteralFicticio,
 } from './datosDelSitio'
@@ -378,20 +376,6 @@ describe('@s50 los recuentos que el sitio muestra son los reales, no los del pro
     expect(informe.discrepancias).toEqual([])
     expect(informe.motivo).toContain('0 listados')
     expect(informe.motivo).not.toMatch(/no encontr/i)
-  })
-})
-
-describe('@s51 las cuatro cifras de la bienvenida se derivan de la fuente única, sin retipear', () => {
-  it('enumera los dígitos que aparecen en un texto, y devuelve lista vacía si no hay ninguno', () => {
-    expect(digitosDe('Urgencias 24 h los 365 días')).toEqual(['2', '4', '3', '6', '5'])
-    expect(digitosDe('<strong>{cifra.valor}</strong>')).toEqual([])
-    expect(digitosDe('')).toEqual([])
-  })
-
-  it('extrae el trozo entre dos marcas y devuelve null si falta cualquiera de las dos', () => {
-    expect(extraerFragmento('antes<ul>medio</ul>después', '<ul>', '</ul>')).toBe('medio')
-    expect(extraerFragmento('antes<ul>medio</ul>', 'no-existe', '</ul>')).toBeNull()
-    expect(extraerFragmento('antes<ul>medio sin cierre', '<ul>', '</ul>')).toBeNull()
   })
 })
 

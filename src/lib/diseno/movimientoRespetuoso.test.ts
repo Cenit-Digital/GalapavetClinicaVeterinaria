@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ejecutarPuertaDeMovimientoRespetuoso } from './movimientoRespetuoso'
+import { ejecutarPuertaDeEntradaSoloEnNoPreference, ejecutarPuertaDeMovimientoRespetuoso } from './movimientoRespetuoso'
 
 describe('@s33 toda regla de animación o transición introducida vive dentro de la consulta prefers-reduced-motion', () => {
   it('los ficheros reales del inventario: cada transition/animation vive en no-preference o en reduce, y se comprobó más de 0 ficheros', () => {
@@ -114,6 +114,59 @@ describe('@s33 toda regla de animación o transición introducida vive dentro de
     expect(informe.pasa).toBe(false)
   })
 
+  it('un bloque que abre y cierra en la MISMA línea no deja una llave abierta: una transición posterior, fuera de "no-preference", se señala', () => {
+    const ficheroConBloqueEnUnaLinea = {
+      ruta: '/prueba/BloqueEnUnaLinea.module.scss',
+      contenido: [
+        '@media (prefers-reduced-motion: no-preference) {',
+        '  .a { color: red; }',
+        '}',
+        '.b {',
+        '  transition: color 1s;',
+        '}',
+        '',
+      ].join('\n'),
+    }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroConBloqueEnUnaLinea])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/BloqueEnUnaLinea.module.scss', linea: 5 }])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it('una interpolación "#{…}" dentro de un valor no desordena la pila de bloques', () => {
+    const ficheroConInterpolacion = {
+      ruta: '/prueba/ConInterpolacion.module.scss',
+      contenido: [
+        '@media (prefers-reduced-motion: no-preference) {',
+        '  .a {',
+        '    width: min(100% - #{espaciado(48)}, 900px);',
+        '  }',
+        '}',
+        '.b {',
+        '  transition: color 1s;',
+        '}',
+        '',
+      ].join('\n'),
+    }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroConInterpolacion])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/ConInterpolacion.module.scss', linea: 7 }])
+  })
+
+  it('una propiedad que solo CONTIENE "transition" o "animation" en su nombre, por delante o por detrás, no es de movimiento', () => {
+    const ficheroConNombresParecidos = {
+      ruta: '/prueba/NombresParecidos.module.scss',
+      contenido: '.a {\n  transitional: 1;\n  mi-animation: 2;\n}\n',
+    }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroConNombresParecidos])
+
+    expect(informe.ficherosComprobados).toBe(0)
+    expect(informe.incumplimientos).toEqual([])
+  })
+
   it('un bloque "reduce" con dos espacios tras los dos puntos también se reconoce como cobertura', () => {
     const ficheroDosEspacios = {
       ruta: '/prueba/ReduceDosEspacios.module.scss',
@@ -123,6 +176,433 @@ describe('@s33 toda regla de animación o transición introducida vive dentro de
     const informe = ejecutarPuertaDeMovimientoRespetuoso([ficheroDosEspacios])
 
     expect(informe.incumplimientos).toHaveLength(0)
+    expect(informe.pasa).toBe(true)
+  })
+})
+
+/**
+ * hero_reducido_con_animacion @s8 — «las declaraciones de entrada solo existen
+ * dentro de `no-preference`». Esta puerta NO sustituye a @s33 de
+ * `sistema_de_diseno_visual.feature` (la de arriba): la AMPLÍA. Cada fila de la
+ * tabla del escenario es una mutación (o un falso rojo que debe evitarse) y se
+ * ejecuta aquí contra el módulo real, con el veredicto SIN las guardas
+ * "mayor que 0", que solo se aplican al conjunto de las hojas reales.
+ */
+const RUTA_SINTETICA = '/prueba/Hero.module.scss'
+
+function hojaSintetica(lineas: readonly string[]): { ruta: string; contenido: string } {
+  return { ruta: RUTA_SINTETICA, contenido: [...lineas, ''].join('\n') }
+}
+
+interface FilaDeLaTabla {
+  /** Redacción de la fila, tal como la escribe el contrato. */
+  readonly fila: string
+  readonly lineas: readonly string[]
+  readonly veredicto: 'pasa' | 'incumple'
+  /** Lo que la puerta señala: línea y propiedad (o "@keyframes"). Vacío si pasa. */
+  readonly señalados: readonly { readonly linea: number; readonly propiedad: string }[]
+  readonly fotogramas: number
+  readonly declaracionesDeEntradaEnNoPreference: number
+}
+
+const BLOQUE_NO_PREFERENCE = '@media (prefers-reduced-motion: no-preference) {'
+const BLOQUE_REDUCE = '@media (prefers-reduced-motion: reduce) {'
+const BLOQUE_OTRA_CONSULTA = '@media (max-width: 560px) {'
+
+const FOTOGRAMAS_EN_VARIAS_LINEAS = [
+  '  @keyframes entrada {',
+  '    from {',
+  '      opacity: 0;',
+  '    }',
+  '    to {',
+  '      opacity: 1;',
+  '    }',
+  '  }',
+]
+
+const TABLA_DE_FILAS: readonly FilaDeLaTabla[] = [
+  {
+    fila: '"animation" con un nombre de fotogramas, dentro de "no-preference"',
+    lineas: [BLOQUE_NO_PREFERENCE, '  .titular {', '    animation: entrada 700ms ease-out backwards;', '  }', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"animation-name" dentro de "no-preference"',
+    lineas: ['.titular {', `  ${BLOQUE_NO_PREFERENCE}`, '    animation-name: entrada;', '  }', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"animation-delay: 120ms" dentro de "no-preference"',
+    lineas: ['.parrafo {', `  ${BLOQUE_NO_PREFERENCE}`, '    animation-delay: 120ms;', '  }', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"animation" con un nombre de fotogramas, en la raíz del fichero',
+    lineas: ['.titular {', '  animation: entrada 700ms ease-out backwards;', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 2, propiedad: 'animation' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-name" en la raíz del fichero',
+    lineas: ['.titular {', '  animation-name: entrada;', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 2, propiedad: 'animation-name' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-delay: 120ms" en la raíz del fichero',
+    lineas: ['.parrafo {', '  animation-delay: 120ms;', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 2, propiedad: 'animation-delay' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation: none" en la raíz del fichero',
+    lineas: ['.titular {', '  animation: none;', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation" con un nombre de fotogramas, dentro de "reduce"',
+    lineas: [BLOQUE_REDUCE, '  .titular {', '    animation: entrada 700ms ease-out backwards;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-name" con un nombre de fotogramas, dentro de "reduce"',
+    lineas: [BLOQUE_REDUCE, '  .titular {', '    animation-name: entrada;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation-name' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-name: none" dentro de "reduce"',
+    lineas: [BLOQUE_REDUCE, '  .titular {', '    animation-name: none;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation-name' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-delay: 0s" dentro de "reduce"',
+    lineas: [BLOQUE_REDUCE, '  .titular {', '    animation-delay: 0s;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation-delay' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation: none" dentro de "reduce"',
+    lineas: [BLOQUE_REDUCE, '  .titular {', '    animation: none;', '  }', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-duration: 0.01ms" y "animation-iteration-count: 1" dentro de "reduce", como la regla global',
+    lineas: [
+      BLOQUE_REDUCE,
+      '  *,',
+      '  *::before,',
+      '  *::after {',
+      '    animation-duration: 0.01ms;',
+      '    animation-iteration-count: 1;',
+      '  }',
+      '}',
+    ],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation" con un nombre de fotogramas, dentro de "@media (max-width: 560px)"',
+    lineas: [BLOQUE_OTRA_CONSULTA, '  .titular {', '    animation: entrada 700ms ease-out backwards;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-name" con un nombre de fotogramas, dentro de "@media (max-width: 560px)"',
+    lineas: [BLOQUE_OTRA_CONSULTA, '  .titular {', '    animation-name: entrada;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation-name' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"animation-delay: 120ms" dentro de "@media (max-width: 560px)"',
+    lineas: [BLOQUE_OTRA_CONSULTA, '  .parrafo {', '    animation-delay: 120ms;', '  }', '}'],
+    veredicto: 'incumple',
+    señalados: [{ linea: 3, propiedad: 'animation-delay' }],
+    fotogramas: 0,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: '"@keyframes" y su "animation", ambos dentro de "no-preference"',
+    lineas: [
+      BLOQUE_NO_PREFERENCE,
+      ...FOTOGRAMAS_EN_VARIAS_LINEAS,
+      '  .titular {',
+      '    animation: entrada 700ms ease-out backwards;',
+      '  }',
+      '}',
+    ],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 1,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"@keyframes" en la raíz del fichero y su "animation" dentro de "no-preference"',
+    lineas: [
+      ...FOTOGRAMAS_EN_VARIAS_LINEAS.map((linea) => linea.slice(2)),
+      BLOQUE_NO_PREFERENCE,
+      '  .titular {',
+      '    animation: entrada 700ms ease-out backwards;',
+      '  }',
+      '}',
+    ],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 1,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"@keyframes" dentro de "reduce", en una hoja que además lleva una animación legítima con sus fotogramas dentro de "no-preference"',
+    lineas: [
+      BLOQUE_NO_PREFERENCE,
+      ...FOTOGRAMAS_EN_VARIAS_LINEAS,
+      '  .titular {',
+      '    animation: entrada 700ms ease-out backwards;',
+      '  }',
+      '}',
+      BLOQUE_REDUCE,
+      '  @keyframes salida {',
+      '    to {',
+      '      opacity: 0;',
+      '    }',
+      '  }',
+      '}',
+    ],
+    veredicto: 'incumple',
+    señalados: [{ linea: 15, propiedad: '@keyframes' }],
+    fotogramas: 2,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: '"@keyframes" dentro de "@media (max-width: 560px)", en una hoja que además lleva una animación legítima con sus fotogramas dentro de "no-preference"',
+    lineas: [
+      BLOQUE_NO_PREFERENCE,
+      ...FOTOGRAMAS_EN_VARIAS_LINEAS,
+      '  .titular {',
+      '    animation: entrada 700ms ease-out backwards;',
+      '  }',
+      '}',
+      BLOQUE_OTRA_CONSULTA,
+      '  @keyframes salida {',
+      '    to {',
+      '      opacity: 0;',
+      '    }',
+      '  }',
+      '}',
+    ],
+    veredicto: 'incumple',
+    señalados: [{ linea: 15, propiedad: '@keyframes' }],
+    fotogramas: 2,
+    declaracionesDeEntradaEnNoPreference: 1,
+  },
+  {
+    fila: 'fotogramas con sus bloques "from" y "to" escritos cada uno en una sola línea, dentro de "no-preference"',
+    lineas: [BLOQUE_NO_PREFERENCE, '  @keyframes entrada {', '    from { opacity: 0; }', '    to { opacity: 1; }', '  }', '}'],
+    veredicto: 'pasa',
+    señalados: [],
+    fotogramas: 1,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+  {
+    fila: 'lo anterior, seguido de una "animation" con un nombre de fotogramas escrita DESPUÉS del cierre de "no-preference", en la raíz',
+    lineas: [
+      BLOQUE_NO_PREFERENCE,
+      '  @keyframes entrada {',
+      '    from { opacity: 0; }',
+      '    to { opacity: 1; }',
+      '  }',
+      '}',
+      '.titular {',
+      '  animation: entrada 700ms ease-out backwards;',
+      '}',
+    ],
+    veredicto: 'incumple',
+    señalados: [{ linea: 8, propiedad: 'animation' }],
+    fotogramas: 1,
+    declaracionesDeEntradaEnNoPreference: 0,
+  },
+]
+
+describe('hero_reducido_con_animacion @s8 (tabla de 22 filas del contrato): el veredicto de cada hoja sintética, SIN las guardas "mayor que 0"', () => {
+  it('la tabla tiene exactamente las 22 filas del contrato', () => {
+    expect(TABLA_DE_FILAS).toHaveLength(22)
+  })
+
+  it.each(TABLA_DE_FILAS)(
+    '$veredicto: $fila',
+    ({ lineas, veredicto, señalados, fotogramas, declaracionesDeEntradaEnNoPreference }) => {
+      const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaSintetica(lineas)])
+
+      expect(informe.incumplimientos).toEqual(señalados.map((señalado) => ({ ruta: RUTA_SINTETICA, ...señalado })))
+      expect(informe.pasa).toBe(veredicto === 'pasa')
+      expect(informe.ficherosLeidos).toBe(1)
+      expect(informe.recuentoDeFotogramas).toBe(fotogramas)
+      expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBe(declaracionesDeEntradaEnNoPreference)
+    },
+  )
+})
+
+describe('hero_reducido_con_animacion @s8: el análisis, más allá de la tabla', () => {
+  it('"animation" con el valor en la línea siguiente sigue siendo una animación con nombre; con "none" en la siguiente, no', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica(['.a {', '  animation:', '    entrada 700ms ease-out;', '}', '.b {', '  animation:', '    none;', '}']),
+    ])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad: 'animation' }])
+  })
+
+  it('las demás propiedades "animation-*" (duración, iteraciones, relleno, curva) no son de entrada y pasan en cualquier sitio', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica([
+        '.a {',
+        '  animation-duration: 0.7s;',
+        '  animation-iteration-count: 1;',
+        '  animation-fill-mode: backwards;',
+        '  animation-timing-function: ease-out;',
+        '  transition-delay: 120ms;',
+        '}',
+      ]),
+    ])
+
+    expect(informe.incumplimientos).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+
+  it('con varias hojas señala cada incumplimiento con SU ruta y suma los recuentos de todas', () => {
+    const hojaConEntradaLegitima = {
+      ruta: '/prueba/Legitima.module.scss',
+      contenido: [BLOQUE_NO_PREFERENCE, ...FOTOGRAMAS_EN_VARIAS_LINEAS, '  .a {', '    animation: entrada 700ms;', '  }', '}', ''].join('\n'),
+    }
+    const hojaConUnaInfractora = {
+      ruta: '/prueba/Infractora.module.scss',
+      contenido: ['.b {', '  animation-delay: 120ms;', '}', BLOQUE_NO_PREFERENCE, '  .c {', '    animation-name: otra;', '  }', '}', ''].join('\n'),
+    }
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaConEntradaLegitima, hojaConUnaInfractora])
+
+    expect(informe.ficherosLeidos).toBe(2)
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/Infractora.module.scss', linea: 2, propiedad: 'animation-delay' }])
+    expect(informe.recuentoDeFotogramas).toBe(1)
+    expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBe(2)
+    expect(informe.pasa).toBe(false)
+  })
+
+  it('una hoja con una declaración y un @keyframes fuera de sitio señala las dos cosas', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica(['.a {', '  animation-name: x;', '}', BLOQUE_REDUCE, '  @keyframes y {', '    to { opacity: 1; }', '  }', '}']),
+    ])
+
+    expect(informe.incumplimientos).toEqual([
+      { ruta: RUTA_SINTETICA, linea: 2, propiedad: 'animation-name' },
+      { ruta: RUTA_SINTETICA, linea: 5, propiedad: '@keyframes' },
+    ])
+  })
+
+  it('una "@media" ajena no cubre aunque contenga a "no-preference" fuera de su alcance: solo cubre estar DENTRO de "no-preference"', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica([BLOQUE_OTRA_CONSULTA, '  .a {', '    animation: x 1s;', '  }', '}', BLOQUE_NO_PREFERENCE, '  .b {', '    animation: y 1s;', '  }', '}']),
+    ])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 3, propiedad: 'animation' }])
+    expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBe(1)
+  })
+
+  it('una "@media" ajena que envuelve a "no-preference" no le quita la cobertura', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica([BLOQUE_OTRA_CONSULTA, `  ${BLOQUE_NO_PREFERENCE}`, '    .a {', '      animation: x 1s;', '    }', '  }', '}']),
+    ])
+
+    expect(informe.incumplimientos).toEqual([])
+  })
+
+  it('con 0 ficheros la puerta falla cerrada: no "pasa" por vacuidad', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([])
+
+    expect(informe.ficherosLeidos).toBe(0)
+    expect(informe.incumplimientos).toEqual([])
+    expect(informe.pasa).toBe(false)
+  })
+})
+
+/**
+ * El inventario REAL de la puerta: los 20 ficheros de estilos —3 de `src/styles`,
+ * 12 de `src/components` y 5 de `src/pages`—. Es una invocación PROPIA: no
+ * amplía el glob de los 17 módulos (`inventarioModulos.test.ts`) ni cambia las
+ * 3 hojas globales que pasa `movimiento-global.test.ts` por @s33.
+ *
+ * LAS GUARDAS "MAYOR QUE 0" (hay al menos un `@keyframes` y al menos una
+ * declaración de entrada dentro de `no-preference` en el CONJUNTO de las 20)
+ * NO están aquí todavía: hoy ninguna hoja real declara la animación del hero y
+ * esas guardas no pueden pasar sin la hoja de la ola 2. Lo que sí se afirma
+ * desde ya —y seguirá cierto cuando exista la animación correcta— es el recuento
+ * de ficheros y que NINGUNA hoja real incumple.
+ */
+const HOJAS_REALES_DEL_INVENTARIO = {
+  estilos: import.meta.glob('../../styles/*.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
+  componentes: import.meta.glob('../../components/*.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
+  paginas: import.meta.glob('../../pages/*.module.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
+}
+
+function aFicheros(hojas: Record<string, string>): { ruta: string; contenido: string }[] {
+  return Object.entries(hojas).map(([ruta, contenido]) => ({ ruta, contenido }))
+}
+
+describe('hero_reducido_con_animacion @s8 sobre las 20 hojas reales del inventario', () => {
+  it('lee exactamente 20 ficheros (3 + 12 + 5) y ninguno declara entrada fuera de "no-preference" ni fotogramas fuera de sitio', () => {
+    expect(Object.keys(HOJAS_REALES_DEL_INVENTARIO.estilos).map((ruta) => ruta.split('/').pop()).toSorted()).toEqual([
+      '_api.scss',
+      '_tokens.scss',
+      'global.scss',
+    ])
+    expect(Object.keys(HOJAS_REALES_DEL_INVENTARIO.componentes)).toHaveLength(12)
+    expect(Object.keys(HOJAS_REALES_DEL_INVENTARIO.paginas)).toHaveLength(5)
+    const ficheros = [
+      ...aFicheros(HOJAS_REALES_DEL_INVENTARIO.estilos),
+      ...aFicheros(HOJAS_REALES_DEL_INVENTARIO.componentes),
+      ...aFicheros(HOJAS_REALES_DEL_INVENTARIO.paginas),
+    ]
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference(ficheros)
+
+    expect(informe.ficherosLeidos).toBe(20)
+    expect(informe.incumplimientos).toEqual([])
     expect(informe.pasa).toBe(true)
   })
 })

@@ -347,16 +347,12 @@ const TEXTO_REAL_DE_FAQ_SCSS = (
 const ANCHO_MAXIMO_CONTENEDOR_GENERAL_PX = 1220
 
 /**
- * Ancho máximo de la sección de bienvenida (Hero), leído SOLO por lectura de
- * `src/components/Hero.module.scss:39` (`width: min(100% - #{espaciado(48)},
- * 900px)`), sin editar ese fichero: @s18 pide que Faq declare "su propio
- * ancho máximo, distinto del general y distinto entre sí" (Hero lo cierra
- * OTRO artesano en paralelo).
+ * Desde la feature 48 (`hero_reducido_con_animacion`) el FAQ es la única
+ * sección estrecha a propósito: la bienvenida arranca en el borde de la
+ * columna de 1220 px y ya no declara un ancho propio con el que comparar.
  */
-const ANCHO_MAXIMO_HERO_PX = 900
-
-describe('@s18 (rediseno_visual) la sección de preguntas frecuentes declara su propio ancho máximo, distinto del general y del de la sección de bienvenida', () => {
-  it('el texto real de Faq.module.scss fija max-width en un valor propio, menor que el general y distinto del de Hero', () => {
+describe('@s18 (rediseno_visual) la sección de preguntas frecuentes declara su propio ancho máximo, distinto del general', () => {
+  it('el texto real de Faq.module.scss fija max-width en un valor propio y menor que el general', () => {
     // Solo las declaraciones DIRECTAS de ".faq" (hasta la primera llave
     // anidada): así "max-width: 70ch" de la sub-región de respuesta (más
     // abajo en el fichero) nunca se confunde con el ancho de la sección.
@@ -368,6 +364,5 @@ describe('@s18 (rediseno_visual) la sección de preguntas frecuentes declara su 
 
     expect(anchoDeclarado).toBe(860)
     expect(anchoDeclarado).toBeLessThan(ANCHO_MAXIMO_CONTENEDOR_GENERAL_PX)
-    expect(anchoDeclarado).not.toBe(ANCHO_MAXIMO_HERO_PX)
   })
 })

@@ -13,6 +13,9 @@ La 49 (cabecera_sobre_el_hero) queda spec_ready: NO se toca hasta cerrar la 48.
 
 Olas (cada agente escribe SOLO su informe progress/tdd_hero_reducido_con_animacion_ola<X>.md; current.md lo mantiene el craftsman_lead):
 - Ola 1A  retirada del contenido del hero + altura a pantalla completa (Hero.*, datosDelSitio, Hero-logica, tests unitarios y fidelidad-hero.spec)
+          HECHA (14/10/2026): informe progress/tdd_hero_reducido_con_animacion_olaa.md
 - Ola 1B  puertas de movimiento (escalaMovimiento, movimientoRespetuoso, accesibilidad-movimiento y sus tests)
+          HECHA (14/10/2026): informe progress/tdd_hero_reducido_con_animacion_olab.md (estado parcial: lo que falta es de la ola 2)
+          Verificacion conjunta del lead: lint 0, tsc 0, vitest 1716/1716 (89 ficheros), test:e2e 185/185 con 4173 libre; vista real a 1440x900 y 375x812 comprobada.
 - Ola 2   animacion real + pruebas de navegador (@s5 @s6 @s7 @s9 @s10 @s11 @s12)
 - Ola 3   cierre: harness init, test:e2e, mutacion, juez, informe LCP, despliegue

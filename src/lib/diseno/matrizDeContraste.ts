@@ -382,10 +382,11 @@ export const MATRIZ_DE_USO_DEL_SISTEMA: readonly EntradaDeMatrizDeUso[] = [
   // Anillo de foco: mínimo de 3:1 por SC 2.4.11 (@s9).
   { rol: 'foco', fondo: 'fondo', uso: 'componente de interfaz o borde de foco' }, // `_api.scss:75` (mixin `foco-visible`)
   { rol: 'foco', fondo: 'superficie', uso: 'componente de interfaz o borde de foco' }, // `PieDePagina.module.scss:12` + `:42-43`
-  // Sobre el velo oscuro del hero el anillo global no llega a 3:1; los dos
-  // botones lo cambian a la tinta ya validada de la sección (fidelidad_hero,
-  // reparación del 03/09/2026: `accesibilidad` @s38/@s39).
-  { rol: 'sobre-primario', fondo: 'tinta', uso: 'componente de interfaz o borde de foco' }, // `Hero.module.scss` (`.acciones a … &:focus-visible`)
+  // Sobre el velo oscuro del hero el anillo global no llega a 3:1; el botón
+  // «Reservar cita», que desde la feature 48 es el único del hero, lo cambia a
+  // la tinta ya validada de la sección (fidelidad_hero, reparación del
+  // 03/09/2026: `accesibilidad` @s38/@s39).
+  { rol: 'sobre-primario', fondo: 'tinta', uso: 'componente de interfaz o borde de foco' }, // `Hero.module.scss` (`.acciones a`, bajo `&:focus-visible`)
 
 ]
 

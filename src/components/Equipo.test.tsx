@@ -331,13 +331,14 @@ describe('@s33 la sección de equipo abre con su cintillo en versalitas', () => 
     // (`src/pages/Landing.tsx:58-60`, `.seccionAlterna` -> `--color-fondo-alterno`),
     // no una fotografía a sangre como el Hero: @s33 exige aquí el
     // "--color-acento-tinta" POR DEFECTO del mixin "eyebrow"
-    // (`src/styles/_api.scss:324-332`), sin la excepción medida de la
-    // Enmienda 2 que solo aplica al Hero (`Hero.module.scss:43-58`).
+    // (`src/styles/_api.scss`). La excepción de la Enmienda 2 (un cintillo
+    // propio del Hero en "--color-sobre-primario") quedó derogada el
+    // 13/10/2026 por la feature 48: el Hero ya no lleva ningún cintillo, así
+    // que no hay excepción de color que conceder a nadie.
     const bloqueEyebrow = /\.eyebrow\s*\{([^}]*)\}/.exec(TEXTO_REAL_DE_EQUIPO_SCSS)?.[1] ?? ''
     expect(bloqueEyebrow).toContain('@include eyebrow;')
-    // Ninguna declaración "color:" propia (a diferencia de la excepción del
-    // Hero, `Hero.module.scss:58`): el cintillo hereda el "--color-acento-tinta"
-    // que ya trae el mixin, sin sobrescribirlo.
+    // Ninguna declaración "color:" propia: el cintillo hereda el
+    // "--color-acento-tinta" que ya trae el mixin, sin sobrescribirlo.
     expect(bloqueEyebrow).not.toMatch(/(?<![a-z-])color\s*:/)
   })
 })
