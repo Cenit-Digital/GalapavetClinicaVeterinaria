@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from 'playwright/test'
 import { DOMINIOS_DE_TERCEROS_PROHIBIDOS, ejecutarPuertaDeTerceros, type ArchivoDeSalida } from '../../src/lib/diseno/puertaTerceros'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
+import { TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const PUERTO_DE_PREVIEW = 4173
 const URL_ESPERADA = `http://localhost:${PUERTO_DE_PREVIEW}${SUBPATH_DE_PRODUCCION}/`
@@ -201,7 +202,11 @@ async function cargarImagenesDiferidas(page: Page): Promise<void> {
   await page.evaluate(() => {
     document.querySelectorAll('img[loading="lazy"]').forEach((imagen) => imagen.setAttribute('loading', 'eager'))
   })
-  await page.waitForFunction(() => Array.from(document.images).every((imagen) => imagen.complete))
+  await page.waitForFunction(
+    () => Array.from(document.images).every((imagen) => imagen.complete),
+    undefined,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
 }
 
 test.describe('@s23 las imágenes de las 6 features y og:image resuelven con 200 bajo el subpath real', () => {

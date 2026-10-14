@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { leerTokenDeVariante } from '../../src/lib/diseno/tokensColor'
 import { expect, test } from 'playwright/test'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
-import { colorComputadoAHex, esTransparente } from './utilidades'
+import { colorComputadoAHex, esTransparente, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const RUTA_TOKENS = fileURLToPath(new URL('../../src/styles/_tokens.scss', import.meta.url))
 const textoDeTokens = (): string => readFileSync(RUTA_TOKENS, 'utf8')
@@ -84,6 +84,7 @@ test.describe('@s25 en las 5 variantes el documento pinta de verdad el fondo y e
           return aHex(estilo.backgroundColor) === fondoHex && aHex(estilo.color) === textoHex
         },
         { fondoHex: fondoEsperado, textoHex: textoEsperado },
+        { timeout: TOPE_DE_UNA_ESPERA_MS },
       )
 
       const { fondoComputado, textoComputado } = await page.evaluate(() => {

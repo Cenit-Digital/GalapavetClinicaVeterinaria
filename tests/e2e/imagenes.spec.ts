@@ -2,6 +2,7 @@
 // locales y la carpeta `public/`). NAVEGADOR REAL con Playwright.
 import { expect, test, type Page } from 'playwright/test'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
+import { TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const CADENA_BANCO_DE_IMAGENES = 'unsplash'
 
@@ -18,7 +19,11 @@ async function cargarImagenesDiferidas(page: Page): Promise<void> {
   await page.evaluate(() => {
     document.querySelectorAll('img[loading="lazy"]').forEach((imagen) => imagen.setAttribute('loading', 'eager'))
   })
-  await page.waitForFunction(() => Array.from(document.images).every((imagen) => imagen.complete))
+  await page.waitForFunction(
+    () => Array.from(document.images).every((imagen) => imagen.complete),
+    undefined,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
 }
 
 test.describe('@s27 no hay ni una sola imagen rota en ninguna ruta del sitio real', () => {

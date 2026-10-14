@@ -44,6 +44,12 @@ export default defineConfig({
   // destapar (el sitio real sin CSS del 23/08/2026 pasaba con la suite de
   // jsdom en verde).
   retries: 0,
+  // Un `test.only` olvidado hace que `playwright test` ejecute SOLO ese test y salga con
+  // código 0 (medido): los demás ni corren ni cuentan como fallo, y el cierre de las
+  // features acredita sus escenarios por el código de salida de `pnpm run test:e2e`. Con
+  // "forbidOnly" esa corrida FALLA en vez de callar. Sin condición de CI, por la misma
+  // razón que "retries: 0": aquí no se tolera un verde que no ha corrido lo que dice.
+  forbidOnly: true,
   webServer: {
     // SIEMPRE `dist/` vía `vite preview`, NUNCA el servidor de desarrollo
     // (@s48): es la única forma de que "0 font-family en el CSS generado"

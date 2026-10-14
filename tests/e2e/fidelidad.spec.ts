@@ -18,7 +18,7 @@ import {
   type NombreDeToken,
 } from '../../src/lib/diseno/tokensColor'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
-import { colorComputadoAHex } from './utilidades'
+import { colorComputadoAHex, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const RUTA_TOKENS = fileURLToPath(new URL('../../src/styles/_tokens.scss', import.meta.url))
 const textoDeTokens = (): string => readFileSync(RUTA_TOKENS, 'utf8')
@@ -54,18 +54,27 @@ const RECUENTO_DE_RUTAS = 6
  * capturar un valor a mitad de la interpolación. Es la misma espera que
  * `tests/e2e/accesibilidad.spec.ts` ya usa y justifica.
  *
- * Desde el 20/09/2026 el sujeto de esa segunda espera son SOLO transiciones:
- * la feature 39 dejó el proyecto sin ninguna declaración `animation:`. Las
- * transiciones entran igualmente en `document.getAnimations()`, así que la
- * espera sigue teniendo algo que esperar y no se ha retirado.
+ * El sujeto de esa segunda espera son SOLO transiciones. Desde el 20/09/2026
+ * (feature 39) `src/` no tenía ninguna declaración `animation:`; desde el
+ * 14/10/2026 (feature 48) tiene UNA, la entrada del hero, pero vive solo dentro de
+ * `no-preference` y el único test que usa esta función emula `reduce` antes de
+ * pulsar (a mitad de carga esa emulación la retira de inmediato: MEDIDO en
+ * Chromium 151, de 3 animaciones a 0). Las transiciones entran en
+ * `document.getAnimations()`, así que la espera tiene algo que esperar y no se
+ * ha retirado.
  */
 async function aplicarVariante(page: Page, variante: { id: string; nombreAccesible: string }): Promise<void> {
   await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()
   await page.waitForFunction(
     (esperado) => document.documentElement.getAttribute('data-variante') === esperado,
     variante.id,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
   )
-  await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+  await page.waitForFunction(
+    () => document.getAnimations().every((animacion) => animacion.playState !== 'running'),
+    undefined,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
 }
 
 interface TokenMedido {
@@ -150,13 +159,17 @@ test.describe('@s42 los tokens que el navegador resuelve coinciden con los que e
     page,
   }) => {
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
-    // POR QUÉ SE CONSERVA EL "reduce" AUNQUE YA NO HAYA NINGUNA ANIMACIÓN.
+    // POR QUÉ SE CONSERVA EL "reduce" AUNQUE YA NO HAYA UNA ANIMACIÓN INFINITA.
     // Hasta el 20/09/2026 esta línea estaba aquí por la animación infinita del
     // punto del CTA de urgencias (`Cabecera.module.scss`, `pulso-urgencias`),
     // que nunca dejaba quieto a `document.getAnimations()`. La feature 39
-    // retiró esa animación y la de la tarjeta de contacto: en `src/` no queda
-    // ninguna declaración `animation:`. La emulación SIGUE HACIENDO FALTA
-    // porque `getAnimations()` también devuelve las TRANSICIONES, y el `body`
+    // retiró esa animación y la de la tarjeta de contacto y dejó `src/` sin
+    // ninguna declaración `animation:`; desde la 48 hay UNA, la entrada del hero
+    // (`Hero.module.scss`, solo dentro de `no-preference`). El `goto` de arriba va
+    // ANTES de emular, así que en esa carga la entrada arranca, y emular
+    // `reduce` la retira de inmediato (MEDIDO en Chromium 151: de 3
+    // animaciones a 0, sin esperar un fotograma). La emulación SIGUE HACIENDO
+    // FALTA porque `getAnimations()` también devuelve las TRANSICIONES, y el `body`
     // transiciona "background-color" y "color" (`global.scss:326`) justo al
     // cambiar de variante; con "reduce", `global.scss:337-343` las deja en
     // 0.01ms y la espera de `aplicarVariante` converge en vez de leer un valor

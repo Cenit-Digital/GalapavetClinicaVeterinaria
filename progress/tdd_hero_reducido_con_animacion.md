@@ -15,6 +15,10 @@
 | 2B | Ayudante `esperarEntradaTerminada`, su cableado a los specs reales, CLS de la entrada, accesibilidad @s19/@s22, adaptación de los specs | `tdd_hero_reducido_con_animacion_ola2b.md` | `5baf8ce` |
 | 3A | Prueba y medida de LCP (@s11) | `tdd_hero_reducido_con_animacion_ola3a.md` + `lcp_hero_despues_20261014.md` | (ver `git log`) |
 | 3B | Comentarios que quedaron falsos tras retirar el contenido del hero (solo comentarios) | `tdd_hero_reducido_con_animacion_ola3b.md` | (ver `git log`) |
+| — | Panel de revisión (judge + 4 revisores independientes) sobre `2267262`: CHANGES_REQUESTED, 2 bloqueantes y 13 importantes en las puertas nuevas | `judge_hero_reducido_con_animacion.md` (ronda 1) | `e904a27` |
+| 4A | Comprobación estática de @s10 (`medicionEstable.ts`) endurecida: 139 → 425 pruebas, Stryker 791/791 | `tdd_hero_reducido_con_animacion_ola4a.md` | (ver `git log`) |
+| 4B | Lector de hojas y las tres puertas de movimiento que lo usan: Stryker 636/636 | `tdd_hero_reducido_con_animacion_ola4b.md` | (ver `git log`) |
+| 4C | Specs de navegador, `forbidOnly`, comentarios falsos y «mismo instante» de @s5 como prueba real | `tdd_hero_reducido_con_animacion_ola4c.md` | (ver `git log`) |
 
 Verificación conjunta del `craftsman_lead` tras cada ola (los agentes de una misma ola
 trabajan en paralelo: sus verdes individuales no bastan): lint 0, `tsc -b` 0,
@@ -54,31 +58,45 @@ Los nombres exactos de cada test están en el informe de la ola que se indica.
 | `identidad_visual` @s16 | `src/lib/diseno/escalaMovimiento.test.ts` | 1B |
 | `identidad_visual` @s23 | `tests/e2e/tipografia.spec.ts` | 1A |
 
-## 3. Estado de las puertas (medido por el lead, 14/10/2026 08:30, con la máquina en reposo)
+## 3. Estado de las puertas (medido por el lead, 14/10/2026 16:00, con la máquina en reposo, tras la ola 4)
 
 - `pnpm run lint` → salida 0 · `pnpm run typecheck` → 0 · `tsc -p tsconfig.e2e.json --noEmit` → 0.
-- `pnpm test` → 90 ficheros, **1748 pruebas** en verde.
-- `pnpm run test:e2e` → **267 pruebas** en verde (salida 0), con la animación presente.
-- LCP con la máquina en reposo (`progress/lcp_hero_despues_20261014.md` §10): escritorio 116 y 128 ms frente a 132 ms de la línea base local; móvil 96 y 104 ms frente a 120 ms; la foto sigue siendo el candidato en las 20 pasadas y el CLS es 0.
-- Mutación (`StrykerJS`, umbral 100 % sobre los mutantes no equivalentes): **pendiente**, la ejecuta el `mutation_tester` DESPUÉS de la aprobación del `judge`.
+- `pnpm test` → 90 ficheros, **2388 pruebas** en verde.
+- `pnpm run test:e2e` → **278 pruebas** en verde (salida 0), con la animación presente.
+- LCP con la máquina en reposo (`progress/lcp_hero_despues_20261014.md` §10 y §11, cuatro ejecuciones): escritorio 116 · 128 · 148 · 144 ms frente a 132 ms de la línea base local; móvil 96 · 104 · 136 · 132 ms frente a 120 ms; la foto sigue siendo el candidato en las 40 pasadas y el CLS es 0. Las dos últimas medianas son algo peores que la línea base y las dos primeras algo mejores: sin diferencia atribuible, y se le muestra a Pablo.
+- Mutación acotada por los agentes de la ola 4 (módulo a módulo): `medicionEstable.ts` 791/791, `lectorDeEstilos.ts` 229/229, `movimientoRespetuoso.ts` 98/98, `accesibilidad-movimiento.ts` 76/76, `escalaMovimiento.ts` 233/233; 0 supervivientes, 0 Timeout, 0 NoCoverage, 0 RuntimeError. La corrida OFICIAL del `mutation_tester` (sobre el estado final y con la máquina en reposo) está **pendiente** y va DESPUÉS de la segunda aprobación del `judge`.
 
 ## 4. Puntos abiertos que el `judge` debe mirar
 
-1. **«Las tres empiezan en el mismo instante» (@s5)** no se puede probar con el reloj congelado
-   (`startTime` vale 0 para todas por construcción). La ola 2A lo deja como cláusula DOCUMENTAL.
-2. **La ventana de observación de @s11** (`networkidle` + 1,5 s, ≈ 2 s tras navegar) no ve un
-   retardo de entrada de 3 s: la cláusula «mediana ≤ 2500 ms» solo salta si el candidato llega
-   a observarse. No afecta a la 48 (el candidato es la foto); **la 49 necesita un suelo de
-   observación** y eso es un cambio de contrato a presentar a Pablo con ella.
-3. **Las vías (a) y (b) de @s10 no miden el mismo estado cuando se mide el FOCO** (con `reduce`
-   la regla global deja `transition-duration: 0.01ms` y el color del contorno se lee a medio
-   camino: ratio 1,12). Por eso `accesibilidad` @s38/@s39 van por la vía (a) solo en la portada.
-4. **La comprobación estática de @s10 alcanza a 6 ficheros, no a los 4 del contrato**
-   (`fidelidad.spec.ts` @s43 y `hero-reducido.spec.ts` entran además): dato, no defecto.
-5. **Excepción por etiqueta de `cabecera_sobre_el_hero`** sin implementar en `medicionEstable.ts`
-   (los specs de la 49 aún no existen): se arrastra a la 49.
-6. **Intermitencia observada una vez** en `src/accesibilidad-teclado.test.tsx` durante una ejecución
-   completa de Vitest con otro agente midiendo en paralelo (5 pruebas: el tabulador acababa en
-   `body`); pasa sola y en las ejecuciones completas posteriores del lead. Causa no demostrada.
-7. **Puerta humana pendiente (@s11):** el visto bueno de Pablo sobre las cifras de LCP antes de
-   cerrar la 48 (el informe de LCP lo dice; el lead se lo presenta).
+RESUELTOS por la ola 4 (ver los informes 4a, 4b y 4c): la comprobación estática ya ata espera y emulación a la
+página y al `await`, resuelve flechas de expresión y funciones pasadas por referencia, no se deja engañar por
+cadenas, reconoce `test.only` y no tiene bucles que dejen mutantes en Timeout; el lector de hojas entiende
+cadenas y comentarios pegados y falla cerrado ante lo que no sabe leer; el clasificador de `@media` solo da
+`no-preference` a esa condición exacta; `forbidOnly: true` en Playwright; «las tres empiezan en el mismo
+instante» (@s5) es ahora una PRUEBA real con el reloj vivo, no una cláusula documental.
+
+SIGUEN ABIERTOS (declarados, no defectos nuevos):
+
+1. **La ventana de observación de @s11** (`networkidle` + 1,5 s, unos 2 s tras navegar) no ve un retardo de
+   entrada de 3 s: la cláusula «mediana ≤ 2500 ms» solo salta si el candidato llega a observarse. No afecta a
+   la 48 (el candidato es la foto); **la 49 necesita un suelo de observación** y eso es un cambio de contrato a
+   presentar a Pablo con ella.
+2. **Las vías (a) y (b) de @s10 no miden el mismo estado cuando se mide el FOCO** (con `reduce` la regla global
+   deja `transition-duration: 0.01ms` y el color del contorno se lee a medio camino: ratio 1,12). Por eso
+   `accesibilidad` @s38/@s39 van por la vía (a) solo en la portada, y la comprobación estática NO las alcanza
+   (H4 del judge: miden la caja del botón con selectores sin marca del hero).
+3. **La comprobación estática de @s10 alcanza a 6 ficheros, no a los 4 del contrato** (dato, no defecto) y falla
+   ABIERTO en los casos que enumera su cabecera (un localizador guardado antes de nombrar otra página,
+   `if (false)`, la segunda medición tras otra navegación, `toHaveCSS`, `getClientRects`...).
+4. **Excepción por etiqueta de `cabecera_sobre_el_hero`** sin implementar en `medicionEstable.ts` (los specs de
+   la 49 aún no existen): se arrastra a la 49.
+5. **Intermitencia observada una vez** en `src/accesibilidad-teclado.test.tsx` durante una ejecución completa
+   de Vitest con otro agente midiendo en paralelo (5 pruebas); NO se reproduce con seis ejecuciones simultáneas
+   del fichero ni con dos suites completas más la batería de navegador a la vez. Causa no demostrada.
+6. **El foco durante la entrada**: la animación cuelga del contenedor del botón y la opacidad se compone sobre
+   su anillo de foco (MEDIDO: 184 de 255 a mitad de la entrada). Dicho en el comentario de `Hero.module.scss`; el
+   diseño firmado lo permite. La entrada se repite cada vez que el hero se monta (navegación de cliente a /).
+7. **Deuda de organización**: `hero-reducido.spec.ts` (unas 1350 líneas) y `movimiento.spec.ts` se parten después
+   de la 49 (la ola 4C extrajo solo `esperarDosFotogramas`: congelar y colocar son marcadores textuales de @s10).
+8. **Puerta humana pendiente (@s11):** el visto bueno de Pablo sobre las cifras de LCP antes de cerrar la 48
+   (informe de LCP §10 y §11; el lead se las presenta con las cifras).

@@ -54,6 +54,7 @@ describe('identidad_visual @s16 la escala de movimiento declara exactamente tres
     expect(informe.duracionesFueraDeEscala).toEqual([])
     expect(informe.retardosFueraDeEscala).toEqual([])
     expect(informe.valoresNoVerificables).toEqual([])
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
   })
 
   it('ninguna declaración real anima la palabra clave "all"', () => {
@@ -327,12 +328,12 @@ describe('identidad_visual @s16: la lectura de los tiempos, más allá de la tab
     expect(informe.pasa).toBe(true)
   })
 
-  it('un token que solo CONTIENE un tiempo (el nombre "fade400ms", la unidad "400msx") no es un tiempo', () => {
+  it('un nombre que solo CONTIENE un tiempo ("fade400ms") no es un tiempo, y una unidad inventada ("400msx") ya no se ignora: falla cerrada', () => {
     const informe = informeDe('.x {', '  animation: fade400ms 300ms ease-out;', '  transition: color 400msx ease-out;', '}')
 
     expect(informe.duracionesFueraDeEscala).toEqual([])
     expect(informe.retardosFueraDeEscala).toEqual([])
-    expect(informe.valoresNoVerificables).toEqual([])
+    expect(informe.valoresNoVerificables).toEqual([{ ruta: RUTA_SINTETICA, linea: 3, valor: '400msx' }])
   })
 
   it('una función de curva ("cubic-bezier") no se parte por sus comas: es UN valor no verificable, y la lista sigue leyéndose entrada a entrada', () => {
@@ -449,5 +450,237 @@ describe('identidad_visual @s16: ninguna declaración anima la palabra clave "al
     const informe = informeDe('body {', '  transition: all-caps 150ms;', '  transition-property: allow, opacity;', '  animation: all 150ms;', '}')
 
     expect(informe.usosDePalabraClaveAll).toEqual([])
+  })
+})
+
+/**
+ * OLA 4B de la feature 48 (revisión independiente): B3, B5 y el cierre CERRADO de
+ * la lectura (B1). Cada caso se ejecuta con los dos finales de línea, el de Unix
+ * y el de Windows, y los dos informes tienen que ser IDÉNTICOS.
+ */
+function informeConLfYCrlf(...lineasDeLaHoja: readonly string[]) {
+  const conLf = ejecutarPuertaDeEscalaDeMovimiento([ficheroDeEstilos(RUTA_SINTETICA, [...lineasDeLaHoja, ''].join('\n'))])
+  const conCrlf = ejecutarPuertaDeEscalaDeMovimiento([ficheroDeEstilos(RUTA_SINTETICA, [...lineasDeLaHoja, ''].join('\r\n'))])
+  expect(conCrlf).toEqual(conLf)
+  return conLf
+}
+
+describe('identidad_visual @s16 B3: todo lo que parece un tiempo se lee o falla cerrado, nunca se ignora', () => {
+  it.each([
+    ['0.9S', 900],
+    ['900MS', 900],
+    ['+900ms', 900],
+    ['9e2ms', 900],
+    ['9E2MS', 900],
+    ['0.9e3ms', 900],
+    ['9e-1s', 900],
+    ['+.9s', 900],
+    ['9e+2ms', 900],
+    ['9e02ms', 900],
+    ['9e-01s', 900],
+    ['0.09e+04ms', 900],
+  ])('"transition-duration: %s" es una duración de %i ms, fuera de la escala', (escrito, milisegundos) => {
+    const informe = informeConLfYCrlf('.x {', `  transition-duration: ${escrito};`, '}')
+
+    expect(informe.duracionesFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valorMs: milisegundos }])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it.each(['0.7S', '700MS', '+700ms', '7e2ms', '7E2ms', '0.07e1s', '7e-1s', '+.7s', '0.15S', '150MS', '300Ms', '0.3e0S', '0.01MS', '1e-5s'])(
+    '"transition-duration: %s" es una duración de la escala y pasa',
+    (escrito) => {
+      const informe = informeConLfYCrlf('.x {', `  transition-duration: ${escrito};`, '}')
+
+      expect(informe.duracionesFueraDeEscala).toEqual([])
+      expect(informe.valoresNoVerificables).toEqual([])
+      expect(informe.pasa).toBe(true)
+    },
+  )
+
+  it.each(['+120ms', '0.12S', '1.2e2ms', '240MS', '0S', '0MS', '0e5ms', '+0s', '2.4e-1s'])(
+    '"animation-delay: %s" es un retardo de la escala y pasa',
+    (escrito) => {
+      const informe = informeConLfYCrlf('.x {', `  animation-delay: ${escrito};`, '}')
+
+      expect(informe.retardosFueraDeEscala).toEqual([])
+      expect(informe.pasa).toBe(true)
+    },
+  )
+
+  it.each(['900ms*2', '900ms/2', '#{900}ms', '400msx', '700msx', '1x', '10%', '0.7sx', '.5foo'])(
+    '"%s", que empieza como un número y no es un tiempo literal, se declara no verificable',
+    (token) => {
+      const informe = informeConLfYCrlf('.x {', `  transition: color ${token} ease-out;`, '}')
+
+      expect(informe.valoresNoVerificables).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valor: token }])
+      expect(informe.duracionesFueraDeEscala).toEqual([])
+      expect(informe.pasa).toBe(false)
+    },
+  )
+
+  it('un paréntesis de cierre suelto tampoco se ignora: el token que lo lleva se declara no verificable', () => {
+    const informe = informeConLfYCrlf('.x {', '  transition: color 900ms) ease-out;', '}')
+
+    expect(informe.valoresNoVerificables).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valor: '900ms) ease-out' }])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it.each(['1', '0', '1.5', '.5', '-1', '+2', '3e2', '12', '120', '1.25', '.25', '3e12', '3e+2', '3e-2', '-12.5e+3'])('el número sin unidad "%s" (un contador de iteraciones, por ejemplo) no es un tiempo ni se declara', (numero) => {
+    const informe = informeConLfYCrlf('.x {', `  animation: entrada 700ms ease-out ${numero};`, '}')
+
+    expect(informe.valoresNoVerificables).toEqual([])
+    expect(informe.duracionesFueraDeEscala).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+
+  it('un nombre que contiene dígitos o que empieza por un guion ("-webkit-transform", "fade400ms", "x2") no se confunde con un número', () => {
+    const informe = informeConLfYCrlf('.x {', '  transition: -webkit-transform 150ms ease-out, fade400ms 300ms, x2 700ms;', '}')
+
+    expect(informe.valoresNoVerificables).toEqual([])
+    expect(informe.duracionesFueraDeEscala).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+})
+
+describe('identidad_visual @s16 B3: "!important" no enmascara un tiempo ni una palabra clave', () => {
+  it.each([
+    ['transition-duration: 900ms!important'],
+    ['transition-duration: 900ms !important'],
+    ['transition-duration: 900ms  !  important'],
+    ['transition-duration: 900ms !IMPORTANT'],
+    ['transition: color 900ms ease-out !important'],
+    ['animation: entrada 900ms ease-out backwards!important'],
+  ])('"%s" sigue siendo una duración de 900 ms fuera de la escala', (declaracion) => {
+    const informe = informeConLfYCrlf('.x {', `  ${declaracion};`, '}')
+
+    expect(informe.duracionesFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valorMs: 900 }])
+    expect(informe.valoresNoVerificables).toEqual([])
+  })
+
+  it('un retardo fuera de la escala con "!important" también se señala', () => {
+    const informe = informeConLfYCrlf('.x {', '  animation-delay: 77ms!important;', '}')
+
+    expect(informe.retardosFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valorMs: 77 }])
+  })
+
+  it('las duraciones de la escala con "!important" pasan', () => {
+    const informe = informeConLfYCrlf('.x {', '  transition: color 150ms ease-out !important;', '  animation-delay: 120ms!important;', '}')
+
+    expect(informe.pasa).toBe(true)
+  })
+
+  it.each(['transition: all!important', 'transition: all !important', 'transition-property: all!important'])(
+    '"%s" sigue animando la palabra clave "all"',
+    (declaracion) => {
+      const informe = informeConLfYCrlf('.x {', `  ${declaracion};`, '}')
+
+      expect(informe.usosDePalabraClaveAll).toEqual([{ ruta: RUTA_SINTETICA, linea: 2 }])
+    },
+  )
+
+  it.each(['transition: ALL 150ms', 'transition: All 150ms', 'transition-property: opacity, ALL'])('"%s": la palabra clave "all" se reconoce con cualquier mayúscula', (declaracion) => {
+    const informe = informeConLfYCrlf('.x {', `  ${declaracion};`, '}')
+
+    expect(informe.usosDePalabraClaveAll).toEqual([{ ruta: RUTA_SINTETICA, linea: 2 }])
+  })
+})
+
+describe('identidad_visual @s16 B5: las propiedades en mayúsculas o con prefijo de fabricante también se leen', () => {
+  it.each([
+    ['ANIMATION: x 900ms 77ms', [900], [77]],
+    ['-webkit-animation: x 900ms 77ms', [900], [77]],
+    ['-webkit-transition: color 900ms 77ms', [900], [77]],
+    ['Transition-Duration: 900ms', [900], []],
+    ['-moz-animation-duration: 900ms', [900], []],
+    ['-WEBKIT-ANIMATION-DELAY: 77ms', [], [77]],
+    ['-o-transition-delay: 77ms', [], [77]],
+  ])('"%s" se lee como su propiedad sin prefijo', (declaracion, duraciones, retardos) => {
+    const informe = informeConLfYCrlf('.x {', `  ${declaracion};`, '}')
+
+    expect(informe.duracionesFueraDeEscala.map((hallazgo) => hallazgo.valorMs)).toEqual(duraciones)
+    expect(informe.retardosFueraDeEscala.map((hallazgo) => hallazgo.valorMs)).toEqual(retardos)
+  })
+
+  it.each(['-webkit-transition: all 150ms', 'TRANSITION: all 150ms', '-moz-transition-property: all', 'Transition-Property: opacity, all'])(
+    '"%s" también anima la palabra clave "all"',
+    (declaracion) => {
+      const informe = informeConLfYCrlf('.x {', `  ${declaracion};`, '}')
+
+      expect(informe.usosDePalabraClaveAll).toEqual([{ ruta: RUTA_SINTETICA, linea: 2 }])
+    },
+  )
+
+  it('una propiedad personalizada que se llama como una de movimiento ("--transition-duration") no se valida', () => {
+    const informe = informeConLfYCrlf('.x {', '  --transition-duration: 900ms;', '}')
+
+    expect(informe.duracionesFueraDeEscala).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+})
+
+describe('identidad_visual @s16 B6: cada tiempo de una declaración corta ocupa su sitio, y los que sobran se ignoran', () => {
+  it('el primer tiempo de una declaración corta es la duración y el segundo el retardo, en cada entrada de la lista', () => {
+    const informe = informeConLfYCrlf('.x {', '  transition: color 400ms ease-out 500ms, transform 600ms ease-out 700ms;', '}')
+
+    expect(informe.duracionesFueraDeEscala.map((hallazgo) => hallazgo.valorMs)).toEqual([400, 600])
+    expect(informe.retardosFueraDeEscala.map((hallazgo) => hallazgo.valorMs)).toEqual([500, 700])
+  })
+
+  it('una declaración corta sin retardo no inventa uno, y una suelta de duración con dos tiempos solo lee el primero como duración', () => {
+    const informe = informeConLfYCrlf('.x {', '  animation: entrada 700ms ease-out;', '  transition-duration: 400ms 500ms;', '}')
+
+    expect(informe.retardosFueraDeEscala).toEqual([])
+    expect(informe.duracionesFueraDeEscala.map((hallazgo) => hallazgo.valorMs)).toEqual([400])
+  })
+})
+
+describe('identidad_visual @s16 B1: una hoja que el lector no puede leer entera hace fallar CERRADA la puerta', () => {
+  const FICHERO_LIMPIO = ficheroDeEstilos('/prueba/limpio.scss', '.x {\n  transition: color 150ms ease-out;\n}\n')
+  const RUTA_ROTA = '/prueba/rota.scss'
+
+  it('el fichero limpio, solo, pasa y no declara ninguna hoja sin lectura fiable', () => {
+    const informe = ejecutarPuertaDeEscalaDeMovimiento([FICHERO_LIMPIO])
+
+    expect(informe.pasa).toBe(true)
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
+  })
+
+  it.each([
+    ['una llave de apertura sin cerrar', '.a {\n  color: red;\n'],
+    ['una llave de cierre de más', '.a {\n  color: red;\n}\n}\n'],
+    ['un nombre de propiedad con interpolación', '.a {\n  #{$p}: 900ms;\n}\n'],
+    ['una cadena sin cerrar', '.a {\n  content: "abc;\n}\n'],
+  ])('%s: la hoja se nombra y la puerta no pasa, aunque no declare movimiento', (_caso, contenido) => {
+    for (const final of ['\n', '\r\n']) {
+      const informe = ejecutarPuertaDeEscalaDeMovimiento([FICHERO_LIMPIO, ficheroDeEstilos(RUTA_ROTA, contenido.replaceAll('\n', final))])
+
+      expect(informe.ficherosSinLecturaFiable).toEqual([RUTA_ROTA])
+      expect(informe.duracionesFueraDeEscala).toEqual([])
+      expect(informe.retardosFueraDeEscala).toEqual([])
+      expect(informe.valoresNoVerificables).toEqual([])
+      expect(informe.usosDePalabraClaveAll).toEqual([])
+      expect(informe.pasa).toBe(false)
+    }
+  })
+
+  it('con 0 ficheros no hay ninguna hoja sin lectura fiable, y la puerta sigue sin pasar', () => {
+    const informe = ejecutarPuertaDeEscalaDeMovimiento([])
+
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it('una "//" pegada a un punto y coma no se traga la declaración de la línea siguiente', () => {
+    const informe = informeConLfYCrlf('.m { color: red;// nota', '  animation: x 900ms 77ms; }')
+
+    expect(informe.duracionesFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valorMs: 900 }])
+    expect(informe.retardosFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, valorMs: 77 }])
+  })
+
+  it('una "//" con blanco delante DENTRO de una cadena no se traga la declaración que la sigue', () => {
+    const informe = informeConLfYCrlf('.m { content: " // "; animation: x 900ms 77ms; }')
+
+    expect(informe.duracionesFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 1, valorMs: 900 }])
+    expect(informe.retardosFueraDeEscala).toEqual([{ ruta: RUTA_SINTETICA, linea: 1, valorMs: 77 }])
   })
 })

@@ -13,6 +13,7 @@ describe('@s33 toda regla de animación o transición introducida vive dentro de
 
     expect(informe.ficherosComprobados).toBeGreaterThan(0)
     expect(informe.incumplimientos).toHaveLength(0)
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
     expect(informe.pasa).toBe(true)
   })
 
@@ -603,10 +604,214 @@ describe('hero_reducido_con_animacion @s8 sobre las 20 hojas reales del inventar
 
     expect(informe.ficherosLeidos).toBe(20)
     expect(informe.incumplimientos).toEqual([])
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
     expect(informe.pasa).toBe(true)
     // Las dos guardas anti-vacuidad del contrato, sobre el CONJUNTO de las hojas reales: que la puerta haya
     // encontrado algo que comprobar (los fotogramas y las declaraciones de entrada de la hoja del hero).
     expect(informe.recuentoDeFotogramas).toBeGreaterThan(0)
     expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBeGreaterThan(0)
+  })
+})
+
+/**
+ * OLA 4B de la feature 48 (revisión independiente): lo que el lector mejorado
+ * (B1, B2, B5) cambia para las dos puertas de este módulo, y los cierres de B6
+ * y B7. Cada comportamiento nuevo se prueba también con los finales de línea de
+ * Windows, que tienen que dar el MISMO informe.
+ */
+const FIN_DE_LINEA_DE_WINDOWS = '\r\n'
+
+function enCrlf(fichero: { ruta: string; contenido: string }): { ruta: string; contenido: string } {
+  return { ruta: fichero.ruta, contenido: fichero.contenido.replaceAll('\n', FIN_DE_LINEA_DE_WINDOWS) }
+}
+
+describe('hero_reducido_con_animacion @s8: CRLF y LF dan el mismo informe en cada fila de la tabla', () => {
+  it.each(TABLA_DE_FILAS)('$veredicto: $fila', ({ lineas }) => {
+    const conLf = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaSintetica(lineas)])
+    const conCrlf = ejecutarPuertaDeEntradaSoloEnNoPreference([enCrlf(hojaSintetica(lineas))])
+
+    expect(conCrlf).toEqual(conLf)
+  })
+})
+
+describe('@s33 con finales de línea de Windows: el mismo informe que con LF', () => {
+  it('una transición sin cubrir se señala igual y en la misma línea', () => {
+    const hoja = { ruta: '/prueba/Crlf.module.scss', contenido: '.a {\n  color: red;\n  transition: color 1s;\n}\n' }
+
+    expect(ejecutarPuertaDeMovimientoRespetuoso([enCrlf(hoja)])).toEqual(ejecutarPuertaDeMovimientoRespetuoso([hoja]))
+    expect(ejecutarPuertaDeMovimientoRespetuoso([hoja]).incumplimientos).toEqual([{ ruta: '/prueba/Crlf.module.scss', linea: 3 }])
+  })
+})
+
+describe('B5: las propiedades en mayúsculas o con prefijo de fabricante también son de movimiento', () => {
+  it.each(['ANIMATION: x 900ms 77ms', '-webkit-animation: x 900ms 77ms', 'Transition-Delay: 77ms', '-webkit-transition: color 900ms', '-moz-animation-duration: 900ms'])(
+    '@s33: "%s" fuera de cualquier consulta de movimiento se señala',
+    (declaracion) => {
+      const hoja = { ruta: '/prueba/Fabricante.module.scss', contenido: `.m {\n  ${declaracion};\n}\n` }
+
+      const informe = ejecutarPuertaDeMovimientoRespetuoso([hoja])
+      const informeConCrlf = ejecutarPuertaDeMovimientoRespetuoso([enCrlf(hoja)])
+
+      expect(informe.ficherosComprobados).toBe(1)
+      expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/Fabricante.module.scss', linea: 2 }])
+      expect(informe.pasa).toBe(false)
+      expect(informeConCrlf).toEqual(informe)
+    },
+  )
+
+  it.each([
+    ['ANIMATION: x 900ms 77ms', 'ANIMATION'],
+    ['-webkit-animation: x 900ms 77ms', '-webkit-animation'],
+    ['-webkit-animation-name: x', '-webkit-animation-name'],
+    ['Animation-Delay: 77ms', 'Animation-Delay'],
+    ['-moz-animation-delay: 77ms', '-moz-animation-delay'],
+  ])('@s8: "%s" en la raíz se señala, con el nombre tal como está escrito', (declaracion, propiedad) => {
+    const hoja = hojaSintetica(['.m {', `  ${declaracion};`, '}'])
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad }])
+    expect(ejecutarPuertaDeEntradaSoloEnNoPreference([enCrlf(hoja)])).toEqual(informe)
+  })
+
+  it('@s8: la entrada con prefijo o en mayúsculas DENTRO de "no-preference" pasa y se cuenta', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([
+      hojaSintetica([BLOQUE_NO_PREFERENCE, '  .m {', '    -webkit-animation: x 700ms;', '    ANIMATION-DELAY: 120ms;', '  }', '}']),
+    ])
+
+    expect(informe.incumplimientos).toEqual([])
+    expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBe(2)
+  })
+})
+
+describe('B4/B6: "animation: none" no es una entrada, escrita como se escriba', () => {
+  it.each(['animation: none', 'animation: NONE', 'animation: none !important', 'animation: None!important', '-webkit-animation: none'])(
+    '"%s" en la raíz pasa @s8',
+    (declaracion) => {
+      const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaSintetica(['.m {', `  ${declaracion};`, '}'])])
+
+      expect(informe.incumplimientos).toEqual([])
+      expect(informe.pasa).toBe(true)
+    },
+  )
+
+  it('"animation: entrada 700ms !important" en la raíz se señala: el !important no la disfraza', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaSintetica(['.m {', '  animation: entrada 700ms !important;', '}'])])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad: 'animation' }])
+  })
+
+  it('"animation-name: none" SÍ cuenta como entrada (fila firmada de @s8: dentro de "reduce" incumple)', () => {
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hojaSintetica(['.m {', '  animation-name: none;', '}'])])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad: 'animation-name' }])
+  })
+})
+
+describe('B2: una consulta que también se cumple con movimiento reducido no cubre la entrada', () => {
+  it.each([
+    '@media not (prefers-reduced-motion: no-preference)',
+    '@media (prefers-reduced-motion: no-preference), (max-width: 560px)',
+    '@media (prefers-reduced-motion: no-preference) or (min-width: 0)',
+    '@media (prefers-reduced-motion: no-preference) and (prefers-reduced-motion: reduce)',
+    '@media not all and (prefers-reduced-motion: no-preference)',
+  ])('@s8: una animación dentro de "%s" se señala', (consulta) => {
+    const hoja = hojaSintetica([`${consulta} {`, '  .m {', '    animation: x 900ms 77ms;', '  }', '}'])
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 3, propiedad: 'animation' }])
+    expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBe(0)
+    expect(ejecutarPuertaDeEntradaSoloEnNoPreference([enCrlf(hoja)])).toEqual(informe)
+  })
+
+  it('@s33: una transición dentro de "@media not (prefers-reduced-motion: reduce)" ya no se da por cubierta por "reduce"', () => {
+    const hoja = { ruta: '/prueba/Invertida.module.scss', contenido: '@media not (prefers-reduced-motion: reduce) {\n  .m {\n    transition: color 1s;\n  }\n}\n' }
+
+    const informe = ejecutarPuertaDeMovimientoRespetuoso([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: '/prueba/Invertida.module.scss', linea: 3 }])
+    expect(ejecutarPuertaDeMovimientoRespetuoso([enCrlf(hoja)])).toEqual(informe)
+  })
+
+  it.each(['@-webkit-keyframes', '@KEYFRAMES'])('@s8: "%s" dentro de "reduce" se señala y cuenta como fotogramas', (arranque) => {
+    const hoja = hojaSintetica([BLOQUE_REDUCE, `  ${arranque} salida {`, '    to { opacity: 0; }', '  }', '}'])
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad: '@keyframes' }])
+    expect(informe.recuentoDeFotogramas).toBe(1)
+  })
+})
+
+describe('B1: una hoja que el lector no puede leer entera hace fallar CERRADAS las dos puertas', () => {
+  const FICHERO_LIMPIO = {
+    ruta: '/prueba/Limpio.module.scss',
+    contenido: [BLOQUE_NO_PREFERENCE, '  .a {', '    animation: entrada 700ms ease-out backwards;', '  }', '}', ''].join('\n'),
+  }
+  const RUTA_ROTA = '/prueba/Rota.module.scss'
+
+  it('el fichero limpio, solo, pasa las dos puertas y no declara ninguna hoja sin lectura fiable', () => {
+    const deMovimiento = ejecutarPuertaDeMovimientoRespetuoso([FICHERO_LIMPIO])
+    const deEntrada = ejecutarPuertaDeEntradaSoloEnNoPreference([FICHERO_LIMPIO])
+
+    expect(deMovimiento.pasa).toBe(true)
+    expect(deMovimiento.ficherosSinLecturaFiable).toEqual([])
+    expect(deEntrada.pasa).toBe(true)
+    expect(deEntrada.ficherosSinLecturaFiable).toEqual([])
+  })
+
+  it.each([
+    ['una llave de apertura sin cerrar', '.a {\n  color: red;\n'],
+    ['una llave de cierre de más', '.a {\n  color: red;\n}\n}\n'],
+    ['un nombre de propiedad con interpolación', '.a {\n  #{$p}: 900ms;\n}\n'],
+    ['una cadena sin cerrar', '.a {\n  content: "abc;\n}\n'],
+  ])('%s: la hoja se nombra y ninguna de las dos pasa, aunque no declare movimiento', (_caso, contenido) => {
+    const rota = { ruta: RUTA_ROTA, contenido }
+
+    for (const ficheros of [
+      [FICHERO_LIMPIO, rota],
+      [FICHERO_LIMPIO, enCrlf(rota)],
+    ]) {
+      const deMovimiento = ejecutarPuertaDeMovimientoRespetuoso(ficheros)
+      const deEntrada = ejecutarPuertaDeEntradaSoloEnNoPreference(ficheros)
+
+      expect(deMovimiento.ficherosSinLecturaFiable).toEqual([RUTA_ROTA])
+      expect(deMovimiento.incumplimientos).toEqual([])
+      expect(deMovimiento.pasa).toBe(false)
+      expect(deEntrada.ficherosSinLecturaFiable).toEqual([RUTA_ROTA])
+      expect(deEntrada.incumplimientos).toEqual([])
+      expect(deEntrada.pasa).toBe(false)
+    }
+  })
+
+  it('con varias hojas sin lectura fiable se nombran todas, en el orden en que llegan', () => {
+    const ficheros = [
+      { ruta: '/prueba/UnoRota.module.scss', contenido: '.a {\n' },
+      FICHERO_LIMPIO,
+      { ruta: '/prueba/DosRota.module.scss', contenido: '}\n' },
+    ]
+
+    expect(ejecutarPuertaDeMovimientoRespetuoso(ficheros).ficherosSinLecturaFiable).toEqual(['/prueba/UnoRota.module.scss', '/prueba/DosRota.module.scss'])
+    expect(ejecutarPuertaDeEntradaSoloEnNoPreference(ficheros).ficherosSinLecturaFiable).toEqual(['/prueba/UnoRota.module.scss', '/prueba/DosRota.module.scss'])
+  })
+
+  it('la llave dentro de una cadena ya no desordena la pila: una animación posterior se señala donde está', () => {
+    const hoja = hojaSintetica([BLOQUE_NO_PREFERENCE, '  .b::before { content: "{"; }', '}', '.m { animation: x 900ms 77ms; }'])
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 4, propiedad: 'animation' }])
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
+  })
+
+  it('una "//" pegada a un punto y coma ya no se traga la animación de la línea siguiente', () => {
+    const hoja = hojaSintetica(['.m { color: red;// nota', '  animation: x 900ms 77ms; }'])
+
+    const informe = ejecutarPuertaDeEntradaSoloEnNoPreference([hoja])
+    const deMovimiento = ejecutarPuertaDeMovimientoRespetuoso([hoja])
+
+    expect(informe.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2, propiedad: 'animation' }])
+    expect(deMovimiento.incumplimientos).toEqual([{ ruta: RUTA_SINTETICA, linea: 2 }])
   })
 })

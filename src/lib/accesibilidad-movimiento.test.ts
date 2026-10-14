@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { calcularSolicitudDeDesplazamiento, prefiereMenosMovimiento } from '../components/Galeria-logica'
 import { decidirComportamientoDesplazamiento } from './desplazamiento'
 import {
-  HOJAS_AUTORIZADAS_A_ANIMAR_LA_ENTRADA,
+  HOJA_AUTORIZADA_A_ANIMAR_LA_ENTRADA,
   ejecutarComprobacionDeVisibilidadSinAnimacion,
   inventariarBloquesQueAparecenAnimando,
   type BloqueQueApareceAnimando,
@@ -234,10 +234,6 @@ const HOJA_CON_ENTRADA_OCULTA = `.tarjeta {
 }
 `
 
-// LA LISTA DE HOJAS AUTORIZADAS, ESCRITA A MANO: «solo la del hero». NO se obtiene de la constante del módulo
-// que se comprueba (patrón doble-de-test-anclado-al-literal).
-const LISTA_AUTORIZADA_A_MANO: readonly string[] = ['/components/Hero.module.scss']
-
 const RUTA_DE_LA_HOJA_DEL_HERO = '/prueba/components/Hero.module.scss'
 const RUTA_DE_OTRA_HOJA = '/prueba/components/Servicios.module.scss'
 
@@ -288,10 +284,6 @@ describe('@s20 el inventario de bloques que aparecen animando se lee del sitio r
     expect(inventario.hojasInspeccionadas).toBe(HOJAS_REALES.length)
   })
 
-  it('la lista de hojas autorizadas a declarar una animación de entrada es exactamente la del hero (literal escrito a mano)', () => {
-    expect(HOJAS_AUTORIZADAS_A_ANIMAR_LA_ENTRADA).toEqual(LISTA_AUTORIZADA_A_MANO)
-  })
-
   it('sobre las hojas reales ninguna aparición animada queda fuera de la hoja del hero ni queda invisible sin su animación', () => {
     const inventario = inventariarBloquesQueAparecenAnimando(HOJAS_REALES)
     const visibilidad = ejecutarComprobacionDeVisibilidadSinAnimacion(inventario.bloques)
@@ -302,6 +294,7 @@ describe('@s20 el inventario de bloques que aparecen animando se lee del sitio r
     expect(inventario.pasa).toBe(true)
     expect(visibilidad.pasa).toBe(true)
     expect(inventario.bloquesFueraDeLasHojasAutorizadas).toEqual([])
+    expect(inventario.hojasSinLecturaFiable).toEqual([])
     expect(visibilidad.bloquesComprobados).toBe(inventario.recuentoDeBloquesQueAparecenAnimando)
     expect(visibilidad.bloquesInvisibles).toEqual([])
   })
@@ -603,5 +596,197 @@ describe('@s20: el estado base invisible y la hoja autorizada, más allá de la 
 
     expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBe(2)
     expect(inventario.bloques.map((bloque) => bloque.nombre)).toEqual([`${RUTA_DE_LA_HOJA_DEL_HERO}:2`, `${RUTA_DE_LA_HOJA_DEL_HERO}:5`])
+  })
+})
+
+/**
+ * OLA 4B de la feature 48 (revisión independiente): B1, B4, B5 y B6 de
+ * `accesibilidad-movimiento.ts`. Cada caso se evalúa con los dos finales de línea
+ * y los dos inventarios tienen que ser IDÉNTICOS.
+ */
+function inventarioConLfYCrlf(ruta: string, lineas: readonly string[]) {
+  const conLf = inventariarBloquesQueAparecenAnimando([{ ruta, contenido: [...lineas, ''].join('\n') }])
+  const conCrlf = inventariarBloquesQueAparecenAnimando([{ ruta, contenido: [...lineas, ''].join('\r\n') }])
+  expect(conCrlf).toEqual(conLf)
+  return conLf
+}
+
+describe('@s20 B4: el estado base oculto se reconoce escrito como se escriba', () => {
+  it.each([
+    'opacity: 0 !important',
+    'opacity: 0!important',
+    'opacity: 0.0',
+    'opacity: 0.00',
+    'opacity: .0',
+    'opacity: 0%',
+    'opacity: 0.0%',
+    'opacity: -0',
+    'opacity: +0',
+    'opacity: 0e3',
+    'Opacity: 0',
+    'OPACITY: 0',
+    '-moz-opacity: 0',
+    'visibility: HIDDEN',
+    'visibility: Hidden',
+    'visibility: hidden !important',
+    'visibility: hidden!IMPORTANT',
+    'VISIBILITY: hidden',
+  ])('"%s" en el estado base deja el bloque animado invisible sin su animación', (declaracion) => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', `  ${declaracion};`, '  animation: entrada 700ms ease-out backwards;', '}'])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:3`, visibleSinAnimacion: false }])
+    expect(ejecutarComprobacionDeVisibilidadSinAnimacion(inventario.bloques).pasa).toBe(false)
+  })
+
+  it.each([
+    'opacity: 0.5',
+    'opacity: 1',
+    'opacity: 0.01',
+    'opacity: 0.0001',
+    'opacity: 10%',
+    'opacity: 1 !important',
+    'opacity: 0.5 !important',
+    'opacity: 00.5',
+    'opacity: inherit',
+    'visibility: visible',
+    'visibility: visible !important',
+    'visibility: inherit',
+  ])('"%s" en el estado base no oculta nada', (declaracion) => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', `  ${declaracion};`, '  animation: entrada 700ms ease-out backwards;', '}'])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:3`, visibleSinAnimacion: true }])
+  })
+
+  it('una opacidad 0 escrita como se escriba DENTRO de unos fotogramas sigue sin ser un estado base', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, [
+      '@keyframes entrada {',
+      '  from { opacity: 0 !important; visibility: HIDDEN; }',
+      '  to { OPACITY: 1; }',
+      '}',
+      '.x {',
+      '  animation: entrada 700ms ease-out backwards;',
+      '}',
+    ])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:6`, visibleSinAnimacion: true }])
+  })
+})
+
+describe('@s20 B4: "animation: none" y "animation-name: none" no hacen aparecer nada y no inflan el recuento', () => {
+  it.each(['animation: none', 'animation-name: none', 'animation: NONE', 'animation: none !important', 'animation-name: None!important', '-webkit-animation: none'])(
+    '"%s" no cuenta como aparición animada',
+    (declaracion) => {
+      const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['@media (prefers-reduced-motion: reduce) {', '  .x {', `    ${declaracion};`, '  }', '}'])
+
+      expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBe(0)
+      expect(inventario.bloques).toEqual([])
+      expect(inventario.pasa).toBe(false)
+    },
+  )
+
+  it('en una hoja que no es la del hero tampoco la señala como aparición fuera de las autorizadas', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_OTRA_HOJA, ['.x {', '  animation: none;', '  animation-name: none;', '}'])
+
+    expect(inventario.bloquesFueraDeLasHojasAutorizadas).toEqual([])
+  })
+
+  it.each(['animation: entrada 700ms', 'animation: none, entrada 700ms', 'animation-name: entrada', 'animation-name: none, entrada', 'animation: none 700ms'])(
+    '"%s" SÍ es una aparición animada: el valor no es exactamente "none"',
+    (declaracion) => {
+      const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', `  ${declaracion};`, '}'])
+
+      expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:2`, visibleSinAnimacion: true }])
+    },
+  )
+
+  it('la hoja del hero que perdió su animación pero conserva un "animation: none" NO pasa la guarda del recuento mayor que 0', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.titular {', '  animation: none;', '}'])
+
+    expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBe(0)
+    expect(inventario.pasa).toBe(false)
+  })
+})
+
+describe('@s20 B5: las propiedades en mayúsculas o con prefijo de fabricante también hacen aparecer un bloque', () => {
+  it.each(['ANIMATION: e 1s', '-webkit-animation: e 1s', '-webkit-animation-name: e', 'Animation-Name: e', '-moz-animation: e 1s'])(
+    '"%s" cuenta como aparición animada, con su línea',
+    (declaracion) => {
+      const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', `  ${declaracion};`, '}'])
+
+      expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:2`, visibleSinAnimacion: true }])
+    },
+  )
+
+  it('con prefijo, en una hoja que no es la del hero, se señala como aparición fuera de las autorizadas', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_OTRA_HOJA, ['.x {', '  -webkit-animation: e 1s;', '}'])
+
+    expect(inventario.bloquesFueraDeLasHojasAutorizadas).toEqual([`${RUTA_DE_OTRA_HOJA}:2`])
+    expect(inventario.pasa).toBe(false)
+  })
+
+  it('"-webkit-animation" con "opacity: 0" en la hoja del hero: un bloque animado, invisible sin su animación', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', '  opacity: 0;', '  -webkit-animation: e 1s;', '}'])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:3`, visibleSinAnimacion: false }])
+  })
+
+  it('las propiedades de animación que no hacen aparecer nada ("animation-duration", "animation-iteration-count") siguen sin contar, con o sin prefijo', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.x {', '  -webkit-animation-duration: 1s;', '  ANIMATION-ITERATION-COUNT: 1;', '  animation-delay: 1s;', '}'])
+
+    expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBe(0)
+  })
+})
+
+describe('@s20 B6: la hoja autorizada es una sola, escrita a mano en el test', () => {
+  it('la hoja autorizada a declarar una animación de entrada es exactamente la del hero (literal escrito a mano)', () => {
+    expect(HOJA_AUTORIZADA_A_ANIMAR_LA_ENTRADA).toBe('/components/Hero.module.scss')
+  })
+})
+
+describe('@s20 B1: una hoja que el lector no puede leer entera hace fallar CERRADA la puerta', () => {
+  const HOJA_LIMPIA = { ruta: RUTA_DE_LA_HOJA_DEL_HERO, contenido: hojaConAnimacion({}) }
+  const RUTA_ROTA = '/prueba/components/Rota.module.scss'
+
+  it('la hoja limpia, sola, pasa y no declara ninguna hoja sin lectura fiable', () => {
+    const inventario = inventariarBloquesQueAparecenAnimando([HOJA_LIMPIA])
+
+    expect(inventario.pasa).toBe(true)
+    expect(inventario.hojasSinLecturaFiable).toEqual([])
+  })
+
+  it.each([
+    ['una llave de apertura sin cerrar', '.a {\n  color: red;\n'],
+    ['una llave de cierre de más', '.a {\n  color: red;\n}\n}\n'],
+    ['un nombre de propiedad con interpolación', '.a {\n  #{$p}: 900ms;\n}\n'],
+    ['una cadena sin cerrar', '.a {\n  content: "abc;\n}\n'],
+  ])('%s: la hoja se nombra y el inventario no pasa, aunque no declare ninguna animación', (_caso, contenido) => {
+    for (const final of ['\n', '\r\n']) {
+      const inventario = inventariarBloquesQueAparecenAnimando([HOJA_LIMPIA, { ruta: RUTA_ROTA, contenido: contenido.replaceAll('\n', final) }])
+
+      expect(inventario.hojasSinLecturaFiable).toEqual([RUTA_ROTA])
+      expect(inventario.bloquesFueraDeLasHojasAutorizadas).toEqual([])
+      expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBe(1)
+      expect(inventario.pasa).toBe(false)
+    }
+  })
+
+  it('con 0 hojas no hay ninguna hoja sin lectura fiable, y el inventario sigue sin pasar', () => {
+    const inventario = inventariarBloquesQueAparecenAnimando([])
+
+    expect(inventario.hojasSinLecturaFiable).toEqual([])
+    expect(inventario.pasa).toBe(false)
+  })
+
+  it('una "//" pegada a un punto y coma ya no hace desaparecer la "opacity: 0" de la línea siguiente', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.h { color: red;// c', '  opacity: 0; animation: e 1s; }'])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:2`, visibleSinAnimacion: false }])
+  })
+
+  it('una llave dentro de una cadena no desordena nada: la "opacity: 0" posterior se ve igual', () => {
+    const inventario = inventarioConLfYCrlf(RUTA_DE_LA_HOJA_DEL_HERO, ['.b::before { content: "{"; }', '.h { opacity: 0; animation: e 1s; }'])
+
+    expect(inventario.bloques).toEqual([{ nombre: `${RUTA_DE_LA_HOJA_DEL_HERO}:2`, visibleSinAnimacion: false }])
+    expect(inventario.hojasSinLecturaFiable).toEqual([])
   })
 })

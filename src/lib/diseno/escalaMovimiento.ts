@@ -10,11 +10,25 @@
  * un retardo fuera de esa escala (salvo el corte "0.01ms" de
  * `prefers-reduced-motion: reduce`, que no es parte de la escala: es su
  * ANULACIÓN, y vale solo como duración), ninguna puede llevar un valor que la
- * puerta no sepa leer (`var()`, `$variable`, `calc()`: falla CERRADO) y
- * ninguna puede animar la palabra clave "all".
+ * puerta no sepa leer y ninguna puede animar la palabra clave "all".
+ *
+ * FALLA CERRADO ante lo que no sabe leer (B3 de la revisión de la feature 48):
+ * una variable, una función o una interpolación (`var()`, `$x`, `calc()`,
+ * `#{…}`), y también todo token que EMPIEZA como un número y no es ni un tiempo
+ * literal ni un número sin unidad (`900ms*2`, `400msx`, `10%`). Los tiempos
+ * literales se leen sin distinguir mayúsculas y con signo `+`, `-` o notación
+ * científica (`0.9S`, `+900ms`, `9e2ms`); `!important` no enmascara nada.
  */
 
-import { leerEstilos, type DeclaracionLeida } from './lectorDeEstilos'
+import {
+  leerFicheros,
+  nombreCanonicoDeLaPropiedad,
+  rutasSinLecturaFiable,
+  valorSinImportante,
+  type DeclaracionLeida,
+  type FicheroEstilos,
+  type FicheroLeido,
+} from './lectorDeEstilos'
 
 export interface EscalaDeMovimiento {
   readonly duracionesMs: readonly number[]
@@ -37,10 +51,7 @@ export function escalaDeMovimientoDeclarada(): EscalaDeMovimiento {
   }
 }
 
-export interface FicheroEstilos {
-  readonly ruta: string
-  readonly contenido: string
-}
+export type { FicheroEstilos } from './lectorDeEstilos'
 
 export interface DuracionFueraDeEscala {
   readonly ruta: string
@@ -57,7 +68,7 @@ export interface RetardoFueraDeEscala {
 export interface ValorNoVerificable {
   readonly ruta: string
   readonly linea: number
-  /** El token tal como está escrito en la hoja: `var(--x)`, `$x`, `calc(…)`. */
+  /** El token tal como está escrito en la hoja: `var(--x)`, `$x`, `calc(…)`, `900ms*2`. */
   readonly valor: string
 }
 
@@ -73,26 +84,30 @@ export interface InformeEscalaDeMovimiento {
   readonly retardosFueraDeEscala: readonly RetardoFueraDeEscala[]
   readonly valoresNoVerificables: readonly ValorNoVerificable[]
   readonly usosDePalabraClaveAll: readonly UsoDePalabraClaveAll[]
+  /** Las hojas que el lector no pudo leer entera: con una sola, la puerta no pasa. */
+  readonly ficherosSinLecturaFiable: readonly string[]
 }
 
-const CERO_FICHEROS = 0
-const CERO_HALLAZGOS = 0
+const NINGUNO = 0
 
-type PapelDeLaPropiedad = 'duracion' | 'retardo' | 'abreviada'
+type ListaDeTiempos = 'duraciones' | 'retardos'
 
 /**
- * Las ÚNICAS propiedades que llevan tiempos. Las demás `animation-*`
- * (`-iteration-count`, `-timing-function`, `-fill-mode`, `-name`) no: validar
- * su valor contra la escala dejaría roja la regla global de `reduce` de
- * `global.scss`, que declara `animation-iteration-count: 1`.
+ * Las ÚNICAS propiedades que llevan tiempos, y a qué lista va el tiempo que
+ * ocupa cada posición de una entrada: en una declaración corta el primer tiempo
+ * es la duración y el segundo el retardo; en una suelta lo dice el nombre. Las
+ * demás `animation-*` (`-iteration-count`, `-timing-function`, `-fill-mode`,
+ * `-name`) no llevan tiempos: validar su valor contra la escala dejaría roja la
+ * regla global de `reduce` de `global.scss`, que declara
+ * `animation-iteration-count: 1`.
  */
-const PAPEL_DE_LA_PROPIEDAD: ReadonlyMap<string, PapelDeLaPropiedad> = new Map([
-  ['animation', 'abreviada'],
-  ['transition', 'abreviada'],
-  ['animation-duration', 'duracion'],
-  ['transition-duration', 'duracion'],
-  ['animation-delay', 'retardo'],
-  ['transition-delay', 'retardo'],
+const LISTAS_POR_POSICION: ReadonlyMap<string, readonly ListaDeTiempos[]> = new Map<string, readonly ListaDeTiempos[]>([
+  ['animation', ['duraciones', 'retardos']],
+  ['transition', ['duraciones', 'retardos']],
+  ['animation-duration', ['duraciones']],
+  ['transition-duration', ['duraciones']],
+  ['animation-delay', ['retardos']],
+  ['transition-delay', ['retardos']],
 ])
 
 /** Las propiedades de transición que nombran QUÉ se anima, donde puede aparecer la palabra clave "all". */
@@ -102,8 +117,17 @@ const PALABRA_CLAVE_ALL = 'all'
 const DURACIONES_ADMITIDAS_MS: ReadonlySet<number> = new Set([...DURACIONES_DE_MOVIMIENTO_MS, DURACION_DE_CORTE_REDUCIDO_MS])
 const RETARDOS_ADMITIDOS_MS: ReadonlySet<number> = new Set(RETARDOS_DE_MOVIMIENTO_MS)
 
-/** Un tiempo escrito como literal: con o sin signo, con o sin cero inicial (`.7s`), en `ms` o en `s`. */
-const PATRON_TIEMPO_LITERAL = /^(-?(?:\d+(?:\.\d+)?|\.\d+))(ms|s)$/
+/**
+ * Un tiempo escrito como literal: con signo o sin él, con o sin cero inicial
+ * (`.7s`), con exponente (`9e2ms`), en `ms` o en `s` y con cualquier mayúscula.
+ */
+const PATRON_TIEMPO_LITERAL = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:e([+-]?\d+))?(ms|s)$/i
+const PATRON_NUMERO_SIN_UNIDAD = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?$/i
+const PATRON_EMPIEZA_COMO_NUMERO = /^[+-]?\.?\d/
+const PATRON_SINTAXIS_QUE_NO_SE_LEE = /[$(){}]/
+const UNIDAD_EN_SEGUNDOS = 's'
+/** De segundos a milisegundos se corre el exponente tres lugares. */
+const EXPONENTE_DE_SEGUNDOS_A_MILISEGUNDOS = 3
 
 /**
  * Convierte `0.24s` a 240 SIN pasar por una multiplicación en coma flotante
@@ -114,23 +138,33 @@ function milisegundosDe(token: string): number | undefined {
   if (coincidencia === null) {
     return undefined
   }
-  const [, numero, unidad] = coincidencia
-  return unidad === 's' ? Number(`${numero}e3`) : Number(numero)
+  const mantisa = coincidencia[1] as string
+  const exponente = Number(coincidencia[2] ?? NINGUNO)
+  const unidad = (coincidencia[3] as string).toLowerCase()
+  const corrimiento = unidad === UNIDAD_EN_SEGUNDOS ? EXPONENTE_DE_SEGUNDOS_A_MILISEGUNDOS : NINGUNO
+  return Number(`${mantisa}e${exponente + corrimiento}`)
 }
 
 /**
  * Lo que la puerta no sabe leer: una variable de Sass (`$x`, `#{$x}`) o cualquier
- * función (`var()`, `calc()`, también `cubic-bezier()`, que además no es "ease-out").
+ * función (`var()`, `calc()`, también `cubic-bezier()`, que además no es
+ * "ease-out"), y todo token que empieza como un número y no es un tiempo literal
+ * ni un número sin unidad (el contador de iteraciones, por ejemplo).
  */
 function esNoVerificable(token: string): boolean {
-  return token.includes('$') || token.includes('(')
+  return (
+    PATRON_SINTAXIS_QUE_NO_SE_LEE.test(token) ||
+    (PATRON_EMPIEZA_COMO_NUMERO.test(token) && !PATRON_NUMERO_SIN_UNIDAD.test(token))
+  )
 }
 
 /** Parte por un separador SOLO en el nivel superior: lo que va entre paréntesis (`calc(100ms + 50ms)`) no se parte. */
 function partirEnNivelSuperior(texto: string, esSeparador: (caracter: string) => boolean): string[] {
-  const partes: string[] = []
+  // Siempre hay una parte en curso (la última): empieza vacía, cada carácter se le añade y cada
+  // separador de nivel superior abre otra. Sin una variable aparte para la parte en curso, una
+  // parte que no nace vacía o un trozo de más delante de las reales corrompe un token de verdad.
+  const partes = ['']
   let profundidad = 0
-  let parteActual = ''
   for (const caracter of texto) {
     if (caracter === '(') {
       profundidad += 1
@@ -138,13 +172,11 @@ function partirEnNivelSuperior(texto: string, esSeparador: (caracter: string) =>
       profundidad -= 1
     }
     if (profundidad === 0 && esSeparador(caracter)) {
-      partes.push(parteActual)
-      parteActual = ''
+      partes.push('')
     } else {
-      parteActual += caracter
+      partes.push(`${partes.pop()}${caracter}`)
     }
   }
-  partes.push(parteActual)
   return partes
 }
 
@@ -157,45 +189,42 @@ interface TiemposLeidos {
   readonly noVerificables: string[]
 }
 
-/** En una declaración corta el primer tiempo es la duración y el segundo el retardo; en una suelta lo dice el nombre. */
-function repartirPorPapel(tiempos: readonly number[], papel: PapelDeLaPropiedad, destino: TiemposLeidos): void {
-  if (papel === 'duracion') {
-    destino.duraciones.push(...tiempos)
-  } else if (papel === 'retardo') {
-    destino.retardos.push(...tiempos)
-  } else {
-    const [duracion, retardo] = tiempos
-    destino.duraciones.push(...(duracion === undefined ? [] : [duracion]))
-    destino.retardos.push(...(retardo === undefined ? [] : [retardo]))
-  }
+/** Cada tiempo de una entrada va a la lista que dice la posición que ocupa; los que sobran no tienen papel. */
+function repartirPorPosicion(tiempos: readonly number[], listas: readonly ListaDeTiempos[], destino: TiemposLeidos): void {
+  listas.forEach((lista, posicion) => {
+    const milisegundos = tiempos[posicion]
+    if (milisegundos !== undefined) {
+      destino[lista].push(milisegundos)
+    }
+  })
 }
 
-function leerTiempos(declaracion: DeclaracionLeida, papel: PapelDeLaPropiedad): TiemposLeidos {
+function leerTiempos(declaracion: DeclaracionLeida, listas: readonly ListaDeTiempos[]): TiemposLeidos {
   const leidos: TiemposLeidos = { duraciones: [], retardos: [], noVerificables: [] }
 
-  for (const entrada of partirEnNivelSuperior(declaracion.valor, esComa)) {
+  for (const entrada of partirEnNivelSuperior(valorSinImportante(declaracion.valor), esComa)) {
     const tiempos: number[] = []
     for (const token of partirEnNivelSuperior(entrada, esBlanco)) {
       const milisegundos = milisegundosDe(token)
-      if (esNoVerificable(token)) {
-        leidos.noVerificables.push(token)
-      } else if (milisegundos !== undefined) {
+      if (milisegundos !== undefined) {
         tiempos.push(milisegundos)
+      } else if (esNoVerificable(token)) {
+        leidos.noVerificables.push(token)
       }
     }
-    repartirPorPapel(tiempos, papel, leidos)
+    repartirPorPosicion(tiempos, listas, leidos)
   }
 
   return leidos
 }
 
 function animaLaPalabraClaveAll(declaracion: DeclaracionLeida): boolean {
-  if (!PROPIEDADES_QUE_NOMBRAN_LO_ANIMADO.has(declaracion.propiedad)) {
+  if (!PROPIEDADES_QUE_NOMBRAN_LO_ANIMADO.has(nombreCanonicoDeLaPropiedad(declaracion.propiedad))) {
     return false
   }
   // En una entrada de `transition` la propiedad puede ir en cualquier posición ("150ms ease-out all" es válida).
-  return partirEnNivelSuperior(declaracion.valor, esComa).some((entrada) =>
-    partirEnNivelSuperior(entrada, esBlanco).includes(PALABRA_CLAVE_ALL),
+  return partirEnNivelSuperior(valorSinImportante(declaracion.valor), esComa).some((entrada) =>
+    partirEnNivelSuperior(entrada, esBlanco).some((token) => token.toLowerCase() === PALABRA_CLAVE_ALL),
   )
 }
 
@@ -206,15 +235,15 @@ interface AnalisisDeUnFichero {
   readonly usosDeAll: UsoDePalabraClaveAll[]
 }
 
-function analizarFichero(fichero: FicheroEstilos): AnalisisDeUnFichero {
+function analizarFichero(fichero: FicheroLeido): AnalisisDeUnFichero {
   const analisis: AnalisisDeUnFichero = { duraciones: [], retardos: [], noVerificables: [], usosDeAll: [] }
 
-  for (const declaracion of leerEstilos(fichero.contenido).declaraciones) {
+  for (const declaracion of fichero.estilos.declaraciones) {
     const { ruta } = fichero
     const { linea } = declaracion
-    const papel = PAPEL_DE_LA_PROPIEDAD.get(declaracion.propiedad)
-    if (papel !== undefined) {
-      const tiempos = leerTiempos(declaracion, papel)
+    const listas = LISTAS_POR_POSICION.get(nombreCanonicoDeLaPropiedad(declaracion.propiedad))
+    if (listas !== undefined) {
+      const tiempos = leerTiempos(declaracion, listas)
       analisis.duraciones.push(
         ...tiempos.duraciones.filter((valorMs) => !DURACIONES_ADMITIDAS_MS.has(valorMs)).map((valorMs) => ({ ruta, linea, valorMs })),
       )
@@ -234,37 +263,43 @@ function analizarFichero(fichero: FicheroEstilos): AnalisisDeUnFichero {
 /**
  * Recorre el texto real de cada fichero del inventario y señala cualquier
  * duración o retardo de movimiento fuera de la escala declarada, cualquier
- * valor de tiempo que no pueda leer, y cualquier uso de la palabra clave "all"
- * en una declaración de transición.
+ * valor de tiempo que no pueda leer, cualquier uso de la palabra clave "all"
+ * en una declaración de transición y cualquier hoja que el lector no pueda
+ * leer entera.
  */
 export function ejecutarPuertaDeEscalaDeMovimiento(ficheros: readonly FicheroEstilos[]): InformeEscalaDeMovimiento {
-  if (ficheros.length === CERO_FICHEROS) {
+  if (ficheros.length === NINGUNO) {
     return {
       pasa: false,
-      ficherosInspeccionados: CERO_FICHEROS,
+      ficherosInspeccionados: NINGUNO,
       duracionesFueraDeEscala: [],
       retardosFueraDeEscala: [],
       valoresNoVerificables: [],
       usosDePalabraClaveAll: [],
+      ficherosSinLecturaFiable: [],
     }
   }
 
-  const analisis = ficheros.map(analizarFichero)
+  const leidos = leerFicheros(ficheros)
+  const analisis = leidos.map(analizarFichero)
   const duracionesFueraDeEscala = analisis.flatMap((resultado) => resultado.duraciones)
   const retardosFueraDeEscala = analisis.flatMap((resultado) => resultado.retardos)
   const valoresNoVerificables = analisis.flatMap((resultado) => resultado.noVerificables)
   const usosDePalabraClaveAll = analisis.flatMap((resultado) => resultado.usosDeAll)
+  const ficherosSinLecturaFiable = rutasSinLecturaFiable(leidos)
 
   return {
     pasa:
-      duracionesFueraDeEscala.length === CERO_HALLAZGOS &&
-      retardosFueraDeEscala.length === CERO_HALLAZGOS &&
-      valoresNoVerificables.length === CERO_HALLAZGOS &&
-      usosDePalabraClaveAll.length === CERO_HALLAZGOS,
+      duracionesFueraDeEscala.length === NINGUNO &&
+      retardosFueraDeEscala.length === NINGUNO &&
+      valoresNoVerificables.length === NINGUNO &&
+      usosDePalabraClaveAll.length === NINGUNO &&
+      ficherosSinLecturaFiable.length === NINGUNO,
     ficherosInspeccionados: ficheros.length,
     duracionesFueraDeEscala,
     retardosFueraDeEscala,
     valoresNoVerificables,
     usosDePalabraClaveAll,
+    ficherosSinLecturaFiable,
   }
 }

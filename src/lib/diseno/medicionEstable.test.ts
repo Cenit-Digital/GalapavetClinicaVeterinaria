@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { comprobarMedicionEstable, type Veredicto } from './medicionEstable'
+import { comprobarMedicionEstable, esFicheroDeTestDePlaywright, type Veredicto } from './medicionEstable'
 
 /**
  * hero_reducido_con_animacion @s10 — «todo test que mide la portada recién
@@ -7,13 +7,14 @@ import { comprobarMedicionEstable, type Veredicto } from './medicionEstable'
  * emulado». Esta es la COMPROBACIÓN ESTÁTICA: un módulo puro que lee el TEXTO
  * de un spec de navegador y decide, bloque `test(` por bloque `test(`, si
  * cumple. Vive aquí (mordible por StrykerJS) y no en `tests/e2e`; el cableado a
- * los specs REALES lo hace la ola siguiente, cuando esos specs ya se hayan
- * actualizado.
+ * los specs REALES está en `medicionEstableSpecsReales.test.ts`.
  *
  * Las filas sintéticas están escritas con las MISMAS formas que usan los
  * specs reales: `cargarPortada()` y `cajaDe()` de `fidelidad-hero.spec.ts`, el
  * bucle por rutas con `AxeBuilder` de `accesibilidad.spec.ts`, el `boundingBox`
- * de `tipografia.spec.ts`.
+ * de `tipografia.spec.ts`. Las filas con el prefijo A1…A8 son las de la revisión
+ * independiente del 14/10/2026 (ola 4a): cada una fija una forma que la comprobación
+ * dejaba pasar en silencio.
  */
 
 const CABECERA_DEL_SPEC = [
@@ -498,10 +499,10 @@ describe('hero_reducido_con_animacion @s10: funciones locales del mismo fichero 
     expect(veredictoDelUnicoBloque(specConUnBloque(cuerpo(NAVEGA, 'await medir(page)'), funciones))).toBe('incumple')
   })
 
-  it('una función flecha de expresión (sin llaves) no se resuelve: no hay cuerpo que leer', () => {
+  it('una función flecha de expresión (sin llaves) SÍ se resuelve: su cuerpo es la expresión (A1 de la revisión del 14/10/2026)', () => {
     const funciones = 'const cajaDe = (locator: Locator) => locator.boundingBox()'
 
-    expect(veredictoDelUnicoBloque(specConUnBloque(cuerpo(NAVEGA, "await cajaDe(page.locator('h1'))"), funciones))).toBe('exento')
+    expect(veredictoDelUnicoBloque(specConUnBloque(cuerpo(NAVEGA, "await cajaDe(page.locator('h1'))"), funciones))).toBe('incumple')
   })
 
   it('una función local que el test NO llama no cuenta, aunque mida o espere', () => {
@@ -553,24 +554,28 @@ describe('hero_reducido_con_animacion @s10: funciones locales del mismo fichero 
     expect(veredictoDelUnicoBloque(specConUnBloque(cuerpo(NAVEGA, "await $caja(page.locator('h1'))"), funciones))).toBe('incumple')
   })
 
-  it('una función declarada DENTRO de un bloque test(...) no es una función local: ya forma parte del bloque', () => {
-    const bloque = [
+  it('una función declarada DENTRO de un bloque test(...) no es una función local: ya forma parte del bloque y cuenta donde se escribe', () => {
+    const declaradaDespuesDelGoto = [
       "test('con una función interna', async ({ page }) => {",
+      `  ${NAVEGA}`,
       '  async function esperar(p: Page) {',
       '    await esperarEntradaTerminada(p)',
       '  }',
-      `  ${NAVEGA}`,
       '  await esperar(page)',
       `  ${MIDE_EL_TITULAR}`,
       '})',
     ].join('\n')
+    // A2 (d): con la declaración ANTES del "goto" la precedencia textual pone la espera antes de navegar, y el
+    // "goto" posterior la invalida. Es la lectura estricta del contrato ("la espera precede textualmente").
+    const declaradaAntesDelGoto = declaradaDespuesDelGoto
+      .replace(`  ${NAVEGA}\n`, '')
+      .replace('  await esperar(page)\n', `  ${NAVEGA}\n  await esperar(page)\n`)
 
-    // La espera vive en una función interna que NO se resuelve: el bloque no la ve como espera previa… salvo
-    // porque su texto, con la espera dentro, ya está en el propio bloque. Lo importante es que no cuente DOS veces.
-    const informe = comprobarMedicionEstable(specConUnBloque(bloque))
+    const informe = comprobarMedicionEstable(specConUnBloque(declaradaDespuesDelGoto))
 
     expect(informe.bloquesInspeccionados).toBe(1)
     expect(informe.bloques[0]?.veredicto).toBe('pasa')
+    expect(veredictoDelUnicoBloque(specConUnBloque(declaradaAntesDelGoto))).toBe('incumple')
   })
 
   it('las funciones locales declaradas dentro de un "test.describe" (fuera de todo test) también se resuelven', () => {
@@ -1017,5 +1022,1341 @@ describe('hero_reducido_con_animacion @s10: los detalles de lo que cuenta como m
 
   it('un selector que solo contiene "h1" dentro de otra palabra ("#ah1") no es el titular', () => {
     expect(veredictoDe(NAVEGA, "await page.locator('#ah1').boundingBox()")).toBe('exento')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// LA REVISIÓN INDEPENDIENTE DEL 14/10/2026 (ola 4a). Cada bloque cita el hallazgo
+// (A1…A9) que cierra. Las filas son specs SINTÉTICOS escritos con las formas que
+// la comprobación dejaba pasar en silencio: la tabla firmada de 16 filas de arriba
+// sigue entera y estas filas la AMPLÍAN, no la sustituyen.
+// ---------------------------------------------------------------------------
+
+const EMULA_SIN_PREFERENCIA = "await page.emulateMedia({ reducedMotion: 'no-preference' })"
+const CONGELA_EL_RELOJ = "await sesion.send('Animation.setPlaybackRate', { playbackRate: 0 })"
+const COLOCA_LAS_ANIMACIONES = 'await page.evaluate(() => { animacion.currentTime = 0 })'
+
+function veredictosDe(spec: string): readonly Veredicto[] {
+  return comprobarMedicionEstable(spec).bloques.map((bloque) => bloque.veredicto)
+}
+
+/** El veredicto de UN bloque `test(` con las funciones locales dadas declaradas fuera de él. */
+function veredictoConFunciones(funciones: string, ...lineas: readonly string[]): Veredicto {
+  return veredictoDelUnicoBloque(specConUnBloque(cuerpo(...lineas), funciones))
+}
+
+describe('hero_reducido_con_animacion @s10, A1 de la revisión: una función local que mide cuenta sea cual sea la forma en que se escribe y se usa', () => {
+  const LLAMA_A_MEDIR = 'await medir(page)'
+
+  it.each([
+    ['una flecha de expresión', "const medir = (page: Page) => page.locator('h1').boundingBox()"],
+    ['una flecha de expresión con "await"', "const medir = async (page: Page) => await page.locator('h1').boundingBox()"],
+    [
+      'una flecha de expresión que devuelve un objeto entre paréntesis',
+      "const medir = async (page: Page) => ({ caja: await page.locator('h1').boundingBox() })",
+    ],
+    ['una flecha de expresión terminada en punto y coma', "const medir = (page: Page) => page.locator('h1').boundingBox();"],
+    [
+      'una flecha de expresión cuya cadena de llamadas sigue en las líneas de abajo',
+      ['const medir = (page: Page) =>', '  page', "    .locator('h1')", '    .boundingBox()'].join('\n'),
+    ],
+    [
+      'una flecha de expresión con un parámetro por defecto que llama a otra función',
+      "const medir = (page: Page, escala = obtener(10, 20)) => page.locator('h1').boundingBox()",
+    ],
+    [
+      'una flecha con parámetros desestructurados',
+      "const medir = async ({ page }: { page: Page }) => { return page.locator('h1').boundingBox() }",
+    ],
+    [
+      'una función con un tipo de retorno que es una función ("(): () => Promise<void>")',
+      ['async function medir(page: Page): () => Promise<void> {', "  return () => page.locator('h1').boundingBox()", '}'].join('\n'),
+    ],
+    [
+      'una función con parámetros desestructurados',
+      ['async function medir({ page }: { page: Page }) {', "  return page.locator('h1').boundingBox()", '}'].join('\n'),
+    ],
+  ])('%s se resuelve: el bloque que la llama mide el titular, incumple sin esperar y pasa si espera antes', (_nombre, funcion) => {
+    expect(veredictoConFunciones(funcion, NAVEGA, LLAMA_A_MEDIR)).toBe('incumple')
+    expect(veredictoConFunciones(funcion, NAVEGA, ESPERA, LLAMA_A_MEDIR)).toBe('pasa')
+  })
+
+  it('una flecha de expresión termina donde acaba la expresión: ni el punto y coma ni la sentencia siguiente son suyos', () => {
+    const conPuntoYComa = ['const contar = (locator: Locator) => locator.count();', "async function otra(page: Page) { return page.locator('h1').boundingBox() }"].join('\n')
+    const seguidaDeUnaSentencia = ['const contar = (locator: Locator) => locator.count()', "const otra = (page: Page) => page.locator('h1').boundingBox()"].join('\n')
+
+    expect(veredictoConFunciones(conPuntoYComa, NAVEGA, "await contar(page.locator('h1'))")).toBe('exento')
+    expect(veredictoConFunciones(seguidaDeUnaSentencia, NAVEGA, "await contar(page.locator('h1'))")).toBe('exento')
+  })
+
+  it('una flecha de expresión que acaba en un operador sigue en la línea de abajo, y una que empieza con uno continúa la anterior', () => {
+    const terminaEnOperador = ['const medir = (page: Page) => page.locator("h1") ||', '  page.locator("p").boundingBox()'].join('\n')
+    const empiezaConOperador = ['const medir = (page: Page) => page.locator("p").count()', '  ?? page.locator("h1").boundingBox()'].join('\n')
+
+    expect(veredictoConFunciones(terminaEnOperador, NAVEGA, LLAMA_A_MEDIR)).toBe('incumple')
+    expect(veredictoConFunciones(empiezaConOperador, NAVEGA, LLAMA_A_MEDIR)).toBe('incumple')
+  })
+
+  it('una flecha de expresión dentro de una llamada acaba donde se cierra esa llamada', () => {
+    const funciones = ["const contar = registrar((locator: Locator) => locator.count())", "const otra = (page: Page) => page.locator('h1').boundingBox()"].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, "await contar(page.locator('h1'))")).toBe('exento')
+  })
+
+  it('una función pasada por referencia ("locator.evaluate(cajaDe)") cuenta como uso de esa función', () => {
+    const funcion = ['function cajaDe(elemento: Element) {', '  return elemento.getBoundingClientRect()', '}'].join('\n')
+    const referencia = "await page.locator('h1').evaluate(cajaDe)"
+
+    expect(veredictoConFunciones(funcion, NAVEGA, referencia)).toBe('incumple')
+    expect(veredictoConFunciones(funcion, NAVEGA, ESPERA, referencia)).toBe('pasa')
+  })
+
+  it('una referencia a una función con otro nombre que lo contiene ("micajaDe", "objeto.cajaDe") no es un uso', () => {
+    const funcion = ['function cajaDe(elemento: Element) {', '  return elemento.getBoundingClientRect()', '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, "await page.locator('h1').evaluate(micajaDe)")).toBe('exento')
+    expect(veredictoConFunciones(funcion, NAVEGA, "await page.locator('h1').evaluate(objeto.cajaDe)")).toBe('exento')
+  })
+})
+
+interface FilaDeLaRevision {
+  /** El hallazgo y la forma que se escapaba. */
+  readonly fila: string
+  readonly spec: string
+  readonly veredicto: Veredicto
+}
+
+function filaDeLaRevision(fila: string, veredicto: Veredicto, lineas: readonly string[], funciones = ''): FilaDeLaRevision {
+  return { fila, veredicto, spec: specConUnBloque(cuerpo(...lineas), funciones) }
+}
+
+const MEDIR_ALTOS = ['async function medirAltos(pagina: Page) {', "  return pagina.locator('h1').first().boundingBox()", '}'].join('\n')
+const ABRIR_OTRA_PAGINA = 'const paginaSinFuente = await context.newPage()'
+const EMULA_REDUCE_EN_LA_OTRA = "await paginaSinFuente.emulateMedia({ reducedMotion: 'reduce' })"
+
+const FILAS_DE_LA_REVISION: readonly FilaDeLaRevision[] = [
+  // A2 (a): la espera tiene que ejecutarse y su fallo tiene que llegar al test.
+  filaDeLaRevision('A2a: la espera SIN "await" delante', 'incumple', [NAVEGA, 'esperarEntradaTerminada(page)', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2a: la espera precedida de "void"', 'incumple', [NAVEGA, 'void esperarEntradaTerminada(page)', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2a: la espera con ".catch(" que traga el fallo', 'incumple', [
+    NAVEGA,
+    'await esperarEntradaTerminada(page).catch(() => {})',
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2a: la espera con ".then(" que no relanza el fallo', 'incumple', [
+    NAVEGA,
+    'await esperarEntradaTerminada(page)\n    .then(() => undefined)',
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2a: la espera dentro de un "try" que traga el error', 'incumple', [
+    NAVEGA,
+    'try {',
+    '  await esperarEntradaTerminada(page)',
+    '} catch {',
+    '  // sigue midiendo',
+    '}',
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2a: la espera tras "return" de una función local', 'pasa', ['await cargarYEsperar(page)', MIDE_EL_TITULAR], [
+    'async function cargarYEsperar(page: Page) {',
+    "  await page.goto('/')",
+    '  return esperarEntradaTerminada(page)',
+    '}',
+  ].join('\n')),
+  filaDeLaRevision('A2a: la espera con "await" y opciones, tras un "try" ya cerrado', 'pasa', [
+    NAVEGA,
+    'try {',
+    '  await page.waitForTimeout(1)',
+    '} finally {',
+    '  await page.waitForTimeout(1)',
+    '}',
+    'await esperarEntradaTerminada(page, { topeMs: 5000 })',
+    MIDE_EL_TITULAR,
+  ]),
+  // A2 (b): la espera y la emulación se atan a la PÁGINA que navega y mide.
+  filaDeLaRevision('A2b: la emulación de "reduce" es sobre OTRA página y se mide "page"', 'incumple', [
+    "await otra.emulateMedia({ reducedMotion: 'reduce' })",
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2b: la espera es sobre OTRA página y se mide "page"', 'incumple', [NAVEGA, 'await esperarEntradaTerminada(otra)', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2b: dos páginas (context.newPage()), la segunda sin emular "reduce", medida por una función local', 'incumple', [
+    EMULA_REDUCE,
+    NAVEGA,
+    'const conFuente = await medirAltos(page)',
+    ABRIR_OTRA_PAGINA,
+    "await paginaSinFuente.goto('/')",
+    'const sinFuente = await medirAltos(paginaSinFuente)',
+  ], MEDIR_ALTOS),
+  filaDeLaRevision('A2b: dos páginas (context.newPage()), cada una con su emulación antes de su "goto"', 'pasa', [
+    EMULA_REDUCE,
+    NAVEGA,
+    'const conFuente = await medirAltos(page)',
+    ABRIR_OTRA_PAGINA,
+    EMULA_REDUCE_EN_LA_OTRA,
+    "await paginaSinFuente.goto('/')",
+    'const sinFuente = await medirAltos(paginaSinFuente)',
+  ], MEDIR_ALTOS),
+  filaDeLaRevision('A2b: la primera página sin emular y la segunda emulada: la que no se emuló incumple', 'incumple', [
+    NAVEGA,
+    'const conFuente = await medirAltos(page)',
+    ABRIR_OTRA_PAGINA,
+    EMULA_REDUCE_EN_LA_OTRA,
+    "await paginaSinFuente.goto('/')",
+    'const sinFuente = await medirAltos(paginaSinFuente)',
+  ], MEDIR_ALTOS),
+  filaDeLaRevision('A2b: una función local espera en la página que recibe, con otro nombre de parámetro', 'pasa', [NAVEGA, 'await esperar(page)', MIDE_EL_TITULAR], [
+    'async function esperar(pagina: Page) {',
+    '  await esperarEntradaTerminada(pagina)',
+    '}',
+  ].join('\n')),
+  filaDeLaRevision('A2b: una función local espera en OTRA página que la que se mide', 'incumple', [NAVEGA, 'await esperar(otra)', MIDE_EL_TITULAR], [
+    'async function esperar(pagina: Page) {',
+    '  await esperarEntradaTerminada(pagina)',
+    '}',
+  ].join('\n')),
+  filaDeLaRevision('A2b: la función local que navega y emula recibe la página con otro nombre', 'pasa', ['await cargar(page)', MIDE_EL_TITULAR], [
+    'async function cargar(pagina: Page) {',
+    "  await pagina.emulateMedia({ reducedMotion: 'reduce' })",
+    "  await pagina.goto('/')",
+    '}',
+  ].join('\n')),
+  filaDeLaRevision('A2b: una medición a través de un localizador guardado en una variable se ata a la página que navega', 'incumple', [
+    NAVEGA,
+    "const titular = page.locator('h1')",
+    'const caja = await titular.boundingBox()',
+  ]),
+  // A2 (c): la ÚLTIMA emulación antes de navegar manda.
+  filaDeLaRevision('A2c: "reduce" y después "no-preference" antes del "goto"', 'incumple', [EMULA_REDUCE, EMULA_SIN_PREFERENCIA, NAVEGA, MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2c: "no-preference" y después "reduce" antes del "goto"', 'pasa', [EMULA_SIN_PREFERENCIA, EMULA_REDUCE, NAVEGA, MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2c: "reduce" y después "reducedMotion: null" (la restablece) antes del "goto"', 'incumple', [
+    EMULA_REDUCE,
+    'await page.emulateMedia({ reducedMotion: null })',
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2c: "reduce" y después otra emulación que no toca el movimiento ("colorScheme")', 'pasa', [
+    EMULA_REDUCE,
+    "await page.emulateMedia({ colorScheme: 'dark' })",
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2c: "reduce", "goto", "no-preference" y "reload": la recarga se mide sin movimiento reducido', 'incumple', [
+    EMULA_REDUCE,
+    NAVEGA,
+    EMULA_SIN_PREFERENCIA,
+    'await page.reload()',
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2c: la emulación de "reduce" sin "await" delante', 'incumple', [
+    "page.emulateMedia({ reducedMotion: 'reduce' })",
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  // A2 (d): una navegación posterior invalida la espera.
+  filaDeLaRevision('A2d: otro "goto" tras la espera y antes de medir', 'incumple', [NAVEGA, ESPERA, "await page.goto('/otra')", MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: un "reload" tras la espera y antes de medir', 'incumple', [NAVEGA, ESPERA, 'await page.reload()', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: un "goBack" tras la espera y antes de medir', 'incumple', [NAVEGA, ESPERA, 'await page.goBack()', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: un "goForward" tras la espera y antes de medir', 'incumple', [NAVEGA, ESPERA, 'await page.goForward()', MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: la espera ANTES del "goto" no espera nada de lo que se mide', 'incumple', [ESPERA, NAVEGA, MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: dos "goto" y la espera tras el último', 'pasa', [NAVEGA, "await page.goto('/otra')", ESPERA, MIDE_EL_TITULAR]),
+  filaDeLaRevision('A2d: la navegación de OTRA página tras la espera no la invalida', 'pasa', [
+    NAVEGA,
+    ESPERA,
+    "await otra.goto('/otra')",
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A2d: "reduce" antes del "goto" y un "reload" después: la emulación sigue en vigor', 'pasa', [
+    EMULA_REDUCE,
+    NAVEGA,
+    'await page.reload()',
+    MIDE_EL_TITULAR,
+  ]),
+  // A2 (e): el ".include(" se evalúa POR LLAMADA, no por bloque.
+  filaDeLaRevision('A2e: un AxeBuilder con ".include(" y otro sin él en el mismo bloque', 'incumple', [
+    NAVEGA,
+    "await new AxeBuilder({ page }).include('#contacto').analyze()",
+    'await new AxeBuilder({ page }).analyze()',
+  ]),
+  filaDeLaRevision('A2e: un AxeBuilder sin ".include(" y otro con él, en ese orden', 'incumple', [
+    NAVEGA,
+    'await new AxeBuilder({ page }).analyze()',
+    "await new AxeBuilder({ page }).include('#contacto').analyze()",
+  ]),
+  filaDeLaRevision('A2e: dos AxeBuilder, los dos con ".include("', 'exento', [
+    NAVEGA,
+    "await new AxeBuilder({ page }).include('#contacto').analyze()",
+    "await new AxeBuilder({ page }).include('#faq').analyze()",
+  ]),
+  filaDeLaRevision('A2e: el ".include(" va en una línea de la cadena de llamadas', 'exento', [
+    NAVEGA,
+    'await new AxeBuilder({ page })',
+    "  .withTags(['wcag2a'])",
+    "  .include('#contacto')",
+    '  .analyze()',
+  ]),
+  filaDeLaRevision('A2e: la cadena de llamadas repartida en líneas, sin ".include("', 'incumple', [
+    NAVEGA,
+    'const analisis = await new AxeBuilder({ page })',
+    "  .withTags(['wcag2a'])",
+    '  .analyze()',
+    'expect(analisis.violations).toEqual([])',
+  ]),
+  filaDeLaRevision('A2e: el AxeBuilder va como argumento de otra llamada y el ".include(" es suyo', 'exento', [
+    NAVEGA,
+    "expect((await new AxeBuilder({ page }).include('#contacto').analyze()).violations).toEqual([])",
+  ]),
+  filaDeLaRevision('A2e: un AxeBuilder sobre "{ page: pagina }" se mide en esa página, que no esperó', 'incumple', [
+    NAVEGA,
+    ESPERA,
+    ABRIR_OTRA_PAGINA,
+    "await paginaSinFuente.goto('/')",
+    'await new AxeBuilder({ page: paginaSinFuente }).analyze()',
+  ]),
+  // A3: las cadenas y las plantillas no son código.
+  filaDeLaRevision('A3: el nombre de la espera citado en el mensaje de un expect', 'incumple', [
+    NAVEGA,
+    "expect(1, 'sin esperarEntradaTerminada(page) se mediría').toBe(1)",
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: el nombre de la espera citado en una plantilla', 'incumple', [
+    NAVEGA,
+    'expect(1, `sin esperarEntradaTerminada(page) se mediría`).toBe(1)',
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: la espera ENTERA, con su "await", escrita dentro de una cadena', 'incumple', [
+    NAVEGA,
+    "const nota = 'await esperarEntradaTerminada(page)'",
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: la emulación de "reduce" escrita dentro de una cadena', 'incumple', [
+    "const nota = \"await page.emulateMedia({ reducedMotion: 'reduce' })\"",
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: un "page.goto(" dentro de una cadena no es la primera navegación', 'pasa', [
+    "expect(1, 'tras page.goto(x)').toBe(1)",
+    EMULA_REDUCE,
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: congelar y colocar citados en una cadena no eximen', 'incumple', [
+    'const nota = "congelarRelojDeAnimaciones(page) y animacion.currentTime = 0"',
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: "Animation.setPlaybackRate" como SEGUNDO argumento de "send(" no congela el reloj', 'incumple', [
+    "await sesion.send('Otro.metodo', 'Animation.setPlaybackRate')",
+    NAVEGA,
+    COLOCA_LAS_ANIMACIONES,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: "Animation.setPlaybackRate" citado en un "console.log" no congela el reloj', 'incumple', [
+    "console.log('Animation.setPlaybackRate')",
+    NAVEGA,
+    COLOCA_LAS_ANIMACIONES,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: congelar con "send(" y una plantilla como primer argumento exime', 'exento', [
+    'await sesion.send(`Animation.setPlaybackRate`, { playbackRate: 0 })',
+    NAVEGA,
+    COLOCA_LAS_ANIMACIONES,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: congelar con "send (" y comillas dobles, con espacios, exime', 'exento', [
+    'await sesion.send ( "Animation.setPlaybackRate", { playbackRate: 0 })',
+    NAVEGA,
+    COLOCA_LAS_ANIMACIONES,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: "reducedMotion" con el literal "reduce" entre comillas dobles y con espacios', 'pasa', [
+    'await page.emulateMedia({ reducedMotion : "reduce" })',
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: "reducedMotion" con una variable no es un literal "reduce"', 'incumple', [
+    'await page.emulateMedia({ reducedMotion: movimiento })',
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: una cadena con la forma de la emulación dentro de OTRA opción de "emulateMedia" no es la emulación', 'incumple', [
+    "await page.emulateMedia({ colorScheme: \"reducedMotion: 'reduce'\" })",
+    NAVEGA,
+    MIDE_EL_TITULAR,
+  ]),
+  filaDeLaRevision('A3: un texto de expresión regular con "Reservar cita" sitúa la medición en el hero', 'incumple', [
+    NAVEGA,
+    "await page.getByRole('link', { name: /Reservar cita/ }).boundingBox()",
+  ]),
+]
+
+describe('hero_reducido_con_animacion @s10, A2 y A3 de la revisión: la espera y la emulación se atan a la página, al "await" y al código (no a las cadenas)', () => {
+  it('la tabla de la revisión tiene filas de los hallazgos A2 y A3 y ninguna se llama igual que otra', () => {
+    const nombres = FILAS_DE_LA_REVISION.map(({ fila }) => fila)
+
+    expect(FILAS_DE_LA_REVISION.length).toBeGreaterThan(0)
+    expect(new Set(nombres).size).toBe(nombres.length)
+  })
+
+  it.each(FILAS_DE_LA_REVISION)('$veredicto: $fila', ({ spec, veredicto }) => {
+    expect(veredictoDelUnicoBloque(spec)).toBe(veredicto)
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A4 de la revisión: una función declarada dentro de un test es de ese test', () => {
+  const cargarSinEspera = ['const cargar = async (p: Page) => {', "  await p.goto('/')", '}'].join('\n')
+  const cargarConEspera = ['const cargar = async (p: Page) => {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+  const bloqueConLaFuncion = (titulo: string, funcion: string): string =>
+    [`test('${titulo}', async ({ page }) => {`, ...funcion.split('\n').map((linea) => `  ${linea}`), '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+  it('un test posterior que declara una flecha con el mismo nombre no cambia el veredicto de otro anterior', () => {
+    const spec = [CABECERA_DEL_SPEC, bloqueConLaFuncion('sin espera', cargarSinEspera), bloqueConLaFuncion('con espera', cargarConEspera)].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple', 'pasa'])
+  })
+
+  it('y al revés: el orden de los tests no cambia el veredicto de ninguno', () => {
+    const spec = [CABECERA_DEL_SPEC, bloqueConLaFuncion('con espera', cargarConEspera), bloqueConLaFuncion('sin espera', cargarSinEspera)].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['pasa', 'incumple'])
+  })
+
+  it('una función declarada con "function" dentro de un test tampoco se ve desde otro test', () => {
+    const conEspera = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const declarante = bloqueConLaFuncion('declara y llama', conEspera)
+    const llamante = ["test('solo llama', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+    expect(veredictosDe([CABECERA_DEL_SPEC, declarante, llamante].join('\n'))).toEqual(['pasa', 'incumple'])
+  })
+
+  it('una flecha declarada dentro del test cuenta donde se escribe: declarada antes de medir con la espera dentro, vale', () => {
+    const bloque = [
+      "test('flecha propia', async ({ page }) => {",
+      `  ${NAVEGA}`,
+      '  const esperar = async (p: Page) => {',
+      '    await esperarEntradaTerminada(p)',
+      '  }',
+      '  await esperar(page)',
+      `  ${MIDE_EL_TITULAR}`,
+      '})',
+    ].join('\n')
+
+    expect(veredictosDe(specConUnBloque(bloque))).toEqual(['pasa'])
+  })
+
+  it('una función local del fichero NO se resuelve en un test que declara otra con el mismo nombre', () => {
+    const delFichero = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const spec = specConUnBloque(bloqueConLaFuncion('con la suya', cargarSinEspera), delFichero)
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  describe('dos funciones del fichero con el mismo nombre (dos "describe"): el bloque ve la declarada más cerca ANTES de él', () => {
+    const sinEspera = ['async function cargar(p: Page) {', "  await p.goto('/')", '}'].join('\n')
+    const conEspera = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const flechaConEspera = ['const cargar = async (p: Page) => {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const bloque = (titulo: string): string => ["test('" + titulo + "', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+    const spec = (...partes: readonly string[]): string => [CABECERA_DEL_SPEC, ...partes].join('\n')
+
+    it('cada bloque ve la suya, en un orden y en el otro', () => {
+      expect(veredictosDe(spec(sinEspera, bloque('uno'), conEspera, bloque('dos')))).toEqual(['incumple', 'pasa'])
+      expect(veredictosDe(spec(conEspera, bloque('uno'), sinEspera, bloque('dos')))).toEqual(['pasa', 'incumple'])
+    })
+
+    it('si todas van detrás del bloque, ve la primera', () => {
+      expect(veredictosDe(spec(bloque('uno'), sinEspera, conEspera))).toEqual(['incumple'])
+      expect(veredictosDe(spec(bloque('uno'), conEspera, sinEspera))).toEqual(['pasa'])
+    })
+
+    it('una flecha y una función con el mismo nombre se ordenan por dónde se declaran, no por cómo', () => {
+      expect(veredictosDe(spec(sinEspera, flechaConEspera, bloque('uno')))).toEqual(['pasa'])
+      expect(veredictosDe(spec(flechaConEspera, sinEspera, bloque('uno')))).toEqual(['incumple'])
+    })
+  })
+
+  it('una función local del fichero se resuelve en el test que no declara ninguna con ese nombre', () => {
+    const delFichero = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const llamante = ["test('usa la del fichero', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+    expect(veredictosDe(specConUnBloque(llamante, delFichero))).toEqual(['pasa'])
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A5 de la revisión: test.only, test.fail, test.fixme, test.skip y los alias también son bloques', () => {
+  const bloqueQueMideSinEsperar = (llamada: string): string =>
+    [`${llamada}('mide sin esperar', async ({ page }) => {`, `  ${NAVEGA}`, `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+  const otroTestCorrecto = cuerpo(NAVEGA, ESPERA, MIDE_EL_TITULAR).replace("'bloque de prueba'", "'correcto'")
+
+  it.each(['test.only', 'test.fail', 'test.fixme', 'test.skip', 'test .only', 'test.only ', 'test . skip'])(
+    '"%s(" con título y cuerpo es un bloque que se inspecciona aunque el fichero tenga otro test() correcto',
+    (llamada) => {
+      const spec = [CABECERA_DEL_SPEC, otroTestCorrecto, bloqueQueMideSinEsperar(llamada)].join('\n')
+
+      expect(comprobarMedicionEstable(spec).bloques).toEqual([
+        { titulo: 'correcto', veredicto: 'pasa' },
+        { titulo: 'mide sin esperar', veredicto: 'incumple' },
+      ])
+    },
+  )
+
+  it('un "test.only(" hace que el fichero NO pase, aunque su bloque esté en regla, y se nombra', () => {
+    const informe = comprobarMedicionEstable(specConUnBloque(cuerpo(NAVEGA, ESPERA, MIDE_EL_TITULAR).replace('test(', 'test.only(')))
+
+    expect(informe.bloques.map((bloque) => bloque.veredicto)).toEqual(['pasa'])
+    expect(informe.bloquesConOnly).toEqual(['bloque de prueba'])
+    expect(informe.pasa).toBe(false)
+  })
+
+  it('sin ningún "test.only(" la lista de bloques con "only" está vacía y el fichero pasa', () => {
+    const informe = comprobarMedicionEstable(specConUnBloque(cuerpo(NAVEGA, ESPERA, MIDE_EL_TITULAR)))
+
+    expect(informe.bloquesConOnly).toEqual([])
+    expect(informe.pasa).toBe(true)
+  })
+
+  it.each(['fail', 'fixme', 'skip'])('un "test.%s(" CONDICIONAL (sin función de cuerpo) no es un bloque', (modificador) => {
+    const spec = [
+      CABECERA_DEL_SPEC,
+      "test('con una condición', async ({ page, browserName }) => {",
+      `  test.${modificador}(browserName === 'firefox', 'no aplica')`,
+      `  ${NAVEGA}`,
+      '})',
+    ].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(1)
+  })
+
+  it('un "test.skip(" con una función flecha o con "function" como cuerpo SÍ es un bloque', () => {
+    const spec = [
+      CABECERA_DEL_SPEC,
+      "test.skip('con flecha', async ({ page }) => {})",
+      "test.fixme('con function', async function ({ page }) {})",
+    ].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(2)
+  })
+
+  it('"test.describe.only(", "test.step(" y "test.use(" no son bloques', () => {
+    const spec = [
+      CABECERA_DEL_SPEC,
+      "test.describe.only('grupo', () => {",
+      `  ${cuerpo(NAVEGA).replace("'bloque de prueba'", "'uno'")}`,
+      '})',
+      "test('con un paso', async ({ page }) => {",
+      "  await test.step('paso', async () => {",
+      `    ${NAVEGA}`,
+      '  })',
+      '})',
+    ].join('\n')
+
+    const informe = comprobarMedicionEstable(spec)
+
+    expect(informe.bloques.map((bloque) => bloque.titulo)).toEqual(['uno', 'con un paso'])
+    expect(informe.bloquesConOnly).toEqual([])
+  })
+
+  it('un alias del test ("const t = test") se lee como el propio test, también con ".only"', () => {
+    const spec = [
+      CABECERA_DEL_SPEC,
+      'const t = test',
+      otroTestCorrecto,
+      bloqueQueMideSinEsperar('t'),
+      bloqueQueMideSinEsperar('t.only').replace('mide sin esperar', 'solo este'),
+    ].join('\n')
+
+    const informe = comprobarMedicionEstable(spec)
+
+    expect(informe.bloques).toEqual([
+      { titulo: 'correcto', veredicto: 'pasa' },
+      { titulo: 'mide sin esperar', veredicto: 'incumple' },
+      { titulo: 'solo este', veredicto: 'incumple' },
+    ])
+    expect(informe.bloquesConOnly).toEqual(['solo este'])
+  })
+
+  it.each([
+    ['con "let" y punto y coma', 'let t = test;'],
+    ['con "var" y un tipo', 'var t: typeof test = test'],
+    ['con "const" y espacios de más', 'const   t   =   test   '],
+    ['extendido con fixtures ("test.extend(")', "const t = test.extend<{ ayuda: string }>({ ayuda: 'x' })"],
+  ])('un alias %s también declara bloques', (_nombre, declaracion) => {
+    const spec = [CABECERA_DEL_SPEC, declaracion, bloqueQueMideSinEsperar('t')].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloques).toEqual([{ titulo: 'mide sin esperar', veredicto: 'incumple' }])
+  })
+
+  it('una variable que se llama como el test pero vale otra cosa ("const t = test.describe", "const t = otro") no es un alias', () => {
+    const spec = [CABECERA_DEL_SPEC, 'const t = otro', 'const u = test.describe', bloqueQueMideSinEsperar('t'), bloqueQueMideSinEsperar('u')].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(0)
+  })
+
+  it('un alias "$t" con signo de dólar se escapa en la búsqueda: no se confunde con otro nombre', () => {
+    const spec = [CABECERA_DEL_SPEC, 'const $t = test', bloqueQueMideSinEsperar('$t'), bloqueQueMideSinEsperar('xt')].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(1)
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 de la revisión: cada patrón se lee con cualquier espaciado y las lecturas de borde no inventan bloques', () => {
+  const COLOCA = 'await page.evaluate(() => document.getAnimations().forEach((animacion) => { %COLOCA% }))'
+  const eximido = (colocar: string): Veredicto => veredictoDe(CONGELA_EL_RELOJ, NAVEGA, COLOCA.replace('%COLOCA%', colocar), MIDE_EL_TITULAR)
+
+  it.each([
+    ['"currentTime" sin espacios alrededor del "="', 'animacion.currentTime=0'],
+    ['"currentTime" con varios espacios alrededor del "="', 'animacion.currentTime   =   0'],
+    ['".cancel" con un espacio antes del paréntesis', 'animacion.cancel ()'],
+    ['".cancel" con varios espacios antes del paréntesis', 'animacion.cancel   ()'],
+  ])('colocar las animaciones con %s exime', (_nombre, colocar) => {
+    expect(eximido(colocar)).toBe('exento')
+  })
+
+  it.each([
+    ['".screenshot (" con un espacio', "await page.locator('h1').screenshot ()"],
+    ['".screenshot  (" con dos espacios', "await page.locator('h1').screenshot  ()"],
+    ['"toHaveScreenshot (" con un espacio', "await expect(page.locator('h1')).toHaveScreenshot ()"],
+    ['"toHaveScreenshot  (" con dos espacios', "await expect(page.locator('h1')).toHaveScreenshot  ()"],
+    ['"level : 1" con espacios antes de los dos puntos', "await page.getByRole('heading', { level : 1 }).boundingBox()"],
+    ['"level  :  1" con varios espacios', "await page.getByRole('heading', { level  :  1 }).boundingBox()"],
+  ])('medir con %s sitúa la medición en el hero y obliga', (_nombre, medicion) => {
+    expect(veredictoDe(NAVEGA, medicion)).toBe('incumple')
+  })
+
+  it.each([
+    ['"page.screenshot (" con un espacio', 'await page.screenshot ()'],
+    ['"page.screenshot  (" con dos espacios', 'await page.screenshot  ()'],
+    ['"expect (page)" con un espacio', 'await expect (page).toHaveScreenshot()'],
+    ['"expect(  page  )" con espacios dentro', 'await expect(  page  ).toHaveScreenshot()'],
+    ['") .toHaveScreenshot" con un espacio', 'await expect(page) .toHaveScreenshot()'],
+    ['")  .toHaveScreenshot" con dos espacios', 'await expect(page)  .toHaveScreenshot()'],
+    ['") .toHaveScreenshot" con un salto de línea', 'await expect(page)\n    .toHaveScreenshot()'],
+  ])('capturar la página con %s obliga aunque no mencione el hero', (_nombre, captura) => {
+    expect(veredictoDe(NAVEGA, captura)).toBe('incumple')
+  })
+
+  it.each([
+    ['"function  f(" con dos espacios', 'function  cajaDe(locator: Locator) { return locator.boundingBox() }'],
+    ['"function f (" con un espacio antes del paréntesis', 'function cajaDe (locator: Locator) { return locator.boundingBox() }'],
+    ['"function f   (" con varios espacios antes del paréntesis', 'function cajaDe   (locator: Locator) { return locator.boundingBox() }'],
+    ['"const  f  =" con espacios de más', 'const  cajaDe  =  (locator: Locator)  =>  { return locator.boundingBox() }'],
+    ['"const f=async(" sin espacios', 'const cajaDe=async(locator: Locator)=>{ return locator.boundingBox() }'],
+    ['"const f = async  (" con dos espacios tras async', 'const cajaDe = async  (locator: Locator) => { return locator.boundingBox() }'],
+    ['"let f =  async  x =>" con un parámetro sin paréntesis', 'let cajaDe =  async  locator => { return locator.boundingBox() }'],
+    ['"const f : T = " con un tipo', 'const cajaDe : Medidor = async (locator: Locator) : Promise<Caja> => { return locator.boundingBox() }'],
+  ])('una función local escrita con %s se resuelve', (_nombre, funcion) => {
+    expect(veredictoConFunciones(funcion, NAVEGA, "await cajaDe(page.locator('h1'))")).toBe('incumple')
+  })
+
+  it('un comentario de línea al FINAL del texto, sin salto de línea, no inventa bloques', () => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, MIDE_EL_TITULAR))}// test('falso', async () => {})`
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(1)
+  })
+
+  it('un comentario de bloque sin cerrar al FINAL del texto no inventa bloques', () => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, MIDE_EL_TITULAR))}/* test('falso', async () => {})`
+
+    expect(comprobarMedicionEstable(spec).bloquesInspeccionados).toBe(1)
+  })
+
+  it('un comentario de línea en una línea con CRLF acaba en el salto de línea y no se come la línea siguiente', () => {
+    const spec = [CABECERA_DEL_SPEC, '// comentario', cuerpo(NAVEGA, MIDE_EL_TITULAR)].join('\r\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('una función con la espera, declarada dentro de un test, NO se ve desde OTRO test que la llama', () => {
+    const declarante = [
+      "test('declara', async ({ page }) => {",
+      '  async function cargar(p: Page) {',
+      "    await p.goto('/')",
+      '    await esperarEntradaTerminada(p)',
+      '  }',
+      '  await cargar(page)',
+      `  ${MIDE_EL_TITULAR}`,
+      '})',
+    ].join('\n')
+    const llamante = ["test('llama', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+    expect(veredictosDe([CABECERA_DEL_SPEC, declarante, llamante].join('\n'))).toEqual(['pasa', 'incumple'])
+  })
+
+  it('una función declarada entre dos tests (fuera de todos) se ve desde los dos', () => {
+    const entreLosDos = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const uno = ["test('uno', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+    const dos = uno.replace("'uno'", "'dos'")
+
+    expect(veredictosDe([CABECERA_DEL_SPEC, uno, entreLosDos, dos].join('\n'))).toEqual(['pasa', 'pasa'])
+  })
+
+  it('una flecha con parámetros desestructurados y un tipo con llaves resuelve su cuerpo', () => {
+    const funcion = ['const medir = async ({ page }: { page: Page }) => {', "  return page.locator('h1').boundingBox()", '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await medir({ page })')).toBe('incumple')
+  })
+
+  it('una función con un parámetro por defecto que lleva paréntesis resuelve su cuerpo', () => {
+    const funcion = ['async function medir(page: Page, escala = obtener(1)) {', "  return page.locator('h1').boundingBox()", '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A8 de la revisión: la comprobación lee los mismos ficheros que ejecuta Playwright', () => {
+  it.each([
+    'tests/e2e/accesibilidad.spec.ts',
+    'tests/e2e/hero/portada.spec.ts',
+    'tests/e2e/a/b/c/profunda.spec.ts',
+    'tests/e2e/otra.test.ts',
+    'tests/e2e/modulo.spec.mts',
+    'tests/e2e/comun.spec.cts',
+    'tests/e2e/script.spec.js',
+    'tests/e2e/script.test.mjs',
+    'tests/e2e/script.spec.cjs',
+    'tests/e2e/pagina.spec.tsx',
+    'tests/e2e/pagina.test.jsx',
+    'accesibilidad.spec.ts',
+    'tests\\e2e\\windows.spec.ts',
+  ])('"%s" es un fichero de test que Playwright ejecuta y por tanto se lee', (ruta) => {
+    expect(esFicheroDeTestDePlaywright(ruta)).toBe(true)
+  })
+
+  it.each([
+    'tests/e2e/entrada-del-hero.ts',
+    'tests/e2e/rutas.ts',
+    'tests/e2e/utilidades.ts',
+    'tests/e2e/spec.ts',
+    'tests/e2e/test.ts',
+    'tests/e2e/accesibilidad.spec.ts.bak',
+    'tests/e2e/accesibilidad.spec.md',
+    'tests/e2e/accesibilidad.spec.json',
+    'tests/e2e/accesibilidad.specs.ts',
+    'tests/e2e/accesibilidad.mspec.ts',
+    'tests/e2e/accesibilidad-spec.ts',
+    'tests/e2e/accesibilidad.spec.d.ts',
+    'tests/e2e/accesibilidad.spec.xts',
+    'tests/e2e/accesibilidad.spec.tss',
+    'tests/e2e/accesibilidad.spec.ctsx.map',
+  ])('"%s" no es un fichero de test de Playwright y no se lee', (ruta) => {
+    expect(esFicheroDeTestDePlaywright(ruta)).toBe(false)
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 y A7 de la revisión: la lectura del texto, sin recorridos por índices, conserva cada comportamiento', () => {
+  it('un selector XPath ("//h1") es una cadena y no un comentario: el titular que nombra sitúa la medición en el hero', () => {
+    expect(veredictoDe(NAVEGA, "await page.locator('//h1').boundingBox()")).toBe('incumple')
+  })
+
+  it('un comentario de bloque se cierra en SU "*/": el código que hay entre dos comentarios de bloque se lee', () => {
+    const spec = ['/* uno */', cuerpo(NAVEGA, MIDE_EL_TITULAR), '/* dos */'].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('un comentario de bloque de varias líneas se enmascara entero, con lo que lleva dentro', () => {
+    const spec = ['/*', ' * test("falso", async () => {', ' *   await page.locator("h1").boundingBox()', ' * })', ' */', cuerpo(NAVEGA)].join('\n')
+
+    expect(comprobarMedicionEstable(spec).bloques).toEqual([{ titulo: 'bloque de prueba', veredicto: 'exento' }])
+  })
+
+  it('una plantilla de varias líneas con comillas dentro se lee entera y no deja ver lo que cita', () => {
+    const plantilla = ['const nota = `primera línea con una \' y un "', "esperarEntradaTerminada(page) en la segunda `"].join('\n')
+    const spec = [plantilla, cuerpo(NAVEGA, MIDE_EL_TITULAR)].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('una cadena que acaba en una barra invertida escapada (`\\\\\'`) se cierra donde debe y no se come lo que sigue', () => {
+    const spec = ["const ruta = 'C:\\\\dir\\\\'", cuerpo(NAVEGA, MIDE_EL_TITULAR)].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('una expresión regular tras cada carácter que la admite ("(", ",", "=", ":", "[", "!", "&", "|", "?", "{", "}", ";") no desordena la lectura', () => {
+    const regex = "/'\"`/"
+    const previos = ['probar(', 'probar(a, ', 'x = ', '{ a: ', '[', '!', 'a &', 'a |', 'a ? ', '{ ', '} ', 'a; ']
+
+    for (const previo of previos) {
+      const spec = [`${previo}${regex}`, cuerpo(NAVEGA, MIDE_EL_TITULAR)].join('\n')
+
+      expect(veredictosDe(spec), `tras «${previo}»`).toEqual(['incumple'])
+    }
+  })
+
+  it('una expresión regular tras un salto de línea y sangría (con la línea anterior acabada en "=") se reconoce', () => {
+    const spec = ['const patron =', "    /'\"`/", cuerpo(NAVEGA, MIDE_EL_TITULAR)].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('una flecha de expresión entre paréntesis y en varias líneas se lee entera', () => {
+    const funciones = ['const medir = (page: Page) => (', "  page.locator('h1').boundingBox()", ')'].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it('una flecha de expresión cuya primera palabra es un evento (una navegación) lo cuenta como suyo', () => {
+    const funciones = "const recargar = (pagina: Page) => pagina.goto('/otra')"
+
+    expect(veredictoConFunciones(funciones, ESPERA, 'await recargar(page)', MIDE_EL_TITULAR)).toBe('incumple')
+  })
+})
+
+/** Una función local que espera en la página que recibe como parámetro `pagina`, tras los demás parámetros dados. */
+function funcionQueEsperaEn(parametros: string): string {
+  return [`async function esperarEn(${parametros}) {`, '  await esperarEntradaTerminada(pagina)', '}'].join('\n')
+}
+
+describe('hero_reducido_con_animacion @s10, A2 de la revisión: los parámetros de una función local se corresponden con los argumentos de la llamada', () => {
+  it.each([
+    ['un array con comas', 'esperarEn([1, 2], page)', 'primero: number[], pagina: Page'],
+    ['un objeto con comas', 'esperarEn({ a: 1, b: 2 }, page)', 'primero: object, pagina: Page'],
+    ['una llamada con comas', 'esperarEn(sumar(1, 2), page)', 'primero: number, pagina: Page'],
+    ['una cadena con comas', "esperarEn('a, b', page)", 'primero: string, pagina: Page'],
+    ['espacios alrededor de los argumentos', 'esperarEn( 1 ,  page )', 'primero: number, pagina: Page'],
+    ['un parámetro con valor por defecto', 'esperarEn(1, page)', 'primero = 1, pagina: Page'],
+    ['un parámetro opcional', 'esperarEn(1, page)', 'primero?: number, pagina: Page'],
+    ['un parámetro con $ en el nombre', 'esperarEn(1, page)', '$primero: number, pagina: Page'],
+  ])('con %s antes del argumento de la página, la espera se ata a esa página', (_nombre, llamada, parametros) => {
+    expect(veredictoConFunciones(funcionQueEsperaEn(parametros), NAVEGA, `await ${llamada}`, MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('un argumento que no es un identificador ("{ page }") no corresponde a ninguna página: la espera no cuenta', () => {
+    expect(veredictoConFunciones(funcionQueEsperaEn('pagina: Page'), NAVEGA, 'await esperarEn({ page })', MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('un argumento con otro identificador por delante ("(await abrir(page))") se ata al primero', () => {
+    expect(veredictoConFunciones(funcionQueEsperaEn('pagina: Page'), NAVEGA, 'await esperarEn(page.mainFrame().page())', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('un parámetro de una flecha sin paréntesis ("async pagina =>") y uno con "$" se corresponden con su argumento', () => {
+    const sinParentesis = ['const esperarEn = async pagina => {', '  await esperarEntradaTerminada(pagina)', '}'].join('\n')
+    const conDolar = ['const esperarEn = async ($pagina: Page) => {', '  await esperarEntradaTerminada($pagina)', '}'].join('\n')
+
+    expect(veredictoConFunciones(sinParentesis, NAVEGA, 'await esperarEn(page)', MIDE_EL_TITULAR)).toBe('pasa')
+    expect(veredictoConFunciones(conDolar, NAVEGA, 'await esperarEn(page)', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('una página con "$" en el nombre se ata igual: no se confunde con otra', () => {
+    const lineas = ["await $pagina.emulateMedia({ reducedMotion: 'reduce' })", "await $pagina.goto('/')", "await $pagina.locator('h1').boundingBox()"]
+
+    expect(veredictoDe(...lineas)).toBe('pasa')
+    expect(veredictoDe("await pagina.emulateMedia({ reducedMotion: 'reduce' })", "await $pagina.goto('/')", "await $pagina.locator('h1').boundingBox()")).toBe('incumple')
+  })
+
+  it('una llamada con MENOS argumentos que parámetros no toma los argumentos de lo que viene después', () => {
+    const lineas = [NAVEGA, 'await esperarEn(1)', 'registrar(otra, page)', MIDE_EL_TITULAR]
+
+    expect(veredictoConFunciones(funcionQueEsperaEn('primero: number, pagina: Page'), ...lineas)).toBe('incumple')
+  })
+
+  it('una llamada SIN argumentos deja a la función con sus propios nombres: un parámetro "page" sigue siendo "page"', () => {
+    const funcion = ['async function esperar(page: Page) {', '  await esperarEntradaTerminada(page)', '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await esperar()', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('un argumento que es un objeto ("{ otra }") no es la página "otra": la espera de la función no se ata a ella', () => {
+    const funcion = ['async function esperar(p: Page) {', '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const lineas = ["await otra.goto('/')", 'await esperar({ otra })', "await otra.locator('h1').boundingBox()"]
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('incumple')
+  })
+
+  it('un parámetro desestructurado ("{ page }") no se corresponde con el argumento: la función conserva el nombre "page"', () => {
+    const funcion = ['async function esperar({ page }: Fixtures) {', '  await esperarEntradaTerminada(page)', '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await esperar(fixtures)', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('una función pasada por referencia ("ejecutar(esperarPortada)") conserva sus nombres: su parámetro "page" sigue siendo "page"', () => {
+    const funcion = ['async function esperarPortada(page: Page) {', '  await esperarEntradaTerminada(page)', '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await ejecutar(esperarPortada)', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('una función pasada por referencia se sitúa con la página que el bloque nombra a su altura, no con la que nombra después', () => {
+    const funcion = ['function cajaDe(elemento: Element) {', '  return elemento.getBoundingClientRect()', '}'].join('\n')
+    const lineas = [NAVEGA, ESPERA, "await page.locator('h1').evaluate(cajaDe)", "await otra.goto('/')"]
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('pasa')
+  })
+
+  it('con dos páginas por parámetro cada medición se ata a SU página', () => {
+    const funcion = [
+      'async function comparar(a: Page, b: Page) {',
+      "  await a.locator('h1').boundingBox()",
+      "  await b.locator('h1').boundingBox()",
+      '}',
+    ].join('\n')
+    const lineas = [NAVEGA, "await otra.emulateMedia({ reducedMotion: 'reduce' })", "await otra.goto('/')", 'await comparar(page, otra)']
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('incumple')
+  })
+
+  it('una función que abre y mide su propia página se lee entera: la emulación y la medición son de la página que ella abre', () => {
+    const funcion = [
+      'async function medirEnOtra(context: BrowserContext) {',
+      '  const otra = await context.newPage()',
+      "  await otra.emulateMedia({ reducedMotion: 'reduce' })",
+      "  await otra.goto('/')",
+      "  return otra.locator('h1').boundingBox()",
+      '}',
+    ].join('\n')
+
+    expect(veredictoConFunciones(funcion, 'await medirEnOtra(context)')).toBe('pasa')
+    expect(veredictoConFunciones(funcion.replace("  await otra.emulateMedia({ reducedMotion: 'reduce' })\n", ''), 'await medirEnOtra(context)')).toBe('incumple')
+  })
+
+  it('una función sin parámetros que usa la "page" del fichero se ata a "page", aunque el bloque nombre otra página justo antes de llamarla', () => {
+    const funcion = ['async function medirPortada() {', "  return page.locator('h1').boundingBox()", '}'].join('\n')
+    const lineas = [NAVEGA, ESPERA, "await otra.goto('/')", 'await medirPortada()']
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('pasa')
+  })
+
+  it('una función sin ninguna mención de página mide la página que el bloque nombró más cerca antes de llamarla', () => {
+    const funcion = ['async function medirElTitular() {', "  return document.querySelector('h1').getBoundingClientRect()", '}'].join('\n')
+    const lineas = [NAVEGA, ESPERA, "await otra.goto('/')", 'await medirElTitular()']
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('incumple')
+  })
+
+  it('un cierre de paréntesis de MÁS (sin apertura) acaba la flecha de expresión en la que está', () => {
+    const funciones = "const contar = (locator: Locator) => locator.count()) + page.locator('h1').boundingBox()"
+
+    expect(veredictoConFunciones(funciones, NAVEGA, "await contar(page.locator('h1'))")).toBe('exento')
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 de la revisión: dónde acaba una expresión y cómo se juntan las líneas', () => {
+  const llamadaAContar = "await contar(page.locator('h1'))"
+
+  it('una flecha de expresión que contiene otra flecha en su primera línea acaba igualmente donde acaba la línea', () => {
+    const funciones = [
+      'const contar = (locator: Locator) => locator.evaluate((elemento) => elemento.textContent)',
+      "const medir = (page: Page) => page.locator('h1').boundingBox()",
+    ].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, llamadaAContar)).toBe('exento')
+  })
+
+  it('una flecha de expresión acaba en su ";" aunque la sentencia siguiente siga en la misma línea', () => {
+    const funciones = "const contar = (locator: Locator) => locator.count(); const medir = (page: Page) => page.locator('h1').boundingBox()"
+
+    expect(veredictoConFunciones(funciones, NAVEGA, llamadaAContar)).toBe('exento')
+  })
+
+  it('una flecha de expresión con la cabeza entre paréntesis y la cadena de llamadas detrás se lee entera', () => {
+    const funciones = "const medir = (page: Page) => (page.locator('h1')).boundingBox()"
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it('un operador al final de una línea con fin de línea de Windows (CRLF) sigue en la línea de abajo', () => {
+    const funciones = ['const medir = (page: Page) => page.locator("h1") ||', '  page.locator("p").boundingBox()'].join('\r\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it.each([
+    ['"="', 'const medir = (page: Page) => resultado ='],
+    ['"+"', 'const medir = (page: Page) => 1 +'],
+    ['"-"', 'const medir = (page: Page) => 1 -'],
+    ['"*"', 'const medir = (page: Page) => 2 *'],
+    ['"/"', 'const medir = (page: Page) => 4 /'],
+    ['"%"', 'const medir = (page: Page) => 4 %'],
+    ['"&&"', 'const medir = (page: Page) => hay &&'],
+    ['"||"', 'const medir = (page: Page) => hay ||'],
+    ['"?"', 'const medir = (page: Page) => hay ?'],
+    ['":"', 'const medir = (page: Page) => hay ? 1 :'],
+    ['","', 'const medir = (page: Page) => hay,'],
+    ['"."', 'const medir = (page: Page) => page.'],
+    ['"=>"', 'const medir = (page: Page) => (p: Page) =>'],
+  ])('una línea que acaba en %s sigue en la línea de abajo', (_nombre, cabeza) => {
+    const funciones = [cabeza, "  page.locator('h1').boundingBox()"].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it.each([
+    ['"."', '  .boundingBox()'],
+    ['"?"', "  ?? page.locator('h1').boundingBox()"],
+    ['":"', "  : page.locator('h1').boundingBox()"],
+    ['"&"', "  && page.locator('h1').boundingBox()"],
+    ['"|"', "  || page.locator('h1').boundingBox()"],
+    ['"+"', "  + page.locator('h1').boundingBox()"],
+    ['"-"', "  - page.locator('h1').boundingBox()"],
+    ['"*"', "  * page.locator('h1').boundingBox()"],
+    ['"%"', "  % page.locator('h1').boundingBox()"],
+  ])('una línea que empieza por %s continúa la anterior', (_nombre, siguiente) => {
+    const funciones = ["const medir = (page: Page) => page.locator('h1')", siguiente].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it('una línea que acaba en un identificador, un número o un cierre NO sigue en la línea de abajo', () => {
+    for (const final of ['resultado', '42', 'lista[0]', 'funcion()', 'objeto!']) {
+      const funciones = [`const contar = (page: Page) => ${final}`, "const medir = (page: Page) => page.locator('h1').boundingBox()"].join('\n')
+
+      expect(veredictoConFunciones(funciones, NAVEGA, 'await contar(page)'), `tras «${final}»`).toBe('exento')
+    }
+  })
+
+  it('una flecha de expresión escrita al final del texto, sin salto de línea, llega hasta el final', () => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, 'await medir(page)'))}const medir = (page: Page) => page.locator('h1').boundingBox()`
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('una flecha de expresión con "=>" y un salto de línea antes del cuerpo, sin salto al final del texto, se lee', () => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, 'await medir(page)'))}const medir = (page: Page) =>\n  page.locator('h1').boundingBox()`
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('un ".include(" de lo que sigue a la cadena del AxeBuilder, tras su cierre, no la acota', () => {
+    const lineas = [NAVEGA, 'expect((await new AxeBuilder({ page }).analyze()).violations).toEqual(lista.include(1))']
+
+    expect(veredictoDe(...lineas)).toBe('incumple')
+  })
+
+  it('una flecha sin nada tras su "=>", al final del texto, no mete en el ámbito del bloque que la llama el texto de los demás', () => {
+    const sinElHero = ["test('sin hero', async ({ page }) => {", `  ${NAVEGA}`, '  await medir(page)', "  await page.locator('#contacto').boundingBox()", '})'].join('\n')
+    const conElHero = cuerpo(NAVEGA, MIDE_EL_TITULAR).replace("'bloque de prueba'", "'con hero'")
+    const spec = [CABECERA_DEL_SPEC, sinElHero, conElHero, 'const medir = (page: Page) =>'].join('\n')
+
+    expect(veredictosDe(spec)).toEqual(['exento', 'incumple'])
+  })
+
+  it('una función declarada sin cuerpo ("function medir(page: Page): void" al final) no tiene nada que medir', () => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, 'await medir(page)'))}function medir(page: Page): void`
+
+    expect(veredictosDe(spec)).toEqual(['exento'])
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 de la revisión: las coincidencias de cada patrón con cualquier espaciado', () => {
+  it.each([
+    ['un espacio antes del punto', "await page .goto('/otra')"],
+    ['un espacio tras el punto', "await page. goto('/otra')"],
+    ['un salto de línea antes del punto (cadena de llamadas)', "await page\n    .goto('/otra')"],
+    ['un espacio antes del paréntesis', "await page.goto ('/otra')"],
+    ['"reload" con un espacio antes del paréntesis', 'await page.reload ()'],
+  ])('una navegación con %s invalida la espera anterior', (_nombre, navegacion) => {
+    expect(veredictoDe(NAVEGA, ESPERA, navegacion, MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it.each([
+    ['dos espacios tras "await"', "await  page.emulateMedia({ reducedMotion: 'reduce' })"],
+    ['un salto de línea tras "await"', "await\n    page.emulateMedia({ reducedMotion: 'reduce' })"],
+    ['un espacio antes del punto', "await page .emulateMedia({ reducedMotion: 'reduce' })"],
+    ['un espacio tras el punto', "await page. emulateMedia({ reducedMotion: 'reduce' })"],
+    ['un salto de línea antes del punto', "await page\n    .emulateMedia({ reducedMotion: 'reduce' })"],
+    ['"return" en vez de "await"', "return page.emulateMedia({ reducedMotion: 'reduce' })"],
+  ])('una emulación con %s cuenta', (_nombre, emulacion) => {
+    expect(veredictoDe(emulacion, NAVEGA, MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it.each([
+    ['dos espacios tras "await"', 'await  esperarEntradaTerminada(page)'],
+    ['un salto de línea tras "await"', 'await\n    esperarEntradaTerminada(page)'],
+    ['"return" en vez de "await"', 'return esperarEntradaTerminada(page)'],
+  ])('una espera con %s cuenta', (_nombre, espera) => {
+    expect(veredictoDe(NAVEGA, espera, MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it.each([
+    ['un espacio antes del paréntesis de "send"', "await sesion.send ('Animation.setPlaybackRate', { playbackRate: 0 })"],
+    ['un espacio tras el punto de "send"', "await sesion. send('Animation.setPlaybackRate', { playbackRate: 0 })"],
+    ['un salto de línea antes del punto de "send"', "await sesion\n    .send('Animation.setPlaybackRate', { playbackRate: 0 })"],
+    ['el ayudante con un espacio antes del paréntesis', 'await congelarRelojDeAnimaciones (page)'],
+  ])('congelar el reloj con %s exime', (_nombre, congelar) => {
+    expect(veredictoDe(congelar, NAVEGA, COLOCA_LAS_ANIMACIONES, MIDE_EL_TITULAR)).toBe('exento')
+  })
+
+  it.each([
+    ['un espacio antes del paréntesis', "await new AxeBuilder({ page }).include ('#contacto').analyze()"],
+    ['un espacio tras el punto', "await new AxeBuilder({ page }). include('#contacto').analyze()"],
+    ['un salto de línea tras el punto', "await new AxeBuilder({ page }).\n    include('#contacto').analyze()"],
+  ])('un ".include(" con %s acota el AxeBuilder', (_nombre, analisis) => {
+    expect(veredictoDe(NAVEGA, analisis)).toBe('exento')
+  })
+
+  it.each([
+    ['un espacio antes del punto', 'await esperarEntradaTerminada(page) .catch(() => {})'],
+    ['un espacio tras el punto', 'await esperarEntradaTerminada(page). catch(() => {})'],
+    ['un espacio antes del paréntesis de "catch"', 'await esperarEntradaTerminada(page).catch (() => {})'],
+    ['un espacio antes del paréntesis de "then"', 'await esperarEntradaTerminada(page).then (() => 1)'],
+  ])('una espera con %s y "catch" o "then" detrás se traga', (_nombre, espera) => {
+    expect(veredictoDe(NAVEGA, espera, MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('un ".then(" o un ".catch(" de OTRA llamada, más adelante en el fichero, no traga la espera', () => {
+    expect(veredictoDe(NAVEGA, ESPERA, MIDE_EL_TITULAR, 'await otra.then(() => 1)', 'await uno.catch(() => 2)')).toBe('pasa')
+  })
+
+  it.each([
+    ['sin espacio antes de la llave', 'try{'],
+    ['con dos espacios antes de la llave', 'try  {'],
+    ['con un salto de línea antes de la llave', 'try\n{'],
+  ])('una espera dentro de un "try" escrito %s se traga', (_nombre, intento) => {
+    expect(veredictoDe(NAVEGA, intento, ESPERA, '} catch {}', MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('una espera ANTES de un "try" y otra DESPUÉS de uno, ya cerrado, no están dentro de él', () => {
+    const intento = ['try {', '  await page.waitForTimeout(1)', '} catch {', '}']
+
+    expect(veredictoDe(NAVEGA, ESPERA, ...intento, MIDE_EL_TITULAR)).toBe('pasa')
+    expect(veredictoDe(NAVEGA, ...intento, ESPERA, MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('un ".try(" o un "retry(" no son un "try"', () => {
+    expect(veredictoDe(NAVEGA, 'await retry({', `  ${ESPERA}`, '})', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('un "const  f =" con espacios de más en el bloque declara su propio nombre: oculta el de la función del fichero', () => {
+    const delFichero = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const lineas = ['const   cargar = async (p: Page) => {', "  await p.goto('/')", '}', 'await cargar(page)', MIDE_EL_TITULAR]
+
+    expect(veredictoConFunciones(delFichero, ...lineas)).toBe('incumple')
+  })
+
+  it('una función declarada en el bloque y que nadie usa no aporta nada: ni su espera, aunque su parámetro se llame "page"', () => {
+    const conOtroNombre = [NAVEGA, 'async function sinUso(p: Page) {', '  await esperarEntradaTerminada(p)', '}', MIDE_EL_TITULAR]
+    const conPage = [NAVEGA, 'async function sinUso(page: Page) {', '  await esperarEntradaTerminada(page)', '}', MIDE_EL_TITULAR]
+    const conPageYUsada = [...conPage.slice(0, -1), 'await sinUso(page)', MIDE_EL_TITULAR]
+
+    expect(veredictoDe(...conOtroNombre)).toBe('incumple')
+    expect(veredictoDe(...conPage)).toBe('incumple')
+    expect(veredictoDe(...conPageYUsada)).toBe('pasa')
+  })
+
+  it('una función declarada en el bloque y solo pasada por referencia SÍ se usa', () => {
+    const lineas = [NAVEGA, 'async function esperar(page: Page) {', '  await esperarEntradaTerminada(page)', '}', 'await ejecutar(esperar)', MIDE_EL_TITULAR]
+
+    expect(veredictoDe(...lineas)).toBe('pasa')
+  })
+
+  it('con dos funciones declaradas en el bloque, cada una se traduce con SU primera llamada', () => {
+    const lineas = [
+      NAVEGA,
+      'async function abrir(x: Page) {',
+      "  await x.goto('/otra')",
+      '}',
+      'async function esperar(p: Page) {',
+      '  await esperarEntradaTerminada(p)',
+      '}',
+      'await abrir(otra)',
+      'await esperar(page)',
+      MIDE_EL_TITULAR,
+    ]
+
+    expect(veredictoDe(...lineas)).toBe('pasa')
+  })
+
+  it('una medición dentro de una función declarada en el bloque se ata a SU página, no a la que el bloque nombra antes', () => {
+    const lineas = [
+      NAVEGA,
+      ESPERA,
+      "await otra.goto('/')",
+      'async function medirEn(p: Page) {',
+      "  return p.locator('h1').boundingBox()",
+      '}',
+      'await medirEn(page)',
+    ]
+
+    expect(veredictoDe(...lineas)).toBe('pasa')
+  })
+
+  it('una medición sin ninguna página nombrada antes se ata a "page"', () => {
+    expect(veredictoDe(NAVEGA, ESPERA, "await contenedor.locator('h1').boundingBox()")).toBe('pasa')
+  })
+
+  it('una medición se ata a la página nombrada ANTES, no a la que se nombra después', () => {
+    expect(veredictoDe(NAVEGA, ESPERA, MIDE_EL_TITULAR, "await otra.goto('/')")).toBe('pasa')
+  })
+
+  it('una emulación sin "reducedMotion" no se confunde con la que viene después, más abajo en el fichero', () => {
+    const lineas = ["await page.emulateMedia({ colorScheme: 'dark' })", NAVEGA, MIDE_EL_TITULAR, EMULA_REDUCE]
+
+    expect(veredictoDe(...lineas)).toBe('incumple')
+  })
+
+  it('una captura de la página entera se ata a "page", no a la última página que el bloque nombra', () => {
+    const lineas = [
+      "await otra.emulateMedia({ reducedMotion: 'reduce' })",
+      "await otra.goto('/')",
+      NAVEGA,
+      'await page.screenshot()',
+    ]
+
+    expect(veredictoDe(...lineas)).toBe('incumple')
+    expect(veredictoDe(...lineas.slice(0, 3), 'await expect(page).toHaveScreenshot()')).toBe('incumple')
+  })
+
+  it('un AxeBuilder sin "page" en sus opciones mide la página que el bloque nombra más cerca antes', () => {
+    const lineas = [NAVEGA, ESPERA, "await otra.goto('/')", 'await new AxeBuilder({ ...opciones }).analyze()']
+
+    expect(veredictoDe(...lineas)).toBe('incumple')
+    expect(veredictoDe(NAVEGA, ESPERA, 'await new AxeBuilder({ page }).analyze()')).toBe('pasa')
+    expect(veredictoDe(NAVEGA, ESPERA, "await otra.goto('/')", 'await new AxeBuilder({ page }).analyze()')).toBe('pasa')
+    expect(veredictoDe(NAVEGA, ESPERA, "await otra.goto('/')", 'await new AxeBuilder({ page: page }).analyze()')).toBe('pasa')
+  })
+
+  it.each([
+    ['con espacios alrededor de los dos puntos', 'await new AxeBuilder({ page : otra }).analyze()'],
+    ['sin espacios', 'await new AxeBuilder({page:otra}).analyze()'],
+  ])('un AxeBuilder con "{ page: otra }" %s mide la página "otra"', (_nombre, analisis) => {
+    expect(veredictoDe(NAVEGA, ESPERA, "await otra.goto('/')", analisis)).toBe('incumple')
+  })
+
+  it('un AxeBuilder con una opción que solo CONTIENE "page" ("{ subpage }") no nombra ninguna página', () => {
+    expect(veredictoDe(NAVEGA, ESPERA, "await otra.goto('/')", 'await new AxeBuilder({ subpage }).analyze()')).toBe('incumple')
+    expect(veredictoDe(NAVEGA, ESPERA, 'await new AxeBuilder({ subpage }).analyze()')).toBe('pasa')
+  })
+
+  it('una opción que solo CONTIENE "reducedMotion" ("noreducedMotion") o un valor que solo EMPIEZA por "reduce" ("reduced") no es movimiento reducido', () => {
+    expect(veredictoDe("await page.emulateMedia({ noreducedMotion: 'reduce' })", NAVEGA, MIDE_EL_TITULAR)).toBe('incumple')
+    expect(veredictoDe("await page.emulateMedia({ reducedMotion: 'reduced' })", NAVEGA, MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('una flecha de expresión que es un array en varias líneas se lee entera', () => {
+    const funciones = ['const medir = (page: Page) => [', "  page.locator('h1').boundingBox(),", ']'].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it('una espera con un argumento que no es un identificador ("{ page }") no se ata a ninguna página', () => {
+    expect(veredictoDe(NAVEGA, 'await esperarEntradaTerminada({ page })', MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('un texto con la página en una captura y el nombre de otra función que no es la del hero no mide el hero', () => {
+    expect(veredictoDe(NAVEGA, "await page.locator('#contacto').boundingBox()")).toBe('exento')
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 de la revisión: las cadenas, los comentarios y los alias de los tests', () => {
+  it('una cadena con una barra invertida y un salto de línea (continuación de línea) se lee entera y no deja ver lo que cita', () => {
+    const lineas = ["const nota = 'primera \\", "page.goto(x)'", EMULA_REDUCE, NAVEGA, MIDE_EL_TITULAR]
+
+    expect(veredictoDe(...lineas)).toBe('pasa')
+  })
+
+  it('un título con una barra invertida y un espacio se lee entero', () => {
+    const spec = "test('con \\ espacio', async ({ page }) => {\n  await page.goto('/')\n})"
+
+    expect(comprobarMedicionEstable(spec).bloques).toEqual([{ titulo: 'con \\ espacio', veredicto: 'exento' }])
+  })
+
+  it.each([
+    ['con un espacio antes del punto', "const t = test .extend({})"],
+    ['con un espacio tras el punto', "const t = test. extend({})"],
+    ['sin salto de línea al final del texto', 'const t = test'],
+  ])('un alias %s declara bloques', (_nombre, declaracion) => {
+    const spec = `${specConUnBloque(cuerpo(NAVEGA, MIDE_EL_TITULAR).replace('test(', 't('))}${declaracion}`
+
+    expect(veredictosDe(spec)).toEqual(['incumple'])
+  })
+
+  it('congelar y colocar: solo la colocación es código, el nombre del ayudante en una cadena no congela', () => {
+    expect(veredictoDe('const nota = "congelarRelojDeAnimaciones(page)"', NAVEGA, COLOCA_LAS_ANIMACIONES, MIDE_EL_TITULAR)).toBe('incumple')
+    expect(veredictoDe('const nota = "sesion.send(\'Animation.setPlaybackRate\', 0)"', NAVEGA, COLOCA_LAS_ANIMACIONES, MIDE_EL_TITULAR)).toBe('incumple')
+  })
+
+  it('el orden de los eventos de una función local de varios eventos se conserva entero', () => {
+    const ordenada = [
+      'async function cargar(pagina: Page) {',
+      "  await pagina.goto('/')",
+      '  await esperarEntradaTerminada(pagina)',
+      '  await pagina.reload()',
+      '  await esperarEntradaTerminada(pagina)',
+      '}',
+    ].join('\n')
+    const desordenada = ordenada.replace('  await esperarEntradaTerminada(pagina)\n}', '}')
+
+    expect(veredictoConFunciones(ordenada, 'await cargar(page)', MIDE_EL_TITULAR)).toBe('pasa')
+    expect(veredictoConFunciones(desordenada, 'await cargar(page)', MIDE_EL_TITULAR)).toBe('incumple')
+  })
+})
+
+describe('hero_reducido_con_animacion @s10, A6 de la revisión: lo que la primera corrida de StrykerJS dejó vivo', () => {
+  it('un ";" acaba la flecha de expresión aunque la sentencia que sigue empiece por un operador ("-1 + …")', () => {
+    const funciones = "const contar = (locator: Locator) => locator.count(); -1 + page.locator('h1').boundingBox()"
+
+    expect(veredictoConFunciones(funciones, NAVEGA, "await contar(page.locator('h1'))")).toBe('exento')
+  })
+
+  it('una llamada con menos argumentos que parámetros deja al parámetro que falta con su propio nombre ("page")', () => {
+    const funcion = ['async function esperar(primero: number, page: Page) {', '  await esperarEntradaTerminada(page)', '}'].join('\n')
+
+    expect(veredictoConFunciones(funcion, NAVEGA, 'await esperar(1)', MIDE_EL_TITULAR)).toBe('pasa')
+  })
+
+  it('una flecha de expresión con varias líneas en blanco antes del cuerpo lo lee entero', () => {
+    const funciones = ['const medir = (page: Page) =>', '', '', '', "    page.locator('h1').boundingBox()"].join('\n')
+
+    expect(veredictoConFunciones(funciones, NAVEGA, 'await medir(page)')).toBe('incumple')
+  })
+
+  it('un argumento desestructurado en el que la función espera ("esperarEntradaTerminada({ page })") no ata la espera a la página que recibe', () => {
+    const funcion = ['async function esperar({ page }: Fixtures) {', '  await esperarEntradaTerminada({ page })', '}'].join('\n')
+    const lineas = ["await otra.goto('/')", 'await esperar(otra)', "await otra.locator('h1').boundingBox()"]
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('incumple')
+  })
+
+  it('la función del fichero se ve aunque OTRO test declare dentro una con el mismo nombre', () => {
+    const delFichero = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const conLaSuya = [
+      "test('declara la suya', async ({ page }) => {",
+      '  async function cargar(p: Page) {',
+      "    await p.goto('/')",
+      '  }',
+      '  await cargar(page)',
+      `  ${MIDE_EL_TITULAR}`,
+      '})',
+    ].join('\n')
+    const laDelFichero = ["test('usa la del fichero', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+    expect(veredictosDe([CABECERA_DEL_SPEC, delFichero, conLaSuya, laDelFichero].join('\n'))).toEqual(['incumple', 'pasa'])
+  })
+
+  it('una función del fichero pegada al test que la llama ("}test(") es la más cercana ANTES de él', () => {
+    const sinEspera = ['async function cargar(p: Page) {', "  await p.goto('/')", '}'].join('\n')
+    const conEspera = ['async function cargar(p: Page) {', "  await p.goto('/')", '  await esperarEntradaTerminada(p)', '}'].join('\n')
+    const bloque = ["test('pegado', async ({ page }) => {", '  await cargar(page)', `  ${MIDE_EL_TITULAR}`, '})'].join('\n')
+
+    expect(veredictosDe([CABECERA_DEL_SPEC, sinEspera, `${conEspera}${bloque}`].join('\n'))).toEqual(['pasa'])
+  })
+
+  it('una función declarada en el bloque y llamada sin página nombrada mide la que el bloque nombró más cerca antes de llamarla', () => {
+    const lineas = [
+      NAVEGA,
+      ESPERA,
+      "await otra.goto('/')",
+      'async function medir() {',
+      "  return document.querySelector('h1').getBoundingClientRect()",
+      '}',
+      'await medir()',
+    ]
+
+    expect(veredictoDe(...lineas)).toBe('incumple')
+  })
+
+  it('una medición que no nombra ninguna página, tras una función que navega y espera con la "page" del fichero, se ata a "page"', () => {
+    const funcion = ['async function cargarPortada() {', "  await page.goto('/')", '  await esperarEntradaTerminada(page)', '}'].join('\n')
+    // Ni siquiera la firma del test nombra "page": no hay ninguna mención en el bloque entero.
+    const bloque = ["test('sin ninguna página nombrada', async (fixtures) => {", '  await cargarPortada()', "  await contenedor.locator('h1').boundingBox()", '})'].join('\n')
+
+    expect(veredictosDe(specConUnBloque(bloque, funcion))).toEqual(['pasa'])
+    expect(veredictoConFunciones(funcion, 'await cargarPortada()', "await contenedor.locator('h1').boundingBox()")).toBe('pasa')
+  })
+
+  it('una lectura de estilo en el bloque cuenta aunque la función que llama no lea ninguno', () => {
+    const funcion = ['async function medir(page: Page) {', '  return page.url()', '}'].join('\n')
+    const lineas = [NAVEGA, 'await medir(page)', "await page.locator('h1').evaluate((e) => getComputedStyle(e).opacity)"]
+
+    expect(veredictoConFunciones(funcion, ...lineas)).toBe('incumple')
   })
 })

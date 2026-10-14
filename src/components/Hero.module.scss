@@ -126,9 +126,21 @@
 // buena). Sin `will-change`: no se reserva una capa permanente para una entrada
 // que dura 0,94 s.
 //
-// La animación cuelga del CONTENEDOR del botón y no del enlace, para que el foco y
-// su anillo no se vean afectados. Los tiempos van en LITERAL: la puerta de la escala
-// de movimiento falla cerrado ante `var()`, `$variable` y `calc()`.
+// La animación cuelga del CONTENEDOR del botón y no del enlace. Eso NO deja a salvo el
+// foco ni su anillo: la opacidad de un contenedor se compone sobre todo su subárbol,
+// anillo incluido. MEDIDO el 14/10/2026 sobre el `dist/` real, con el reloj de
+// animaciones congelado a mitad de la entrada: el enlace, enfocado con Tab, queda con el
+// foco visible de teclado, su contenedor está a 0,68 de opacidad y el píxel del anillo sale a
+// 184 de 255 en el canal rojo, frente a 254 con la entrada terminada. Durante la
+// entrada (hasta 0,94 s tras montar la portada, y sin verse nada en los primeros 240 ms
+// de retardo) el anillo se ve atenuado; un Tab tras una navegación de cliente a la
+// portada puede caer ahí (camino que reprodujo el revisor de accesibilidad sobre una
+// réplica sintética). Ninguna puerta lo mide: @s38 y @s39 de accesibilidad esperan a
+// que la entrada termine. El diseño firmado permite animar el contenedor, así que
+// esto queda dicho aquí y no corregido.
+//
+// Los tiempos van en LITERAL: la puerta de la escala de movimiento falla cerrado ante
+// `var()`, `$variable` y `calc()`.
 @media (prefers-reduced-motion: no-preference) {
   .contenido h1 {
     animation: entrada-del-hero 700ms ease-out backwards;

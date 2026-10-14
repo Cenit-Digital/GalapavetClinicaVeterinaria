@@ -34,6 +34,7 @@ describe('(paso 5 del plan) @s33 ampliado: toda animación o transición de las 
 
     expect(informe.ficherosComprobados).toBeGreaterThan(0)
     expect(informe.incumplimientos).toHaveLength(0)
+    expect(informe.ficherosSinLecturaFiable).toEqual([])
     expect(informe.pasa).toBe(true)
   })
 

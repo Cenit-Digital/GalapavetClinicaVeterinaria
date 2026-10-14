@@ -15,6 +15,14 @@ import { errors, type Page } from 'playwright/test'
 /** Dónde cuelga el registro en la `window` de cada documento: un solo literal, compartido con el lado del navegador. */
 const CLAVE_DEL_REGISTRO = '__registroDeEntradaDelHero'
 
+/**
+ * El contenedor del titular, el párrafo y el botón (`Hero.tsx`). El registro cuenta SOLO las animaciones
+ * cuyo objetivo cuelga de él: el documento puede tener otras ajenas a la entrada (la cabecera de la
+ * feature 49, un indicador de carga) y, contadas, adelantarían el ancla antes de que arranque la tercera
+ * del hero, o impedirían que `fines >= arranques` se cumpliera nunca.
+ */
+const SELECTOR_DEL_HERO = '[data-hero-contenido]'
+
 /** Las tres animaciones de la entrada del hero (titular, párrafo y botón): @s5 de la feature. */
 const ANIMACIONES_DE_ENTRADA_DEL_HERO = 3
 
@@ -23,6 +31,19 @@ const ANIMACIONES_DE_ENTRADA_DEL_HERO = 3
  * `load` + 980-1015 ms. Este tope es holgura para una máquina lenta, no una espera prevista.
  */
 const TOPE_POR_DEFECTO_MS = 10_000
+
+/** Lo que el navegador necesita saber, en UN solo objeto: las funciones que se le envían se serializan y no pueden cerrar sobre constantes del módulo. */
+interface ParametrosDelNavegador {
+  readonly clave: string
+  readonly selectorDelHero: string
+  readonly arranquesEsperados: number
+}
+
+const PARAMETROS_DEL_NAVEGADOR: ParametrosDelNavegador = {
+  clave: CLAVE_DEL_REGISTRO,
+  selectorDelHero: SELECTOR_DEL_HERO,
+  arranquesEsperados: ANIMACIONES_DE_ENTRADA_DEL_HERO,
+}
 
 interface RegistroEnLaPagina {
   arranques: number
@@ -34,14 +55,16 @@ interface RegistroEnLaPagina {
  * sobre nada de fuera. Instalado a la vez en el contexto y en la página, la segunda copia sustituye al
  * registro de la primera y cuenta ella sola: no hay doble recuento.
  */
-function instalarElRegistro(clave: string): void {
+function instalarElRegistro({ clave, selectorDelHero }: ParametrosDelNavegador): void {
   const registro: RegistroEnLaPagina = { arranques: 0, fines: 0 }
   ;(window as unknown as Record<string, RegistroEnLaPagina>)[clave] = registro
-  window.addEventListener('animationstart', () => (registro.arranques += 1), true)
-  window.addEventListener('animationend', () => (registro.fines += 1), true)
+  const esDelHero = (evento: Event): boolean =>
+    evento.target instanceof Element && evento.target.closest(selectorDelHero) !== null
+  window.addEventListener('animationstart', (evento) => (registro.arranques += esDelHero(evento) ? 1 : 0), true)
+  window.addEventListener('animationend', (evento) => (registro.fines += esDelHero(evento) ? 1 : 0), true)
 }
 
-/** Lo que el registro dice en este instante, más si el titular ya existe. */
+/** Lo que el registro dice en este instante, más si el titular del hero ya existe. */
 export interface EstadoDelRegistro {
   readonly instalado: boolean
   readonly titular: boolean
@@ -50,20 +73,20 @@ export interface EstadoDelRegistro {
 }
 
 export async function leerRegistroDeEntrada(page: Page): Promise<EstadoDelRegistro> {
-  return page.evaluate((clave) => {
+  return page.evaluate(({ clave, selectorDelHero }) => {
     const registro = (window as unknown as Record<string, RegistroEnLaPagina | undefined>)[clave]
     return {
       instalado: registro !== undefined,
-      titular: document.querySelector('h1') !== null,
+      titular: document.querySelector(`${selectorDelHero} h1`) !== null,
       arranques: registro?.arranques ?? 0,
       fines: registro?.fines ?? 0,
     }
-  }, CLAVE_DEL_REGISTRO)
+  }, PARAMETROS_DEL_NAVEGADOR)
 }
 
 /** PRIMERA FASE: instala el registro de `animationstart` y `animationend`. Antes del `goto`. */
 export async function registrarEntradaDelHero(destino: Pick<Page, 'addInitScript'>): Promise<void> {
-  await destino.addInitScript(instalarElRegistro, CLAVE_DEL_REGISTRO)
+  await destino.addInitScript(instalarElRegistro, PARAMETROS_DEL_NAVEGADOR)
 }
 
 export interface OpcionesDeLaEspera {
@@ -75,14 +98,30 @@ function describirElEstado(estado: EstadoDelRegistro): string {
   return `titular: ${estado.titular}, arranques: ${estado.arranques}, fines: ${estado.fines}`
 }
 
-/** El ANCLA: existe el titular y el registro muestra el arranque de las tres. */
+/**
+ * El estado del registro para el mensaje del tope. Si la página ya no responde (se cerró, navegó), la
+ * lectura falla: ese fallo NO debe tapar al del tope, que es el que explica por qué se paró la espera.
+ */
+async function describirElEstadoSiSePuede(page: Page): Promise<string> {
+  try {
+    return describirElEstado(await leerRegistroDeEntrada(page))
+  } catch (error) {
+    return `no se pudo leer el registro: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/** El ANCLA: existe el titular del hero y el registro muestra el arranque de las tres. */
 async function esperarAlAncla(page: Page, topeMs: number): Promise<void> {
   await page.waitForFunction(
-    ([clave, arranquesEsperados]) => {
+    ({ clave, selectorDelHero, arranquesEsperados }) => {
       const registro = (window as unknown as Record<string, RegistroEnLaPagina | undefined>)[clave]
-      return document.querySelector('h1') !== null && registro !== undefined && registro.arranques >= arranquesEsperados
+      return (
+        document.querySelector(`${selectorDelHero} h1`) !== null &&
+        registro !== undefined &&
+        registro.arranques >= arranquesEsperados
+      )
     },
-    [CLAVE_DEL_REGISTRO, ANIMACIONES_DE_ENTRADA_DEL_HERO] as const,
+    PARAMETROS_DEL_NAVEGADOR,
     { timeout: topeMs },
   )
 }
@@ -115,7 +154,7 @@ async function exigirElRegistro(page: Page): Promise<void> {
  * Dos esperas, en este orden. Primero el ANCLA: que exista el titular y que el registro muestre el
  * arranque de las tres; sin ella, un hero que se monta después de `load` hace que
  * `fines >= arranques` se cumpla con 0 y 0, y la espera vuelve a los ~14 ms sin haber visto nada.
- * Solo después, que no quede ninguna en curso.
+ * Solo después, que no quede ninguna en curso. Las dos cuentan únicamente las animaciones del hero.
  *
  * Con TOPE: si vence con la entrada sin terminar, LANZA un error y el test falla en vez de medir una
  * página en movimiento. El tope ha de ser mayor que 0: Playwright entiende `timeout: 0` como «espera
@@ -135,9 +174,8 @@ export async function esperarEntradaTerminada(page: Page, opciones: OpcionesDeLa
     if (!(error instanceof errors.TimeoutError)) {
       throw error
     }
-    const estado = await leerRegistroDeEntrada(page)
     throw new Error(
-      `esperarEntradaTerminada: se agotó el tope de ${topeMs} ms con la entrada del hero sin terminar (${describirElEstado(estado)}); no se mide una portada en movimiento`,
+      `esperarEntradaTerminada: se agotó el tope de ${topeMs} ms con la entrada del hero sin terminar (${await describirElEstadoSiSePuede(page)}); no se mide una portada en movimiento`,
       { cause: error },
     )
   }

@@ -181,3 +181,36 @@ carga de Vitest en paralelo y no se reproduce. La conclusión del apartado 5 se 
 sola no hay regresión de LCP**; el candidato sigue siendo la foto, que no se anima, y la cláusula del cierre de la
 animación no aplica (apartado 6). Los datos crudos están en el scratchpad de la sesión (`lcp_q1.json`,
 `lcp_q2.json`), no en el repositorio.
+
+## 11. Remedida tras la ola 4 y lectura conjunta de las cuatro ejecuciones en reposo (14/10/2026, 15:57-16:00)
+
+Tras la ola 4 (correcciones del panel de revisión) el lead repitió la medida dos veces más, con la máquina otra
+vez en reposo (ningún agente, 4173 libre antes y después) y el mismo spec y método. Lo que cambió entre la
+ola 3a y esta medida en el código servido: NADA que afecte al hero en el navegador (el SCSS compilado es el
+mismo; `Hero.module.scss` solo cambió un comentario, que no llega al CSS construido).
+
+| Tamaño | Antes (LOCAL) | Reposo, ejecución 3 | Reposo, ejecución 4 | Elemento | CLS |
+| --- | --- | --- | --- | --- | --- |
+| 1440×900 | **132 ms** (96-152) | **148 ms** (132 · 160 · 156 · 148 · 148) | **144 ms** (112 · 140 · 144 · 160 · 160) | `IMG` en las 10 | 0 en las 10 |
+| 390×844 | **120 ms** (112-132) | **136 ms** (148 · 140 · 136 · 84 · 120) | **132 ms** (136 · 132 · 140 · 132 · 116) | `IMG` en las 10 | 0 en las 10 |
+
+**Estas cuatro medianas SON peores que la línea base** (escritorio +16 y +12 ms; móvil +16 y +12 ms), y @s11
+obliga a decirlo: la feature no se cierra sin que Pablo lo vea. Lectura honesta:
+
+- Las ejecuciones 1 y 2 (apartado 10, sin ningún agente en marcha) salieron MEJORES que la línea base
+  (escritorio 116 y 128 ms; móvil 96 y 104 ms). La diferencia entre ejecuciones en reposo del MISMO código
+  (hasta 32 ms en escritorio y 40 ms en móvil) es mayor que la diferencia con la línea base.
+- Reunidas las cuatro ejecuciones en reposo: escritorio 116 · 128 · 148 · 144 (media 134 ms) frente a 132 ms;
+  móvil 96 · 104 · 136 · 132 (media 117 ms) frente a 120 ms. Sin diferencia atribuible.
+- La máquina no es la misma entre las dos tandas: entre ambas corrieron seis horas de agentes con Vitest,
+  Stryker y Playwright, y el repositorio vive dentro de una carpeta sincronizada de OneDrive donde Stryker deja
+  cientos de MB en `.stryker-tmp` (sin verificar si eso afecta; no se midió). No se puede atribuir la subida a
+  nada del código.
+- El elemento candidato sigue siendo la `IMG` en las 40 pasadas medidas, que no se anima y no ha cambiado:
+  el código que decide el LCP en la 48 sola es el mismo que antes.
+- Todas las pasadas están por debajo de 210 ms: más de 11 veces de margen sobre el umbral de 2500 ms.
+
+**Para Pablo:** el «antes» y el «después» son indistinguibles para un visitante (centésimas de segundo, dentro
+del ruido de la propia medida). La decisión que pide @s11 es sencilla: dar o no el visto bueno a esa
+diferencia. El retraso que sí es real aparece solo con la feature 49 (apartado 6: unos 0,8-0,9 s con la foto
+fuera de juego).

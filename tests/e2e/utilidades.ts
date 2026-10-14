@@ -4,7 +4,29 @@
 // lógica de producción — el mismo criterio que ya separa `tools/puerta-terceros.ts`
 // del resto de `src/`.
 
+import type { Page } from 'playwright/test'
+
 const BASE_HEXADECIMAL = 16
+
+/**
+ * El tope de toda `page.waitForFunction` de los specs. En Playwright 1.62 esa espera NO tiene tope por
+ * omisión (su `timeout` vale 0: MEDIDO leyendo los tipos de `playwright-core`, no en la documentación
+ * oficial) y `playwright.config.ts` no declara `actionTimeout`: una espera que nunca se cumple solo la
+ * corta el tiempo del test entero (60 s) y falla con «Test timeout of 60000ms exceeded», sin decir qué
+ * esperaba. Con este tope el fallo nombra la espera. Una espera sana tarda milisegundos (la más larga,
+ * la de @s19 de accesibilidad, dura 1,5 s a propósito): 15 s es holgura para una máquina lenta, muy por
+ * debajo de los 60 s del test. Lo exige `puertaNavegadorReal.test.ts`.
+ */
+export const TOPE_DE_UNA_ESPERA_MS = 15_000
+
+/**
+ * Dos fotogramas: tiempo para que el motor recalcule los estilos y cree las animaciones que la
+ * página acaba de provocar y, con el reloj vivo, para que su `currentTime` avance. Es una espera por
+ * CONDICIÓN (dos `requestAnimationFrame` encadenados), no un `waitForTimeout` a ciegas.
+ */
+export async function esperarDosFotogramas(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>((resolver) => requestAnimationFrame(() => requestAnimationFrame(() => resolver()))))
+}
 
 /**
  * Convierte un color computado por el navegador ("rgb(r, g, b)" o

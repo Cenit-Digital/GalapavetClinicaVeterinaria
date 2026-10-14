@@ -8,7 +8,9 @@
 // `vite preview` (`playwright.config.ts`).
 //
 // Todos cargan la portada con la preferencia de movimiento declarada de forma
-// EXPLÍCITA, nunca por omisión.
+// EXPLÍCITA, nunca por omisión. La ÚNICA cláusula de @s5 que no se mide con el reloj
+// congelado es «las tres empiezan en el mismo instante» (con el reloj congelado no
+// podría fallar): tiene su propio bloque, con el reloj vivo.
 //
 // CÓMO SE MIDE LA ENTRADA SIN QUE DEPENDA DEL RELOJ (@s5, @s7, @s9 y @s12). El
 // reloj de animaciones del documento se CONGELA ANTES de navegar
@@ -30,7 +32,9 @@
 import { expect, test, type Locator, type Page } from 'playwright/test'
 import { textoHorario } from '../../src/components/Faq-logica'
 import { datosNegocio } from '../../src/lib/site'
+import { esperarEntradaTerminada, registrarEntradaDelHero } from './entrada-del-hero'
 import { SUBPATH_DE_PRODUCCION } from './rutas'
+import { esperarDosFotogramas, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const SELECTOR_DEL_HERO = '#inicio [data-a-sangre]'
 const PREGUNTA_DE_HORARIO = '¿Qué horario tiene la clínica?'
@@ -87,6 +91,11 @@ interface MedidaDeUnElemento {
 
 interface MedidaDeUnInstante {
   readonly elementos: Readonly<Record<Rol, MedidaDeUnElemento>>
+  /**
+   * Cuántos elementos tiene la PÁGINA bajo los tres selectores, contados antes de medir ninguno. Es lo que
+   * el recuento de «elementos comprobados» de @s7 puede discutir: `elementos` tiene siempre tres claves.
+   */
+  readonly localizados: number
   readonly hero: { readonly top: number; readonly bottom: number; readonly scrollHeight: number; readonly clientHeight: number }
   readonly documento: { readonly anchoDelContenido: number; readonly anchoDeLaVentana: number }
   /** La caja de cada elemento de las secciones posteriores al hero (solo si se pidió). */
@@ -98,7 +107,6 @@ interface AnimacionLeida {
   readonly retardo: number
   readonly duracion: number
   readonly fin: number
-  readonly inicio: number | null
   readonly iteraciones: number
   readonly rellenoDelEfecto: string
   readonly rellenoComputado: string
@@ -128,9 +136,7 @@ async function congelarRelojDeAnimaciones(page: Page): Promise<void> {
  */
 async function esperarALosElementosDelHero(page: Page): Promise<void> {
   await page.locator(`${SELECTOR_DEL_HERO} h1`).waitFor()
-  await page.evaluate(
-    () => new Promise<void>((resolver) => requestAnimationFrame(() => requestAnimationFrame(() => resolver()))),
-  )
+  await esperarDosFotogramas(page)
 }
 
 /**
@@ -185,6 +191,11 @@ async function medirElementos(page: Page, conPosteriores = false): Promise<Medid
   }
   return page.evaluate(
     ({ selectorDelHero, selectores: selectoresDeLaPagina, incluirPosteriores }) => {
+      // Antes de desreferenciar nada: lo que la página tiene bajo cada selector, no lo que `querySelector` elige.
+      const localizados = Object.values(selectoresDeLaPagina).reduce(
+        (suma, selector) => suma + document.querySelectorAll(selector).length,
+        0,
+      )
       const seccion = document.querySelector(selectorDelHero) as HTMLElement
       const cajaDe = (elemento: Element): Caja => {
         const { x, y, width, height } = elemento.getBoundingClientRect()
@@ -230,6 +241,7 @@ async function medirElementos(page: Page, conPosteriores = false): Promise<Medid
           parrafo: medir(selectoresDeLaPagina.parrafo),
           boton: medir(selectoresDeLaPagina.boton),
         },
+        localizados,
         hero: {
           top: cajaDelHero.top,
           bottom: cajaDelHero.bottom,
@@ -284,7 +296,6 @@ async function leerAnimaciones(page: Page): Promise<readonly AnimacionLeida[]> {
           retardo: Number(tiempos.delay),
           duracion: Number(tiempos.duration),
           fin: Number(tiempos.endTime),
-          inicio: typeof animacion.startTime === 'number' ? animacion.startTime : null,
           iteraciones: Number(tiempos.iterations),
           rellenoDelEfecto: String(efecto.getTiming().fill),
           rellenoComputado: estilo.animationFillMode,
@@ -340,11 +351,9 @@ function incumplimientosDeLosValoresAprobados(captura: CapturaDeLaEntrada): read
     ...comparar('duraciones', de((a) => a.duracion), ROLES.map(() => DURACION_MS)),
     ...comparar('retardos', de((a) => a.retardo), RETARDOS_MS),
     ...comparar('instantes de fin', de((a) => a.fin), FIN_DE_CADA_ANIMACION_MS),
-    // DOCUMENTAL, NO es una puerta: con el reloj congelado `startTime` vale 0 para CUALQUIER animación, también
-    // para una que nazca 400 ms después de `load` (MEDIDO en Chromium 151), así que esta cláusula se cumple por
-    // construcción y ninguna hoja de estilos puede ponerla en rojo. Los tres elementos se montan en el mismo
-    // commit, y esa es la garantía real de que «empiezan en el mismo instante».
-    ...comparar('empiezan en el mismo instante', new Set(de((a) => a.inicio)).size, 1),
+    // «Las tres empiezan en el mismo instante» NO se lee aquí: con el reloj congelado `startTime` vale 0 para
+    // CUALQUIER animación y la cláusula no podría fallar. Se mide con el reloj vivo en su propio bloque
+    // (más abajo, «las tres empiezan en el mismo instante»).
     ...comparar('curva computada', de((a) => a.curvaComputada), mismoValorEnTodas(CURVA)),
     ...comparar('curvas de los fotogramas', de((a) => [...new Set(a.curvasDeLosFotogramas)]), ROLES.map(() => [CURVA])),
     ...comparar('iteraciones', de((a) => a.iteraciones), ROLES.map(() => 1)),
@@ -391,7 +400,7 @@ function incumplimientosDeLaCancelacion(
 ): readonly string[] {
   const { final, cancelado } = captura
   const incumplidas: string[] = [...comparar('animaciones en curso antes de cancelar', captura.animacionesAntesDeCancelar, ANIMACIONES_DEL_HERO)]
-  incumplidas.push(...comparar('elementos comprobados', Object.keys(cancelado.elementos).length, ANIMACIONES_DEL_HERO))
+  incumplidas.push(...comparar('elementos localizados en la página bajo los tres selectores', cancelado.localizados, ROLES.length))
 
   for (const rol of ROLES) {
     const sinAnimacion = cancelado.elementos[rol]
@@ -429,8 +438,11 @@ function incumplimientosDeLaCancelacion(
 
 const ORIGEN_SINTETICO = 'http://sintetica.test'
 
-/** Un hero con la estructura del real (`#inicio > section[data-a-sangre]`) y una sección posterior; `css` es el defecto. */
-function paginaSintetica(css: string): string {
+/**
+ * Un hero con la estructura del real (`#inicio > section[data-a-sangre]`) y una sección posterior; `css` es el
+ * defecto de estilos y `guion`, si lo hay, el defecto de MONTAJE: un script que corre al final del documento.
+ */
+function paginaSintetica(css: string, guion = ''): string {
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><title>hero sintético</title>
 <style>
@@ -450,11 +462,14 @@ function paginaSintetica(css: string): string {
     <div data-hero-acciones><a href="#reservar">Reservar cita</a></div>
   </div></section></div>
   <section id="posterior"><h2>Otra sección</h2><p>Contenido posterior al hero.</p></section>
+  <script>${guion}</script>
 </body></html>`
 }
 
-async function cargarPaginaSintetica(page: Page, css: string, ancho = 1440, alto = 900): Promise<void> {
-  await page.route(`${ORIGEN_SINTETICO}/**`, (ruta) => ruta.fulfill({ contentType: 'text/html', body: paginaSintetica(css) }))
+async function cargarPaginaSintetica(page: Page, css: string, ancho = 1440, alto = 900, guion = ''): Promise<void> {
+  await page.route(`${ORIGEN_SINTETICO}/**`, (ruta) =>
+    ruta.fulfill({ contentType: 'text/html', body: paginaSintetica(css, guion) }),
+  )
   await page.setViewportSize({ width: ancho, height: alto })
   await page.goto(`${ORIGEN_SINTETICO}/`)
 }
@@ -501,6 +516,10 @@ function cssDeLaEntrada(opciones: OpcionesDeLaEntrada = {}): string {
   }
   ${fueraDeLaConsulta}`
 }
+
+/** Defecto de MONTAJE: un segundo enlace dentro del contenedor del botón. `querySelector('… a')` toma el primero y no avisa. */
+const GUION_CON_UN_SEGUNDO_ENLACE =
+  "document.querySelector('[data-hero-acciones]').append(Object.assign(document.createElement('a'), { href: '#llamar', textContent: 'Llamar' }))"
 
 /** La misma secuencia que hacen los tests reales, para las páginas sintéticas. */
 async function capturarLaEntrada(page: Page): Promise<CapturaDeLaEntrada> {
@@ -883,6 +902,164 @@ test.describe('@s5 de hero_reducido_con_animacion: la comprobación muerde (pág
 })
 
 // ---------------------------------------------------------------------------
+// @s5 — «las tres empiezan en el mismo instante», medido con el reloj VIVO
+// ---------------------------------------------------------------------------
+//
+// POR QUÉ NO VIVE EN LA AUDITORÍA DE LOS VALORES. Con el reloj congelado (el Given de @s5), `startTime`
+// vale 0 para CUALQUIER animación, también para una que nazca 400 ms después de `load` (MEDIDO en
+// Chromium 151): una cláusula «un solo instante de inicio» leída ahí se cumple por construcción y ninguna
+// hoja de estilos ni ningún montaje puede ponerla en rojo. Por eso se mide APARTE y con el reloj VIVO:
+// un observador de `animationstart` en fase de captura, instalado con `addInitScript` ANTES del `goto`,
+// que en el PRIMER arranque del hero (el titular, retardo 0) guarda las animaciones del hero que existen
+// entonces con su `startTime`. Se lee DENTRO del evento, así que no depende del reloj de la máquina ni de
+// cuándo se mire. Las tres de la portada real nacen en el mismo fotograma y comparten `startTime`; un
+// botón montado en otro commit (1 s después, o un fotograma antes) lo rompe y lo ven los sintéticos.
+// DESVÍO del contrato: el Given de @s5 dice «reloj congelado»; esta cláusula, por lo dicho, no puede.
+
+/** Dónde deja el observador su anotación del primer arranque del hero. */
+const CLAVE_DEL_PRIMER_ARRANQUE = '__primerArranqueDelHero'
+
+interface PrimerArranqueDelHero {
+  /** Cuántas animaciones por fotogramas clave del hero existían cuando arrancó la primera. */
+  readonly existentes: number
+  /** El `startTime` de cada una; `null` si aún no lo tiene. */
+  readonly inicios: readonly (number | null)[]
+}
+
+/** Instala, ANTES de que cargue la página, el observador del primer `animationstart` cuyo objetivo cuelga del hero. */
+async function observarElPrimerArranqueDelHero(page: Page): Promise<void> {
+  await page.addInitScript(
+    ({ clave, selectorDelHero }) => {
+      const ventana = window as unknown as Record<string, PrimerArranqueDelHero | null>
+      ventana[clave] = null
+      window.addEventListener(
+        'animationstart',
+        (evento) => {
+          const esDelHero = evento.target instanceof Element && evento.target.closest(selectorDelHero) !== null
+          if (!esDelHero || ventana[clave] !== null) {
+            return
+          }
+          const delHero = document
+            .getAnimations()
+            .filter(
+              (animacion): animacion is CSSAnimation =>
+                animacion instanceof CSSAnimation &&
+                animacion.effect instanceof KeyframeEffect &&
+                animacion.effect.target?.closest(selectorDelHero) != null,
+            )
+          ventana[clave] = {
+            existentes: delHero.length,
+            inicios: delHero.map((animacion) => (typeof animacion.startTime === 'number' ? animacion.startTime : null)),
+          }
+        },
+        true,
+      )
+    },
+    { clave: CLAVE_DEL_PRIMER_ARRANQUE, selectorDelHero: SELECTOR_DEL_HERO },
+  )
+}
+
+/** Espera, con tope, a que el hero haya arrancado su primera animación y devuelve lo que el observador anotó (solo la primera: las siguientes no lo sobrescriben). */
+async function leerElPrimerArranque(page: Page): Promise<PrimerArranqueDelHero> {
+  await page.waitForFunction(
+    (clave) => (window as unknown as Record<string, unknown>)[clave] !== null,
+    CLAVE_DEL_PRIMER_ARRANQUE,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
+  return page.evaluate(
+    (clave) => (window as unknown as Record<string, PrimerArranqueDelHero>)[clave] as PrimerArranqueDelHero,
+    CLAVE_DEL_PRIMER_ARRANQUE,
+  )
+}
+
+/** hero_reducido_con_animacion @s5: al arrancar la primera, existen las 3 del hero y todas comparten un único instante de inicio. */
+function incumplimientosDelMismoInstante(arranque: PrimerArranqueDelHero): readonly string[] {
+  return [
+    ...comparar('animaciones del hero que existen al arrancar la primera', arranque.existentes, ANIMACIONES_DEL_HERO),
+    ...comparar('todas con instante de inicio', arranque.inicios.every((inicio) => inicio !== null), true),
+    ...comparar('instantes de inicio distintos', new Set(arranque.inicios).size, 1),
+  ]
+}
+
+/**
+ * Defecto de MONTAJE: el contenedor del botón se monta 1 s DESPUÉS que el titular y el párrafo (otro commit). Un segundo y no 300 ms: con la máquina
+ * cargada el primer arranque puede tardar más de 300 ms y el defecto dejaría de verse (un rojo falso por el reloj, justo lo que esta medida evita).
+ */
+const GUION_CON_EL_BOTON_1_S_DESPUES =
+  "const acciones = document.querySelector('[data-hero-acciones]'); const padre = acciones.parentElement; acciones.remove(); setTimeout(() => padre.append(acciones), 1000)"
+
+/**
+ * Defecto de MONTAJE: el botón entra UN FOTOGRAMA ANTES que el titular y el párrafo. Los tres existen cuando
+ * arranca el titular, pero la animación del botón nació en otro fotograma: instantes de inicio distintos.
+ */
+const GUION_CON_EL_BOTON_UN_FOTOGRAMA_ANTES =
+  "const retrasados = [document.querySelector('h1'), document.querySelector('[data-hero-subtitulo]')]; retrasados.forEach((elemento) => { elemento.style.display = 'none' }); requestAnimationFrame(() => requestAnimationFrame(() => retrasados.forEach((elemento) => { elemento.style.display = '' })))"
+
+/** La misma secuencia que hace el test real, para las páginas sintéticas: sin congelar el reloj. */
+async function capturarElPrimerArranque(page: Page, css: string, guion = ''): Promise<PrimerArranqueDelHero> {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await observarElPrimerArranqueDelHero(page)
+  await registrarEntradaDelHero(page)
+  await cargarPaginaSintetica(page, css, 1440, 900, guion)
+  await esperarEntradaTerminada(page)
+  return leerElPrimerArranque(page)
+}
+
+test.describe('@s5 de hero_reducido_con_animacion: las tres empiezan en el mismo instante (reloj vivo, en el primer "animationstart" del hero)', () => {
+  test('en la portada real, cuando arranca el titular existen las 3 animaciones del hero y las tres comparten un único instante de inicio', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await observarElPrimerArranqueDelHero(page)
+    await registrarEntradaDelHero(page)
+    await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
+    // Se lee con la entrada ya terminada: lo anotado ha de ser el PRIMER arranque aunque después haya habido más.
+    await esperarEntradaTerminada(page)
+
+    const arranque = await leerElPrimerArranque(page)
+
+    expect(incumplimientosDelMismoInstante(arranque)).toEqual([])
+  })
+
+  test('no incumple nada: un hero sano, con los tres montados en el mismo fotograma', async ({ page }) => {
+    const arranque = await capturarElPrimerArranque(page, cssDeLaEntrada())
+
+    expect(arranque.existentes).toBe(ANIMACIONES_DEL_HERO)
+    expect(incumplimientosDelMismoInstante(arranque)).toEqual([])
+  })
+
+  test('incumple: el botón se monta 1 s después (otro commit): al arrancar el titular solo existen 2 animaciones', async ({ page }) => {
+    const arranque = await capturarElPrimerArranque(page, cssDeLaEntrada(), GUION_CON_EL_BOTON_1_S_DESPUES)
+
+    // Exactamente 2, y no «algo distinto de 3»: lo anotado ha de ser el PRIMER arranque (un observador que se pisara en cada
+    // arranque acabaría anotando el del botón, cuando ya solo queda su animación: 1).
+    expect(arranque.existentes).toBe(ANIMACIONES_DEL_HERO - 1)
+    expect(incumplimientosDelMismoInstante(arranque).join('\n')).toContain('animaciones del hero que existen')
+  })
+
+  test('incumple: el botón entra un fotograma antes que el titular: existen las 3, pero con instantes de inicio distintos', async ({
+    page,
+  }) => {
+    const arranque = await capturarElPrimerArranque(page, cssDeLaEntrada(), GUION_CON_EL_BOTON_UN_FOTOGRAMA_ANTES)
+
+    expect(arranque.existentes).toBe(ANIMACIONES_DEL_HERO)
+    expect(incumplimientosDelMismoInstante(arranque).join('\n')).toContain('instantes de inicio distintos')
+  })
+
+  test('la auditoría señala cada cláusula por separado: recuento, instante de inicio ausente y varios instantes', () => {
+    const sano: PrimerArranqueDelHero = { existentes: 3, inicios: [97.5, 97.5, 97.5] }
+
+    expect(incumplimientosDelMismoInstante(sano)).toEqual([])
+    expect(incumplimientosDelMismoInstante({ existentes: 2, inicios: [97.5, 97.5] }).join('\n')).toContain('animaciones del hero que existen')
+    expect(incumplimientosDelMismoInstante({ existentes: 4, inicios: [97.5, 97.5, 97.5, 97.5] }).join('\n')).toContain('animaciones del hero que existen')
+    expect(incumplimientosDelMismoInstante({ existentes: 3, inicios: [97.5, null, 97.5] }).join('\n')).toContain('todas con instante de inicio')
+    expect(incumplimientosDelMismoInstante({ existentes: 3, inicios: [97.5, 97.5, 113.9] }).join('\n')).toContain('instantes de inicio distintos')
+    // Un recuento correcto con instantes ausentes NO se queda en un solo valor «nulo» por casualidad.
+    expect(incumplimientosDelMismoInstante({ existentes: 3, inicios: [null, null, null] }).join('\n')).toContain('todas con instante de inicio')
+  })
+})
+
+// ---------------------------------------------------------------------------
 // @s7 — si la animación no corre, el contenido se ve en su sitio
 // ---------------------------------------------------------------------------
 
@@ -948,6 +1125,7 @@ test.describe('@s7 de hero_reducido_con_animacion: la comprobación muerde (pág
     }
     const instante = (parrafo: MedidaDeUnElemento): MedidaDeUnInstante => ({
       elementos: { titular: sano, parrafo, boton: sano },
+      localizados: ROLES.length,
       hero: { top: 0, bottom: 900, scrollHeight: 900, clientHeight: 900 },
       documento: { anchoDelContenido: 1440, anchoDeLaVentana: 1440 },
       posteriores: [],
@@ -958,6 +1136,52 @@ test.describe('@s7 de hero_reducido_con_animacion: la comprobación muerde (pág
     expect(
       incumplimientosDeLaCancelacion({ ...captura, cancelado: instante({ ...sano, ocultoParaElArbol: true }) }).join('\n'),
     ).toContain('oculto para el árbol de accesibilidad')
+  })
+
+  // «El recuento de elementos comprobados es exactamente 3» (@s7). Con un recuento sacado del objeto que se
+  // construye, la cláusula no podía fallar nunca (siempre trae las tres claves); este cuenta lo que la
+  // PÁGINA tiene bajo cada selector, antes de construir nada. Y mide más que `querySelector`, que toma el
+  // primero y no avisa de que haya un segundo.
+  test('incumple: un segundo enlace en el hero, que "querySelector" no ve, deja el recuento de elementos localizados en 4 y no en 3', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await congelarRelojDeAnimaciones(page)
+    await cargarPaginaSintetica(page, cssDeLaEntrada(), 1440, 900, GUION_CON_UN_SEGUNDO_ENLACE)
+
+    const captura = await capturarLaEntrada(page)
+
+    expect(captura.cancelado.localizados).toBe(ROLES.length + 1)
+    expect(incumplimientosDeLaCancelacion(captura).join('\n')).toContain('elementos localizados')
+  })
+
+  test('incumple: el recuento de elementos localizados que no es 3 se señala aunque todo lo demás esté sano', () => {
+    const sano: MedidaDeUnElemento = {
+      opacidadEfectiva: 1,
+      caja: { x: 24, y: 100, width: 300, height: 40 },
+      visibilidad: 'visible',
+      transform: 'none',
+      willChange: 'auto',
+      ancestrosConOpacidadDistintaDe1: 0,
+      ocultoParaElArbol: false,
+      dentroDeLaVentana: true,
+    }
+    const instante = (localizados: number): MedidaDeUnInstante => ({
+      elementos: { titular: sano, parrafo: sano, boton: sano },
+      localizados,
+      hero: { top: 0, bottom: 900, scrollHeight: 900, clientHeight: 900 },
+      documento: { anchoDelContenido: 1440, anchoDeLaVentana: 1440 },
+      posteriores: [],
+    })
+    const captura = (localizados: number) => ({
+      final: instante(ROLES.length),
+      cancelado: instante(localizados),
+      animacionesAntesDeCancelar: ANIMACIONES_DEL_HERO,
+    })
+
+    expect(incumplimientosDeLaCancelacion(captura(ROLES.length))).toEqual([])
+    expect(incumplimientosDeLaCancelacion(captura(ROLES.length - 1)).join('\n')).toContain('elementos localizados')
+    expect(incumplimientosDeLaCancelacion(captura(ROLES.length + 1)).join('\n')).toContain('elementos localizados')
   })
 })
 

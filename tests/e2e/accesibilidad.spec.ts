@@ -14,7 +14,7 @@ import { calcularRatioContraste } from '../../src/lib/contraste'
 import { ETIQUETAS_AXE_ACUMULATIVAS } from '../../src/lib/diseno/analisisAutomaticoAxe'
 import { esperarEntradaTerminada, registrarEntradaDelHero } from './entrada-del-hero'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
-import { colorComputadoAHex, esTransparente } from './utilidades'
+import { colorComputadoAHex, esTransparente, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const RUTA_DE_LA_PORTADA = `${SUBPATH_DE_PRODUCCION}/`
 
@@ -325,10 +325,16 @@ test.describe('@s40 al tabular por la página entera ningún control enfocado qu
         // `waitForTimeout` a ciegas: es la misma espera determinista que
         // `tests/e2e/movimiento.spec.ts` ya usa y justifica para @s42. No
         // debilita nada: las dos aserciones de abajo siguen exigiendo lo mismo.
-        // Desde el 20/09/2026 lo que espera son transiciones, no animaciones:
-        // la feature 39 dejó `src/` sin ninguna declaración `animation:`, y
-        // las transiciones sí entran en `document.getAnimations()`.
-        await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+        // Lo que espera son transiciones, no animaciones: desde el 20/09/2026
+        // (feature 39) `src/` no tenía ninguna declaración `animation:`; desde la
+        // 48 tiene UNA (la entrada del hero), pero solo dentro de
+        // `no-preference`, y este test emula `reduce` antes del primer `goto`.
+        // Las transiciones sí entran en `document.getAnimations()`.
+        await page.waitForFunction(
+          () => document.getAnimations().every((animacion) => animacion.playState !== 'running'),
+          undefined,
+          { timeout: TOPE_DE_UNA_ESPERA_MS },
+        )
         const activo = page.locator(':focus')
         if ((await activo.count()) === 0) break
         const identidad = await activo.evaluate((el) => el.outerHTML.slice(0, 120))
@@ -535,18 +541,25 @@ const RECUENTO_DE_COMBINACIONES = RECUENTO_DE_VARIANTES * RUTAS_DEL_INVENTARIO.l
  * `src/styles/global.scss:326`) — sin esto, `AxeBuilder` podría analizar un
  * fotograma a mitad de la interpolación de color.
  *
- * Desde el 20/09/2026 (feature 39) lo único que esa segunda espera puede
- * encontrar son TRANSICIONES: el proyecto se quedó sin ninguna declaración
- * `animation:`. Las transiciones entran igualmente en `getAnimations()`, así
- * que la espera conserva su sujeto y no se retira.
+ * Lo único que esa segunda espera puede encontrar son TRANSICIONES: desde el
+ * 20/09/2026 (feature 39) el proyecto no tenía ninguna declaración
+ * `animation:`, y desde la 48 tiene UNA (la entrada del hero) que vive solo
+ * dentro de `no-preference`; el único test que usa esta función (@s45) emula
+ * `reduce` antes de navegar. Las transiciones entran igualmente en
+ * `getAnimations()`, así que la espera conserva su sujeto y no se retira.
  */
 async function aplicarVariante(page: Page, variante: { id: string; nombreAccesible: string }): Promise<void> {
   await page.getByRole('button', { name: variante.nombreAccesible, exact: true }).click()
   await page.waitForFunction(
     (esperado) => document.documentElement.getAttribute('data-variante') === esperado,
     variante.id,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
   )
-  await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+  await page.waitForFunction(
+    () => document.getAnimations().every((animacion) => animacion.playState !== 'running'),
+    undefined,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
 }
 
 test.describe('@s45 el análisis automático de accesibilidad sigue sin reportar violaciones, en las cinco variantes', () => {

@@ -11,6 +11,7 @@
 import { expect, test, type Page } from 'playwright/test'
 import { leerRegistroDeEntrada, registrarEntradaDelHero } from './entrada-del-hero'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
+import { esperarDosFotogramas, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 /** El navegador serializa `transitionDuration` en SEGUNDOS: mide "1e-05s" para "0.01ms", nunca ese literal. */
 const MILISEGUNDOS_POR_SEGUNDO = 1000
@@ -45,7 +46,11 @@ async function instalarLectorDeDuraciones(page: Page): Promise<void> {
  * (no un `waitForTimeout` a ciegas, sino la condición real que interesa).
  */
 async function esperarAQueNoQuedeMovimientoEnCurso(page: Page): Promise<void> {
-  await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState !== 'running'))
+  await page.waitForFunction(
+    () => document.getAnimations().every((animacion) => animacion.playState !== 'running'),
+    undefined,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
+  )
 }
 
 test.describe('@s42 con la preferencia de menos movimiento activa no queda ninguna animación ni transición en curso', () => {
@@ -61,9 +66,11 @@ test.describe('@s42 con la preferencia de menos movimiento activa no queda ningu
       // Con movimiento reducido la duración efectiva es 0.01 ms, no cero:
       // medir inmediatamente después de navegar puede capturar ese instante
       // transitorio. Se espera el estado asentado igual que tras interactuar
-      // más abajo; no se relaja la aserción de cero animaciones. Desde el
-      // 20/09/2026 lo que esta espera encuentra en `getAnimations()` son
-      // TRANSICIONES: no queda ninguna `animation:` en `src/`.
+      // más abajo; no se relaja la aserción de cero animaciones. Lo que esta
+      // espera encuentra en `getAnimations()` son TRANSICIONES: desde el
+      // 20/09/2026 porque no quedaba ninguna `animation:` en `src/` y, desde la
+      // 48, porque la única que hay (la entrada del hero) vive solo dentro de
+      // `no-preference` y aquí se emula `reduce` ANTES de navegar.
       await esperarAQueNoQuedeMovimientoEnCurso(page)
 
       // AVISO (20/09/2026, feature 39; revisado el 14/10/2026, feature 48): desde
@@ -265,12 +272,8 @@ async function esperarALasAnimacionesDeLaEntrada(page: Page): Promise<void> {
   await page.waitForFunction(
     (esperadas) => document.getAnimations().filter((animacion) => animacion instanceof CSSAnimation).length >= esperadas,
     ANIMACIONES_DE_ENTRADA_DEL_HERO,
+    { timeout: TOPE_DE_UNA_ESPERA_MS },
   )
-}
-
-/** Dos fotogramas: tiempo para que el motor cree las animaciones y, con el reloj vivo, para que su `currentTime` avance. */
-async function esperarDosFotogramas(page: Page): Promise<void> {
-  await page.evaluate(() => new Promise<void>((resolver) => requestAnimationFrame(() => requestAnimationFrame(() => resolver()))))
 }
 
 /**
@@ -435,29 +438,96 @@ async function observarElPrimerFotogramaConElTitular(page: Page): Promise<void> 
   )
 }
 
+/** Dónde deja el contador su cuenta de TODOS los `animationstart` del documento, de cualquier elemento y pseudoelemento. */
+const CLAVE_DE_LOS_ARRANQUES_DEL_DOCUMENTO = '__arranquesDeAnimacionDelDocumento'
+
+/** Instala, ANTES de que cargue la página, un contador de `animationstart` sin filtrar por objetivo: el registro del hero solo cuenta lo que cuelga de su contenedor. */
+async function contarLosArranquesDelDocumento(page: Page): Promise<void> {
+  await page.addInitScript((clave) => {
+    const ventana = window as unknown as Record<string, number>
+    ventana[clave] = 0
+    window.addEventListener(
+      'animationstart',
+      () => {
+        ventana[clave] = (ventana[clave] ?? 0) + 1
+      },
+      true,
+    )
+  }, CLAVE_DE_LOS_ARRANQUES_DEL_DOCUMENTO)
+}
+
+async function leerLosArranquesDelDocumento(page: Page): Promise<number> {
+  return page.evaluate((clave) => (window as unknown as Record<string, number>)[clave] as number, CLAVE_DE_LOS_ARRANQUES_DEL_DOCUMENTO)
+}
+
+/**
+ * El DEFECTO de la prueba de mordida, inyectado en la portada real (la hoja del repositorio no se toca): una animación
+ * de 1 ms sobre el velo de la sección del hero, fuera de toda consulta de movimiento.
+ */
+async function inyectarUnaAnimacionSobreElVeloDelHero(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const estilo = document.createElement('style')
+      estilo.textContent = '@keyframes velo-de-prueba { from { opacity: 0.5 } } #inicio section::after { animation: velo-de-prueba 1ms }'
+      document.head.append(estilo)
+    })
+  })
+}
+
 test.describe('@s19 de accesibilidad: con la preferencia de menos movimiento la entrada del hero no existe desde el primer fotograma', () => {
   test('con "reduce" emulado antes de navegar, en el primer fotograma con el titular los tres elementos tienen animation-name "none" y no hay ninguna animación por fotogramas clave, ni en curso ni terminada', async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await registrarEntradaDelHero(page)
+    await contarLosArranquesDelDocumento(page)
     await observarElPrimerFotogramaConElTitular(page)
     await page.goto(RUTA_DE_LA_PORTADA)
 
-    await page.waitForFunction((clave) => (window as unknown as Record<string, unknown>)[clave] !== null, CLAVE_DEL_PRIMER_FOTOGRAMA)
+    await page.waitForFunction((clave) => (window as unknown as Record<string, unknown>)[clave] !== null, CLAVE_DEL_PRIMER_FOTOGRAMA, {
+      timeout: TOPE_DE_UNA_ESPERA_MS,
+    })
     const primerFotograma = await page.evaluate(
       (clave) => (window as unknown as Record<string, PrimerFotogramaConElTitular>)[clave] as PrimerFotogramaConElTitular,
       CLAVE_DEL_PRIMER_FOTOGRAMA,
     )
-    // «Tampoco los ya terminados»: una animación de 0,01 ms ya ha terminado cuando alguien la busca. Solo el registro de eventos la recuerda.
+    // «Tampoco los ya terminados»: una animación de 0,01 ms ya ha terminado cuando alguien la busca. Solo los contadores de eventos la recuerdan.
     await page.waitForFunction(
       ([instante, espera]) => performance.now() >= (instante as number) + (espera as number),
       [primerFotograma.instante, ESPERA_PARA_VER_SI_ALGO_ARRANCA_MS] as const,
+      // Esta espera dura 1500 ms A PROPÓSITO: el tope tiene que ser mayor que ella con holgura.
+      { timeout: TOPE_DE_UNA_ESPERA_MS },
     )
 
     expect(primerFotograma.nombres).toEqual({ titular: 'none', parrafo: 'none', boton: 'none' })
     expect(primerFotograma.animaciones).toBe(0)
-    expect((await leerRegistroDeEntrada(page)).arranques, 'animationstart con "reduce"').toBe(0)
+    expect((await leerRegistroDeEntrada(page)).arranques, 'animationstart de los elementos del hero con "reduce"').toBe(0)
+    expect(await leerLosArranquesDelDocumento(page), 'animationstart de cualquier elemento del documento con "reduce"').toBe(0)
+  })
+
+  // El registro de `entrada-del-hero.ts` cuenta SOLO lo que cuelga de `[data-hero-contenido]` (así la cabecera de la
+  // feature 49 o un indicador de carga no lo desordenan). El evento de un `::after` tiene como objetivo su propio
+  // elemento, y la sección no cuelga de su contenedor: una animación sobre el velo o sobre la foto del hero,
+  // declarada fuera de `no-preference`, que termine al instante bajo `reduce`, escaparía de las tres cosas que miden
+  // «ni en curso ni terminada» (los nombres, que solo miran a los tres elementos y sus ancestros; el recuento del
+  // primer fotograma, porque ya terminó; y el registro). Por eso @s19 cuenta además TODOS los `animationstart`
+  // del documento, de cualquier elemento y pseudoelemento. Este test lo demuestra sobre la portada real con el defecto
+  // inyectado, sin tocar la hoja del repositorio.
+  test('la comprobación muerde: una animación sobre el velo del hero, declarada fuera de "no-preference" y terminada al instante, la ve el contador del documento y no el registro del hero', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await registrarEntradaDelHero(page)
+    await contarLosArranquesDelDocumento(page)
+    await inyectarUnaAnimacionSobreElVeloDelHero(page)
+    await page.goto(RUTA_DE_LA_PORTADA)
+
+    await page.waitForFunction((clave) => ((window as unknown as Record<string, number>)[clave] ?? 0) > 0, CLAVE_DE_LOS_ARRANQUES_DEL_DOCUMENTO, {
+      timeout: TOPE_DE_UNA_ESPERA_MS,
+    })
+
+    expect(await leerLosArranquesDelDocumento(page), 'animationstart de cualquier elemento del documento').toBeGreaterThan(0)
+    expect((await leerRegistroDeEntrada(page)).arranques, 'animationstart de los elementos del hero').toBe(0)
   })
 })
 

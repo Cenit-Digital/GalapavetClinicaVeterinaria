@@ -3,7 +3,7 @@
 import { expect, test, type Page } from 'playwright/test'
 import { calcularRatioContraste } from '../../src/lib/contraste'
 import { RECUENTO_DE_RUTAS, RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
-import { colorComputadoAHex } from './utilidades'
+import { colorComputadoAHex, TOPE_DE_UNA_ESPERA_MS } from './utilidades'
 
 const ANCHO_ESCRITORIO = 1440
 const ANCHO_CONTENEDOR = 1220
@@ -368,7 +368,11 @@ test.describe('@s7 de fidelidad_cabecera: el borde del acceso "Tienda" se suaviz
     for (const { id, nombreAccesible } of VARIANTES) {
       await page.getByRole('button', { name: nombreAccesible, exact: true }).click()
       await expect(page.locator('html')).toHaveAttribute('data-variante', id)
-      await page.waitForFunction(() => document.getAnimations().every((animacion) => animacion.playState === 'finished'))
+      await page.waitForFunction(
+        () => document.getAnimations().every((animacion) => animacion.playState === 'finished'),
+        undefined,
+        { timeout: TOPE_DE_UNA_ESPERA_MS },
+      )
 
       const colores = await page.locator(SELECTOR_ENLACE_DE_TIENDA).evaluate((enlace) => {
         const resolver = (token: string): string => {

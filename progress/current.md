@@ -23,5 +23,7 @@ Olas (cada agente escribe SOLO su informe progress/tdd_hero_reducido_con_animaci
 - Ola 3a  A: prueba y medida de LCP (@s11) + informe lcp_hero_despues_20261014.md; B: comentarios falsos tras retirar el hero (solo comentarios)
           HECHA (14/10/2026): informes progress/tdd_hero_reducido_con_animacion_ola3a.md y ola3b.md; indice consolidado progress/tdd_hero_reducido_con_animacion.md.
           Verificacion del lead con la maquina en reposo: lint 0, tsc 0 (x2), vitest 1748/1748 (90 ficheros), test:e2e 267/267, LCP escritorio 116 y 128 ms frente a 132 (linea base local), movil 96 y 104 frente a 120.
-- Ola 4   panel de revision (judge + 4 revisores independientes), despues mutacion (mutation_tester) y cierre
+- Panel   revision de la 48 sobre 2267262 (judge + 4 revisores): CHANGES_REQUESTED (2 bloqueantes y 13 importantes en las puertas nuevas; el judge solo pedia documentacion). Informe: progress/judge_hero_reducido_con_animacion.md (ronda 1)
+- Ola 4   HECHA (14/10/2026): 4A comprobacion estatica de @s10, 4B lector de hojas y puertas de movimiento, 4C specs, forbidOnly y comentarios. Stryker acotado 100 % en los 5 modulos, 0 Timeout. Verificacion del lead: lint 0, tsc 0 (x2), vitest 2388/2388 (90 ficheros), test:e2e 278/278.
+- Ola 5   judge (segunda ronda, sobre el delta), despues mutation_tester oficial sobre el estado final, puerta humana de LCP (Pablo) y cierre de la 48
 - Ola 3   cierre: harness init, test:e2e, mutacion, juez, informe LCP, despliegue
