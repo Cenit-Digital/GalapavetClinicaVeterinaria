@@ -17,5 +17,8 @@ Olas (cada agente escribe SOLO su informe progress/tdd_hero_reducido_con_animaci
 - Ola 1B  puertas de movimiento (escalaMovimiento, movimientoRespetuoso, accesibilidad-movimiento y sus tests)
           HECHA (14/10/2026): informe progress/tdd_hero_reducido_con_animacion_olab.md (estado parcial: lo que falta es de la ola 2)
           Verificacion conjunta del lead: lint 0, tsc 0, vitest 1716/1716 (89 ficheros), test:e2e 185/185 con 4173 libre; vista real a 1440x900 y 375x812 comprobada.
-- Ola 2   animacion real + pruebas de navegador (@s5 @s6 @s7 @s9 @s10 @s11 @s12)
+- Ola 2   animacion real + pruebas de navegador (@s5 @s6 @s7 @s9 @s10 @s12; @s11 pasa a la ola 3a)
+          HECHA (14/10/2026): informes progress/tdd_hero_reducido_con_animacion_ola2a.md (animacion + specs del hero) y ola2b.md (ayudante esperarEntradaTerminada, cableado de @s10, @s9 CLS, accesibilidad @s19/@s22).
+          Verificacion conjunta del lead: lint 0, tsc 0 (y tsconfig.e2e 0), vitest 1748/1748 (90 ficheros), test:e2e 247/247 con la animacion presente.
+- Ola 3a  A: prueba y medida de LCP (@s11) + informe lcp_hero_despues_20261014.md; B: comentarios falsos tras retirar el hero (solo comentarios)
 - Ola 3   cierre: harness init, test:e2e, mutacion, juez, informe LCP, despliegue

@@ -293,11 +293,14 @@ describe('@s20 el inventario de bloques que aparecen animando se lee del sitio r
   })
 
   it('sobre las hojas reales ninguna aparición animada queda fuera de la hoja del hero ni queda invisible sin su animación', () => {
-    // Lo "mayor que 0" —que la animación del hero exista de verdad— lo exige la ola que la escribe: hoy ninguna
-    // hoja real la declara. Lo que se afirma desde ya, y seguirá cierto con la animación correcta, es el resto.
     const inventario = inventariarBloquesQueAparecenAnimando(HOJAS_REALES)
     const visibilidad = ejecutarComprobacionDeVisibilidadSinAnimacion(inventario.bloques)
 
+    // Desde el 13/10/2026 la entrada del hero existe de verdad: el recuento es mayor que 0 (la puerta lo declara
+    // por escrito en vez de aprobar sobre una lista vacía) y todo el inventario sale de la hoja del hero.
+    expect(inventario.recuentoDeBloquesQueAparecenAnimando).toBeGreaterThan(0)
+    expect(inventario.pasa).toBe(true)
+    expect(visibilidad.pasa).toBe(true)
     expect(inventario.bloquesFueraDeLasHojasAutorizadas).toEqual([])
     expect(visibilidad.bloquesComprobados).toBe(inventario.recuentoDeBloquesQueAparecenAnimando)
     expect(visibilidad.bloquesInvisibles).toEqual([])

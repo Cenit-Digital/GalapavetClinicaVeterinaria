@@ -604,5 +604,9 @@ describe('hero_reducido_con_animacion @s8 sobre las 20 hojas reales del inventar
     expect(informe.ficherosLeidos).toBe(20)
     expect(informe.incumplimientos).toEqual([])
     expect(informe.pasa).toBe(true)
+    // Las dos guardas anti-vacuidad del contrato, sobre el CONJUNTO de las hojas reales: que la puerta haya
+    // encontrado algo que comprobar (los fotogramas y las declaraciones de entrada de la hoja del hero).
+    expect(informe.recuentoDeFotogramas).toBeGreaterThan(0)
+    expect(informe.recuentoDeDeclaracionesDeEntradaEnNoPreference).toBeGreaterThan(0)
   })
 })

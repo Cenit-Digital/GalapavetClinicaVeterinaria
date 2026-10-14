@@ -12,8 +12,11 @@ import { expect, test, type Locator, type Page } from 'playwright/test'
 import { ejecutarPuertaDeAnalisisAutomatico, type ResultadoDeAnalisisAutomatico } from '../../src/lib/accesibilidad-analisis'
 import { calcularRatioContraste } from '../../src/lib/contraste'
 import { ETIQUETAS_AXE_ACUMULATIVAS } from '../../src/lib/diseno/analisisAutomaticoAxe'
+import { esperarEntradaTerminada, registrarEntradaDelHero } from './entrada-del-hero'
 import { RUTAS_DEL_INVENTARIO, SUBPATH_DE_PRODUCCION } from './rutas'
 import { colorComputadoAHex, esTransparente } from './utilidades'
+
+const RUTA_DE_LA_PORTADA = `${SUBPATH_DE_PRODUCCION}/`
 
 // UMBRALES ESCRITOS A MANO — no se recalculan de los valores que comprueban.
 const AREA_TACTIL_MINIMA_PX = 24
@@ -26,6 +29,10 @@ test.describe('@s36 el análisis automático no reporta ninguna violación en ni
     page,
   }) => {
     const informes: ResultadoDeAnalisisAutomatico['informes'][number][] = []
+    // VÍA (b) de @s10 de hero_reducido_con_animacion: la portada se mide con movimiento reducido
+    // emulado ANTES del primer `goto`, así que el hero no tiene entrada en curso que falsee la
+    // medida. Mide el MISMO estado final que con la entrada terminada (@s5 y @s7 de esa feature).
+    await page.emulateMedia({ reducedMotion: 'reduce' })
 
     for (const { pagina, ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
@@ -99,9 +106,18 @@ test.describe('@s38 el indicador de foco del sitio real tiene perímetro y contr
     page,
   }) => {
     let controlesComprobados = 0
+    await registrarEntradaDelHero(page)
 
     for (const { ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
+      // VÍA (a) de @s10 de hero_reducido_con_animacion, solo en la iteración de la portada (en las otras 5 rutas
+      // no hay titular al que anclarse). NO la vía (b): bajo `reduce`, `global.scss` deja una transición de 0,01 ms
+      // en TODAS las propiedades, y el color del contorno se leería a medio camino justo tras `focus()` (medido:
+      // ratio 1,12 en vez de >= 3). Aquí se mide con la preferencia por defecto, como hasta ahora, y con la
+      // entrada del hero ya terminada.
+      if (ruta === RUTA_DE_LA_PORTADA) {
+        await esperarEntradaTerminada(page)
+      }
       await page.locator('body').click({ position: { x: 1, y: 1 } })
 
       const objetivos = await objetivosVisibles(page)
@@ -219,9 +235,16 @@ test.describe('@s39 el anillo de foco contrasta con los dos fondos que tiene al 
     page,
   }) => {
     let controlesComprobados = 0
+    await registrarEntradaDelHero(page)
 
     for (const { ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
+      // VÍA (a) de @s10 de hero_reducido_con_animacion, solo en la portada (ver @s38, que dice por qué no la (b)):
+      // se toma la caja del botón del hero y se mira qué píxel hay a su lado, y con la entrada en curso la caja
+      // se movería entre una lectura y la otra.
+      if (ruta === RUTA_DE_LA_PORTADA) {
+        await esperarEntradaTerminada(page)
+      }
       const viewport = page.viewportSize()
       if (viewport === null) {
         throw new Error('no se pudo leer el tamaño del viewport')
@@ -537,10 +560,13 @@ test.describe('@s45 el análisis automático de accesibilidad sigue sin reportar
     test.setTimeout(180_000)
 
     const informes: ResultadoDeAnalisisAutomatico['informes'][number][] = []
+    // ANTES del primer `goto` (vía (b) de @s10 de hero_reducido_con_animacion): emulada DESPUÉS de navegar, la
+    // portada ya habría empezado su entrada y axe la analizaría con el hero a medio aparecer. Además, ver
+    // la justificación en `aplicarVariante` (que las transiciones converjan).
+    await page.emulateMedia({ reducedMotion: 'reduce' })
 
     for (const { pagina, ruta } of RUTAS_DEL_INVENTARIO) {
       await page.goto(ruta)
-      await page.emulateMedia({ reducedMotion: 'reduce' }) // ver justificación en `aplicarVariante`
       await page.getByRole('button', { name: 'Cambiar paleta de color' }).click()
 
       for (const variante of VARIANTES_DEL_SELECTOR) {

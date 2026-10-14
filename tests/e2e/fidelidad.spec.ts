@@ -278,6 +278,9 @@ test.describe('@s43 ninguna imagen nueva del rediseño está rota ni viene de un
     page,
     request,
   }) => {
+    // Vía (b) de @s10 de hero_reducido_con_animacion: se lee la sección de bienvenida con movimiento
+    // reducido emulado ANTES del `goto`, sin la entrada del hero en curso.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 
     const urls = await urlsDeFondoDeLaBienvenida(page)

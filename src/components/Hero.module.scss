@@ -105,3 +105,55 @@
     }
   }
 }
+
+// Entrada animada (hero_reducido_con_animacion @s5-@s8, aprobada por Pablo el
+// 13/10/2026): los tres elementos aparecen y se deslizan 40 px desde la izquierda,
+// 700 ms, `ease-out`, una sola vez, escalonados 0 / 120 / 240 ms.
+//
+// Toda la entrada vive dentro de `no-preference`. La regla global de `reduce`
+// (`animation-duration: 0.01ms`) tiene especificidad 0 y pierde ante cualquier regla
+// con selector propio que declare `animation`, y no toca `animation-delay`: no
+// protege de nada. La única defensa es no declarar nada fuera de aquí.
+//
+// El estado BASE es el final y es visible: la opacidad 0 y el desplazamiento viven
+// solo en el `from` (Invariante 4). Sin animación —un navegador que no entiende la
+// consulta, una extensión que corta animaciones— todo se ve en su sitio.
+//
+// `backwards` y no `both`: durante el retardo el párrafo y el botón esperan ya en su
+// estado de partida (sin parpadear en su sitio final) y, al acabar, la animación se
+// retira del elemento; con `both` o `forwards` la opacidad quedaría compuesta y el
+// texto nunca llegaría a ser candidato de LCP (la medida saldría artificialmente
+// buena). Sin `will-change`: no se reserva una capa permanente para una entrada
+// que dura 0,94 s.
+//
+// La animación cuelga del CONTENEDOR del botón y no del enlace, para que el foco y
+// su anillo no se vean afectados. Los tiempos van en LITERAL: la puerta de la escala
+// de movimiento falla cerrado ante `var()`, `$variable` y `calc()`.
+@media (prefers-reduced-motion: no-preference) {
+  .contenido h1 {
+    animation: entrada-del-hero 700ms ease-out backwards;
+    animation-delay: 0ms;
+  }
+
+  .subtitulo {
+    animation: entrada-del-hero 700ms ease-out backwards;
+    animation-delay: 120ms;
+  }
+
+  .acciones {
+    animation: entrada-del-hero 700ms ease-out backwards;
+    animation-delay: 240ms;
+  }
+
+  @keyframes entrada-del-hero {
+    from {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

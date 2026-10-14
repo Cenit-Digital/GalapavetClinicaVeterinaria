@@ -6,7 +6,15 @@ const ANCHOS_TELEFONO_PX = [320, 360, 375, 390, 414] as const
 const ANCHOS_INTERMEDIOS_PX = [480, 600, 768, 820, 900] as const
 const TOLERANCIA_PX = 1
 
+/**
+ * Carga la portada con la entrada del hero ya fuera de juego: vía (b) de @s10 de
+ * hero_reducido_con_animacion. Con la entrada animada el titular y el botón arrancan 40 px a la
+ * izquierda, y este barrido los contaría como fuera de la ventana. Se emula movimiento reducido
+ * ANTES del `goto` (con efecto sobre la carga medida): se mide el MISMO estado final que con la
+ * entrada terminada (@s5 y @s7 de esa feature). Todo test que llama a esta función hereda la vía (b).
+ */
 async function cargarPortada(page: Page, ancho: number): Promise<void> {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: ancho, height: 900 })
   await page.goto(`${SUBPATH_DE_PRODUCCION}/`)
 }

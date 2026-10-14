@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { calcularRatioContraste } from '../lib/contraste'
+import { leerEstilos } from '../lib/diseno/lectorDeEstilos'
 import { leerTokenDeVariante } from '../lib/diseno/tokensColor'
 import * as datosDelSitio from '../lib/diseno/datosDelSitio'
 import { mezclar } from '../lib/diseno/mezclaDeColor'
@@ -425,6 +426,242 @@ describe('@s12 de hero_reducido_con_animacion: la sección de bienvenida es de p
     expect(
       incumplimientosDeLaAlturaCompleta('// antes: clamp(560px, 84svh, 784px)\n.hero { min-height: 100svh; }'),
     ).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// hero_reducido_con_animacion @s5-@s8: la entrada animada, en lo que se lee de la
+// hoja. Los valores medidos con el motor de animaciones (duración, retardos,
+// caja en cada instante) los fija `tests/e2e/hero-reducido.spec.ts`; esta es la
+// parte que se lee del TEXTO, que da el aviso en el segundo en que alguien toca
+// la hoja y no necesita navegador.
+// ---------------------------------------------------------------------------
+
+/** Una regla `selector { interior }` de primer nivel de un texto; `interior` conserva sus reglas anidadas. */
+interface ReglaLeida {
+  readonly selector: string
+  readonly interior: string
+}
+
+/**
+ * Las reglas de primer nivel de un texto SCSS, con las llaves balanceadas. Sin
+ * comentarios y con las interpolaciones `#{...}` opacas: sus llaves no abren
+ * ningún bloque (`.contenido` usa una).
+ */
+function reglasDe(texto: string): readonly ReglaLeida[] {
+  const codigo = sinComentarios(texto).replace(/#\{[^}]*\}/g, 'interpolacion')
+  const reglas: ReglaLeida[] = []
+  let profundidad = 0
+  let encabezado = ''
+  let interior = ''
+  for (const caracter of codigo) {
+    if (caracter === '{') {
+      interior = profundidad === 0 ? '' : interior + caracter
+      profundidad += 1
+    } else if (caracter === '}') {
+      profundidad -= 1
+      if (profundidad === 0) {
+        reglas.push({ selector: encabezado.trim().replace(/\s+/g, ' '), interior })
+        encabezado = ''
+      } else {
+        interior += caracter
+      }
+    } else if (profundidad > 0) {
+      interior += caracter
+    } else {
+      // Una sentencia sin bloque (`@use ...;`) no es el encabezado de la regla que le sigue.
+      encabezado = caracter === ';' ? '' : encabezado + caracter
+    }
+  }
+  return reglas
+}
+
+/** Las declaraciones `propiedad: valor` que un bloque escribe directamente, con los blancos normalizados. */
+function declaracionesEscritasEn(interior: string): readonly string[] {
+  return declaracionesPropias(interior)
+    .split(';')
+    .map((sentencia) => sentencia.trim().replace(/\s+/g, ' '))
+    .filter((sentencia) => /^[\w-]+\s*:/.test(sentencia))
+    .toSorted()
+}
+
+const CONSULTA_SIN_PREFERENCIA = '@media (prefers-reduced-motion: no-preference)'
+const PREFIJO_DE_FOTOGRAMAS = '@keyframes '
+
+/** Los tres elementos que entran, en su orden de retardo: el titular, el párrafo y el CONTENEDOR del botón (nunca el enlace). */
+const ENTRADAS_DEL_HERO = [
+  { selector: '.contenido h1', retardo: '0ms' },
+  { selector: '.subtitulo', retardo: '120ms' },
+  { selector: '.acciones', retardo: '240ms' },
+] as const
+
+/** Parte desplazado 40 px a la IZQUIERDA y transparente; termina en su sitio, opaco y sin transformación. */
+const FOTOGRAMAS_DE_LA_ENTRADA: Readonly<Record<string, readonly string[]>> = {
+  from: ['opacity: 0', 'transform: translateX(-40px)'],
+  to: ['opacity: 1', 'transform: none'],
+}
+
+function distintas(declaradas: readonly string[], esperadas: readonly string[]): boolean {
+  return declaradas.join('; ') !== esperadas.toSorted().join('; ')
+}
+
+/** Lo que `hoja` incumple de la entrada animada del hero (@s5-@s8), en lo que se lee del texto. */
+function incumplimientosDeLaEntrada(hoja: string): readonly string[] {
+  const reglas = reglasDe(hoja)
+  const consultas = reglas.filter((regla) => regla.selector === CONSULTA_SIN_PREFERENCIA)
+  if (consultas.length !== 1) {
+    return [`hay ${consultas.length} bloques "${CONSULTA_SIN_PREFERENCIA}" de primer nivel y debe haber 1`]
+  }
+  const dentro = reglasDe(consultas[0]?.interior ?? '')
+  const fotogramas = [...reglas, ...dentro].filter((regla) => regla.selector.startsWith(PREFIJO_DE_FOTOGRAMAS))
+  const nombre = (fotogramas[0]?.selector ?? PREFIJO_DE_FOTOGRAMAS).slice(PREFIJO_DE_FOTOGRAMAS.length)
+  const pasos = reglasDe(fotogramas[0]?.interior ?? '')
+  const incumplidas: string[] = []
+
+  if (fotogramas.length !== 1) incumplidas.push(`hay ${fotogramas.length} "@keyframes" y debe haber 1`)
+  if (pasos.length !== 2) incumplidas.push(`los fotogramas tienen ${pasos.length} pasos y deben tener 2: "from" y "to"`)
+  for (const [paso, esperadas] of Object.entries(FOTOGRAMAS_DE_LA_ENTRADA)) {
+    const declaradas = declaracionesEscritasEn(pasos.find((regla) => regla.selector === paso)?.interior ?? '')
+    if (distintas(declaradas, esperadas)) {
+      incumplidas.push(`el fotograma "${paso}" declara [${declaradas.join('; ')}] y debe declarar [${esperadas.join('; ')}]`)
+    }
+  }
+
+  for (const { selector, retardo } of ENTRADAS_DEL_HERO) {
+    const declaradas = declaracionesEscritasEn(dentro.find((regla) => regla.selector === selector)?.interior ?? '')
+    const esperadas = [`animation: ${nombre} 700ms ease-out backwards`, `animation-delay: ${retardo}`]
+    if (distintas(declaradas, esperadas)) {
+      incumplidas.push(`"${selector}" declara [${declaradas.join('; ')}] y debe declarar [${esperadas.join('; ')}]`)
+    }
+  }
+  const selectoresEsperados = new Set<string>(ENTRADAS_DEL_HERO.map((entrada) => entrada.selector))
+  const deMas = dentro
+    .filter((regla) => !regla.selector.startsWith(PREFIJO_DE_FOTOGRAMAS) && !selectoresEsperados.has(regla.selector))
+    .map((regla) => regla.selector)
+  if (deMas.length > 0) incumplidas.push(`dentro de "no-preference" hay reglas de más: ${deMas.join(', ')}`)
+
+  // El estado BASE, fuera de la consulta y de los fotogramas, es el estado final visible (Invariante 4, @s7).
+  const fuera = reglas
+    .filter((regla) => regla !== consultas[0] && !regla.selector.startsWith(PREFIJO_DE_FOTOGRAMAS))
+    .map((regla) => `${regla.selector} {${regla.interior}}`)
+    .join('\n')
+  const restos: Array<[string, RegExp]> = [
+    ['declara una animación fuera de "no-preference"', /\banimation[\w-]*\s*:/],
+    ['deja "opacity: 0" en el estado base', /\bopacity\s*:\s*0(?![\d.])/],
+    ['deja "visibility: hidden" en el estado base', /\bvisibility\s*:\s*hidden/],
+    ['deja un "transform: translate" en el estado base', /\btransform\s*:\s*translate/],
+  ]
+  incumplidas.push(...restos.filter(([, patron]) => patron.test(fuera)).map(([resto]) => resto))
+  if (/\bwill-change\b/.test(sinComentarios(hoja))) incumplidas.push('declara "will-change"')
+
+  return incumplidas
+}
+
+interface CambiosEnLaHoja {
+  readonly animacion?: string
+  readonly retardos?: readonly [string, string, string]
+  readonly desde?: string
+  readonly hasta?: string
+  readonly dentroDeMas?: string
+  readonly fuera?: string
+  readonly enReduce?: string
+  readonly consulta?: string
+  readonly fotogramasEnLaRaiz?: boolean
+}
+
+/** Una hoja sintética con la entrada bien escrita; cada sabotaje cambia UNA cosa de ella. */
+function hojaConEntrada(cambios: CambiosEnLaHoja = {}): string {
+  const {
+    animacion = 'entrada 700ms ease-out backwards',
+    retardos = ['0ms', '120ms', '240ms'],
+    desde = 'opacity: 0; transform: translateX(-40px);',
+    hasta = 'opacity: 1; transform: none;',
+    dentroDeMas = '',
+    fuera = '',
+    enReduce = '',
+    consulta = CONSULTA_SIN_PREFERENCIA,
+    fotogramasEnLaRaiz = false,
+  } = cambios
+  const fotogramas = `@keyframes entrada { from { ${desde} } to { ${hasta} } }`
+  return `
+.hero { min-height: 100svh; ${fuera} }
+.contenido h1 { margin: 0; }
+${fotogramasEnLaRaiz ? fotogramas : ''}
+${consulta} {
+  .contenido h1 { animation: ${animacion}; animation-delay: ${retardos[0]}; }
+  .subtitulo { animation: ${animacion}; animation-delay: ${retardos[1]}; }
+  .acciones { animation: ${animacion}; animation-delay: ${retardos[2]}; }
+  ${dentroDeMas}
+  ${fotogramasEnLaRaiz ? '' : fotogramas}
+}
+${enReduce}
+`
+}
+
+describe('@s5-@s8 de hero_reducido_con_animacion: la entrada animada, en lo que se lee de la hoja del hero', () => {
+  it('la hoja real declara la entrada de los tres elementos con los valores aprobados, solo dentro de "no-preference", y deja el estado base visible', () => {
+    expect(reglasDe(TEXTO_REAL_DEL_MODULO).length).toBeGreaterThan(0)
+    expect(incumplimientosDeLaEntrada(TEXTO_REAL_DEL_MODULO)).toEqual([])
+  })
+
+  it('el lector común de las puertas de movimiento ve en la hoja real tres "animation", tres "animation-delay" y unos fotogramas, todo dentro de "no-preference"', () => {
+    const { declaraciones, fotogramas } = leerEstilos(TEXTO_REAL_DEL_MODULO)
+    const deAnimacion = declaraciones.filter((declaracion) => declaracion.propiedad.startsWith('animation'))
+
+    expect(deAnimacion.map((declaracion) => declaracion.propiedad).toSorted()).toEqual([
+      'animation',
+      'animation',
+      'animation',
+      'animation-delay',
+      'animation-delay',
+      'animation-delay',
+    ])
+    expect(deAnimacion.every((declaracion) => declaracion.bloques.includes('no-preference'))).toBe(true)
+    expect(fotogramas).toHaveLength(1)
+    expect(fotogramas[0]?.bloques.includes('no-preference')).toBe(true)
+  })
+
+  it('una hoja sintética bien escrita no incumple nada (la base de los sabotajes), con los fotogramas dentro de la consulta o en la raíz', () => {
+    expect(incumplimientosDeLaEntrada(hojaConEntrada())).toEqual([])
+    expect(incumplimientosDeLaEntrada(hojaConEntrada({ fotogramasEnLaRaiz: true }))).toEqual([])
+  })
+
+  it.each<[string, CambiosEnLaHoja, string]>([
+    ['duración de 1250 ms en vez de 700 ms', { animacion: 'entrada 1250ms ease-out backwards' }, 'animation: entrada 1250ms ease-out backwards'],
+    ['curva "ease" en vez de "ease-out"', { animacion: 'entrada 700ms ease backwards' }, 'animation: entrada 700ms ease backwards'],
+    ['relleno "both" en vez de "backwards"', { animacion: 'entrada 700ms ease-out both' }, 'animation: entrada 700ms ease-out both'],
+    ['relleno "forwards" en vez de "backwards"', { animacion: 'entrada 700ms ease-out forwards' }, 'animation: entrada 700ms ease-out forwards'],
+    ['sin relleno', { animacion: 'entrada 700ms ease-out' }, 'animation: entrada 700ms ease-out]'],
+    ['una animación "infinite"', { animacion: 'entrada 700ms ease-out backwards infinite' }, 'backwards infinite'],
+    ['retardo del párrafo de 150 ms en vez de 120 ms', { retardos: ['0ms', '150ms', '240ms'] }, 'animation-delay: 150ms'],
+    ['retardo del titular de 120 ms en vez de 0 ms', { retardos: ['120ms', '120ms', '240ms'] }, '".contenido h1" declara'],
+    ['retardos en orden inverso', { retardos: ['240ms', '120ms', '0ms'] }, 'animation-delay: 240ms'],
+    ['el desplazamiento parte de la DERECHA (40 px) y no de la izquierda', { desde: 'opacity: 0; transform: translateX(40px);' }, 'translateX(40px)'],
+    ['el desplazamiento es del 100 % y no de 40 px', { desde: 'opacity: 0; transform: translateX(-100%);' }, 'translateX(-100%)'],
+    ['un fotograma inicial que ya es opaco', { desde: 'opacity: 1; transform: translateX(-40px);' }, 'el fotograma "from"'],
+    ['una propiedad de más en los fotogramas (width)', { desde: 'opacity: 0; transform: translateX(-40px); width: 0;' }, 'width: 0'],
+    ['una propiedad de más en los fotogramas (margin-left)', { hasta: 'opacity: 1; transform: none; margin-left: 0;' }, 'margin-left: 0'],
+    ['el último fotograma deja la opacidad a 0', { hasta: 'opacity: 0; transform: none;' }, 'el fotograma "to"'],
+    ['el último fotograma deja un desplazamiento residual', { hasta: 'opacity: 1; transform: translateX(0.3px);' }, 'translateX(0.3px)'],
+    ['la entrada vive en una consulta que no es "no-preference"', { consulta: '@media (max-width: 560px)' }, 'bloques "@media (prefers-reduced-motion: no-preference)"'],
+    ['una cuarta animación sobre el enlace del botón', { dentroDeMas: '.acciones a { animation: entrada 700ms ease-out backwards; }' }, '.acciones a'],
+    ['"will-change" en un estado base', { fuera: 'will-change: transform;' }, 'declara "will-change"'],
+    ['opacidad 0 en el estado base', { fuera: 'opacity: 0;' }, 'deja "opacity: 0" en el estado base'],
+    ['visibilidad oculta en el estado base', { fuera: 'visibility: hidden;' }, 'deja "visibility: hidden" en el estado base'],
+    ['un desplazamiento en el estado base', { fuera: 'transform: translateX(-40px);' }, 'deja un "transform: translate" en el estado base'],
+    ['una animación en la raíz del fichero', { fuera: 'animation: entrada 700ms ease-out backwards;' }, 'declara una animación fuera de "no-preference"'],
+    [
+      'una animación dentro de "reduce"',
+      { enReduce: '@media (prefers-reduced-motion: reduce) { .subtitulo { animation: entrada 700ms ease-out backwards; } }' },
+      'declara una animación fuera de "no-preference"',
+    ],
+  ])('una hoja con %s incumple', (_descripcion, cambios, fragmento) => {
+    expect(incumplimientosDeLaEntrada(hojaConEntrada(cambios)).join('\n')).toContain(fragmento)
+  })
+
+  it('"opacity: 0.5" y "will-change" dentro de un comentario no son una opacidad 0 ni un "will-change"', () => {
+    const comentario = '// will-change: transform'
+    expect(incumplimientosDeLaEntrada(hojaConEntrada({ fuera: `opacity: 0.5;\n${comentario}\n` }))).toEqual([])
   })
 })
 
