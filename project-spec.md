@@ -1072,6 +1072,12 @@ esas respuestas y del análisis de `progress/fidelidad/`.
   translúcido, titular, subtítulo, dos botones (primario + contorno con relleno
   correcto), banda inferior íntegra (nunca cortada) con las cifras derivadas de
   la fuente única que ya define `Hero-logica.ts`.
+  ACTUALIZACIÓN (14/10/2026, feature 48): esta línea describía el hero antiguo
+  (píldora de localidad, dos botones y banda de cifras que definía
+  `Hero-logica.ts`, hoy borrado). El hero actual es a sangre, de pantalla
+  completa y alineado a la izquierda a ras de la marca, con solo el titular, el
+  párrafo y el botón «Reservar cita», y con una entrada animada: ver «Hero
+  reducido con animación», feature 48.
 - **29 `fidelidad_servicios`** — cintillo «Lo que hacemos», titular bicolor
   (Decisión 65), párrafo de apoyo con recuento derivado, tarjeta con píldora
   superpuesta a la foto, título, resumen derivado, panel de puntos con marca ✓,
@@ -1296,3 +1302,93 @@ la comparación en pantalla; la mutación se corre fichero a fichero sobre los
   los 27 specs de Playwright en verde, build con la puerta de terceros, mutación
   al 100 % sobre mutantes no equivalentes con `# timeout` = 0 leído ANTES que el
   score, y verificación en Chrome real contra la línea base.
+
+## Hero reducido con animación — feature 48
+
+Encargo de Pablo del 13/10/2026 (puntos 3 y 4 de su petición), contrastado con
+<https://vetcruzverde.es/> medido en navegador real. La parte de la petición que
+solapa la cabecera con la foto y agranda el menú es la feature 49
+(`cabecera_sobre_el_hero`) y va después. Especificación conversada y medidas:
+`progress/decisiones_cabecera_hero_20261013.md` y
+`progress/investigacion_cabecera_hero_20261013/`. Contrato firmado por Pablo el
+13/10/2026: `features/hero_reducido_con_animacion.feature` (@s1-@s12) más las
+enmiendas escenario a escenario en `hero`, `fidelidad_hero`, `rediseno_visual`,
+`accesibilidad` e `identidad_visual` (tabla en `progress/gherkin_48_resumen.md`).
+
+### Decisiones
+
+77. **El hero conserva solo el titular, el párrafo y un botón.** Se retiran la
+    píldora de ubicación, el botón «Llamar», la franja de horario y la banda de
+    cifras, y con ellos `Hero-logica.ts`, `digitosDe` y `extraerFragmento`.
+    **Ningún dato se pierde**: teléfono, horario y localidad siguen publicados en
+    Contacto, el FAQ, el chat de reserva y el pie (el escenario @s2 lo mide en
+    navegador). El contenido se alinea a la izquierda, en el borde de la columna de
+    1220 px, a ras de la marca de la cabecera. Es la petición 3 de Pablo.
+78. **El hero mide la pantalla completa.** `min-height: 100svh` (respuesta P5 de
+    Pablo): «al menos» la ventana y exactamente ella cuando el contenido cabe, en
+    todos los anchos, con el contenido centrado en vertical. Hasta la feature 49 la
+    cabecera sólida ocupa 64 px encima y los empuja fuera de la primera pantalla;
+    con la 49 la cabecera solapa la foto.
+79. **La entrada animada es la ÚNICA animación de entrada del sitio.** Titular,
+    párrafo y contenedor del botón aparecen y se deslizan 40 px desde la izquierda,
+    700 ms, `ease-out`, una sola vez, escalonados 0 / 120 / 240 ms, con
+    `animation-fill-mode: backwards` (nunca `both` ni `forwards`: con relleno hacia
+    delante la opacidad quedaría compuesta y la medida de LCP saldría
+    artificialmente buena) y solo `opacity` y `transform`. Se declara solo dentro de
+    `@media (prefers-reduced-motion: no-preference)`, con los tiempos en literal; el
+    estado base en CSS es el final y es visible, de modo que si la animación no
+    corre el contenido se ve. La regla global de `reduce` no es una red de
+    seguridad para ella (su especificidad es 0 y no toca `animation-delay`): la
+    defensa es no declarar nada fuera de `no-preference`. Respuesta P1 de Pablo, que
+    es además la puerta humana que exigía `accesibilidad.feature` @s20 para
+    reintroducir una animación tras la política de cero animaciones del
+    20/09/2026. **Amplía la Decisión 31** (tres duraciones: 150, 300 y 700 ms, y
+    los retardos 0, 120 y 240 ms solo para esta entrada).
+80. **Las puertas de movimiento aprenden a leer lo que antes no veían.** La escala
+    lee también segundos, `animation-delay`, el orden duración/retardo, listas y
+    declaraciones en varias líneas, y falla cerrado ante `var()`, `$variable`,
+    `calc()` y cualquier valor que no sepa leer; un lector de hojas común
+    (`src/lib/diseno/lectorDeEstilos.ts`) sustituye a las lecturas línea a línea y
+    cierra un agujero real de la puerta de rótulos. La puerta de aparición animada
+    distingue el estado de partida de un `@keyframes` del estado base realmente
+    invisible. Son módulos puros y los muerde StrykerJS.
+81. **Todo test que mide la portada recién cargada espera a que acabe la entrada o
+    emula movimiento reducido antes de navegar** (escenario @s10): el ayudante
+    `esperarEntradaTerminada` (`tests/e2e/entrada-del-hero.ts`) lee un registro de
+    `animationstart` y `animationend` instalado antes del `goto`, tiene tope y falla
+    en vez de medir, y una comprobación estática
+    (`src/lib/diseno/medicionEstable.ts`, cableada a los `*.spec.ts` reales) pone en
+    rojo cualquier bloque que mida antes de esperar. Sin ella, una medida tomada con
+    la animación en curso sería intermitente.
+82. **El LCP se vigila por TIEMPO, no por elemento.** Con el hero a pantalla
+    completa y la cabecera encima (feature 49), la foto cubre la ventana y el
+    algoritmo de LCP la descarta como candidata: el candidato pasa a ser el titular
+    o el párrafo, que con un fundido cuentan al TERMINAR su animación. La cláusula
+    fija la mediana de cinco cargas por tamaño en ≤ 2500 ms, medida antes y después
+    con el mismo método y en el mismo entorno, y obliga a enseñar a Pablo el
+    resultado si empeora. En la 48 sola no hay regresión (la foto sigue siendo el
+    candidato): `progress/lcp_hero_despues_20261014.md`.
+
+### Alcance y evidencia
+
+- **Línea base previa**: `progress/lcp_hero_linea_base_20261013.md` (LCP y CLS de
+  la web desplegada y en local, antes de tocar `src/`).
+- El contrato se escribió y revisó en **tres rondas de revisión independiente**
+  antes de la firma de Pablo, y cada ronda encontró defectos reales (una cifra de
+  altura medida mal, una premisa falsa sobre cuándo cuenta el LCP del texto, una
+  comparación entre entornos distintos).
+- El TDD fue en **cuatro oleadas con listas de ficheros cerradas** (1A y 1B, 2A y
+  2B, 3A y 3B, y la ola 4 de correcciones), cada una verificada en conjunto por el
+  `craftsman_lead` con la máquina en reposo, más la réplica del CI en una copia
+  limpia antes de cada `push`. Índice y mapa escenario → test:
+  `progress/tdd_hero_reducido_con_animacion.md`.
+- **Un panel de revisión** (el `judge` oficial y cuatro revisores independientes:
+  verdes por vacuidad, TypeScript, accesibilidad y movimiento, y fallos
+  silenciosos) revisó la feature publicada y encontró huecos reales en las puertas
+  nuevas (la comprobación estática y el lector de hojas) que ninguna prueba real
+  disparaba pero que no se podían poner en rojo; la ola 4 los corrige antes de la
+  mutación. Esa es exactamente la clase de defecto que este proyecto no tolera.
+- La feature se cierra solo con: `harness init` sin un solo `[FAIL]`, Vitest y la
+  batería de Playwright en verde, el visto bueno del `judge` sobre el estado final,
+  mutación al 100 % sobre mutantes no equivalentes con `# timeout` = 0 leído ANTES
+  que el score, y la puerta humana de LCP (Pablo ve las cifras antes de cerrar).

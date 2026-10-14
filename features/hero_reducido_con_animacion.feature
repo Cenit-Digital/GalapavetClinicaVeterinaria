@@ -3,9 +3,12 @@
 # «Hero reducido a titular, párrafo y un botón, alineado a la izquierda y con
 #  entrada animada»
 #
-# ESTADO: BORRADOR PARA LA PUERTA HUMANA (13/10/2026). Nada de lo que sigue está
-# firmado todavía. No se escribe código hasta que Pablo firme este fichero y los
-# cinco que enmienda.
+# ESTADO: FIRMADO por Pablo el 13/10/2026 (respuesta «Sí, firmo ambos», sin vetar
+# ningún valor por defecto). Este fichero y los cinco que enmienda son el contrato
+# vigente; la implementación está en los commits eee6be7, 5baf8ce y 2267262 (olas
+# 1, 2 y 3a) y la ola 4 corrige lo que encontró el panel de revisión del 14/10/2026
+# (ver progress/tdd_hero_reducido_con_animacion.md). Las TABLAS de filas sintéticas
+# y el texto de los escenarios no se tocan sin volver a la puerta humana.
 #
 # REVISADO el 13/10/2026 por un panel de cuatro revisores independientes
 # (cobertura, mordiente, consistencia y verdad técnica) y CORREGIDO en consecuencia.
@@ -123,9 +126,9 @@
 #   13/10/2026  Pablo pidió retirar píldora, «Llamar», horario y cifras
 #               (punto 3 de su encargo).
 #   13/10/2026  Pablo decidió P5: el hero es de pantalla completa (H5).
-#   PENDIENTE   La firma de ESTE fichero y de las enmiendas de los demás
-#               (hero, fidelidad_hero, rediseno_visual, accesibilidad,
-#               identidad_visual). También el veto del valor por defecto H2.
+#   13/10/2026  Pablo FIRMÓ este fichero y las enmiendas de los demás (hero,
+#               fidelidad_hero, rediseno_visual, accesibilidad, identidad_visual),
+#               sin vetar ningún valor por defecto, incluido H2.
 #
 # -----------------------------------------------------------------------------
 # ÍNDICE DE TRAZABILIDAD (A) — POR FICHERO DE CONTRATO
