@@ -84,8 +84,9 @@
 #   resource's CORS and credentials mode, **even when the fetch is not
 #   cross-origin**». Sin él el navegador descarga el fichero **dos veces**.
 # - **Reset explícito, regla a regla**: Decisión 29.
-# - **Movimiento: dos duraciones (150 ms / 300 ms), curva `ease-out`, corte en
-#   `reduce` con `0.01ms` y no `0`**: Decisión 31, apoyada en Material Design 3
+# - **Movimiento: tres duraciones (150 ms / 300 ms y 700 ms solo para la entrada
+#   del hero), curva `ease-out`, corte en `reduce` con `0.01ms` y no `0`**:
+#   Decisión 31, apoyada en Material Design 3
 #   (<https://m3.material.io/styles/motion/easing-and-duration/tokens-specs>).
 # - **Imágenes**: `progress/plan_imagenes.md` §1.1 (26 huecos), §2.3 (anchos de
 #   `srcset`), §3 (logo de 201×201 px y favicon), Decisiones 34, 35 y 36.

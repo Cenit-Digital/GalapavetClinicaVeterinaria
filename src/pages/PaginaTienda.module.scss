@@ -4,8 +4,8 @@
   color: var(--color-texto);
 
   // Cintillo del encabezado de página (@s38 de "rediseno_visual.feature"):
-  // mismo mecanismo que "Hero.module.scss:55-59" y "ReservaChat.module.scss:33-34",
-  // nunca un tamaño o un espaciado sueltos.
+  // mismo mecanismo (el mixin "eyebrow" de `_api.scss`) que `.informacion .eyebrow`
+  // de "ReservaChat.module.scss", nunca un tamaño o un espaciado sueltos.
   .cintillo {
     @include eyebrow;
   }

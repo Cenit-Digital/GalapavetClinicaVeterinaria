@@ -148,7 +148,7 @@ describe('contrato del rediseño visual', () => {
         { ruta: 'consumidor.ts', texto: 'export const POR_DEFECTO = VARIANTES[0]' },
         // Una ruta de imagen que CONTIENE la palabra no es una declaración del
         // identificador: el literal tiene que ser la cadena entera
-        // (`src/components/Hero.tsx:48` es exactamente este caso).
+        // (la imagen de `src/components/Hero.tsx` es exactamente este caso).
         { ruta: 'imagen.ts', texto: "hrefDeDestino('/img/hero/clinica.webp')" },
       ],
       'clinica',

@@ -48,7 +48,7 @@ const COMILLAS_DE_CADENA = ["'", '"', '`'] as const
  * Si `texto` escribe `identificador` como literal de cadena ENTERO. Se compara
  * con las comillas incluidas a propósito: `'/img/hero/clinica.webp'` contiene
  * la palabra pero no declara el identificador, y confundirlos convertiría la
- * puerta en ruido (`src/components/Hero.tsx:48`).
+ * puerta en ruido (la imagen de `src/components/Hero.tsx` es ese caso).
  */
 function declaraElIdentificadorComoLiteral(texto: string, identificador: string): boolean {
   return COMILLAS_DE_CADENA.some((comilla) => texto.includes(`${comilla}${identificador}${comilla}`))

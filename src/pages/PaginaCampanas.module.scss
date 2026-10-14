@@ -4,7 +4,7 @@
   color: var(--color-texto);
 
   // Cintillo del encabezado de página (@s39 de "rediseno_visual.feature"):
-  // mismo mecanismo que "PaginaTienda.module.scss" y "Hero.module.scss".
+  // mismo mecanismo (el mixin "eyebrow" de `_api.scss`) que "PaginaTienda.module.scss".
   .cintillo {
     @include eyebrow;
   }

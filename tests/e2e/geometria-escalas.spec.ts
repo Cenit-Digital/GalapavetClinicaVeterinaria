@@ -4,8 +4,8 @@
 // → `webServer`), igual que el resto de `tests/e2e/`.
 //
 // @s18 y @s26 de este mismo bloque los cierran otros artesanos de esta oleada
-// en sus propios ficheros (Hero/Faq y Cabecera respectivamente) — no se
-// duplican aquí.
+// en sus propios ficheros (Faq y Cabecera respectivamente; desde la feature 48
+// @s18 ya no incluye el hero) — no se duplican aquí.
 //
 // Toda la infraestructura CSS que estos 7 escenarios miden YA EXISTE
 // (`src/styles/_api.scss`, `src/styles/global.scss`, `src/styles/_tokens.scss`):
@@ -230,7 +230,7 @@ test.describe('@s19 el ritmo vertical de las secciones es fluido y alterna, en v
 // alcanzan los extremos del diseño; los seis pasos inferiores siguen fijos.
 // ---------------------------------------------------------------------------
 // Fuente de los extremos: `_api.scss:28-37`, `$escala-tipografica`.
-//   paso 5 (h1 de portada, `Hero.module.scss:66`): clamp(33px, 6.4vw, 68px)
+//   paso 5 (h1 de portada, `Hero.module.scss`, `.contenido h1`): clamp(33px, 6.4vw, 68px)
 //   paso 4 (h2 de sección, p. ej. `Servicios.module.scss:15`): clamp(28px, 4.2vw, 46px)
 // A 320px, 6.4vw/4.2vw quedan por debajo de sus mínimos → el navegador pinta
 // el mínimo literal. A 1220px, ambos superan su máximo → pinta el máximo
@@ -399,7 +399,7 @@ test.describe('@s21 los titulares tienen el peso y el tracking óptico del dise�
 // ---------------------------------------------------------------------------
 // `global.scss:122` `body { line-height: 1.5; }`.
 // `global.scss:178` `h1..h6 { line-height: 1.08; }` — salvo el h1 de portada,
-// que declara el suyo propio en `Hero.module.scss:69` (`line-height: 1.05;`,
+// que declara el suyo propio en `Hero.module.scss` (`.contenido h1`, `line-height: 1.05;`,
 // más específico por selector anidado, así que gana sobre la regla global).
 // El sitio no tiene ningún h4/h5/h6 (grep `<h4|<h5|<h6` en `src/` → 0
 // resultados): los tres niveles reales son h1, h2 y h3.

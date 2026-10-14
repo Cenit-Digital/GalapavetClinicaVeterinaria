@@ -240,7 +240,7 @@ function inventarioDeclaradoDeImagenes(): readonly string[] {
  * resuelven del documento vivo, sin suponer la técnica: se mira el
  * "background-image" del propio elemento y de sus dos pseudoelementos, y
  * también las `<img>` colocadas detrás del contenido (posicionadas y con
- * "z-index" negativo), que es como está montada hoy (`Hero.module.scss:23-31`:
+ * "z-index" negativo), que es como está montada hoy (`Hero.module.scss`, `.hero > img`:
  * `position: absolute; z-index: -2; object-fit: cover`). Si el rediseño
  * cambiara a un `background-image` de CSS, esta puerta seguiría midiendo lo
  * mismo sin tocarla.

@@ -569,10 +569,10 @@ describe('hero_reducido_con_animacion @s8: el análisis, más allá de la tabla'
  *
  * LAS GUARDAS "MAYOR QUE 0" (hay al menos un `@keyframes` y al menos una
  * declaración de entrada dentro de `no-preference` en el CONJUNTO de las 20)
- * NO están aquí todavía: hoy ninguna hoja real declara la animación del hero y
- * esas guardas no pueden pasar sin la hoja de la ola 2. Lo que sí se afirma
- * desde ya —y seguirá cierto cuando exista la animación correcta— es el recuento
- * de ficheros y que NINGUNA hoja real incumple.
+ * SÍ están, en el test de abajo: la hoja del hero declara su entrada animada
+ * desde la feature 48, así que se afirman junto con el recuento de ficheros y
+ * con que NINGUNA hoja real incumple. Sin ellas la puerta daría el verde por
+ * vacuidad si alguien retirara la animación.
  */
 const HOJAS_REALES_DEL_INVENTARIO = {
   estilos: import.meta.glob('../../styles/*.scss', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,

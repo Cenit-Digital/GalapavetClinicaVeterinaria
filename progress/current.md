@@ -21,4 +21,7 @@ Olas (cada agente escribe SOLO su informe progress/tdd_hero_reducido_con_animaci
           HECHA (14/10/2026): informes progress/tdd_hero_reducido_con_animacion_ola2a.md (animacion + specs del hero) y ola2b.md (ayudante esperarEntradaTerminada, cableado de @s10, @s9 CLS, accesibilidad @s19/@s22).
           Verificacion conjunta del lead: lint 0, tsc 0 (y tsconfig.e2e 0), vitest 1748/1748 (90 ficheros), test:e2e 247/247 con la animacion presente.
 - Ola 3a  A: prueba y medida de LCP (@s11) + informe lcp_hero_despues_20261014.md; B: comentarios falsos tras retirar el hero (solo comentarios)
+          HECHA (14/10/2026): informes progress/tdd_hero_reducido_con_animacion_ola3a.md y ola3b.md; indice consolidado progress/tdd_hero_reducido_con_animacion.md.
+          Verificacion del lead con la maquina en reposo: lint 0, tsc 0 (x2), vitest 1748/1748 (90 ficheros), test:e2e 267/267, LCP escritorio 116 y 128 ms frente a 132 (linea base local), movil 96 y 104 frente a 120.
+- Ola 4   panel de revision (judge + 4 revisores independientes), despues mutacion (mutation_tester) y cierre
 - Ola 3   cierre: harness init, test:e2e, mutacion, juez, informe LCP, despliegue

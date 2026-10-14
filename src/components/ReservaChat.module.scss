@@ -40,8 +40,8 @@
 // píldoras en UNA fila que salta de línea si no caben; la primera rellena
 // (`boton-primario`, par `sobre-primario`/`primario` de la matriz: el par
 // `sobre-primario`/`acento-tinta` del prototipo no está dado de alta), la
-// segunda de contorno. Misma altura para las dos, como la fila de acciones
-// del Hero (`Hero.module.scss`, `.acciones a`).
+// segunda de contorno. Misma altura para las dos: `boton-primario` trae la
+// grande y `boton-fantasma` la media, así que la de contorno se iguala abajo.
 .acciones {
   display: flex;
   flex-wrap: wrap;

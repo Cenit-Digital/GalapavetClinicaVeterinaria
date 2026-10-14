@@ -17,9 +17,9 @@
 
 // Cabecera de sección centrada (@s1 de `fidelidad_equipo`): un bloque acotado
 // y centrado con todo su texto centrado. El ancho máximo es una medida de
-// composición del mismo tipo que `Faq.module.scss` (860px) o
-// `Hero.module.scss` (720px): más estrecho que el contenedor de 1220 px para
-// que el párrafo caiga en dos líneas legibles.
+// composición del mismo tipo que el de `Faq.module.scss` (860px, `.faq`): más
+// estrecho que el contenedor de 1220 px para que el párrafo caiga en dos
+// líneas legibles.
 .cabecera {
   max-width: 640px;
   margin-inline: auto;
@@ -29,8 +29,9 @@
 // El cintillo en versalitas que precede al título (@s33): "Equipo" pinta su
 // fondo con un ROL DE COLOR del sistema (`Landing.tsx`), no la fotografía a
 // sangre del Hero, así que usa el "--color-acento-tinta" por defecto del
-// mixin, sin la excepción de la Enmienda 2 (solo del Hero). El centrado lo
-// hereda de `.cabecera`.
+// mixin, sin excepción de color: la de la Enmienda 2 (un cintillo propio del
+// Hero) la derogó la feature 48, que lo retiró. El centrado lo hereda de
+// `.cabecera`.
 .cabecera .eyebrow {
   @include eyebrow;
   margin-block-end: espaciado(12);
