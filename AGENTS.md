@@ -32,7 +32,7 @@
 | `docs/conventions.md`      | Estilo, nombres, estructura                                               | Antes de escribir código          |
 | `docs/verification.md`     | Cómo demostrar que funciona                                               | Antes de declarar `done`          |
 | `docs/configuration.md`    | Cómo adaptar `harness.config.json` a cualquier stack                      | Al portar a un nuevo lenguaje     |
-| `docs/tooling.md`          | Agentes de apoyo y hooks                                                  | Para entender el tooling          |
+| `docs/tooling.md`          | Agentes de nivel y especialistas; dónde se verifica (sin hooks de tests)  | Para entender el tooling          |
 | `docs/autonomous.md`       | El bot de evolución autónoma (solo-PR) y su puesta en marcha              | Para operar el bot de auto-mejora |
 | `docs/memoria-organizacional.md` | Patrones validados compartidos entre proyectos (memoria de la org)  | Al arrancar sesión (paso 2bis)    |
 | `scripts/sync-memoria.sh(.ps1)` | Sincroniza la memoria organizacional en `.memoria-cache/`           | Paso 2bis del Protocolo de arranque |
