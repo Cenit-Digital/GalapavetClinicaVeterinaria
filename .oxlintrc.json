@@ -46,6 +46,7 @@
     ".stryker-tmp/**",
     "examples/**",
     ".harness/**",
+    "scripts/harness-upgrade.mjs",
     ".memoria-cache/**",
     "docs/**"
   ],

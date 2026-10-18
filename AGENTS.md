@@ -4,32 +4,30 @@
 > NO es una biblia de reglas: es un **mapa**. Lee solo lo que necesites,
 > cuando lo necesites (divulgación progresiva).
 >
-> Proceso: **Harness / SDD estilo Uncle Bob** — conversación → Gherkin → TDD →
-> review → mutación. Ver `docs/workflow.md`. Plantilla **agnóstica al
-> lenguaje**: los comandos del stack viven en `harness.config.json`.
+> Proceso: lo fija la «Política de trabajo» del final de este fichero (niveles,
+> puerta humana, delegación). El pipeline por fases anterior está retirado:
+> `docs/workflow.md` queda como legado. Plantilla **agnóstica al lenguaje**: los
+> comandos del stack viven en `harness.config.json`.
 
 ## 1. Antes de empezar (obligatorio)
 
 1. Ejecuta `./init.sh` (o `bin/harness init`). Si falla, **para** y resuelve
    el entorno antes de tocar código.
-2. Lee `progress/current.md` (estado de la última sesión).
-3. Lee `feature_list.json`. Toda feature `"sdd": true` recorre el pipeline.
-4. Lee `docs/workflow.md` antes de coordinar nada.
+2. Lee el issue de la tarea (objetivo, criterios y plan); si no hay issue, lo que pida la persona.
+3. Lee la «Política de trabajo» (final de este fichero) antes de planificar.
 
 ## 2. Mapa del repositorio
 
 | Archivo / carpeta          | Qué contiene                                                              | Cuándo leerlo                     |
 | -------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
 | `harness.config.json`      | ⭐ Comandos de TU stack (test, mutación, lint…). El único punto no-agnóstico | Antes de tocar el arnés           |
-| `feature_list.json`        | Tareas con estado (`pending`/`spec_ready`/`in_progress`/`done`/`blocked`) | Siempre                           |
-| `progress/current.md`      | Estado de la sesión actual                                                | Siempre                           |
-| `progress/history.md`      | Bitácora append-only                                                      | Si necesitas contexto             |
 | `project-spec.md`          | Spec conversada por feature                                               | Antes de Gherkin o de implementar |
 | `features/<name>.feature`  | Escenarios Gherkin (contrato aprobado por el humano)                      | Antes del ciclo TDD               |
-| `docs/workflow.md`         | El pipeline completo y los insights de cada fase                          | Antes de coordinar                |
+| `docs/workflow.md`         | Legado: el pipeline por fases anterior, retirado (`init` lo exige)        | Solo como referencia              |
 | `docs/tdd.md`              | Las Tres Leyes; Rojo-Verde-Refactor                                       | Antes de escribir código          |
 | `docs/gherkin.md`          | Cómo escribir `.feature`; de Gherkin a test                               | Antes de redactar escenarios      |
 | `docs/mutation-testing.md` | Por qué y cómo; umbral; mutación por stack                                | Antes de validar la suite         |
+| `docs/mutacion-vitest-related.md`| Stryker + Vitest: qué tests enfrenta de verdad cada mutante (propio de este proyecto)| Antes de leer un informe de mutación|
 | `docs/architecture.md`     | Qué significa "hacer un buen trabajo"                                     | Antes de implementar              |
 | `docs/conventions.md`      | Estilo, nombres, estructura                                               | Antes de escribir código          |
 | `docs/verification.md`     | Cómo demostrar que funciona                                               | Antes de declarar `done`          |
@@ -40,7 +38,7 @@
 | `scripts/sync-memoria.sh(.ps1)` | Sincroniza la memoria organizacional en `.memoria-cache/`           | Paso 2bis del Protocolo de arranque |
 | `CHECKPOINTS.md`           | Criterios objetivos de "estado final correcto"                           | Para auto-evaluarte               |
 | `.harness/harness.mjs`     | Motor agnóstico (lee la config y ejecuta tus comandos)                    | Si depuras el arnés               |
-| `.claude/agents/`          | 6 subagentes del pipeline + 3 de apoyo                                     | Si orquestas                      |
+| `.claude/agents/`          | 3 de nivel y 3 especialistas opt-in                                       | Si delegas                        |
 | `examples/`                | Arneses completos y ejecutables (Python y Node/JS) de referencia          | Para ver el método en acción      |
 | `src/` · `tests/`          | Código de la aplicación y sus tests                                       | Para implementar / verificar      |
 
@@ -58,31 +56,43 @@
   contexto).
 - **Si no sabes algo, busca en `docs/`** antes de inventarlo.
 
-## 4. Pipeline
+## 4. Flujo de trabajo
 
-```
-pending
-  → [spec_partner]    CONVERSACIÓN  → project-spec.md
-  → [gherkin_author]  DESTILACIÓN   → features/<name>.feature   (spec_ready)
-  → ⏸  PUERTA HUMANA: el humano aprueba los escenarios
-  → in_progress
-  → [tdd_craftsman]   ROJO → VERDE → REFACTOR  → src/ + tests/
-  → [judge]           REVIEW ("el review es el juego entero")
-  → [mutation_tester] MUTACIÓN (valida que los tests muerden)
-  → done
-```
+Lo fija la «Política de trabajo» del final de este fichero: nivel de la tarea,
+plan aprobado, ejecución delegada por capacidad y diff revisado en local. El
+pipeline por fases con agentes propios (`docs/workflow.md`) está retirado.
 
-## 5. Cierre de sesión (lifecycle)
+## 5. Cierre de sesión
 
-1. `./init.sh` (o `bin/harness verify`) — todo verde.
-2. Mutación sobre lo tocado — por encima del umbral.
-3. Si la tarea acabó: `status: "done"` en `feature_list.json`.
-4. Mueve el resumen de `progress/current.md` a `progress/history.md`.
-5. Vacía `progress/current.md` dejando solo la plantilla.
-6. No dejes archivos temporales, ni logs de debug, ni TODOs sin contexto.
+Lo rige la «Política de trabajo» del final de este fichero (en particular, la
+puerta humana: el diff se revisa en local antes de cualquier `git push`).
+Deja el repo limpio: sin archivos temporales, sin logs de debug y sin TODOs sin
+contexto.
 
 ## 6. Si te bloqueas
 
 - Relee la sección relevante de `docs/`.
 - Si una herramienta no hace lo que esperas, **no inventes un workaround**:
   documenta el bloqueo en `progress/current.md` y para la sesión.
+
+<!-- harness:begin — bloque gestionado por la plantilla: no lo edites aquí; lo reemplaza scripts/harness-upgrade.mjs al aplicar -->
+## Arnés SSD (gestionado por la plantilla)
+
+- Entorno y arnés: `bin/harness init` · tests: `bin/harness test` · mutación: `bin/harness mutate [target]`.
+- ¿Al día con la plantilla? `node scripts/harness-upgrade.mjs --check` (solo lectura); `--diff` enseña los cambios.
+- Qué es de la plantilla y qué del proyecto: `harness.manifest.json`.
+
+### Política de trabajo
+
+**Niveles.** El planificador clasifica cada tarea por juicio (las pistas no son exhaustivas; ante la duda, el nivel superior) y escribe el nivel y su motivo en el plan; la persona lo corrige al aprobarlo.
+- **trivial:** cambio local y evidente. Un solo contexto, sin subagentes obligatorios.
+- **pequeño:** acotado a pocos ficheros y sin decisiones de diseño. Se planifica con `frontier` y se implementa con `balanced`, en la misma sesión.
+- **estándar:** varias piezas o un comportamiento nuevo. Mismo mecanismo; el plan fija los artefactos que exige.
+- **crítico:** seguridad, datos, dinero o un contrato público. El planificador sigue como orquestador y revisor: delega, puede reasignar y revisa. Exige además TDD estricto y mutación sobre los módulos que fija el plan (`docs/verification.md`); en los demás niveles no se corre mutación.
+
+**Puerta humana (dos puntos, todos los niveles).** 1) La persona aprueba el plan antes de implementar (en trivial basta uno de 1-2 líneas con el nivel y el motivo). 2) La persona revisa el diff en local antes de cualquier `git push`; un agente interactivo no empuja sin esa revisión.
+
+**Delegación.** Por capacidad, no por proveedor: `frontier` (planificar, revisar, lo crítico), `balanced` (implementar), `fast` (tareas mecánicas y exploración). Salvo en trivial, el plan lleva una tabla «Delegación»: ejecutor, nivel, esfuerzo, motivo, «escalar si…» y verificación automática. Qué modelo es cada nivel en cada herramienta: `docs/modelos.md`.
+
+**Issues y PR.** Plantillas en `.github/`. El issue de tarea (objetivo, nivel, criterios Given/When/Then, plan en casillas, resultados) es opcional mientras el proyecto conserve `feature_list.json`; el PR lleva siempre cuatro bloques (qué, por qué, cómo se probó, pendiente), «Impacto en tareas anteriores» y la casilla de revisión local, y el workflow «Plantilla del PR» lo comprueba (`node .harness/pr-body.mjs`).
+<!-- harness:end -->
