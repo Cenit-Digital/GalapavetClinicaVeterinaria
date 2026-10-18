@@ -59,4 +59,4 @@ build, mutación al umbral configurado y verificación independiente.
 ## Punto de control humano
 
 La feature está en estado `spec_ready`. El contrato se debe aprobar de forma
-explícita antes de editar producción, conforme a `docs/workflow.md`.
+explícita antes de editar producción, conforme al flujo anterior, hoy retirado; ahora rige la puerta humana de `AGENTS.md`: plan aprobado y diff revisado en local.
