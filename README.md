@@ -74,11 +74,10 @@ Una sola feature a la vez. Estado en disco (no en el chat): `project-spec.md`,
 
 | Comando                    | Qué hace                                            |
 | -------------------------- | --------------------------------------------------- |
-| `bin/harness init`         | Verifica entorno, ficheros base, feature_list, tests |
+| `bin/harness init`         | Verifica el entorno y el arnés                       |
 | `bin/harness test`         | La suite de tests declarada                          |
 | `bin/harness mutate [t]`   | La prueba de mutación                                |
-| `bin/harness verify`       | init + mutación (puerta de cierre)                  |
-| `bin/harness status`       | Resumen de `feature_list.json`                      |
+| `bin/harness verify`       | init + mutación completa (solo antes de una entrega) |
 
 (En Windows: `bin\harness.ps1 <comando>`.)
 
@@ -118,7 +117,7 @@ muerden).
 ├── .harness/
 │   ├── harness.mjs                           # motor agnóstico (cero deps)
 │   └── adapters/                             # python.md · node.md · go.md · rust.md · java.md · generic.md
-├── docs/                                     # workflow · tdd · gherkin · mutation
+├── docs/                                     # tdd · gherkin · mutation
 │   │                                         #   architecture · conventions · verification
 │   └── configuration · tooling · autonomous · memoria-organizacional
 ├── .claude/agents/                           # 6 del pipeline + 3 de apoyo

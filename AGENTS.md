@@ -5,9 +5,9 @@
 > cuando lo necesites (divulgación progresiva).
 >
 > Proceso: lo fija la «Política de trabajo» del final de este fichero (niveles,
-> puerta humana, delegación). El pipeline por fases anterior está retirado:
-> `docs/workflow.md` queda como legado. Plantilla **agnóstica al lenguaje**: los
-> comandos del stack viven en `harness.config.json`.
+> puerta humana, delegación). El pipeline por fases anterior está retirado.
+> Plantilla **agnóstica al lenguaje**: los comandos del stack viven en
+> `harness.config.json`.
 
 ## 1. Antes de empezar (obligatorio)
 
@@ -15,6 +15,12 @@
    el entorno antes de tocar código.
 2. Lee el issue de la tarea (objetivo, criterios y plan); si no hay issue, lo que pida la persona.
 3. Lee la «Política de trabajo» (final de este fichero) antes de planificar.
+4. Opcional y no bloqueante: sincroniza la memoria de la organización con
+   `scripts/sync-memoria.sh` (`pwsh scripts/sync-memoria.ps1` en Windows) y
+   revisa en `.memoria-cache/patterns/` los patrones de la categoría de tu
+   tarea antes de diseñar desde cero, respetando su «Cuándo NO aplica»; si
+   falla (sin red o sin acceso), sigue sin ella y anótalo en el PR
+   (`docs/memoria-organizacional.md`).
 
 ## 2. Mapa del repositorio
 
@@ -23,7 +29,6 @@
 | `harness.config.json`      | ⭐ Comandos de TU stack (test, mutación, lint…). El único punto no-agnóstico | Antes de tocar el arnés           |
 | `project-spec.md`          | Spec conversada por feature                                               | Antes de Gherkin o de implementar |
 | `features/<name>.feature`  | Escenarios Gherkin (contrato aprobado por el humano)                      | Antes del ciclo TDD               |
-| `docs/workflow.md`         | Legado: el pipeline por fases anterior, retirado (`init` lo exige)        | Solo como referencia              |
 | `docs/tdd.md`              | Las Tres Leyes; Rojo-Verde-Refactor                                       | Antes de escribir código          |
 | `docs/gherkin.md`          | Cómo escribir `.feature`; de Gherkin a test                               | Antes de redactar escenarios      |
 | `docs/mutation-testing.md` | Por qué y cómo; umbral; mutación por stack                                | Antes de validar la suite         |
@@ -34,8 +39,8 @@
 | `docs/configuration.md`    | Cómo adaptar `harness.config.json` a cualquier stack                      | Al portar a un nuevo lenguaje     |
 | `docs/tooling.md`          | Agentes de nivel y especialistas; dónde se verifica (sin hooks de tests)  | Para entender el tooling          |
 | `docs/autonomous.md`       | El bot de evolución autónoma (solo-PR) y su puesta en marcha              | Para operar el bot de auto-mejora |
-| `docs/memoria-organizacional.md` | Patrones validados compartidos entre proyectos (memoria de la org)  | Al arrancar sesión (paso 2bis)    |
-| `scripts/sync-memoria.sh(.ps1)` | Sincroniza la memoria organizacional en `.memoria-cache/`           | Paso 2bis del Protocolo de arranque |
+| `docs/memoria-organizacional.md` | Patrones validados compartidos entre proyectos (memoria de la org)  | Al empezar una tarea (§1, paso 4) |
+| `scripts/sync-memoria.sh(.ps1)` | Sincroniza la memoria organizacional en `.memoria-cache/`           | Paso 4 de §1 (opcional)           |
 | `CHECKPOINTS.md`           | Criterios objetivos de "estado final correcto"                           | Para auto-evaluarte               |
 | `.harness/harness.mjs`     | Motor agnóstico (lee la config y ejecuta tus comandos)                    | Si depuras el arnés               |
 | `.claude/agents/`          | 3 de nivel y 3 especialistas opt-in                                       | Si delegas                        |
@@ -60,7 +65,7 @@
 
 Lo fija la «Política de trabajo» del final de este fichero: nivel de la tarea,
 plan aprobado, ejecución delegada por capacidad y diff revisado en local. El
-pipeline por fases con agentes propios (`docs/workflow.md`) está retirado.
+pipeline por fases con agentes propios está retirado.
 
 ## 5. Cierre de sesión
 
@@ -94,5 +99,12 @@ contexto.
 
 **Delegación.** Por capacidad, no por proveedor: `frontier` (planificar, revisar, lo crítico), `balanced` (implementar), `fast` (tareas mecánicas y exploración). Salvo en trivial, el plan lleva una tabla «Delegación»: ejecutor, nivel, esfuerzo, motivo, «escalar si…» y verificación automática. Qué modelo es cada nivel en cada herramienta: `docs/modelos.md`.
 
-**Issues y PR.** Plantillas en `.github/`. El issue de tarea (objetivo, nivel, criterios Given/When/Then, plan en casillas, resultados) es opcional mientras el proyecto conserve `feature_list.json`; el PR lleva siempre cuatro bloques (qué, por qué, cómo se probó, pendiente), «Impacto en tareas anteriores» y la casilla de revisión local, y el workflow «Plantilla del PR» lo comprueba (`node .harness/pr-body.mjs`).
+**Issues y PR.** Plantillas en `.github/`. Toda tarea tiene su issue (objetivo, nivel, criterios Given/When/Then, plan en casillas, tareas relacionadas, resultados); en trivial es mínimo: objetivo y plan de 1-2 líneas con el nivel y el motivo. El PR lo enlaza con `Closes #N`, lleva siempre cuatro bloques (qué, por qué, cómo se probó, pendiente), «Impacto en tareas anteriores» y la casilla de revisión local; el workflow «Plantilla del PR» comprueba esas secciones y la casilla (`node .harness/pr-body.mjs`).
+
+**Bucle de aprendizaje (fase de cierre).** Una tarea nueva puede dejar obsoletas otras anteriores; el nivel trivial no ejecuta esta fase.
+- Al planificar, anota en «Tareas relacionadas» del issue las anteriores que tocan lo mismo: `node .harness/impacto-tareas.mjs --files <rutas del plan>` da los candidatos.
+- Al cerrar, `node .harness/impacto-tareas.mjs` sobre la rama lista, con tope fijo y sin LLM, los PR e issues previos que tocaron los mismos ficheros. Alimenta «Impacto en tareas anteriores»: cada candidato se marca «afecta» o «no afecta», con el motivo en una línea.
+- Cada tarea afectada (su issue; si solo existe el PR, el PR) recibe la etiqueta `revisit` y un comentario con el motivo y el enlace al PR. Si el impacto exige cambiar algo, un agente en modo plan abre un issue `revisit` nuevo con el plan de enmienda ya redactado; se enlaza desde el comentario, desde «Resultados de la ejecución» y desde el bloque del PR, y la persona lo aprueba como cualquier plan. Comentar, etiquetar, crear la etiqueta si falta y abrir ese issue se hace con el OK de la persona; ningún issue se reabre por su cuenta.
+- Lo aprendido que valga para tareas futuras va a `AGENTS.md` en el mismo PR. No hay bot retrospectivo.
+- «Todo criterio de aceptación tiene un test» es la mitad determinista del bucle.
 <!-- harness:end -->
